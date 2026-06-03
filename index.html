@@ -114,7 +114,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.13</span>
+      <span class="badge">v8.14</span>
     </div>
   </div>
   <div class="body">
@@ -204,7 +204,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery &nbsp;&nbsp; Stamp Approval</p></div>
-    <span class="badge">v8.13</span>
+    <span class="badge">v8.14</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -274,29 +274,7 @@ async function parseDSTBin(file){
     r.readAsArrayBuffer(file);
   });
 }
-function parseFilename(n){const p=n.split('_');let h='';for(const x of p){const m=x.match(/^(\d+\.?\d*)in$/i);if(m){h=m[1];break;}}return{logoName:n,customer:formatCustomer(p[0]||n),heightIn:h};}
-// Customer name lookup — expand ALLCAPS abbreviations to proper formatting.
-// Add entries here as new customers come up. Keys must be UPPERCASE with no spaces.
-const CUSTOMER_LOOKUP = {
-  'TREEFARM': 'Tree Farm',
-  // 'HOUSTONASTROS': 'Houston Astros',
-  // 'UNIONLEAGUE': 'Union League',
-};
-
-function formatCustomer(raw){
-  if (!raw) return raw;
-  const key = raw.toUpperCase().replace(/\s+/g, '');
-  if (CUSTOMER_LOOKUP[key]) return CUSTOMER_LOOKUP[key];
-  // Mixed case → split at PascalCase/camelCase boundaries
-  if (/[a-z]/.test(raw) && /[A-Z]/.test(raw)) {
-    return raw.replace(/([a-z])([A-Z])/g, '$1 $2')
-              .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-              .trim();
-  }
-  // ALLCAPS or all-lowercase fallback — title-case the whole word as one
-  return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-}
-
+function parseFilename(n){const p=n.split('_');let h='';for(const x of p){const m=x.match(/^(\d+\.?\d*)in$/i);if(m){h=m[1];break;}}return{logoName:n,customer:dePascal(p[0]||n),heightIn:h};}
 function dePascal(s){return s.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g,'$1 $2').trim();}
 
 const dz=document.getElementById('dstZone');
@@ -309,7 +287,7 @@ document.getElementById('dstFilename').addEventListener('input',e=>{const raw=e.
 async function handleDST(file){
   const info=await parseDSTBin(file);
   const name=file.name.replace(/\.dst$/i,'').trim();
-  setF('logoName',name);setF('customer',formatCustomer(name.split('_')[0]));
+  setF('logoName',name);setF('customer',dePascal(name.split('_')[0]));
   if(info.heightIn)setF('logoH',info.heightIn+'"');
   if(info.widthIn){setF('logoW',info.widthIn+'"'); setF('fnWidth',info.widthIn);}
   let s=name;if(info.heightIn&&info.widthIn)s+=' \xb7 '+info.heightIn+'"H \xd7 '+info.widthIn+'"W';
