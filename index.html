@@ -59,6 +59,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .crop-canvas-wrap{position:relative;background:#f4f5fa;border:1px solid #d8dce6;border-radius:7px;overflow:hidden;line-height:0;user-select:none;touch-action:none}
 .crop-canvas-wrap canvas{display:block;max-width:100%;max-height:65vh}
 .crop-box{position:absolute;border:2px dashed #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.45);cursor:move;pointer-events:none}
+.crop-aspect{display:flex;gap:4px;background:#f4f5fa;border:1px solid #e0e3ee;border-radius:7px;padding:3px;align-self:flex-start}
+.crop-aspect button{padding:5px 11px;font-size:10px;font-weight:700;border:none;background:transparent;color:var(--gray);cursor:pointer;letter-spacing:.4px;text-transform:uppercase;border-radius:5px;font-family:inherit}
+.crop-aspect button.active{background:var(--navy);color:#fff}
+.crop-aspect button:not(.active):hover{background:rgba(13,30,80,.06);color:var(--navy)}
 .crop-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
 .crop-actions .lhs{margin-right:auto;font-size:11px;color:var(--gray)}
 .crop-actions button{padding:7px 14px;font-size:12px;font-weight:700;border-radius:6px;border:1px solid var(--nmid);background:#fff;color:var(--navy);cursor:pointer;letter-spacing:.4px;text-transform:uppercase}
@@ -88,7 +92,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Sheet Generator</h1><p>Rhoback Embroidery &nbsp;&nbsp; Approval Workflow</p></div>
-    <span class="badge">v8.8</span>
+    <span class="badge">v8.9</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; DST File</div>
@@ -177,7 +181,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery &nbsp;&nbsp; Stamp Approval</p></div>
-    <span class="badge">v8.8</span>
+    <span class="badge">v8.9</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -335,6 +339,44 @@ function rotateRef(i) {
 
 // ── Crop modal ──────────────────────────────────────────────
 let _cropState = null;
+let _cropAspect = 'free';   // 'free' | 'square' | 'rect' (4:3)
+const _CROP_RECT_RATIO = 4/3;   // landscape-style 4:3
+
+function setCropAspect(mode) {
+  _cropAspect = mode;
+  document.querySelectorAll('#cropAspect button').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+  });
+  if (_cropState && _cropState.box) {
+    _snapBoxToAspect();
+    _updateCropBox();
+  }
+}
+
+// Re-snap the current box to the active aspect ratio, keeping center fixed
+function _snapBoxToAspect() {
+  if (!_cropState) return;
+  const canv = document.getElementById('cropCanvas');
+  const cx = _cropState.box.x + _cropState.box.w / 2;
+  const cy = _cropState.box.y + _cropState.box.h / 2;
+  let w = _cropState.box.w, h = _cropState.box.h;
+  if (_cropAspect === 'square') {
+    const s = Math.min(w, h);
+    w = s; h = s;
+  } else if (_cropAspect === 'rect') {
+    // Keep current orientation: landscape if w>=h, else portrait
+    if (w >= h) { h = w / _CROP_RECT_RATIO; }
+    else        { w = h / _CROP_RECT_RATIO; }
+  }
+  // Position centered on (cx, cy) — then clamp to canvas
+  let bx = Math.round(cx - w / 2);
+  let by = Math.round(cy - h / 2);
+  if (bx < 0) bx = 0;
+  if (by < 0) by = 0;
+  if (bx + w > canv.width)  bx = canv.width  - w;
+  if (by + h > canv.height) by = canv.height - h;
+  _cropState.box = { x: bx, y: by, w: Math.round(w), h: Math.round(h) };
+}
 function openCropModal(i) {
   const ri = refImgs[i];
   const modal = document.getElementById('cropModal');
@@ -354,6 +396,7 @@ function openCropModal(i) {
     const bx = Math.round((canv.width - bw) / 2);
     const by = Math.round((canv.height - bh) / 2);
     _cropState = { i, im, scale, box: { x: bx, y: by, w: bw, h: bh }, drag: null };
+    _snapBoxToAspect();
     _updateCropBox();
     modal.classList.add('open');
   };
@@ -392,12 +435,37 @@ function _cropMouseMove(e) {
   const cx = Math.max(0, Math.min(canv.width,  x));
   const cy = Math.max(0, Math.min(canv.height, y));
   const s = _cropState.drag;
-  _cropState.box = {
-    x: Math.min(s.startX, cx),
-    y: Math.min(s.startY, cy),
-    w: Math.abs(cx - s.startX),
-    h: Math.abs(cy - s.startY)
-  };
+  let bw = Math.abs(cx - s.startX);
+  let bh = Math.abs(cy - s.startY);
+  // Constrain to aspect ratio
+  if (_cropAspect === 'square') {
+    const m = Math.max(bw, bh);
+    bw = m; bh = m;
+  } else if (_cropAspect === 'rect') {
+    // 4:3 — choose orientation based on which axis the user dragged more on
+    if (bw >= bh) { bh = bw / _CROP_RECT_RATIO; }
+    else          { bw = bh / _CROP_RECT_RATIO; }
+  }
+  // Anchor at start corner, extend toward current
+  let bx, by;
+  if (cx >= s.startX) { bx = s.startX; }
+  else                { bx = s.startX - bw; }
+  if (cy >= s.startY) { by = s.startY; }
+  else                { by = s.startY - bh; }
+  // Clamp to canvas bounds
+  if (bx < 0) bx = 0;
+  if (by < 0) by = 0;
+  if (bx + bw > canv.width)  bw = canv.width  - bx;
+  if (by + bh > canv.height) bh = canv.height - by;
+  // For constrained modes, also re-clamp the other side to keep ratio
+  if (_cropAspect === 'square') {
+    const m = Math.min(bw, bh);
+    bw = m; bh = m;
+  } else if (_cropAspect === 'rect') {
+    if (bw / bh > _CROP_RECT_RATIO) { bw = bh * _CROP_RECT_RATIO; }
+    else if (bh / bw > _CROP_RECT_RATIO) { bh = bw * _CROP_RECT_RATIO; }
+  }
+  _cropState.box = { x: Math.round(bx), y: Math.round(by), w: Math.round(bw), h: Math.round(bh) };
   _updateCropBox();
   e.preventDefault();
 }
@@ -413,6 +481,7 @@ function _cropMouseUp(e) {
       y: Math.round((canv.height - bh) / 2),
       w: bw, h: bh
     };
+    _snapBoxToAspect();
     _updateCropBox();
   }
   _cropState.drag = null;
@@ -934,6 +1003,11 @@ if (document.readyState === 'loading') {
     <div class="crop-mod-hdr">
       <span>Edit Reference Image</span>
       <span class="crop-mod-hint">Drag to select crop area</span>
+    </div>
+    <div class="crop-aspect" id="cropAspect">
+      <button class="active" data-mode="free"   onclick="setCropAspect('free')">Freeform</button>
+      <button              data-mode="square" onclick="setCropAspect('square')">Square</button>
+      <button              data-mode="rect"   onclick="setCropAspect('rect')">Rectangle</button>
     </div>
     <div class="crop-canvas-wrap">
       <canvas id="cropCanvas"></canvas>
