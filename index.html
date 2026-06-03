@@ -58,7 +58,17 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .crop-mod-hint{font-size:11px;color:var(--gray);font-weight:400;text-transform:none;letter-spacing:0}
 .crop-canvas-wrap{position:relative;background:#f4f5fa;border:1px solid #d8dce6;border-radius:7px;overflow:hidden;line-height:0;user-select:none;touch-action:none}
 .crop-canvas-wrap canvas{display:block;max-width:100%;max-height:65vh}
-.crop-box{position:absolute;border:2px dashed #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.45);cursor:move;pointer-events:none}
+.crop-box{position:absolute;border:2px dashed #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.45);cursor:move;pointer-events:auto}
+.crop-canvas-wrap{cursor:crosshair}
+.crop-handle{position:absolute;width:11px;height:11px;background:#fff;border:1.5px solid #0D1E50;border-radius:2px;pointer-events:auto;box-sizing:border-box;z-index:2}
+.crop-handle.nw{top:-6px;left:-6px;cursor:nwse-resize}
+.crop-handle.n {top:-6px;left:calc(50% - 6px);cursor:ns-resize}
+.crop-handle.ne{top:-6px;right:-6px;cursor:nesw-resize}
+.crop-handle.e {top:calc(50% - 6px);right:-6px;cursor:ew-resize}
+.crop-handle.se{bottom:-6px;right:-6px;cursor:nwse-resize}
+.crop-handle.s {bottom:-6px;left:calc(50% - 6px);cursor:ns-resize}
+.crop-handle.sw{bottom:-6px;left:-6px;cursor:nesw-resize}
+.crop-handle.w {top:calc(50% - 6px);left:-6px;cursor:ew-resize}
 .crop-aspect{display:flex;gap:4px;background:#f4f5fa;border:1px solid #e0e3ee;border-radius:7px;padding:3px;align-self:flex-start}
 .crop-aspect button{padding:5px 11px;font-size:10px;font-weight:700;border:none;background:transparent;color:var(--gray);cursor:pointer;letter-spacing:.4px;text-transform:uppercase;border-radius:5px;font-family:inherit}
 .crop-aspect button.active{background:var(--navy);color:#fff}
@@ -92,7 +102,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Sheet Generator</h1><p>Rhoback Embroidery &nbsp;&nbsp; Approval Workflow</p></div>
-    <span class="badge">v8.9</span>
+    <span class="badge">v8.10</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; DST File</div>
@@ -181,7 +191,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery &nbsp;&nbsp; Stamp Approval</p></div>
-    <span class="badge">v8.9</span>
+    <span class="badge">v8.10</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -339,8 +349,7 @@ function rotateRef(i) {
 
 // ── Crop modal ──────────────────────────────────────────────
 let _cropState = null;
-let _cropAspect = 'free';   // 'free' | 'square' | 'rect' (4:3)
-const _CROP_RECT_RATIO = 4/3;   // landscape-style 4:3
+let _cropAspect = 'free';   // 'free' | 'square'
 
 function setCropAspect(mode) {
   _cropAspect = mode;
@@ -363,10 +372,6 @@ function _snapBoxToAspect() {
   if (_cropAspect === 'square') {
     const s = Math.min(w, h);
     w = s; h = s;
-  } else if (_cropAspect === 'rect') {
-    // Keep current orientation: landscape if w>=h, else portrait
-    if (w >= h) { h = w / _CROP_RECT_RATIO; }
-    else        { w = h / _CROP_RECT_RATIO; }
   }
   // Position centered on (cx, cy) — then clamp to canvas
   let bx = Math.round(cx - w / 2);
@@ -415,13 +420,39 @@ function _updateCropBox() {
   box.style.width  = _cropState.box.w + 'px';
   box.style.height = _cropState.box.h + 'px';
 }
-function _cropMouseDown(e) {
-  if (!_cropState) return;
+// v8.10: three drag modes — new selection / move / resize-by-handle
+function _getCropMouseXY(e) {
   const canv = document.getElementById('cropCanvas');
   const rect = canv.getBoundingClientRect();
-  const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-  const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
-  _cropState.drag = { startX: x, startY: y };
+  const cx = (e.clientX || (e.touches && e.touches[0].clientX) || 0);
+  const cy = (e.clientY || (e.touches && e.touches[0].clientY) || 0);
+  return { x: cx - rect.left, y: cy - rect.top };
+}
+function _cropMouseDown(e) {
+  if (!_cropState) return;
+  const t = e.target;
+  const { x, y } = _getCropMouseXY(e);
+  if (t && t.classList && t.classList.contains('crop-handle')) {
+    _cropState.drag = {
+      type: 'resize',
+      handle: t.getAttribute('data-handle'),
+      startBox: Object.assign({}, _cropState.box),
+      startMx: x, startMy: y
+    };
+    e.preventDefault(); e.stopPropagation();
+    return;
+  }
+  if (t && t.id === 'cropBox') {
+    _cropState.drag = {
+      type: 'move',
+      startBox: Object.assign({}, _cropState.box),
+      startMx: x, startMy: y
+    };
+    e.preventDefault();
+    return;
+  }
+  // Outside the box → start a fresh selection
+  _cropState.drag = { type: 'new', startX: x, startY: y };
   _cropState.box = { x: x, y: y, w: 0, h: 0 };
   _updateCropBox();
   e.preventDefault();
@@ -429,43 +460,79 @@ function _cropMouseDown(e) {
 function _cropMouseMove(e) {
   if (!_cropState || !_cropState.drag) return;
   const canv = document.getElementById('cropCanvas');
-  const rect = canv.getBoundingClientRect();
-  const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-  const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+  const { x, y } = _getCropMouseXY(e);
   const cx = Math.max(0, Math.min(canv.width,  x));
   const cy = Math.max(0, Math.min(canv.height, y));
-  const s = _cropState.drag;
-  let bw = Math.abs(cx - s.startX);
-  let bh = Math.abs(cy - s.startY);
-  // Constrain to aspect ratio
-  if (_cropAspect === 'square') {
-    const m = Math.max(bw, bh);
-    bw = m; bh = m;
-  } else if (_cropAspect === 'rect') {
-    // 4:3 — choose orientation based on which axis the user dragged more on
-    if (bw >= bh) { bh = bw / _CROP_RECT_RATIO; }
-    else          { bw = bh / _CROP_RECT_RATIO; }
+  const d = _cropState.drag;
+
+  if (d.type === 'new') {
+    let bw = Math.abs(cx - d.startX);
+    let bh = Math.abs(cy - d.startY);
+    if (_cropAspect === 'square') { const m = Math.max(bw, bh); bw = m; bh = m; }
+    let bx = (cx >= d.startX) ? d.startX : d.startX - bw;
+    let by = (cy >= d.startY) ? d.startY : d.startY - bh;
+    if (bx < 0) { bw += bx; bx = 0; }
+    if (by < 0) { bh += by; by = 0; }
+    if (bx + bw > canv.width)  bw = canv.width  - bx;
+    if (by + bh > canv.height) bh = canv.height - by;
+    if (_cropAspect === 'square') { const m = Math.min(bw, bh); bw = m; bh = m; }
+    _cropState.box = { x: Math.round(bx), y: Math.round(by), w: Math.round(bw), h: Math.round(bh) };
+  } else if (d.type === 'move') {
+    const dx = cx - d.startMx;
+    const dy = cy - d.startMy;
+    let bx = d.startBox.x + dx;
+    let by = d.startBox.y + dy;
+    bx = Math.max(0, Math.min(bx, canv.width  - d.startBox.w));
+    by = Math.max(0, Math.min(by, canv.height - d.startBox.h));
+    _cropState.box = { x: Math.round(bx), y: Math.round(by), w: d.startBox.w, h: d.startBox.h };
+  } else if (d.type === 'resize') {
+    const sb = d.startBox;
+    const h = d.handle;
+    let left = sb.x, top = sb.y, right = sb.x + sb.w, bottom = sb.y + sb.h;
+    if (h.indexOf('w') >= 0) left   = cx;
+    if (h.indexOf('e') >= 0) right  = cx;
+    if (h.indexOf('n') >= 0) top    = cy;
+    if (h.indexOf('s') >= 0) bottom = cy;
+    let bx = Math.min(left, right);
+    let by = Math.min(top, bottom);
+    let bw = Math.abs(right - left);
+    let bh = Math.abs(bottom - top);
+
+    if (_cropAspect === 'square') {
+      const isCorner = h.length === 2;
+      if (isCorner) {
+        const m = Math.max(bw, bh);
+        bw = m; bh = m;
+        // Re-anchor at the opposite corner so it stays fixed
+        if (h === 'nw') { bx = (sb.x + sb.w) - m; by = (sb.y + sb.h) - m; }
+        else if (h === 'ne') { bx = sb.x;             by = (sb.y + sb.h) - m; }
+        else if (h === 'sw') { bx = (sb.x + sb.w) - m; by = sb.y; }
+        else                 { bx = sb.x;             by = sb.y; }
+      } else {
+        // Edge drag — perpendicular axis matches, centered
+        if (h === 'n' || h === 's') {
+          const cxC = sb.x + sb.w / 2;
+          bw = bh;
+          bx = cxC - bw / 2;
+        } else {  // 'e' or 'w'
+          const cyC = sb.y + sb.h / 2;
+          bh = bw;
+          by = cyC - bh / 2;
+        }
+      }
+    }
+
+    if (bx < 0) { bw += bx; bx = 0; }
+    if (by < 0) { bh += by; by = 0; }
+    if (bx + bw > canv.width)  bw = canv.width  - bx;
+    if (by + bh > canv.height) bh = canv.height - by;
+    // Square mode: enforce 1:1 again after clamping
+    if (_cropAspect === 'square') {
+      const m = Math.min(bw, bh);
+      bw = m; bh = m;
+    }
+    _cropState.box = { x: Math.round(bx), y: Math.round(by), w: Math.round(bw), h: Math.round(bh) };
   }
-  // Anchor at start corner, extend toward current
-  let bx, by;
-  if (cx >= s.startX) { bx = s.startX; }
-  else                { bx = s.startX - bw; }
-  if (cy >= s.startY) { by = s.startY; }
-  else                { by = s.startY - bh; }
-  // Clamp to canvas bounds
-  if (bx < 0) bx = 0;
-  if (by < 0) by = 0;
-  if (bx + bw > canv.width)  bw = canv.width  - bx;
-  if (by + bh > canv.height) bh = canv.height - by;
-  // For constrained modes, also re-clamp the other side to keep ratio
-  if (_cropAspect === 'square') {
-    const m = Math.min(bw, bh);
-    bw = m; bh = m;
-  } else if (_cropAspect === 'rect') {
-    if (bw / bh > _CROP_RECT_RATIO) { bw = bh * _CROP_RECT_RATIO; }
-    else if (bh / bw > _CROP_RECT_RATIO) { bh = bw * _CROP_RECT_RATIO; }
-  }
-  _cropState.box = { x: Math.round(bx), y: Math.round(by), w: Math.round(bw), h: Math.round(bh) };
   _updateCropBox();
   e.preventDefault();
 }
@@ -1005,13 +1072,21 @@ if (document.readyState === 'loading') {
       <span class="crop-mod-hint">Drag to select crop area</span>
     </div>
     <div class="crop-aspect" id="cropAspect">
-      <button class="active" data-mode="free"   onclick="setCropAspect('free')">Freeform</button>
-      <button              data-mode="square" onclick="setCropAspect('square')">Square</button>
-      <button              data-mode="rect"   onclick="setCropAspect('rect')">Rectangle</button>
+      <button class="active" data-mode="free" onclick="setCropAspect('free')">Freeform</button>
+      <button data-mode="square" onclick="setCropAspect('square')">Square</button>
     </div>
     <div class="crop-canvas-wrap">
       <canvas id="cropCanvas"></canvas>
-      <div class="crop-box" id="cropBox"></div>
+      <div class="crop-box" id="cropBox">
+        <div class="crop-handle nw" data-handle="nw"></div>
+        <div class="crop-handle n"  data-handle="n"></div>
+        <div class="crop-handle ne" data-handle="ne"></div>
+        <div class="crop-handle e"  data-handle="e"></div>
+        <div class="crop-handle se" data-handle="se"></div>
+        <div class="crop-handle s"  data-handle="s"></div>
+        <div class="crop-handle sw" data-handle="sw"></div>
+        <div class="crop-handle w"  data-handle="w"></div>
+      </div>
     </div>
     <div class="crop-actions">
       <span class="lhs">Tip: ↻ rotates first if your photo is sideways</span>
