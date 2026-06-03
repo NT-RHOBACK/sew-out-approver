@@ -50,6 +50,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .ref-grid .ref-del .a-del{top:-6px;right:-6px;background:#b02020;color:#fff;border-color:#8a1818}
 .ref-grid .ref-del .a-rot{top:-6px;left:-6px}
 .ref-grid .ref-del .a-crp{bottom:-6px;right:-6px}
+.ref-grid .ref-del .a-rev{bottom:-6px;left:-6px}
 /* Crop modal */
 .crop-mod{position:fixed;inset:0;background:rgba(13,30,80,.55);display:none;align-items:center;justify-content:center;z-index:9999}
 .crop-mod.open{display:flex}
@@ -102,7 +103,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Sheet Generator</h1><p>Rhoback Embroidery &nbsp;&nbsp; Approval Workflow</p></div>
-    <span class="badge">v8.10</span>
+    <span class="badge">v8.11</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; DST File</div>
@@ -191,7 +192,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery &nbsp;&nbsp; Stamp Approval</p></div>
-    <span class="badge">v8.10</span>
+    <span class="badge">v8.11</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -296,7 +297,7 @@ rz.addEventListener('dragover',e=>{e.preventDefault();rz.classList.add('over')})
 rz.addEventListener('dragleave',()=>rz.classList.remove('over'));
 rz.addEventListener('drop',e=>{e.preventDefault();rz.classList.remove('over');addRef(e.dataTransfer.files)});
 document.getElementById('refFiles').addEventListener('change',e=>addRef(e.target.files));
-function addRef(files){Array.from(files).forEach(f=>{if(refImgs.length>=9||!f.type.startsWith('image/'))return;toB64(f,b=>{refImgs.push({b64:b,type:f.type});renderRefs();});});}
+function addRef(files){Array.from(files).forEach(f=>{if(refImgs.length>=9||!f.type.startsWith('image/'))return;toB64(f,b=>{refImgs.push({b64:b,type:f.type,originalB64:b,originalType:f.type});renderRefs();});});}
 function renderRefs(){
   const g = document.getElementById('refGrid');
   g.innerHTML = '';
@@ -318,6 +319,15 @@ function renderRefs(){
     crp.title = 'Crop';
     crp.onclick = (e) => { e.stopPropagation(); openCropModal(i); };
     wrap.appendChild(crp);
+    // Revert: only show when image differs from original
+    if (ri.originalB64 && ri.b64 !== ri.originalB64) {
+      const rev = document.createElement('span');
+      rev.className = 'a-rev';
+      rev.textContent = '⟲';
+      rev.title = 'Revert to original';
+      rev.onclick = (e) => { e.stopPropagation(); revertRef(i); };
+      wrap.appendChild(rev);
+    }
     const del = document.createElement('span');
     del.className = 'a-del';
     del.textContent = '\xd7';
@@ -341,10 +351,27 @@ function rotateRef(i) {
     ctx.rotate(Math.PI / 2);
     ctx.drawImage(im, 0, 0);
     const dataUrl = c.toDataURL('image/jpeg', 0.92);
-    refImgs[i] = { b64: dataUrl.split(',')[1], type: 'image/jpeg' };
+    refImgs[i] = {
+      b64: dataUrl.split(',')[1], type: 'image/jpeg',
+      originalB64: ri.originalB64 || ri.b64,
+      originalType: ri.originalType || ri.type
+    };
     renderRefs();
   };
   im.src = 'data:' + ri.type + ';base64,' + ri.b64;
+}
+
+// Revert a reference image back to the originally uploaded version
+function revertRef(i) {
+  const ri = refImgs[i];
+  if (!ri || !ri.originalB64) return;
+  refImgs[i] = {
+    b64: ri.originalB64,
+    type: ri.originalType || ri.type,
+    originalB64: ri.originalB64,
+    originalType: ri.originalType || ri.type
+  };
+  renderRefs();
 }
 
 // ── Crop modal ──────────────────────────────────────────────
@@ -567,7 +594,12 @@ function cropApply() {
   c.height = sh;
   c.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, sw, sh);
   const dataUrl = c.toDataURL('image/jpeg', 0.92);
-  refImgs[i] = { b64: dataUrl.split(',')[1], type: 'image/jpeg' };
+  const prev = refImgs[i];
+  refImgs[i] = {
+    b64: dataUrl.split(',')[1], type: 'image/jpeg',
+    originalB64: prev.originalB64 || prev.b64,
+    originalType: prev.originalType || prev.type
+  };
   renderRefs();
   cropCancel();
 }
