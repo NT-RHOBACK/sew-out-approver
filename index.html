@@ -10,39 +10,39 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#e8ecf5;min-height:100vh;padding:24px 16px 48px}
 .page{max-width:580px;flex:1;min-width:0}
-.card{background:var(--white);border-radius:var(--r);box-shadow:0 2px 18px rgba(13,30,80,.12);overflow:hidden;margin-bottom:14px}
-.card-hdr{background:var(--navy);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:12px}
+.card{background:var(--white);border-radius:var(--r);box-shadow:0 2px 18px rgba(13,30,80,.12);overflow:hidden;margin-bottom:8px}
+.card-hdr{background:var(--navy);color:#fff;padding:10px 22px;display:flex;align-items:center;gap:12px}
 .card-hdr h1{font-size:17px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
 .card-hdr p{font-size:11px;opacity:.6;margin-top:2px}
 .badge{background:rgba(255,255,255,.15);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;white-space:nowrap;margin-left:auto}
 .body{padding:20px 24px}
-.sec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.sec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin:10px 0 5px;display:flex;align-items:center;gap:8px}
 .sec::after{content:'';flex:1;height:1px;background:#e8eaf2}
-.field{margin-bottom:14px}
-label.lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);margin-bottom:5px}
+.field{margin-bottom:8px}
+label.lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);margin-bottom:3px}
 input[type=text],select,textarea{width:100%;padding:9px 12px;border:1.5px solid #dde1f0;border-radius:7px;font-size:13px;color:var(--navy);font-family:inherit;transition:border-color .2s;background:#fff}
 input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy)}
 textarea{resize:vertical;min-height:72px;line-height:1.5}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.three{display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:10px}
 .three{display:grid;grid-template-columns:.8fr 1.2fr;gap:12px}
-.dst{border:2px dashed var(--nmid);border-radius:10px;padding:12px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--ntint);position:relative;margin-bottom:8px}
+.sig-row{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:10px}
+.dst{border:2px dashed var(--nmid);border-radius:10px;padding:6px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--ntint);position:relative;margin-bottom:6px}
 .dst:hover,.dst.over{border-color:var(--navy);background:#dde3f4}
 .dst input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.dst .di{font-size:20px;margin-bottom:3px}
-.dst .dt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
-.dst .ds{font-size:11px;color:var(--gray)}
-.parsed{background:#e8f4eb;border:1.5px solid #8ecf9b;border-radius:8px;padding:10px 14px;font-size:12px;color:#1a5e28;font-weight:600;display:none;margin-bottom:10px;align-items:center;gap:8px}
+.dst .di{font-size:16px;margin-bottom:1px}
+.dst .dt{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:1px}
+.dst .ds{font-size:10px;color:var(--gray);line-height:1.3}
+.parsed{background:#e8f4eb;border:1.5px solid #8ecf9b;border-radius:8px;padding:6px 12px;font-size:11px;color:#1a5e28;font-weight:600;display:none;margin-bottom:6px;align-items:center;gap:8px}
 .parsed.on{display:flex}
-.up{border:2px dashed #c8ceea;border-radius:9px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--lgray);position:relative}
+.up{border:2px dashed #c8ceea;border-radius:9px;padding:8px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--lgray);position:relative}
 .up:hover{border-color:var(--navy);background:#eef0fb}
 .up input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.up .ui{font-size:20px;margin-bottom:3px}
-.up .ut{font-size:13px;font-weight:600;color:var(--navy)}
-.up .us{font-size:11px;color:var(--gray);margin-top:2px}
+.up .ui{font-size:16px;margin-bottom:1px}
+.up .ut{font-size:12px;font-weight:600;color:var(--navy)}
+.up .us{font-size:10px;color:var(--gray);margin-top:1px}
 .sw-prev{margin-top:10px;display:none}
 .sw-prev img{max-width:100%;max-height:150px;border-radius:6px;border:1px solid #dde}
-.ref-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.ref-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
 .ref-grid img{height:78px;width:78px;object-fit:cover;border-radius:6px;border:1px solid #dde;display:block}
 .ref-grid .ref-del{position:relative;display:inline-block;cursor:pointer}
 .ref-grid .ref-del span{position:absolute;background:#fff;color:#1a1a2e;border-radius:50%;width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 2px rgba(0,0,0,.18)}
@@ -69,7 +69,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .ap{padding:14px 12px;border:2px solid var(--nmid);border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .2s;background:var(--lgray);color:var(--navy);letter-spacing:.5px;user-select:none}
 .ap.ok{background:var(--green);border-color:var(--green);color:#fff}
 .ap.rev{background:var(--red);border-color:var(--red);color:#fff}
-.btn-row{display:flex;gap:10px;margin-top:8px}
+.btn-row{display:flex;gap:10px;margin-top:6px}
 .gen{flex:1;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .2s}
 .gen:hover{background:var(--navy2)}
 .gen:disabled{background:#9da8c4;cursor:default}
@@ -88,7 +88,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Sheet Generator</h1><p>Rhoback Embroidery &nbsp;&nbsp; Approval Workflow</p></div>
-    <span class="badge">v8.7</span>
+    <span class="badge">v8.8</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; DST File</div>
@@ -123,8 +123,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     </div>
     <div id="fnPreview" style="font-family:monospace;background:#edf0f9;padding:10px 12px;border-radius:7px;color:#0D1E50;font-size:12px;font-weight:600;word-break:break-all;margin-top:6px">SOA_&hellip;.pdf</div>
     <div class="sec">3 &nbsp; Logo Info</div>
-    <div class="field"><label class="lbl">Customer</label><input type="text" id="customer" placeholder="Auto-filled from DST filename"></div>
-    <div class="field"><label class="lbl">Logo Name (DST filename)</label><input type="text" id="logoName" placeholder="Auto-filled from DST filename"></div>
+    <div class="two">
+      <div class="field"><label class="lbl">Customer</label><input type="text" id="customer" placeholder="Auto-filled from DST"></div>
+      <div class="field"><label class="lbl">Logo Name (DST filename)</label><input type="text" id="logoName" placeholder="Auto-filled from DST"></div>
+    </div>
     <div class="two">
       <div class="field"><label class="lbl">Logo Height</label><input type="text" id="logoH" placeholder='e.g. 1.60"'></div>
       <div class="field"><label class="lbl">Logo Width</label><input type="text" id="logoW" placeholder='e.g. 1.25"'></div>
@@ -175,7 +177,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery &nbsp;&nbsp; Stamp Approval</p></div>
-    <span class="badge">v8.7</span>
+    <span class="badge">v8.8</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -205,10 +207,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     </div>
     <div class="field" id="apSigSection">
       <label class="lbl">Customer Signature <span id="apSigNote" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--navy);font-size:10px;display:none">— required for approval</span></label>
-      <div class="three" style="margin-top:5px">
-        <div class="field"><label class="lbl" style="font-size:9px;letter-spacing:.4px">VIA</label><input type="text" id="apSigVia" placeholder="email, phone…" oninput="apUpdateSigPreview()"></div>
-        <div class="field"><label class="lbl" style="font-size:9px;letter-spacing:.4px">BY</label><input type="text" id="apSigBy" placeholder="e.g. Rob" oninput="apUpdateSigPreview()"></div>
-        <div class="field"><label class="lbl" style="font-size:9px;letter-spacing:.4px">DATE</label><input type="date" id="apSigDate" oninput="apUpdateSigPreview()" style="font-family:inherit"></div>
+      <div class="sig-row" style="margin-top:5px">
+        <div class="field" style="margin-bottom:0"><label class="lbl" style="font-size:9px;letter-spacing:.4px">VIA</label><input type="text" id="apSigVia" placeholder="email, phone…" oninput="apUpdateSigPreview()"></div>
+        <div class="field" style="margin-bottom:0"><label class="lbl" style="font-size:9px;letter-spacing:.4px">BY</label><input type="text" id="apSigBy" placeholder="e.g. Rob" oninput="apUpdateSigPreview()"></div>
+        <div class="field" style="margin-bottom:0"><label class="lbl" style="font-size:9px;letter-spacing:.4px">DATE</label><input type="date" id="apSigDate" oninput="apUpdateSigPreview()" style="font-family:inherit"></div>
       </div>
       <div id="apSigPreview" style="font-size:11px;color:var(--gray);padding:6px 10px;background:#f4f5fa;border-radius:6px;border:1px solid #e8eaf2;margin-top:6px;font-style:italic"></div>
     </div>
