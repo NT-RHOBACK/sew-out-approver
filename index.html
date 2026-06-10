@@ -114,7 +114,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.19</span>
+      <span class="badge">v8.20</span>
     </div>
   </div>
   <div class="body">
@@ -174,6 +174,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
         </select>
       </div>
     </div>
+    <div class="field" style="margin-top:8px">
+      <label class="lbl">Thread Color Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:10px">(optional &middot; appended after colors)</span></label>
+      <input type="text" id="threadExtra" placeholder="e.g. Maderia 1255 Gold (specific thread codes / extra detail)">
+    </div>
     <div class="sec">4 &nbsp; Sew-Out Photo</div>
     <div class="up" onclick="document.getElementById('swatchFile').click()">
       <input type="file" id="swatchFile" accept="image/*">
@@ -204,7 +208,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.19</span>
+    <span class="badge">v8.20</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -291,31 +295,43 @@ function handleDroppedFile(file){
   return handleDST(file);
 }
 
-// Substring-search to find a known count + colors option inside any thread string.
-// Handles all of:
-//   'Two Club Colors'
-//   'Club Colors - Maderia 1255 Gold'  (extra detail after option)
-//   'two club colors'                  (case-insensitive)
-//   'Other / Special'
+// Substring-search for a known count + colors option inside any thread string,
+// plus the leftover "extra" detail. Examples:
+//   'Two Club Colors'                       → count='Two', colors='Club Colors', extra=''
+//   'Club Colors - Maderia 1255 Gold'       → count='', colors='Club Colors', extra='Maderia 1255 Gold'
+//   'Other / Special - red lettering'       → count='', colors='Other / Special', extra='red lettering'
+//   'Maderia 1234 only'                     → count='', colors='', extra='Maderia 1234 only'
 function _parseThreadStr(raw){
   const s = (raw || '').trim();
-  if (!s) return {count:'', colors:''};
+  if (!s) return {count:'', colors:'', extra:''};
   const counts    = ['One','Two','Three','Multiple'];
   const colorOpts = ['Color Coordinate','Club Colors','Other / Special','Tonal'];
-  // (Color Coordinate comes first so it wins over a substring 'Color' inside a longer option name.)
-  const lower = s.toLowerCase();
-  // Find a colors option anywhere in the string
+  // Color Coordinate first so it wins over a substring 'Color' inside another option.
+  let remaining = s;
+  // Find colors option anywhere in the string
   let colors = '';
   for (const co of colorOpts) {
-    if (lower.indexOf(co.toLowerCase()) !== -1) { colors = co; break; }
+    const idx = remaining.toLowerCase().indexOf(co.toLowerCase());
+    if (idx !== -1) {
+      colors = co;
+      remaining = (remaining.slice(0, idx) + remaining.slice(idx + co.length)).trim();
+      break;
+    }
   }
-  // Find a count word as a whole word at start
+  // Find a count word as a whole word
   let count = '';
   for (const c of counts) {
     const re = new RegExp('(^|\\s)' + c + '(\\s|$)', 'i');
-    if (re.test(s)) { count = c; break; }
+    const m = remaining.match(re);
+    if (m) {
+      count = c;
+      remaining = (remaining.slice(0, m.index) + remaining.slice(m.index + m[0].length)).trim();
+      break;
+    }
   }
-  return { count, colors };
+  // Whatever's left becomes 'extra'. Strip leading/trailing dashes, commas, whitespace.
+  let extra = remaining.replace(/^[\s\-\u2014,]+|[\s\-\u2014,]+$/g, '').trim();
+  return { count, colors, extra };
 }
 
 // Strip trailing _vN and _N.NNin from a sheet's FILE NAME field
@@ -379,10 +395,11 @@ async function handleExistingPdf(file){
       if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
     }
 
-    // Thread fields (best-effort)
+    // Thread fields (best-effort split into count + colors + extra detail)
     const t = _parseThreadStr(thread);
     if (t.count)  setF('threadCount',  t.count);
     if (t.colors) setF('threadColors', t.colors);
+    if (t.extra)  setF('threadExtra',  t.extra);
 
     // Notes — strip the "N colors — " prefix that threadCountNote adds, if present
     let notes = notesRaw || '';
@@ -390,16 +407,17 @@ async function handleExistingPdf(file){
     if (notes) setF('notes', notes);
 
     // ── Parsed-badge ───────────────────────────────────────────────
-    // Keep console.log for diagnostics in case anything goes sideways.
-    console.log('[PDF-load]', { fileName: file.name, parsed, thread, parsedThread: t });
-
     const baseLabel = parsed.base || fileName || file.name;
     const sizeStr   = (height && width) ? ' · ' + height + '"H × ' + width + '"W' : '';
     const verNote   = parsed.version !== null
       ? 'v' + parsed.version + ' → bumping to v' + nextVer
       : 'no version in filename → starting at v' + nextVer;
-    const thrNote   = (t.count || t.colors)
-      ? (t.count ? t.count + ' / ' : '') + (t.colors || '')
+    const thrParts = [];
+    if (t.count)  thrParts.push(t.count);
+    if (t.colors) thrParts.push(t.colors);
+    if (t.extra)  thrParts.push('+ "' + t.extra + '"');
+    const thrNote = thrParts.length
+      ? thrParts.join(' / ')
       : (thread && thread.trim() ? '“' + thread.trim() + '” — please pick manually' : 'thread field empty');
     document.getElementById('parsedTxt').innerHTML =
       '<div><b>Loaded existing PDF:</b> ' + baseLabel + sizeStr + '</div>' +
@@ -771,7 +789,16 @@ function _wireCropHandlers() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _wireCropHandlers);
 else _wireCropHandlers();
 
-function threadDisplay(){const c=document.getElementById('threadCount').value,col=document.getElementById('threadColors').value;if(!col)return'';if(col==='Other / Special')return col;return c?c+' '+col:col;}
+function threadDisplay(){
+  const c   = document.getElementById('threadCount').value;
+  const col = document.getElementById('threadColors').value;
+  const ex  = (document.getElementById('threadExtra')||{value:''}).value.trim();
+  let s = '';
+  if (col === 'Other / Special') s = col;
+  else if (col)                  s = c ? c + ' ' + col : col;
+  if (ex) s = s ? s + ' - ' + ex : ex;
+  return s;
+}
 function threadCountNote(){const c=document.getElementById('threadCount').value,col=document.getElementById('threadColors').value;if(col==='Other / Special'&&c)return c+' colors \u2014 ';return'';}
 function getBaseName(logoName){
   return (logoName||'').replace(/_v\d+\b/gi,'').replace(/_\d+\.?\d*in\b/gi,'');
@@ -802,6 +829,7 @@ function toB64(file,cb){const r=new FileReader();r.onload=e=>cb(e.target.result.
 function clear_form(){
   ['dstFilename','customer','logoName','logoH','logoW','notes','fnWidth','fnVer'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('threadCount').value='';document.getElementById('threadColors').value='';
+  const _te = document.getElementById('threadExtra'); if(_te) _te.value='';
   document.getElementById('fnIncludeWidth').checked=false;document.getElementById('fnIncludeVer').checked=false;
   swB64=null;swType=null;refImgs=[];
   document.getElementById('swPrev').style.display='none';document.getElementById('swatchName').textContent='';
