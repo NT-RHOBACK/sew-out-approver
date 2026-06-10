@@ -102,6 +102,22 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
 .layout{display:flex;gap:20px;align-items:flex-start;max-width:1280px;margin:0 auto}
 
+/* Special Project (section 7) editor */
+.sp-row-hdr{display:grid;grid-template-columns:1fr 90px;gap:8px;margin-top:8px}
+.sp-section{background:#f8f9fc;border:1px solid #dde1f0;border-radius:8px;padding:10px;margin-bottom:10px}
+.sp-section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sp-section-name{flex:1;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:700;color:var(--navy);background:#fff;text-transform:uppercase;letter-spacing:.6px;font-family:inherit}
+.sp-row{display:flex;gap:8px;margin-bottom:5px;align-items:center}
+.sp-row-sku{flex:1;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy)}
+.sp-row-code{width:74px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy);text-align:center;font-weight:700;cursor:pointer}
+.sp-btn{padding:5px 11px;background:#fff;border:1px solid #dde1f0;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:var(--navy);font-family:inherit;letter-spacing:.4px}
+.sp-btn:hover{border-color:var(--navy);background:var(--ntint)}
+.sp-btn-del{background:#fff;color:#b02020;border:1px solid #f0d4d4;padding:4px 9px;border-radius:5px;font-size:11px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap}
+.sp-btn-del:hover{background:#fee;border-color:#b02020}
+.sp-mode{display:flex;gap:0;border:1px solid #d1d5db;border-radius:7px;overflow:hidden;width:fit-content}
+.sp-mode label{padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--gray);background:#fff;border:0;letter-spacing:.4px;text-transform:uppercase}
+.sp-mode label.active{background:var(--navy);color:#fff}
+.sp-mode input[type=radio]{display:none}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
@@ -114,7 +130,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.23</span>
+      <span class="badge">v8.24</span>
     </div>
   </div>
   <div class="body">
@@ -194,6 +210,36 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="ref-grid" id="refGrid"></div>
     <div class="sec">6 &nbsp; Notes</div>
     <div class="field"><label class="lbl">Notes</label><textarea id="notes" placeholder="Revision requests, color instructions, additional context&hellip;"></textarea></div>
+    <div class="sec">7 &nbsp; Special Project Placement <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">(optional &middot; adds a new PDF page)</span></div>
+    <div class="field" style="margin-bottom:0">
+      <label class="lbl" style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;font-weight:700">
+        <input type="checkbox" id="spIncludeChk" style="width:14px;height:14px"> Include Special Project page
+      </label>
+    </div>
+    <div id="spEditor" style="display:none;margin-top:8px">
+      <div class="sp-row-hdr">
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl">Project Name <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:10px">(auto-fills from logo info)</span></label>
+          <input type="text" id="spProjectName" placeholder="e.g. PGA Tour - Players 1 Goldman">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl">Mode</label>
+          <div class="sp-mode">
+            <label class="active" id="spModeFilledLbl"><input type="radio" name="spMode" value="filled" checked>Filled</label>
+            <label id="spModeBlankLbl"><input type="radio" name="spMode" value="blank">Blank</label>
+          </div>
+        </div>
+      </div>
+      <div id="spFilledArea" style="margin-top:10px">
+        <label class="lbl">Placements</label>
+        <div id="spSections"></div>
+        <button type="button" class="sp-btn" onclick="spAddSection()" style="margin-top:4px">+ Add Section</button>
+      </div>
+      <div id="spBlankNote" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f4eb;border:1.5px solid #8ecf9b;border-radius:6px;font-size:11px;color:#1a5e28;line-height:1.5">
+        Blank mode renders an empty placement page with ~20 blank rows for someone to fill in later (printed or in a PDF reader).
+      </div>
+    </div>
+
 <div class="btn-row" style="margin-top:14px">
       <button class="gen" id="dlBtn" onclick="downloadPdf()">&#8595; Download PDF</button>
       <button class="gen" id="sendBtn" onclick="sendToRep()" style="display:none;background:#1a6e2e">&#9658; Send to Rep</button>
@@ -208,7 +254,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.23</span>
+    <span class="badge">v8.24</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -406,6 +452,27 @@ async function handleExistingPdf(file){
     let notes = notesRaw || '';
     notes = notes.replace(/^(?:One|Two|Three|Multiple)\s+colors\s+\u2014\s+/i, '');
     if (notes) setF('notes', notes);
+
+    // Special Project Placement — restore from hidden form field if present
+    const spRaw = readTxt('SPECIAL PROJECT DATA');
+    if (spRaw) {
+      try {
+        const sp = JSON.parse(spRaw);
+        _spData = Object.assign({ include:false, mode:'filled', projectName:'', manualName:false, sections:[] }, sp);
+        const chk = document.getElementById('spIncludeChk');
+        if (chk) { chk.checked = !!_spData.include; document.getElementById('spEditor').style.display = _spData.include ? '' : 'none'; }
+        document.querySelectorAll('input[name=spMode]').forEach(rb => { rb.checked = (rb.value === (_spData.mode || 'filled')); });
+        const fLbl = document.getElementById('spModeFilledLbl');
+        const bLbl = document.getElementById('spModeBlankLbl');
+        if (fLbl) fLbl.classList.toggle('active', _spData.mode !== 'blank');
+        if (bLbl) bLbl.classList.toggle('active', _spData.mode === 'blank');
+        document.getElementById('spFilledArea').style.display = _spData.mode === 'blank' ? 'none' : '';
+        document.getElementById('spBlankNote').style.display  = _spData.mode === 'blank' ? '' : 'none';
+        const pn = document.getElementById('spProjectName');
+        if (pn) pn.value = _spData.projectName || '';
+        spRenderEditor();
+      } catch(e){ console.warn('SP data parse:', e); }
+    }
 
     // ── Parsed-badge ───────────────────────────────────────────────
     const baseLabel = parsed.base || fileName || file.name;
@@ -831,6 +898,13 @@ function clear_form(){
   ['dstFilename','customer','logoName','logoH','logoW','notes','fnWidth','fnVer'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('threadCount').value='';document.getElementById('threadColors').value='';
   const _te = document.getElementById('threadExtra'); if(_te) _te.value='';
+  // Reset special project state
+  _spData = { include:false, mode:'filled', projectName:'', manualName:false, sections:[] };
+  const _spChk = document.getElementById('spIncludeChk'); if (_spChk) _spChk.checked = false;
+  const _spEd  = document.getElementById('spEditor');     if (_spEd)  _spEd.style.display = 'none';
+  const _spPn  = document.getElementById('spProjectName');if (_spPn)  _spPn.value = '';
+  const _spSec = document.getElementById('spSections');   if (_spSec) _spSec.innerHTML = '';
+  document.querySelectorAll('input[name=spMode]').forEach(rb => rb.checked = (rb.value === 'filled'));
   document.getElementById('fnIncludeWidth').checked=false;document.getElementById('fnIncludeVer').checked=false;
   swB64=null;swType=null;refImgs=[];
   document.getElementById('swPrev').style.display='none';document.getElementById('swatchName').textContent='';
@@ -870,6 +944,96 @@ async function embedImageInto(pdfDoc, b64, mime){
   if((mime||'').includes('png')) return await pdfDoc.embedPng(bytes);
   try { return await pdfDoc.embedJpg(bytes); }
   catch(e){ return await pdfDoc.embedPng(bytes); }
+}
+
+
+function _drawSpecialProjectPage(pdfDoc, form, sp) {
+  const { rgb, PDFName, PDFString } = PDFLib;
+  const page = pdfDoc.addPage([612, 792]);
+  const NAVY  = rgb(0.051, 0.118, 0.314);
+  const WHITE = rgb(1, 1, 1);
+  const LIGHT_BG = rgb(0.972, 0.976, 0.988);
+  const ROW_BORDER = rgb(0.9, 0.9, 0.92);
+  const SP_RGB = {
+    LC: rgb(0.835, 0.918, 0.992),
+    CC: rgb(0.812, 0.953, 0.871),
+    CF: rgb(0.996, 0.851, 0.667),
+    RS: rgb(0.965, 0.831, 0.918),
+    LS: rgb(0.918, 0.875, 0.965)
+  };
+  const M_L = 33, M_R = 33;
+  const PAGE_W = 612, PAGE_H = 792;
+  let y = PAGE_H - 50;
+
+  // Title bar
+  page.drawRectangle({ x: M_L, y: y - 36, width: PAGE_W - M_L - M_R, height: 36, color: NAVY });
+  page.drawText('LOGO PLACEMENT', { x: M_L + 14, y: y - 24, size: 15, color: WHITE });
+  const subtitle = sp.projectName || '(special project)';
+  const subW = subtitle.length * 5.5;
+  page.drawText(subtitle, { x: PAGE_W - M_R - 14 - subW, y: y - 24, size: 11, color: rgb(0.85, 0.85, 0.85) });
+  y -= 36 + 14;
+
+  // Legend — 5 chips
+  const legend = [
+    ['LC', 'Left Chest'],
+    ['CC', 'Center Chest'],
+    ['CF', 'Left Cuff'],
+    ['RS', 'Right Sleeve'],
+    ['LS', 'Left Sleeve']
+  ];
+  const legW = (PAGE_W - M_L - M_R) / legend.length;
+  for (let i = 0; i < legend.length; i++) {
+    const [code, name] = legend[i];
+    const x = M_L + i * legW;
+    page.drawRectangle({ x: x + 4, y: y - 22, width: legW - 8, height: 22, color: SP_RGB[code] });
+    page.drawText(code + ' = ' + name, { x: x + 12, y: y - 15, size: 9, color: NAVY });
+  }
+  y -= 22 + 14;
+
+  // Table header
+  const placeColW = 110;
+  const skuColW = PAGE_W - M_L - M_R - placeColW;
+  page.drawRectangle({ x: M_L, y: y - 30, width: PAGE_W - M_L - M_R, height: 30, color: NAVY });
+  page.drawText('GARMENT SKU', { x: M_L + 8, y: y - 19, size: 10, color: WHITE });
+  page.drawText('PLACEMENT', { x: M_L + skuColW + placeColW / 2 - 28, y: y - 19, size: 10, color: WHITE });
+  y -= 30;
+
+  const rowH = 22;
+  const isBlank = sp.mode === 'blank';
+  let sections = sp.sections || [];
+  if (isBlank) {
+    const blankRows = [];
+    for (let i = 0; i < 22; i++) blankRows.push({ sku: '', code: '' });
+    sections = [{ name: '', rows: blankRows }];
+  }
+  for (const sec of sections) {
+    if (sec.name) {
+      page.drawRectangle({ x: M_L, y: y - 18, width: PAGE_W - M_L - M_R, height: 18, color: LIGHT_BG });
+      page.drawText(sec.name, { x: M_L + 6, y: y - 13, size: 9, color: NAVY });
+      y -= 18;
+    }
+    for (const row of sec.rows) {
+      if (y < 60) break;
+      page.drawLine({ start: { x: M_L, y: y - rowH }, end: { x: PAGE_W - M_R, y: y - rowH }, thickness: 0.5, color: ROW_BORDER });
+      page.drawLine({ start: { x: M_L + skuColW, y: y }, end: { x: M_L + skuColW, y: y - rowH }, thickness: 0.5, color: ROW_BORDER });
+      if (row.sku) page.drawText(row.sku, { x: M_L + 6, y: y - 14, size: 9, color: NAVY });
+      if (row.code && SP_RGB[row.code]) {
+        const cx = M_L + skuColW;
+        page.drawRectangle({ x: cx + 8, y: y - rowH + 4, width: placeColW - 16, height: rowH - 8, color: SP_RGB[row.code] });
+        const tw = row.code.length * 6;
+        page.drawText(row.code, { x: cx + placeColW / 2 - tw / 2, y: y - 14, size: 10, color: NAVY });
+      }
+      y -= rowH;
+    }
+    y -= 2;
+  }
+
+  // Hidden form field with JSON for round-trip
+  try {
+    const field = form.createTextField('SPECIAL PROJECT DATA');
+    field.setText(JSON.stringify(sp));
+    field.addToPage(page, { x: -100, y: -100, width: 1, height: 1 });
+  } catch(e){ console.warn('SPECIAL PROJECT DATA field failed:', e); }
 }
 
 async function generateSheet(data){
@@ -977,6 +1141,12 @@ async function generateSheet(data){
     }
   }
 
+  // Optional page: Special Project Placement (v8.24+)
+  if (data.specialProject && data.specialProject.include) {
+    try { _drawSpecialProjectPage(pdfDoc, form, data.specialProject); }
+    catch(e){ console.warn('Special Project page failed:', e); }
+  }
+
   try { form.updateFieldAppearances(); } catch(e){}
 
   return await pdfDoc.save();
@@ -992,6 +1162,7 @@ function _buildData(){
     thread:    threadDisplay(),
     notes:     threadCountNote() + notes0,
     swB64, swType, refImgs,
+    specialProject: _spData,
   };
 }
 
@@ -1270,6 +1441,169 @@ apUpdateSigState();
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', apInitSigDate);
 } else { apInitSigDate(); }
+
+/* ─── Special Project Placement (section 7) ─── */
+const SP_CODES = ['', 'LC', 'CC', 'CF', 'RS', 'LS'];
+const SP_CODE_COLORS = {
+  LC: [0.835, 0.918, 0.992],
+  CC: [0.812, 0.953, 0.871],
+  CF: [0.996, 0.851, 0.667],
+  RS: [0.965, 0.831, 0.918],
+  LS: [0.918, 0.875, 0.965]
+};
+const SP_CODE_NAMES = {
+  LC: 'Left Chest', CC: 'Center Chest', CF: 'Left Cuff',
+  RS: 'Right Sleeve', LS: 'Left Sleeve'
+};
+
+let _spData = {
+  include: false,
+  mode: 'filled',
+  projectName: '',
+  manualName: false,
+  sections: []
+};
+
+function spAddSection() {
+  _spData.sections.push({ name: '', rows: [{ sku: '', code: '' }] });
+  spRenderEditor();
+}
+function spDeleteSection(idx) {
+  if (!confirm('Delete this section and all its rows?')) return;
+  _spData.sections.splice(idx, 1);
+  spRenderEditor();
+}
+function spAddRow(si) {
+  _spData.sections[si].rows.push({ sku: '', code: '' });
+  spRenderEditor();
+}
+function spDeleteRow(si, ri) {
+  _spData.sections[si].rows.splice(ri, 1);
+  if (_spData.sections[si].rows.length === 0) {
+    _spData.sections[si].rows.push({ sku: '', code: '' });
+  }
+  spRenderEditor();
+}
+
+function spRenderEditor() {
+  const root = document.getElementById('spSections');
+  if (!root) return;
+  root.innerHTML = '';
+  _spData.sections.forEach((sec, si) => {
+    const div = document.createElement('div');
+    div.className = 'sp-section';
+    // Section header
+    const hdr = document.createElement('div');
+    hdr.className = 'sp-section-hdr';
+    const nameInp = document.createElement('input');
+    nameInp.type = 'text';
+    nameInp.className = 'sp-section-name';
+    nameInp.placeholder = "MEN'S / TODDLER / WOMEN'S / ...";
+    nameInp.value = sec.name;
+    nameInp.oninput = (e) => { _spData.sections[si].name = e.target.value; };
+    hdr.appendChild(nameInp);
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'sp-btn-del';
+    delBtn.textContent = '\u00d7 Delete section';
+    delBtn.onclick = () => spDeleteSection(si);
+    hdr.appendChild(delBtn);
+    div.appendChild(hdr);
+    // Rows
+    sec.rows.forEach((row, ri) => {
+      const rdiv = document.createElement('div');
+      rdiv.className = 'sp-row';
+      const skuInp = document.createElement('input');
+      skuInp.type = 'text';
+      skuInp.className = 'sp-row-sku';
+      skuInp.placeholder = 'Garment SKU';
+      skuInp.value = row.sku;
+      skuInp.oninput = (e) => { _spData.sections[si].rows[ri].sku = e.target.value; };
+      rdiv.appendChild(skuInp);
+      const sel = document.createElement('select');
+      sel.className = 'sp-row-code';
+      SP_CODES.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c || '\u2014';
+        sel.appendChild(opt);
+      });
+      sel.value = row.code;
+      sel.onchange = (e) => { _spData.sections[si].rows[ri].code = e.target.value; };
+      rdiv.appendChild(sel);
+      const rdel = document.createElement('button');
+      rdel.type = 'button';
+      rdel.className = 'sp-btn-del';
+      rdel.textContent = '\u00d7';
+      rdel.title = 'Remove row';
+      rdel.onclick = () => spDeleteRow(si, ri);
+      rdiv.appendChild(rdel);
+      div.appendChild(rdiv);
+    });
+    const addRow = document.createElement('button');
+    addRow.type = 'button';
+    addRow.className = 'sp-btn';
+    addRow.textContent = '+ Add row';
+    addRow.onclick = () => spAddRow(si);
+    div.appendChild(addRow);
+    root.appendChild(div);
+  });
+}
+
+function spUpdateProjectName() {
+  if (_spData.manualName) return;
+  const cust = (document.getElementById('customer') || { value: '' }).value.trim();
+  const logo = (document.getElementById('logoName') || { value: '' }).value.trim();
+  // Strip trailing _0.93in_v1 / _v1 from logo name; convert _ to space
+  let logoBase = logo.replace(/_v\d+\b/gi, '')
+                     .replace(/_\d+\.?\d*in\b/gi, '')
+                     .replace(/_/g, ' ')
+                     .trim();
+  const proj = cust ? (cust + ' - ' + logoBase) : logoBase;
+  const inp = document.getElementById('spProjectName');
+  if (inp && !_spData.manualName) inp.value = proj;
+  _spData.projectName = proj;
+}
+
+function spInit() {
+  const chk = document.getElementById('spIncludeChk');
+  const editor = document.getElementById('spEditor');
+  if (!chk || !editor) return;
+  chk.addEventListener('change', () => {
+    _spData.include = chk.checked;
+    editor.style.display = chk.checked ? '' : 'none';
+    if (chk.checked && _spData.sections.length === 0) {
+      _spData.sections.push({ name: "MEN'S", rows: [{ sku: '', code: '' }] });
+      spRenderEditor();
+      spUpdateProjectName();
+    }
+  });
+  document.querySelectorAll('input[name=spMode]').forEach(rb => {
+    rb.addEventListener('change', (e) => {
+      _spData.mode = e.target.value;
+      const filledLbl = document.getElementById('spModeFilledLbl');
+      const blankLbl  = document.getElementById('spModeBlankLbl');
+      if (filledLbl) filledLbl.classList.toggle('active', _spData.mode === 'filled');
+      if (blankLbl)  blankLbl.classList.toggle('active', _spData.mode === 'blank');
+      document.getElementById('spFilledArea').style.display = _spData.mode === 'blank' ? 'none' : '';
+      document.getElementById('spBlankNote').style.display  = _spData.mode === 'blank' ? '' : 'none';
+    });
+  });
+  const pn = document.getElementById('spProjectName');
+  if (pn) {
+    pn.addEventListener('input', () => {
+      _spData.projectName = pn.value;
+      _spData.manualName = pn.value.trim() !== '';
+    });
+  }
+  ['customer', 'logoName'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', spUpdateProjectName);
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', spInit);
+else spInit();
+
 </script>
 <div class="crop-mod" id="cropModal">
   <div class="crop-mod-card">
