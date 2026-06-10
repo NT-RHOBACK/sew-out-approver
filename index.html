@@ -134,7 +134,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.26</span>
+      <span class="badge">v8.27</span>
     </div>
   </div>
   <div class="body">
@@ -258,7 +258,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.26</span>
+    <span class="badge">v8.27</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -979,24 +979,27 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
   const helv  = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
   const helvB = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
 
-  // ── Title bar ──────────────────────────────────────────────
-  page.drawRectangle({ x: M_L, y: y - 36, width: PAGE_W - M_L - M_R, height: 36, color: NAVY });
-  page.drawText('LOGO PLACEMENT', { x: M_L + 14, y: y - 24, size: 15, color: WHITE, font: helvB });
-  // Subtitle with proper width measurement + truncation
-  let subtitle = sp.projectName || '(special project)';
-  const SUB_PAD_R = 22;
-  const TITLE_LEFT_RESERVED = 210;
-  const subMaxW = (PAGE_W - M_R) - (M_L + TITLE_LEFT_RESERVED) - SUB_PAD_R;
-  let subW = helv.widthOfTextAtSize(subtitle, 11);
-  if (subW > subMaxW) {
-    while (subtitle.length > 4 && helv.widthOfTextAtSize(subtitle + '\u2026', 11) > subMaxW) {
-      subtitle = subtitle.slice(0, -1);
+  // ── Lightweight header — no navy bar (v8.27) ───────────────
+  // 'LOGO PLACEMENT' left, project name right, thin divider underneath.
+  page.drawText('LOGO PLACEMENT', { x: M_L, y: y - 14, size: 13, color: NAVY, font: helvB });
+  let subtitle = sp.projectName || '';
+  if (subtitle) {
+    // Truncate to fit available right-side space
+    const titleW = helvB.widthOfTextAtSize('LOGO PLACEMENT', 13);
+    const subMaxW = (PAGE_W - M_L - M_R) - titleW - 20;
+    let subW = helv.widthOfTextAtSize(subtitle, 11);
+    if (subW > subMaxW) {
+      while (subtitle.length > 4 && helv.widthOfTextAtSize(subtitle + '\u2026', 11) > subMaxW) {
+        subtitle = subtitle.slice(0, -1);
+      }
+      subtitle = subtitle + '\u2026';
+      subW = helv.widthOfTextAtSize(subtitle, 11);
     }
-    subtitle = subtitle + '\u2026';
-    subW = helv.widthOfTextAtSize(subtitle, 11);
+    page.drawText(subtitle, { x: PAGE_W - M_R - subW, y: y - 14, size: 11, color: rgb(0.35, 0.40, 0.55), font: helv });
   }
-  page.drawText(subtitle, { x: PAGE_W - M_R - SUB_PAD_R - subW, y: y - 24, size: 11, color: rgb(0.85,0.85,0.85), font: helv });
-  y -= 36 + 14;
+  // Thin navy divider below the header
+  page.drawLine({ start: { x: M_L, y: y - 22 }, end: { x: PAGE_W - M_R, y: y - 22 }, thickness: 1.2, color: NAVY });
+  y -= 22 + 12;
 
   // ── Legend — 5 chips ──────────────────────────────────────
   const legend = [
