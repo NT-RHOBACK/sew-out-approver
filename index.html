@@ -40,7 +40,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .dst .di{font-size:28px;margin-bottom:7px}
 .dst .dt{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px}
 .dst .ds{font-size:11px;color:var(--gray)}
-.parsed{background:#e8f4eb;border:1.5px solid #8ecf9b;border-radius:8px;padding:10px 14px;font-size:12px;color:#1a5e28;font-weight:600;display:none;margin-bottom:10px;align-items:center;gap:8px}
+.parsed{background:#e8f4eb;border:1.5px solid #8ecf9b;border-radius:8px;padding:10px 14px;font-size:12px;color:#1a5e28;font-weight:600;display:none;margin-bottom:10px;align-items:flex-start;gap:8px;line-height:1.5}
 .parsed.on{display:flex}
 .up{border:2px dashed #c8ceea;border-radius:9px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--lgray);position:relative}
 .up:hover{border-color:var(--navy);background:#eef0fb}
@@ -114,7 +114,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.17</span>
+      <span class="badge">v8.18</span>
     </div>
   </div>
   <div class="body">
@@ -204,7 +204,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.17</span>
+    <span class="badge">v8.18</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -324,9 +324,11 @@ function _parseSheetFilename(fn){
   let base = (fn || '').trim();
   base = base.replace(/^SOA_/i, '');  // strip leading SOA_ prefix if present
   let version = null, width = null;
-  const vMatch = base.match(/_v(\d+)\s*$/i);
+  // Accept _v1, -v1, ' v1', 'v1' at end (or as standalone token before width)
+  const vMatch = base.match(/[_\-\s]?v(\d+)\s*$/i);
   if (vMatch) { version = parseInt(vMatch[1], 10); base = base.slice(0, vMatch.index); }
-  const wMatch = base.match(/_(\d+\.?\d*)in\s*$/i);
+  // Accept _0.93in, -0.93in, ' 0.93in', or just 0.93in at end
+  const wMatch = base.match(/[_\-\s]?(\d+\.?\d*)in\s*$/i);
   if (wMatch) { width = wMatch[1]; base = base.slice(0, wMatch.index); }
   return { base, width, version };
 }
@@ -378,11 +380,37 @@ async function handleExistingPdf(file){
     notes = notes.replace(/^(?:One|Two|Three|Multiple)\s+colors\s+\u2014\s+/i, '');
     if (notes) setF('notes', notes);
 
-    // Parsed badge
-    const verLabel = parsed.version !== null ? ' (loaded v' + parsed.version + ' \u2192 bumping to v' + (parsed.version+1) + ')' : '';
-    const sizeStr = (height && width) ? ' \xb7 ' + height + '"H \xd7 ' + width + '"W' : '';
+    // ── Diagnostics: log + multi-line parsed-badge ────────────────
+    console.log('[PDF-load] file.name =', file.name);
+    console.log('[PDF-load] parsed from filename =', parsed);
+    console.log('[PDF-load] FILE NAME field =', JSON.stringify(fileName));
+    console.log('[PDF-load] THREAD raw =', JSON.stringify(thread));
+    console.log('[PDF-load] THREAD parsed =', t);
+    console.log('[PDF-load] customer/height/width =', customer, height, width);
+
     const baseLabel = parsed.base || fileName || file.name;
-    document.getElementById('parsedTxt').textContent = 'Loaded existing PDF: ' + baseLabel + sizeStr + verLabel;
+    const sizeStr   = (height && width) ? height + '"H \xd7 ' + width + '"W' : '\u2014';
+    let verLine, widLine, thrLine;
+    if (parsed.version !== null) {
+      verLine = 'Version: v' + parsed.version + ' \u2192 bumping to v' + (parsed.version + 1) + ' \u2705';
+    } else {
+      verLine = 'Version: (none found in dropped filename — ADD VERSION not auto-checked)';
+    }
+    if (parsed.width) {
+      widLine = 'Width: ' + parsed.width + ' \u2705';
+    } else {
+      widLine = 'Width: (none in dropped filename)';
+    }
+    if (!thread || !thread.trim()) {
+      thrLine = 'Thread: (PDF field was empty)';
+    } else if (t.count || t.colors) {
+      thrLine = 'Thread: \u201C' + thread.trim() + '\u201D \u2192 count=' + (t.count || '\u2014') + ', colors=' + (t.colors || '\u2014') + ' \u2705';
+    } else {
+      thrLine = 'Thread: \u201C' + thread.trim() + '\u201D \u2014 couldn\'t parse, please pick manually';
+    }
+    document.getElementById('parsedTxt').innerHTML =
+      '<div><b>Loaded existing PDF:</b> ' + baseLabel + ' \xb7 ' + sizeStr + '</div>' +
+      '<div style="font-weight:400;margin-top:4px">' + verLine + '<br>' + widLine + '<br>' + thrLine + '</div>';
     document.getElementById('parsedBadge').classList.add('on');
     updateFnPreview();
   } catch(e) {
