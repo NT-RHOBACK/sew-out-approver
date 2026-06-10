@@ -114,7 +114,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.22</span>
+      <span class="badge">v8.23</span>
     </div>
   </div>
   <div class="body">
@@ -208,7 +208,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.22</span>
+    <span class="badge">v8.23</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -268,8 +268,9 @@ async function parseDSTBin(file){
         function gd(key){let ek=key.replace(/\+/g,'\\+').replace(/-(?=[XY])/g,'\\-');const m=h.match(new RegExp(ek+':\\s*(\\d+)'));return m?parseInt(m[1]):0;}
         const pX=gd('+X'),nX=gd('-X'),pY=gd('+Y'),nY=gd('-Y');
         const wMM=(pX+nX)*0.1,hMM=(pY+nY)*0.1;
-        let wIn=wMM>0?(wMM/25.4).toFixed(2):'';
-        let hIn=hMM>0?(hMM/25.4).toFixed(2):'';
+        // Round UP to 2 decimals so 0.985 → 0.99, never under-report
+        let wIn=wMM>0?(Math.ceil((wMM/25.4)*100)/100).toFixed(2):'';
+        let hIn=hMM>0?(Math.ceil((hMM/25.4)*100)/100).toFixed(2):'';
         // Sanity check: if height < 30% of width, the Y extents are likely bad — clear it
         if(wIn&&hIn&&parseFloat(hIn)<parseFloat(wIn)*0.30){hIn='';}
         resolve({widthIn:wIn,heightIn:hIn});
@@ -812,7 +813,7 @@ function sheetFn(){
   if(incW && incW.checked){
     const raw = (document.getElementById('fnWidth').value||'').trim().replace(/in$/i,'').trim();
     const n = parseFloat(raw);
-    if(!isNaN(n)) name += '_' + n.toFixed(2) + 'in';
+    if(!isNaN(n)) name += '_' + (Math.ceil(n*100)/100).toFixed(2) + 'in';
   }
   if(incV && incV.checked){
     const v = (document.getElementById('fnVer').value||'').trim().replace(/^v/i,'');
