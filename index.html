@@ -114,16 +114,16 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.15</span>
+      <span class="badge">v8.16</span>
     </div>
   </div>
   <div class="body">
-    <div class="sec">1 &nbsp; DST File</div>
+    <div class="sec">1 &nbsp; DST or PDF</div>
     <div class="dst" id="dstZone">
-      <input type="file" id="dstFile" accept=".dst,.DST">
+      <input type="file" id="dstFile" accept=".dst,.DST,.pdf,.PDF">
       <div class="di">&#128193;</div>
-      <div class="dt">Drag &amp; Drop DST file here</div>
-      <div class="ds">or click to browse &middot; size auto-fills from file</div>
+      <div class="dt">Drag &amp; Drop DST or PDF file here</div>
+      <div class="ds">DST &rarr; new sheet &middot; PDF &rarr; update existing (auto-bumps version)</div>
     </div>
     <div class="parsed" id="parsedBadge"><span>&#10003;</span><span id="parsedTxt"></span></div>
     <div onclick="toggleManualDST()" style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;user-select:none;padding:6px 0;display:flex;align-items:center;gap:6px">
@@ -204,7 +204,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.15</span>
+    <span class="badge">v8.16</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -280,8 +280,99 @@ function dePascal(s){return s.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/([A-Z]
 const dz=document.getElementById('dstZone');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
 dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f)handleDST(f)});
-document.getElementById('dstFile').addEventListener('change',e=>{if(e.target.files[0])handleDST(e.target.files[0])});
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f)handleDroppedFile(f)});
+document.getElementById('dstFile').addEventListener('change',e=>{if(e.target.files[0])handleDroppedFile(e.target.files[0])});
+
+function handleDroppedFile(file){
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (ext === 'pdf') return handleExistingPdf(file);
+  if (ext === 'dst') return handleDST(file);
+  // Fallback: try DST parser if extension is missing/odd
+  return handleDST(file);
+}
+
+// Best-effort split of "Two Club Colors" → count='Two', colors='Club Colors'
+function _parseThreadStr(s){
+  if(!s) return {count:'', colors:''};
+  const counts = ['One','Two','Three','Multiple'];
+  const colorOpts = ['Club Colors','Color Coordinate','Tonal','Other / Special'];
+  // Exact-match a single-word option (e.g. 'Other / Special' alone)
+  if (colorOpts.includes(s.trim())) return {count:'', colors:s.trim()};
+  for (const c of counts) {
+    if (s.startsWith(c + ' ')) {
+      const rest = s.slice(c.length).trim();
+      const col = colorOpts.includes(rest) ? rest : '';
+      return {count:c, colors:col};
+    }
+    if (s === c) return {count:c, colors:''};
+  }
+  return {count:'', colors:''};
+}
+
+// Strip trailing _vN and _N.NNin from a sheet's FILE NAME field
+function _parseSheetFilename(fn){
+  let base = (fn || '').trim();
+  let version = null, width = null;
+  const vMatch = base.match(/_v(\d+)\s*$/i);
+  if (vMatch) { version = parseInt(vMatch[1], 10); base = base.slice(0, vMatch.index); }
+  const wMatch = base.match(/_(\d+\.?\d*)in\s*$/i);
+  if (wMatch) { width = wMatch[1]; base = base.slice(0, wMatch.index); }
+  return { base, width, version };
+}
+
+async function handleExistingPdf(file){
+  const { PDFDocument } = PDFLib;
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    const form = pdfDoc.getForm();
+    const readTxt = n => { try { return form.getTextField(n).getText() || ''; } catch(e){ return ''; } };
+    const customer = readTxt('CUSTOMER');
+    const fileName = readTxt('FILE NAME');
+    const height   = readTxt('HEIGHT');
+    const width    = readTxt('WIDTH');
+    const thread   = readTxt('THREAD COLOR INSTRUCTIONS');
+    const notesRaw = readTxt('NOTES');
+
+    if (customer) setF('customer', customer);
+    if (height)   setF('logoH', height.match(/"|in/i) ? height : height + '"');
+    if (width)    setF('logoW', width.match(/"|in/i)  ? width  : width  + '"');
+
+    // Parse filename → base / width / version, bump version +1
+    const parsed = _parseSheetFilename(fileName);
+    if (parsed.base) setF('logoName', parsed.base);
+    if (parsed.width) {
+      setF('fnWidth', parsed.width);
+      const cb = document.getElementById('fnIncludeWidth');
+      if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
+    }
+    if (parsed.version !== null) {
+      setF('fnVer', String(parsed.version + 1));
+      const cb = document.getElementById('fnIncludeVer');
+      if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
+    }
+
+    // Thread fields (best-effort)
+    const t = _parseThreadStr(thread);
+    if (t.count)  setF('threadCount',  t.count);
+    if (t.colors) setF('threadColors', t.colors);
+
+    // Notes — strip the "N colors — " prefix that threadCountNote adds, if present
+    let notes = notesRaw || '';
+    notes = notes.replace(/^(?:One|Two|Three|Multiple)\s+colors\s+\u2014\s+/i, '');
+    if (notes) setF('notes', notes);
+
+    // Parsed badge
+    const verLabel = parsed.version !== null ? ' (loaded v' + parsed.version + ' → bumping to v' + (parsed.version+1) + ')' : '';
+    const sizeStr = (height && width) ? ' \xb7 ' + height + '"H \xd7 ' + width + '"W' : '';
+    document.getElementById('parsedTxt').textContent = 'Loaded existing PDF: ' + (parsed.base || file.name) + sizeStr + verLabel;
+    document.getElementById('parsedBadge').classList.add('on');
+    updateFnPreview();
+  } catch(e) {
+    console.error(e);
+    alert('Could not read this PDF: ' + (e.message || e));
+  }
+}
 document.getElementById('dstFilename').addEventListener('input',e=>{const raw=e.target.value.trim();if(!raw)return;fill(parseFilename(raw.replace(/\.dst$/i,'').trim()));});
 
 async function handleDST(file){
