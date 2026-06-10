@@ -114,7 +114,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.16</span>
+      <span class="badge">v8.17</span>
     </div>
   </div>
   <div class="body">
@@ -204,7 +204,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.16</span>
+    <span class="badge">v8.17</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -291,27 +291,38 @@ function handleDroppedFile(file){
   return handleDST(file);
 }
 
-// Best-effort split of "Two Club Colors" → count='Two', colors='Club Colors'
-function _parseThreadStr(s){
-  if(!s) return {count:'', colors:''};
+// Best-effort split of "Two Club Colors" → count='Two', colors='Club Colors'.
+// Tolerant of leading/trailing whitespace and case differences.
+function _parseThreadStr(raw){
+  const s = (raw || '').trim();
+  if (!s) return {count:'', colors:''};
   const counts = ['One','Two','Three','Multiple'];
   const colorOpts = ['Club Colors','Color Coordinate','Tonal','Other / Special'];
-  // Exact-match a single-word option (e.g. 'Other / Special' alone)
-  if (colorOpts.includes(s.trim())) return {count:'', colors:s.trim()};
-  for (const c of counts) {
-    if (s.startsWith(c + ' ')) {
-      const rest = s.slice(c.length).trim();
-      const col = colorOpts.includes(rest) ? rest : '';
-      return {count:c, colors:col};
+  const eq = (a, b) => a.toLowerCase() === b.toLowerCase();
+  // Whole string is one of the color options (e.g. 'Other / Special' alone)
+  for (const co of colorOpts) if (eq(s, co)) return {count:'', colors:co};
+  // Try splitting at first space: count + colors
+  const firstSpace = s.indexOf(' ');
+  if (firstSpace > 0) {
+    const head = s.slice(0, firstSpace);
+    const tail = s.slice(firstSpace + 1).trim();
+    const matchCount = counts.find(c => eq(head, c));
+    if (matchCount) {
+      const matchColor = colorOpts.find(co => eq(tail, co));
+      return {count:matchCount, colors:matchColor || ''};
     }
-    if (s === c) return {count:c, colors:''};
   }
+  // Whole string is just a count word (rare)
+  const justCount = counts.find(c => eq(s, c));
+  if (justCount) return {count:justCount, colors:''};
+  // Otherwise: leave selects blank — user can re-pick
   return {count:'', colors:''};
 }
 
 // Strip trailing _vN and _N.NNin from a sheet's FILE NAME field
 function _parseSheetFilename(fn){
   let base = (fn || '').trim();
+  base = base.replace(/^SOA_/i, '');  // strip leading SOA_ prefix if present
   let version = null, width = null;
   const vMatch = base.match(/_v(\d+)\s*$/i);
   if (vMatch) { version = parseInt(vMatch[1], 10); base = base.slice(0, vMatch.index); }
@@ -338,9 +349,14 @@ async function handleExistingPdf(file){
     if (height)   setF('logoH', height.match(/"|in/i) ? height : height + '"');
     if (width)    setF('logoW', width.match(/"|in/i)  ? width  : width  + '"');
 
-    // Parse filename → base / width / version, bump version +1
-    const parsed = _parseSheetFilename(fileName);
-    if (parsed.base) setF('logoName', parsed.base);
+    // Logo Name = FILE NAME PDF field (the base, no width/version suffix)
+    if (fileName) setF('logoName', fileName);
+
+    // Width + version live in the DOWNLOADED filename, not in any PDF
+    // form field — so parse them from `file.name` (the dropped PDF's name).
+    const droppedName = (file.name || '').replace(/\.pdf$/i, '').trim();
+    const parsed = _parseSheetFilename(droppedName);
+    // (parsed.base is informational — we keep the FILE NAME field's value)
     if (parsed.width) {
       setF('fnWidth', parsed.width);
       const cb = document.getElementById('fnIncludeWidth');
@@ -363,9 +379,10 @@ async function handleExistingPdf(file){
     if (notes) setF('notes', notes);
 
     // Parsed badge
-    const verLabel = parsed.version !== null ? ' (loaded v' + parsed.version + ' → bumping to v' + (parsed.version+1) + ')' : '';
+    const verLabel = parsed.version !== null ? ' (loaded v' + parsed.version + ' \u2192 bumping to v' + (parsed.version+1) + ')' : '';
     const sizeStr = (height && width) ? ' \xb7 ' + height + '"H \xd7 ' + width + '"W' : '';
-    document.getElementById('parsedTxt').textContent = 'Loaded existing PDF: ' + (parsed.base || file.name) + sizeStr + verLabel;
+    const baseLabel = parsed.base || fileName || file.name;
+    document.getElementById('parsedTxt').textContent = 'Loaded existing PDF: ' + baseLabel + sizeStr + verLabel;
     document.getElementById('parsedBadge').classList.add('on');
     updateFnPreview();
   } catch(e) {
