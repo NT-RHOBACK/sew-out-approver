@@ -110,6 +110,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .sp-row{display:flex;gap:8px;margin-bottom:5px;align-items:center}
 .sp-row-sku{flex:1;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy)}
 .sp-row-code{width:74px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy);text-align:center;font-weight:700;cursor:pointer}
+.sp-row-cat{width:155px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;font-family:inherit;background:#fff;color:var(--navy);cursor:pointer;flex-shrink:0}
+.sp-placement-chip{flex:1;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.5px;border:1px solid rgba(0,0,0,.08)}
+.sp-add-picker{width:auto;padding:6px 12px;border:1px solid var(--nmid);border-radius:6px;font-size:11px;font-weight:700;background:var(--ntint);color:var(--navy);cursor:pointer;font-family:inherit;letter-spacing:.4px;text-transform:uppercase}
+.sp-add-picker:hover{background:#dde3f4;border-color:var(--navy)}
 .sp-btn{padding:5px 11px;background:#fff;border:1px solid #dde1f0;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:var(--navy);font-family:inherit;letter-spacing:.4px}
 .sp-btn:hover{border-color:var(--navy);background:var(--ntint)}
 .sp-btn-del{background:#fff;color:#b02020;border:1px solid #f0d4d4;padding:4px 9px;border-radius:5px;font-size:11px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap}
@@ -130,7 +134,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.25</span>
+      <span class="badge">v8.26</span>
     </div>
   </div>
   <div class="body">
@@ -233,7 +237,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       <div id="spFilledArea" style="margin-top:10px">
         <label class="lbl">Placements</label>
         <div id="spSections"></div>
-        <button type="button" class="sp-btn" onclick="spAddSection()" style="margin-top:4px">+ Add Section</button>
+        <div id="spAddPickerWrap" style="margin-top:6px"></div>
       </div>
       <div id="spBlankNote" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f4eb;border:1.5px solid #8ecf9b;border-radius:6px;font-size:11px;color:#1a5e28;line-height:1.5">
         Blank mode renders an empty placement page with ~20 blank rows for someone to fill in later (printed or in a PDF reader).
@@ -254,7 +258,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.25</span>
+    <span class="badge">v8.26</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -458,7 +462,9 @@ async function handleExistingPdf(file){
     if (spRaw) {
       try {
         const sp = JSON.parse(spRaw);
-        _spData = Object.assign({ include:false, mode:'filled', projectName:'', manualName:false, sections:[] }, sp);
+        // v8.26 — sections is now a code-keyed object. Reject old array shape silently.
+        if (Array.isArray(sp.sections)) sp.sections = {};
+        _spData = Object.assign({ include:false, mode:'filled', projectName:'', manualName:false, sections:{} }, sp);
         const chk = document.getElementById('spIncludeChk');
         if (chk) { chk.checked = !!_spData.include; document.getElementById('spEditor').style.display = _spData.include ? '' : 'none'; }
         document.querySelectorAll('input[name=spMode]').forEach(rb => { rb.checked = (rb.value === (_spData.mode || 'filled')); });
@@ -899,7 +905,7 @@ function clear_form(){
   document.getElementById('threadCount').value='';document.getElementById('threadColors').value='';
   const _te = document.getElementById('threadExtra'); if(_te) _te.value='';
   // Reset special project state
-  _spData = { include:false, mode:'filled', projectName:'', manualName:false, sections:[] };
+  _spData = { include:false, mode:'filled', projectName:'', manualName:false, sections:{} };
   const _spChk = document.getElementById('spIncludeChk'); if (_spChk) _spChk.checked = false;
   const _spEd  = document.getElementById('spEditor');     if (_spEd)  _spEd.style.display = 'none';
   const _spPn  = document.getElementById('spProjectName');if (_spPn)  _spPn.value = '';
@@ -952,7 +958,6 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
   const page = pdfDoc.addPage([612, 792]);
   const NAVY  = rgb(0.051, 0.118, 0.314);
   const WHITE = rgb(1, 1, 1);
-  const LIGHT_BG = rgb(0.972, 0.976, 0.988);
   const ROW_BORDER = rgb(0.9, 0.9, 0.92);
   const SP_RGB = {
     LC: rgb(0.835, 0.918, 0.992),
@@ -961,105 +966,129 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
     RS: rgb(0.965, 0.831, 0.918),
     LS: rgb(0.918, 0.875, 0.965)
   };
+  const PLACEMENT_NAMES = {
+    LC: 'LEFT CHEST', CC: 'CENTER CHEST', CF: 'LEFT CUFF',
+    RS: 'RIGHT SLEEVE', LS: 'LEFT SLEEVE'
+  };
+  const PLACEMENT_ORDER = ['LC','CC','CF','RS','LS'];
   const M_L = 33, M_R = 33;
   const PAGE_W = 612, PAGE_H = 792;
   let y = PAGE_H - 50;
 
-  // Title bar
-  page.drawRectangle({ x: M_L, y: y - 36, width: PAGE_W - M_L - M_R, height: 36, color: NAVY });
-  page.drawText('LOGO PLACEMENT', { x: M_L + 14, y: y - 24, size: 15, color: WHITE });
   // Embed Helvetica once for accurate width measurement
   const helv  = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
   const helvB = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
 
-  // Subtitle — measure properly, truncate if too wide, right-align with 22px pad
+  // ── Title bar ──────────────────────────────────────────────
+  page.drawRectangle({ x: M_L, y: y - 36, width: PAGE_W - M_L - M_R, height: 36, color: NAVY });
+  page.drawText('LOGO PLACEMENT', { x: M_L + 14, y: y - 24, size: 15, color: WHITE, font: helvB });
+  // Subtitle with proper width measurement + truncation
   let subtitle = sp.projectName || '(special project)';
   const SUB_PAD_R = 22;
-  const TITLE_LEFT_RESERVED = 200;
+  const TITLE_LEFT_RESERVED = 210;
   const subMaxW = (PAGE_W - M_R) - (M_L + TITLE_LEFT_RESERVED) - SUB_PAD_R;
   let subW = helv.widthOfTextAtSize(subtitle, 11);
   if (subW > subMaxW) {
-    while (subtitle.length > 4 && helv.widthOfTextAtSize(subtitle + '…', 11) > subMaxW) {
+    while (subtitle.length > 4 && helv.widthOfTextAtSize(subtitle + '\u2026', 11) > subMaxW) {
       subtitle = subtitle.slice(0, -1);
     }
-    subtitle = subtitle + '…';
+    subtitle = subtitle + '\u2026';
     subW = helv.widthOfTextAtSize(subtitle, 11);
   }
-  page.drawText(subtitle, { x: PAGE_W - M_R - SUB_PAD_R - subW, y: y - 24, size: 11, color: rgb(0.85, 0.85, 0.85), font: helv });
+  page.drawText(subtitle, { x: PAGE_W - M_R - SUB_PAD_R - subW, y: y - 24, size: 11, color: rgb(0.85,0.85,0.85), font: helv });
   y -= 36 + 14;
 
-  // Legend — 5 chips
+  // ── Legend — 5 chips ──────────────────────────────────────
   const legend = [
-    ['LC', 'Left Chest'],
-    ['CC', 'Center Chest'],
-    ['CF', 'Left Cuff'],
-    ['RS', 'Right Sleeve'],
-    ['LS', 'Left Sleeve']
+    ['LC','Left Chest'], ['CC','Center Chest'], ['CF','Left Cuff'],
+    ['RS','Right Sleeve'], ['LS','Left Sleeve']
   ];
   const legW = (PAGE_W - M_L - M_R) / legend.length;
   for (let i = 0; i < legend.length; i++) {
     const [code, name] = legend[i];
     const x = M_L + i * legW;
     page.drawRectangle({ x: x + 4, y: y - 22, width: legW - 8, height: 22, color: SP_RGB[code] });
-    page.drawText(code + ' = ' + name, { x: x + 12, y: y - 15, size: 9, color: NAVY });
+    page.drawText(code + ' = ' + name, { x: x + 12, y: y - 15, size: 9, color: NAVY, font: helvB });
   }
-  y -= 22 + 14;
+  y -= 22 + 16;
 
-  // Table header
-  const placeColW = 110;
-  const skuColW = PAGE_W - M_L - M_R - placeColW;
-  page.drawRectangle({ x: M_L, y: y - 30, width: PAGE_W - M_L - M_R, height: 30, color: NAVY });
-  page.drawText('GARMENT SKU', { x: M_L + 8, y: y - 19, size: 10, color: WHITE });
-  page.drawText('PLACEMENT', { x: M_L + skuColW + placeColW / 2 - 28, y: y - 19, size: 10, color: WHITE });
-  y -= 30;
-
-  const rowH = 22;
+  // ── Body — placement-grouped text blocks ──────────────────
   const isBlank = sp.mode === 'blank';
-  let sections = sp.sections || [];
-  if (isBlank) {
-    const blankRows = [];
-    for (let i = 0; i < 22; i++) blankRows.push({ sku: '', code: '' });
-    sections = [{ name: '', rows: blankRows }];
+  const sections = sp.sections || {};
+
+  // Compose row text: '<category> <sku>' (no prefix if category is blank or Unisex)
+  function _composeRowLine(category, sku) {
+    const cat = (category || '').trim();
+    const s = (sku || '').trim();
+    if (!cat || cat.toLowerCase() === 'unisex') return s;
+    return cat + ' ' + s;
   }
-  for (const sec of sections) {
-    if (sec.name) {
-      page.drawRectangle({ x: M_L, y: y - 18, width: PAGE_W - M_L - M_R, height: 18, color: LIGHT_BG });
-      page.drawText(sec.name, { x: M_L + 6, y: y - 13, size: 9, color: NAVY });
-      y -= 18;
+
+  // Truncate a single line with ellipsis at the given fontSize so it fits in maxW
+  function _truncLine(text, maxW, fontSize, fontObj) {
+    if (fontObj.widthOfTextAtSize(text, fontSize) <= maxW) return text;
+    while (text.length > 4 && fontObj.widthOfTextAtSize(text + '\u2026', fontSize) > maxW) text = text.slice(0, -1);
+    return text + '\u2026';
+  }
+
+  if (isBlank) {
+    // Blank mode — show each placement header with empty handwriting lines under it
+    const allCodes = PLACEMENT_ORDER;
+    const linesPerSec = 4;
+    for (const code of allCodes) {
+      if (y < 70) break;
+      // Header bar
+      page.drawRectangle({ x: M_L, y: y - 24, width: PAGE_W - M_L - M_R, height: 24, color: SP_RGB[code] });
+      page.drawText(code + '  \u2014  ' + PLACEMENT_NAMES[code], { x: M_L + 12, y: y - 17, size: 11, color: NAVY, font: helvB });
+      y -= 24 + 8;
+      // Empty lines
+      for (let i = 0; i < linesPerSec; i++) {
+        if (y < 60) break;
+        page.drawLine({ start: { x: M_L + 12, y: y - 4 }, end: { x: PAGE_W - M_R - 12, y: y - 4 }, thickness: 0.5, color: rgb(0.7, 0.7, 0.74) });
+        y -= 18;
+      }
+      y -= 10;
     }
-    for (let ri = 0; ri < sec.rows.length; ri++) {
-      const row = sec.rows[ri];
+  } else {
+    // Filled mode — iterate placement codes in fixed order, render each present
+    for (const code of PLACEMENT_ORDER) {
+      const rows = sections[code];
+      if (!rows || rows.length === 0) continue;
+      // Skip section if it has no real content (all rows empty)
+      const hasContent = rows.some(r => (r.sku || '').trim().length > 0);
+      if (!hasContent) continue;
+
       if (y < 70) {
-        let remaining = sec.rows.length - ri;
-        const secIdx = sections.indexOf(sec);
-        for (let s2 = secIdx + 1; s2 < sections.length; s2++) remaining += sections[s2].rows.length;
-        if (remaining > 0) {
-          page.drawText('… and ' + remaining + ' more row' + (remaining === 1 ? '' : 's') + ' — open in editor for full list',
-                        { x: M_L + 6, y: y - 14, size: 9, color: rgb(0.5, 0.5, 0.5), font: helv });
-        }
+        page.drawText('\u2026 more placements not shown — open in editor', { x: M_L + 12, y: y - 14, size: 9, color: rgb(0.5,0.5,0.5), font: helv });
         break;
       }
-      page.drawLine({ start: { x: M_L, y: y - rowH }, end: { x: PAGE_W - M_R, y: y - rowH }, thickness: 0.5, color: ROW_BORDER });
-      page.drawLine({ start: { x: M_L + skuColW, y: y }, end: { x: M_L + skuColW, y: y - rowH }, thickness: 0.5, color: ROW_BORDER });
-      if (row.sku) {
-        let skuStr = row.sku;
-        const skuMaxW = skuColW - 12;
-        if (helv.widthOfTextAtSize(skuStr, 9) > skuMaxW) {
-          while (skuStr.length > 4 && helv.widthOfTextAtSize(skuStr + '…', 9) > skuMaxW) skuStr = skuStr.slice(0, -1);
-          skuStr = skuStr + '…';
+
+      // Header bar with colored background + placement name
+      page.drawRectangle({ x: M_L, y: y - 24, width: PAGE_W - M_L - M_R, height: 24, color: SP_RGB[code] });
+      page.drawText(code + '  \u2014  ' + PLACEMENT_NAMES[code], { x: M_L + 12, y: y - 17, size: 11, color: NAVY, font: helvB });
+      y -= 24 + 8;
+
+      // Rows as plain text lines
+      const lineMaxW = PAGE_W - M_L - M_R - 30;
+      let remaining = 0;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const text = _composeRowLine(r.category, r.sku);
+        if (!text) continue;
+        if (y < 60) {
+          remaining = rows.length - i;
+          break;
         }
-        page.drawText(skuStr, { x: M_L + 6, y: y - 14, size: 9, color: NAVY, font: helv });
+        const display = _truncLine(text, lineMaxW, 10, helv);
+        page.drawText(display, { x: M_L + 18, y: y - 12, size: 10, color: NAVY, font: helv });
+        y -= 16;
       }
-      if (row.code && SP_RGB[row.code]) {
-        const cx = M_L + skuColW;
-        page.drawRectangle({ x: cx + 8, y: y - rowH + 4, width: placeColW - 16, height: rowH - 8, color: SP_RGB[row.code] });
-        const tw = helvB.widthOfTextAtSize(row.code, 10);
-        page.drawText(row.code, { x: cx + placeColW / 2 - tw / 2, y: y - 14, size: 10, color: NAVY, font: helvB });
+      if (remaining > 0) {
+        page.drawText('\u2026 and ' + remaining + ' more in this section', { x: M_L + 18, y: y - 12, size: 9, color: rgb(0.5,0.5,0.5), font: helv });
+        y -= 16;
       }
-      y -= rowH;
+      y -= 10;
     }
-    if (y < 70) break;
-    y -= 2;
   }
 
   // Hidden form field with JSON for round-trip
@@ -1476,119 +1505,179 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', apInitSigDate);
 } else { apInitSigDate(); }
 
-/* ─── Special Project Placement (section 7) ─── */
-const SP_CODES = ['', 'LC', 'CC', 'CF', 'RS', 'LS'];
-const SP_CODE_COLORS = {
-  LC: [0.835, 0.918, 0.992],
-  CC: [0.812, 0.953, 0.871],
-  CF: [0.996, 0.851, 0.667],
-  RS: [0.965, 0.831, 0.918],
-  LS: [0.918, 0.875, 0.965]
-};
-const SP_CODE_NAMES = {
-  LC: 'Left Chest', CC: 'Center Chest', CF: 'Left Cuff',
-  RS: 'Right Sleeve', LS: 'Left Sleeve'
-};
+/* ─── Special Project Placement (v8.26 — sections by placement) ─── */
+const SP_PLACEMENTS = [
+  { code: 'LC', name: 'LEFT CHEST',   color: [0.835, 0.918, 0.992] },
+  { code: 'CC', name: 'CENTER CHEST', color: [0.812, 0.953, 0.871] },
+  { code: 'CF', name: 'LEFT CUFF',    color: [0.996, 0.851, 0.667] },
+  { code: 'RS', name: 'RIGHT SLEEVE', color: [0.965, 0.831, 0.918] },
+  { code: 'LS', name: 'LEFT SLEEVE',  color: [0.918, 0.875, 0.965] }
+];
+const SP_PLACEMENT_ORDER = ['LC', 'CC', 'CF', 'RS', 'LS'];
+const SP_PLACEMENT_BY_CODE = {};
+SP_PLACEMENTS.forEach(p => { SP_PLACEMENT_BY_CODE[p.code] = p; });
+
+const SP_CATEGORIES = [
+  '',
+  "Men's",
+  "Toddler",
+  "Women's",
+  "Unisex",
+  "Men's & Toddler",
+  "Men's & Women's",
+  "Toddler & Women's"
+];
 
 let _spData = {
   include: false,
   mode: 'filled',
   projectName: '',
   manualName: false,
-  sections: []
+  sections: {}
 };
 
-function spAddSection() {
-  _spData.sections.push({ name: '', rows: [{ sku: '', code: '' }] });
+function _spEnsureSection(code) {
+  if (!_spData.sections[code]) _spData.sections[code] = [{ category: '', sku: '' }];
+}
+function spAddSection(code) {
+  if (!code) return;
+  _spEnsureSection(code);
   spRenderEditor();
 }
-function spDeleteSection(idx) {
-  if (!confirm('Delete this section and all its rows?')) return;
-  _spData.sections.splice(idx, 1);
+function spDeleteSection(code) {
+  const placement = SP_PLACEMENT_BY_CODE[code];
+  const label = placement ? placement.name : code;
+  if (!confirm('Delete the ' + label + ' section and all its rows?')) return;
+  delete _spData.sections[code];
   spRenderEditor();
 }
-function spAddRow(si) {
-  _spData.sections[si].rows.push({ sku: '', code: '' });
+function spAddRow(code) {
+  if (!_spData.sections[code]) return;
+  _spData.sections[code].push({ category: '', sku: '' });
   spRenderEditor();
 }
-function spDeleteRow(si, ri) {
-  _spData.sections[si].rows.splice(ri, 1);
-  if (_spData.sections[si].rows.length === 0) {
-    _spData.sections[si].rows.push({ sku: '', code: '' });
+function spDeleteRow(code, ri) {
+  if (!_spData.sections[code]) return;
+  _spData.sections[code].splice(ri, 1);
+  if (_spData.sections[code].length === 0) {
+    _spData.sections[code].push({ category: '', sku: '' });
   }
   spRenderEditor();
+}
+
+function _spColorRgbCss(arr) {
+  return 'rgb(' + Math.round(arr[0]*255) + ',' + Math.round(arr[1]*255) + ',' + Math.round(arr[2]*255) + ')';
 }
 
 function spRenderEditor() {
   const root = document.getElementById('spSections');
   if (!root) return;
   root.innerHTML = '';
-  _spData.sections.forEach((sec, si) => {
+  // Render sections in fixed placement order, skipping any not present
+  SP_PLACEMENT_ORDER.forEach(code => {
+    if (!_spData.sections[code]) return;
+    const placement = SP_PLACEMENT_BY_CODE[code];
     const div = document.createElement('div');
     div.className = 'sp-section';
-    // Section header
+
+    // Section header — colored chip with placement name + delete
     const hdr = document.createElement('div');
     hdr.className = 'sp-section-hdr';
-    const nameInp = document.createElement('input');
-    nameInp.type = 'text';
-    nameInp.className = 'sp-section-name';
-    nameInp.placeholder = "MEN'S / TODDLER / WOMEN'S / ...";
-    nameInp.value = sec.name;
-    nameInp.oninput = (e) => { _spData.sections[si].name = e.target.value; };
-    hdr.appendChild(nameInp);
+    const chip = document.createElement('div');
+    chip.className = 'sp-placement-chip';
+    chip.style.background = _spColorRgbCss(placement.color);
+    chip.textContent = code + ' \u2014 ' + placement.name;
+    hdr.appendChild(chip);
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.className = 'sp-btn-del';
     delBtn.textContent = '\u00d7 Delete section';
-    delBtn.onclick = () => spDeleteSection(si);
+    delBtn.onclick = () => spDeleteSection(code);
     hdr.appendChild(delBtn);
     div.appendChild(hdr);
+
     // Rows
-    sec.rows.forEach((row, ri) => {
+    _spData.sections[code].forEach((row, ri) => {
       const rdiv = document.createElement('div');
       rdiv.className = 'sp-row';
-      const skuInp = document.createElement('input');
-      skuInp.type = 'text';
-      skuInp.className = 'sp-row-sku';
-      skuInp.placeholder = 'Garment SKU';
-      skuInp.value = row.sku;
-      skuInp.oninput = (e) => { _spData.sections[si].rows[ri].sku = e.target.value; };
-      rdiv.appendChild(skuInp);
-      const sel = document.createElement('select');
-      sel.className = 'sp-row-code';
-      SP_CODES.forEach(c => {
+
+      // Category dropdown
+      const catSel = document.createElement('select');
+      catSel.className = 'sp-row-cat';
+      SP_CATEGORIES.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c;
         opt.textContent = c || '\u2014';
-        sel.appendChild(opt);
+        catSel.appendChild(opt);
       });
-      sel.value = row.code;
-      sel.onchange = (e) => { _spData.sections[si].rows[ri].code = e.target.value; };
-      rdiv.appendChild(sel);
+      catSel.value = row.category;
+      catSel.onchange = (e) => { _spData.sections[code][ri].category = e.target.value; };
+      rdiv.appendChild(catSel);
+
+      // SKU input
+      const skuInp = document.createElement('input');
+      skuInp.type = 'text';
+      skuInp.className = 'sp-row-sku';
+      skuInp.placeholder = 'Garment SKU (e.g. Polo - TPC Sawgrass Course Map 2.0)';
+      skuInp.value = row.sku;
+      skuInp.oninput = (e) => { _spData.sections[code][ri].sku = e.target.value; };
+      rdiv.appendChild(skuInp);
+
+      // Delete row
       const rdel = document.createElement('button');
       rdel.type = 'button';
       rdel.className = 'sp-btn-del';
       rdel.textContent = '\u00d7';
       rdel.title = 'Remove row';
-      rdel.onclick = () => spDeleteRow(si, ri);
+      rdel.onclick = () => spDeleteRow(code, ri);
       rdiv.appendChild(rdel);
       div.appendChild(rdiv);
     });
+
+    // Add row
     const addRow = document.createElement('button');
     addRow.type = 'button';
     addRow.className = 'sp-btn';
     addRow.textContent = '+ Add row';
-    addRow.onclick = () => spAddRow(si);
+    addRow.onclick = () => spAddRow(code);
     div.appendChild(addRow);
     root.appendChild(div);
   });
+
+  // Render the Add Placement Section picker — only unused placements
+  spRenderAddPicker();
+}
+
+function spRenderAddPicker() {
+  const pickerWrap = document.getElementById('spAddPickerWrap');
+  if (!pickerWrap) return;
+  const unused = SP_PLACEMENT_ORDER.filter(c => !_spData.sections[c]);
+  if (unused.length === 0) {
+    pickerWrap.style.display = 'none';
+    return;
+  }
+  pickerWrap.style.display = '';
+  pickerWrap.innerHTML = '';
+  const sel = document.createElement('select');
+  sel.className = 'sp-add-picker';
+  const opt0 = document.createElement('option');
+  opt0.value = ''; opt0.textContent = '+ Add Placement Section\u2026';
+  sel.appendChild(opt0);
+  unused.forEach(code => {
+    const placement = SP_PLACEMENT_BY_CODE[code];
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = code + ' — ' + placement.name;
+    sel.appendChild(opt);
+  });
+  sel.onchange = (e) => { if (e.target.value) spAddSection(e.target.value); };
+  pickerWrap.appendChild(sel);
 }
 
 function spUpdateProjectName() {
   if (_spData.manualName) return;
   const cust = (document.getElementById('customer') || { value: '' }).value.trim();
   const logo = (document.getElementById('logoName') || { value: '' }).value.trim();
-  // Strip trailing _0.93in_v1 / _v1 from logo name; convert _ to space
   let logoBase = logo.replace(/_v\d+\b/gi, '')
                      .replace(/_\d+\.?\d*in\b/gi, '')
                      .replace(/_/g, ' ')
@@ -1606,8 +1695,9 @@ function spInit() {
   chk.addEventListener('change', () => {
     _spData.include = chk.checked;
     editor.style.display = chk.checked ? '' : 'none';
-    if (chk.checked && _spData.sections.length === 0) {
-      _spData.sections.push({ name: "MEN'S", rows: [{ sku: '', code: '' }] });
+    if (chk.checked && Object.keys(_spData.sections).length === 0) {
+      // Seed with Left Chest (most common placement)
+      _spData.sections['LC'] = [{ category: '', sku: '' }];
       spRenderEditor();
       spUpdateProjectName();
     }
@@ -1634,6 +1724,8 @@ function spInit() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', spUpdateProjectName);
   });
+  // Initial render (in case old data is present or for the empty picker)
+  spRenderAddPicker();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', spInit);
 else spInit();
