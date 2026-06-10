@@ -130,7 +130,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.24</span>
+      <span class="badge">v8.25</span>
     </div>
   </div>
   <div class="body">
@@ -254,7 +254,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.24</span>
+    <span class="badge">v8.25</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -947,7 +947,7 @@ async function embedImageInto(pdfDoc, b64, mime){
 }
 
 
-function _drawSpecialProjectPage(pdfDoc, form, sp) {
+async function _drawSpecialProjectPage(pdfDoc, form, sp) {
   const { rgb, PDFName, PDFString } = PDFLib;
   const page = pdfDoc.addPage([612, 792]);
   const NAVY  = rgb(0.051, 0.118, 0.314);
@@ -968,9 +968,24 @@ function _drawSpecialProjectPage(pdfDoc, form, sp) {
   // Title bar
   page.drawRectangle({ x: M_L, y: y - 36, width: PAGE_W - M_L - M_R, height: 36, color: NAVY });
   page.drawText('LOGO PLACEMENT', { x: M_L + 14, y: y - 24, size: 15, color: WHITE });
-  const subtitle = sp.projectName || '(special project)';
-  const subW = subtitle.length * 5.5;
-  page.drawText(subtitle, { x: PAGE_W - M_R - 14 - subW, y: y - 24, size: 11, color: rgb(0.85, 0.85, 0.85) });
+  // Embed Helvetica once for accurate width measurement
+  const helv  = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+  const helvB = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+  // Subtitle — measure properly, truncate if too wide, right-align with 22px pad
+  let subtitle = sp.projectName || '(special project)';
+  const SUB_PAD_R = 22;
+  const TITLE_LEFT_RESERVED = 200;
+  const subMaxW = (PAGE_W - M_R) - (M_L + TITLE_LEFT_RESERVED) - SUB_PAD_R;
+  let subW = helv.widthOfTextAtSize(subtitle, 11);
+  if (subW > subMaxW) {
+    while (subtitle.length > 4 && helv.widthOfTextAtSize(subtitle + '…', 11) > subMaxW) {
+      subtitle = subtitle.slice(0, -1);
+    }
+    subtitle = subtitle + '…';
+    subW = helv.widthOfTextAtSize(subtitle, 11);
+  }
+  page.drawText(subtitle, { x: PAGE_W - M_R - SUB_PAD_R - subW, y: y - 24, size: 11, color: rgb(0.85, 0.85, 0.85), font: helv });
   y -= 36 + 14;
 
   // Legend — 5 chips
@@ -1012,19 +1027,38 @@ function _drawSpecialProjectPage(pdfDoc, form, sp) {
       page.drawText(sec.name, { x: M_L + 6, y: y - 13, size: 9, color: NAVY });
       y -= 18;
     }
-    for (const row of sec.rows) {
-      if (y < 60) break;
+    for (let ri = 0; ri < sec.rows.length; ri++) {
+      const row = sec.rows[ri];
+      if (y < 70) {
+        let remaining = sec.rows.length - ri;
+        const secIdx = sections.indexOf(sec);
+        for (let s2 = secIdx + 1; s2 < sections.length; s2++) remaining += sections[s2].rows.length;
+        if (remaining > 0) {
+          page.drawText('… and ' + remaining + ' more row' + (remaining === 1 ? '' : 's') + ' — open in editor for full list',
+                        { x: M_L + 6, y: y - 14, size: 9, color: rgb(0.5, 0.5, 0.5), font: helv });
+        }
+        break;
+      }
       page.drawLine({ start: { x: M_L, y: y - rowH }, end: { x: PAGE_W - M_R, y: y - rowH }, thickness: 0.5, color: ROW_BORDER });
       page.drawLine({ start: { x: M_L + skuColW, y: y }, end: { x: M_L + skuColW, y: y - rowH }, thickness: 0.5, color: ROW_BORDER });
-      if (row.sku) page.drawText(row.sku, { x: M_L + 6, y: y - 14, size: 9, color: NAVY });
+      if (row.sku) {
+        let skuStr = row.sku;
+        const skuMaxW = skuColW - 12;
+        if (helv.widthOfTextAtSize(skuStr, 9) > skuMaxW) {
+          while (skuStr.length > 4 && helv.widthOfTextAtSize(skuStr + '…', 9) > skuMaxW) skuStr = skuStr.slice(0, -1);
+          skuStr = skuStr + '…';
+        }
+        page.drawText(skuStr, { x: M_L + 6, y: y - 14, size: 9, color: NAVY, font: helv });
+      }
       if (row.code && SP_RGB[row.code]) {
         const cx = M_L + skuColW;
         page.drawRectangle({ x: cx + 8, y: y - rowH + 4, width: placeColW - 16, height: rowH - 8, color: SP_RGB[row.code] });
-        const tw = row.code.length * 6;
-        page.drawText(row.code, { x: cx + placeColW / 2 - tw / 2, y: y - 14, size: 10, color: NAVY });
+        const tw = helvB.widthOfTextAtSize(row.code, 10);
+        page.drawText(row.code, { x: cx + placeColW / 2 - tw / 2, y: y - 14, size: 10, color: NAVY, font: helvB });
       }
       y -= rowH;
     }
+    if (y < 70) break;
     y -= 2;
   }
 
@@ -1143,7 +1177,7 @@ async function generateSheet(data){
 
   // Optional page: Special Project Placement (v8.24+)
   if (data.specialProject && data.specialProject.include) {
-    try { _drawSpecialProjectPage(pdfDoc, form, data.specialProject); }
+    try { await _drawSpecialProjectPage(pdfDoc, form, data.specialProject); }
     catch(e){ console.warn('Special Project page failed:', e); }
   }
 
