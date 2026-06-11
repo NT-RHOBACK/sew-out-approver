@@ -9,7 +9,16 @@
 :root{--navy:#0D1E50;--navy2:#162966;--ntint:#edf0f9;--nmid:#c4cde8;--gray:#7a7a8a;--lgray:#f4f5fa;--white:#fff;--red:#b02020;--green:#1a6e2e;--r:9px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#e8ecf5;min-height:100vh;padding:24px 16px 48px}
-.page{max-width:580px;flex:1;min-width:0}
+.page{max-width:100%;width:100%;flex:1;min-width:0}
+.app-header{background:var(--navy);color:#fff;padding:16px 28px 14px;max-width:1100px;margin:0 auto;border-radius:var(--r) var(--r) 0 0}
+.app-brand{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:.55;margin-bottom:3px}
+.app-title{font-size:20px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+.tab-bar{display:flex;gap:0;max-width:1100px;margin:0 auto;background:#fff;border-bottom:2px solid var(--navy)}
+.tab-btn{padding:10px 26px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:transparent;border:none;cursor:pointer;color:var(--gray);border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--navy)}
+.tab-btn:hover:not(.active){color:var(--navy)}
+.gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;align-items:start}
+.gen-col-left,.gen-col-right{min-width:0}
 .card{background:var(--white);border-radius:var(--r);box-shadow:0 2px 18px rgba(13,30,80,.12);overflow:hidden;margin-bottom:14px}
 .card-hdr{background:var(--navy);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:12px}
 .card-hdr h1{font-size:17px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
@@ -100,10 +109,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .clr:hover{border-color:var(--red);color:var(--red)}
 .msg{text-align:center;font-size:12px;color:var(--navy);min-height:18px;margin-top:8px;font-weight:600}
 .hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
-.layout{display:flex;gap:20px;align-items:flex-start;max-width:1280px;margin:0 auto}
+.layout{max-width:1100px;margin:0 auto}
 
 /* Special Project (section 7) editor */
-.sp-row-hdr{display:grid;grid-template-columns:1fr 120px;gap:8px;margin-top:8px}
+.sp-row-hdr{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
 .sp-section{background:#f8f9fc;border:1px solid #dde1f0;border-radius:8px;padding:10px;margin-bottom:10px}
 .sp-section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .sp-section-name{flex:1;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:700;color:var(--navy);background:#fff;text-transform:uppercase;letter-spacing:.6px;font-family:inherit}
@@ -126,18 +135,28 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
 <body>
+<div class="app-header">
+  <p class="app-brand">Rhoback Embroidery</p>
+  <h1 class="app-title">Rhoback Sew-Out Approver</h1>
+</div>
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabBtnGen" onclick="switchTab('gen')">Generator</button>
+  <button class="tab-btn" id="tabBtnApp" onclick="switchTab('app')">Approver</button>
+</div>
 <div class="layout">
-<div class="page">
+<div class="page" id="tabGen">
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Sheet Generator</h1><p>Rhoback Embroidery</p></div>
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.27</span>
+      <span class="badge">v8.29</span>
     </div>
   </div>
   <div class="body">
+<div class="gen-cols">
+<div class="gen-col-left">
     <div class="sec">1 &nbsp; DST or PDF</div>
     <div class="dst" id="dstZone">
       <input type="file" id="dstFile" accept=".dst,.DST,.pdf,.PDF">
@@ -205,6 +224,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       <div class="us"><span id="swatchName"></span></div>
     </div>
     <div class="sw-prev" id="swPrev"><img id="swImg" alt="Swatch"></div>
+</div>
+<div class="gen-col-right">
     <div class="sec">5 &nbsp; Customer Reference Images <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">(optional &middot; page 2)</span></div>
     <div class="up" id="refZone">
       <input type="file" id="refFiles" accept="image/*" multiple>
@@ -244,6 +265,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       </div>
     </div>
 
+</div></div>
 <div class="btn-row" style="margin-top:14px">
       <button class="gen" id="dlBtn" onclick="downloadPdf()">&#8595; Download PDF</button>
       <button class="gen" id="sendBtn" onclick="sendToRep()" style="display:none;background:#1a6e2e">&#9658; Send to Rep</button>
@@ -254,11 +276,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 </div>
 </div>
 
-<div class="page">
+<div class="page" id="tabApp" style="display:none">
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.27</span>
+    <span class="badge">v8.29</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -1715,6 +1737,12 @@ function spInit() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', spInit);
 else spInit();
+function switchTab(tab) {
+  var gen=document.getElementById('tabGen'),app=document.getElementById('tabApp');
+  var bg=document.getElementById('tabBtnGen'),ba=document.getElementById('tabBtnApp');
+  if(tab==='gen'){gen.style.display='';app.style.display='none';bg.classList.add('active');ba.classList.remove('active');}
+  else{gen.style.display='none';app.style.display='';ba.classList.add('active');bg.classList.remove('active');}
+}
 
 </script>
 <div class="crop-mod" id="cropModal">
