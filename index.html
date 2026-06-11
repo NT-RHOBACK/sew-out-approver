@@ -19,6 +19,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tab-btn:hover:not(.active){color:var(--navy)}
 .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;align-items:start}
 .gen-col-left,.gen-col-right{min-width:0}
+.sp-import-btn{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--navy);background:#edf0f9;border:1px solid #c8cfe8;border-radius:6px;padding:5px 10px;cursor:pointer}
+.sp-import-btn:hover{background:#dce1f5}
+.sp-imp-tab{padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;border:1px solid #d1d5db;background:#fff;cursor:pointer;color:var(--gray)}
+.sp-imp-tab:first-child{border-radius:6px 0 0 6px}.sp-imp-tab:last-child{border-radius:0 6px 6px 0;border-left:none}
+.sp-imp-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+#spImportModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
+#spImportModal.open{display:flex}
+.sp-imp-card{background:#fff;border-radius:10px;padding:24px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.sp-imp-h{color:var(--navy);font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px}
+.sp-imp-ta{width:100%;height:130px;font-size:11px;font-family:monospace;border:1px solid #d1d5db;border-radius:6px;padding:8px;resize:vertical;box-sizing:border-box}
+.sp-imp-file-lbl{display:block;padding:18px;border:2px dashed #d1d5db;border-radius:8px;text-align:center;cursor:pointer;font-size:12px;color:var(--gray)}
+.sp-imp-file-lbl:hover{border-color:var(--navy);color:var(--navy)}
 .card{background:var(--white);border-radius:var(--r);box-shadow:0 2px 18px rgba(13,30,80,.12);overflow:hidden;margin-bottom:14px}
 .card-hdr{background:var(--navy);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:12px}
 .card-hdr h1{font-size:17px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
@@ -133,6 +145,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .sp-mode input[type=radio]{display:none}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="app-header">
@@ -151,7 +164,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.29</span>
+      <span class="badge">v8.30</span>
     </div>
   </div>
   <div class="body">
@@ -256,7 +269,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
         </div>
       </div>
       <div id="spFilledArea" style="margin-top:10px">
-        <label class="lbl">Placements</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="lbl" style="margin-bottom:0">Placements</label>
+          <button class="sp-import-btn" onclick="spShowImportModal()">&#128203; Import from spreadsheet</button>
+        </div>
         <div id="spSections"></div>
         <div id="spAddPickerWrap" style="margin-top:6px"></div>
       </div>
@@ -280,7 +296,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.29</span>
+    <span class="badge">v8.30</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -977,6 +993,7 @@ async function embedImageInto(pdfDoc, b64, mime){
 
 async function _drawSpecialProjectPage(pdfDoc, form, sp) {
   const { rgb, PDFName, PDFString } = PDFLib;
+  let spFieldIdx = Math.floor(Math.random()*9e4)+1e4;
   const page = pdfDoc.addPage([612, 792]);
   const NAVY  = rgb(0.051, 0.118, 0.314);
   const WHITE = rgb(1, 1, 1);
@@ -1089,6 +1106,7 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
         }
         const display = _truncLine(text, lineMaxW, 10, helv);
         page.drawText(display, { x: M_L + 18, y: y - 12, size: 10, color: NAVY, font: helv });
+        try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(text); tf.setFontSize(10); tf.addToPage(page,{x:M_L+10,y:y-15,width:lineMaxW+12,height:14,borderWidth:0}); } catch(e){}
         y -= 16;
       }
       if (remaining > 0) {
@@ -1737,6 +1755,19 @@ function spInit() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', spInit);
 else spInit();
+// ── Special Project spreadsheet import ────────────────────────
+let _spImpRows = null;
+const _SP_CAT_MAP = {"MEN'S":"Men's","MENS":"Men's","MEN":"Men's","WOMEN'S":"Women's","WOMENS":"Women's","WOMEN":"Women's","TODDLER":"Toddler","TODDLERS":"Toddler","YOUTH":"Men's","KIDS":"Toddler","UNISEX":"Unisex","BOYS":"Men's","GIRLS":"Women's"};
+function spShowImportModal(){const m=document.getElementById('spImportModal');if(!m)return;m.classList.add('open');document.getElementById('spImpPasteTxt').value='';document.getElementById('spImpFileName').textContent='';_spImpRows=null;spImpUpdateUI();}
+function spImpClose(){const m=document.getElementById('spImportModal');if(m)m.classList.remove('open');}
+function spImpMode(mode){document.getElementById('spImpPasteArea').style.display=mode==='paste'?'':'none';document.getElementById('spImpFileArea').style.display=mode==='file'?'':'none';document.getElementById('spImpTabPaste').classList.toggle('active',mode==='paste');document.getElementById('spImpTabFile').classList.toggle('active',mode==='file');_spImpRows=null;spImpUpdateUI();}
+function spImpParseTSV(text){return text.trim().split('\n').map(l=>l.split('\t').map(c=>c.replace(/^"|"$/g,'').trim()));}
+function spImpParseCSV(text){return text.trim().split('\n').map(line=>{const row=[];let cur='',inQ=false;for(const ch of line){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){row.push(cur.trim());cur='';}else{cur+=ch;}}row.push(cur.trim());return row;});}
+function spImpSetRows(rows){if(!rows||rows.length<2)return;_spImpRows=rows;const headers=rows[0];const sel=document.getElementById('spImpColSel');sel.innerHTML='';let has=false;for(let i=1;i<headers.length;i++){if(!headers[i])continue;const o=document.createElement('option');o.value=i;o.textContent=headers[i];sel.appendChild(o);has=true;}document.getElementById('spImpColWrap').style.display=has&&sel.options.length>1?'':'none';spImpUpdateUI();}
+function spImpParseRows(rows,ci){const sec={};let cat='';for(let i=1;i<rows.length;i++){const sku=(rows[i][0]||'').trim();const code=((rows[i][ci]||'').trim().toUpperCase());if(!sku)continue;if(!code){const m=_SP_CAT_MAP[sku.toUpperCase().trim()];if(m)cat=m;continue;}if(!['LC','CC','CF','RS','LS'].includes(code))continue;if(!sec[code])sec[code]=[];sec[code].push({category:cat,sku});}return sec;}
+function spImpUpdateUI(){const has=!!_spImpRows&&_spImpRows.length>1;const btn=document.getElementById('spImpApplyBtn');const prev=document.getElementById('spImpPreview');if(btn){btn.disabled=!has;btn.style.opacity=has?'1':'.4';}if(has){const ci=parseInt(document.getElementById('spImpColSel').value)||1;const p=spImpParseRows(_spImpRows,ci);const tot=Object.values(p).reduce((s,a)=>s+a.length,0);const codes=Object.keys(p).join(', ');if(prev){prev.style.display=tot>0?'':'none';prev.textContent=`Found ${tot} item(s) across placements: ${codes||'none'}`;}}else if(prev){prev.style.display='none';}}
+function spImpApply(){if(!_spImpRows)return;const ci=parseInt(document.getElementById('spImpColSel').value)||1;const sections=spImpParseRows(_spImpRows,ci);if(!Object.keys(sections).length){alert('No placement data found — check which column is selected.');return;}_spData.sections=sections;_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name="spMode"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
+document.addEventListener('DOMContentLoaded',function(){const ta=document.getElementById('spImpPasteTxt');if(ta)ta.addEventListener('input',function(){if(!this.value.trim()){_spImpRows=null;spImpUpdateUI();return;}spImpSetRows(spImpParseTSV(this.value));});const fi=document.getElementById('spImpFile');if(fi)fi.addEventListener('change',function(){const file=this.files[0];if(!file)return;document.getElementById('spImpFileName').textContent=file.name;const ext=file.name.split('.').pop().toLowerCase();if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){alert('SheetJS not loaded. Try CSV instead.');return;}const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];spImpSetRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));spImpUpdateUI();};r.readAsArrayBuffer(file);}else{const r=new FileReader();r.onload=e=>{spImpSetRows(ext==='tsv'?spImpParseTSV(e.target.result):spImpParseCSV(e.target.result));spImpUpdateUI();};r.readAsText(file);}});const sel=document.getElementById('spImpColSel');if(sel)sel.addEventListener('change',spImpUpdateUI);});
 function switchTab(tab) {
   var gen=document.getElementById('tabGen'),app=document.getElementById('tabApp');
   var bg=document.getElementById('tabBtnGen'),ba=document.getElementById('tabBtnApp');
@@ -1745,6 +1776,35 @@ function switchTab(tab) {
 }
 
 </script>
+<div id="spImportModal">
+  <div class="sp-imp-card">
+    <div class="sp-imp-h">Import Placement Data</div>
+    <div style="display:flex;margin-bottom:14px">
+      <button class="sp-imp-tab active" id="spImpTabPaste" onclick="spImpMode('paste')">Paste from spreadsheet</button>
+      <button class="sp-imp-tab" id="spImpTabFile" onclick="spImpMode('file')">Upload .csv / .xlsx</button>
+    </div>
+    <div id="spImpPasteArea">
+      <p style="font-size:11px;color:var(--gray);margin-bottom:6px">Copy cells from Excel or Google Sheets then paste below (Ctrl+V).</p>
+      <textarea class="sp-imp-ta" id="spImpPasteTxt" placeholder="Paste spreadsheet data here…"></textarea>
+    </div>
+    <div id="spImpFileArea" style="display:none">
+      <label class="sp-imp-file-lbl">
+        <input type="file" id="spImpFile" accept=".csv,.tsv,.xlsx,.xls" style="display:none">
+        &#128194; Click to upload .csv or .xlsx
+      </label>
+      <p id="spImpFileName" style="font-size:11px;color:var(--navy);margin-top:6px;text-align:center"></p>
+    </div>
+    <div id="spImpColWrap" style="display:none;margin-top:12px">
+      <label style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Which logo column to import?</label>
+      <select id="spImpColSel" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit"></select>
+    </div>
+    <div id="spImpPreview" style="display:none;margin-top:10px;font-size:11px;color:#1a5e28;background:#e8f4eb;border-radius:6px;padding:8px 12px"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button onclick="spImpClose()" style="padding:8px 16px;font-size:12px;font-weight:700;color:var(--gray);background:#f1f2f6;border:none;border-radius:6px;cursor:pointer">Cancel</button>
+      <button id="spImpApplyBtn" onclick="spImpApply()" style="padding:8px 16px;font-size:12px;font-weight:700;color:#fff;background:var(--navy);border:none;border-radius:6px;cursor:pointer;opacity:.4" disabled>Import</button>
+    </div>
+  </div>
+</div>
 <div class="crop-mod" id="cropModal">
   <div class="crop-mod-card">
     <div class="crop-mod-hdr">
