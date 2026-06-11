@@ -103,7 +103,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .layout{display:flex;gap:20px;align-items:flex-start;max-width:1280px;margin:0 auto}
 
 /* Special Project (section 7) editor */
-.sp-row-hdr{display:grid;grid-template-columns:1fr 90px;gap:8px;margin-top:8px}
+.sp-row-hdr{display:grid;grid-template-columns:1fr 120px;gap:8px;margin-top:8px}
 .sp-section{background:#f8f9fc;border:1px solid #dde1f0;border-radius:8px;padding:10px;margin-bottom:10px}
 .sp-section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .sp-section-name{flex:1;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:700;color:var(--navy);background:#fff;text-transform:uppercase;letter-spacing:.6px;font-family:inherit}
@@ -979,14 +979,13 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
   const helv  = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
   const helvB = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
 
-  // ── Lightweight header — no navy bar (v8.27) ───────────────
-  // 'LOGO PLACEMENT' left, project name right, thin divider underneath.
-  page.drawText('LOGO PLACEMENT', { x: M_L, y: y - 14, size: 13, color: NAVY, font: helvB });
+  // ── Full navy header bar (v8.28) — white text both sides, no legend ─────
+  const HDR_H = 36;
+  page.drawRectangle({ x: 0, y: y - HDR_H, width: PAGE_W, height: HDR_H, color: NAVY });
+  page.drawText('LOGO PLACEMENT', { x: M_L, y: y - HDR_H + 12, size: 14, color: WHITE, font: helvB });
   let subtitle = sp.projectName || '';
   if (subtitle) {
-    // Truncate to fit available right-side space
-    const titleW = helvB.widthOfTextAtSize('LOGO PLACEMENT', 13);
-    const subMaxW = (PAGE_W - M_L - M_R) - titleW - 20;
+    const subMaxW = PAGE_W - M_L - M_R - helvB.widthOfTextAtSize('LOGO PLACEMENT', 14) - 20;
     let subW = helv.widthOfTextAtSize(subtitle, 11);
     if (subW > subMaxW) {
       while (subtitle.length > 4 && helv.widthOfTextAtSize(subtitle + '\u2026', 11) > subMaxW) {
@@ -995,25 +994,9 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
       subtitle = subtitle + '\u2026';
       subW = helv.widthOfTextAtSize(subtitle, 11);
     }
-    page.drawText(subtitle, { x: PAGE_W - M_R - subW, y: y - 14, size: 11, color: rgb(0.35, 0.40, 0.55), font: helv });
+    page.drawText(subtitle, { x: PAGE_W - M_R - subW, y: y - HDR_H + 12, size: 11, color: WHITE, font: helv });
   }
-  // Thin navy divider below the header
-  page.drawLine({ start: { x: M_L, y: y - 22 }, end: { x: PAGE_W - M_R, y: y - 22 }, thickness: 1.2, color: NAVY });
-  y -= 22 + 12;
-
-  // ── Legend — 5 chips ──────────────────────────────────────
-  const legend = [
-    ['LC','Left Chest'], ['CC','Center Chest'], ['CF','Left Cuff'],
-    ['RS','Right Sleeve'], ['LS','Left Sleeve']
-  ];
-  const legW = (PAGE_W - M_L - M_R) / legend.length;
-  for (let i = 0; i < legend.length; i++) {
-    const [code, name] = legend[i];
-    const x = M_L + i * legW;
-    page.drawRectangle({ x: x + 4, y: y - 22, width: legW - 8, height: 22, color: SP_RGB[code] });
-    page.drawText(code + ' = ' + name, { x: x + 12, y: y - 15, size: 9, color: NAVY, font: helvB });
-  }
-  y -= 22 + 16;
+  y -= HDR_H + 14;
 
   // ── Body — placement-grouped text blocks ──────────────────
   const isBlank = sp.mode === 'blank';
