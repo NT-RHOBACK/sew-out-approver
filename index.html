@@ -8,14 +8,16 @@
 
 :root{--navy:#0D1E50;--navy2:#162966;--ntint:#edf0f9;--nmid:#c4cde8;--gray:#7a7a8a;--lgray:#f4f5fa;--white:#fff;--red:#b02020;--green:#1a6e2e;--r:9px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#e8ecf5;min-height:100vh;padding:24px 16px 48px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#e8ecf5;min-height:100vh;padding:0 0 48px}
 .page{max-width:100%;width:100%;flex:1;min-width:0}
-.app-header{background:var(--navy);color:#fff;padding:13px;text-align:center;width:100%}
-.app-title{font-size:13px;font-weight:400;letter-spacing:3px;text-transform:uppercase}
-.tab-bar{display:flex;justify-content:center;gap:0;width:100%;margin:0;background:#fff;padding:14px 16px 12px;border-bottom:1px solid var(--nmid)}
+.top-bar{background:var(--navy);color:rgba(255,255,255,.9);text-align:center;padding:8px 24px;font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase}
+.header{background:#fff;padding:8px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e6ef}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-title{font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--navy)}
+.tab-bar{background:#fff;border-bottom:1px solid #e2e6ef;padding:0 24px;display:flex;overflow-x:auto;align-items:stretch}
 .tab-seg{display:inline-flex;align-items:center;gap:2px;padding:4px;background:var(--lgray);border:1px solid var(--nmid);border-radius:10px}
-.tab-btn{padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;background:transparent;border:none;cursor:pointer;color:var(--gray);border-radius:7px;transition:color .15s,background .15s}
-.tab-btn.active{color:var(--navy);background:#fff;font-weight:700;box-shadow:0 1px 2px rgba(13,30,64,.14)}
+.tab-btn{padding:12px 18px;font-size:14px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit;transition:color .15s}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--red)}
 .tab-btn:hover:not(.active){color:var(--navy)}
 .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;align-items:start}
 .gen-col-left,.gen-col-right{min-width:0}
@@ -125,8 +127,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .clr:hover{border-color:var(--red);color:var(--red)}
 .msg{text-align:center;font-size:12px;color:var(--navy);min-height:18px;margin-top:8px;font-weight:600}
 .hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
-.layout{max-width:1300px;margin:0 auto}
-@media(max-width:900px){.gen-cols{grid-template-columns:1fr;gap:0}body{padding:16px 10px 40px}.tab-bar{padding:12px 10px 10px}.card-hdr{padding:14px 16px}.body{padding:16px 16px}}
+.layout{max-width:1300px;margin:0 auto;padding:22px 24px}
+@media(max-width:900px){.gen-cols{grid-template-columns:1fr;gap:0}.layout{padding:18px 16px}.card-hdr{padding:14px 16px}.body{padding:16px 16px}}
+@media(max-width:700px){.top-bar{display:none}.header{padding:6px 14px}.tab-bar{padding:0 10px}.tab-btn{padding:10px 11px;font-size:13px;letter-spacing:1px}.layout{padding:14px 12px}}
 @media(max-width:560px){.two,.three{grid-template-columns:1fr}}
 
 /* Special Project (section 7) editor */
@@ -154,25 +157,26 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-<div class="app-header">
-  <h1 class="app-title">Rhoback &mdash; Sew-Out Approver</h1>
+<div class="top-bar">Rhoback &mdash; Sew-Out Approver</div>
+<div class="header">
+  <div class="header-brand">
+    <div class="ridge"><span class="r-red"></span><span class="r-navy"></span></div>
+    <span class="header-title">Sew-Out Approver</span>
+  </div>
 </div>
 <div class="tab-bar">
-  <div class="tab-seg">
   <button class="tab-btn active" id="tabBtnGen" onclick="switchTab('gen')">Generator</button>
   <button class="tab-btn" id="tabBtnApp" onclick="switchTab('app')">Approver</button>
-  </div>
 </div>
 <div class="layout">
 <div class="page" id="tabGen">
 <div class="card">
   <div class="card-hdr">
-    <div class="ridge"><span class="r-red"></span><span class="r-navy"></span></div>
     <div><h1>Sew-Out Sheet Generator</h1><p>Rhoback Embroidery</p></div>
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.33</span>
+      <span class="badge">v8.34</span>
     </div>
   </div>
   <div class="body">
@@ -303,9 +307,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="page" id="tabApp" style="display:none">
 <div class="card">
   <div class="card-hdr">
-    <div class="ridge"><span class="r-red"></span><span class="r-navy"></span></div>
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.33</span>
+    <span class="badge">v8.34</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
