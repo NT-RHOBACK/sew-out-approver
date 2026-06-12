@@ -125,7 +125,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .clr:hover{border-color:var(--red);color:var(--red)}
 .msg{text-align:center;font-size:12px;color:var(--navy);min-height:18px;margin-top:8px;font-weight:600}
 .hint{font-size:11px;color:var(--gray);margin-top:4px;line-height:1.5}
-.layout{max-width:1100px;margin:0 auto}
+.layout{max-width:1300px;margin:0 auto}
+@media(max-width:900px){.gen-cols{grid-template-columns:1fr;gap:0}body{padding:16px 10px 40px}.tab-bar{padding:12px 10px 10px}.card-hdr{padding:14px 16px}.body{padding:16px 16px}}
+@media(max-width:560px){.two,.three{grid-template-columns:1fr}}
 
 /* Special Project (section 7) editor */
 .sp-row-hdr{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
@@ -170,7 +172,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.32</span>
+      <span class="badge">v8.33</span>
     </div>
   </div>
   <div class="body">
@@ -303,7 +305,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
   <div class="card-hdr">
     <div class="ridge"><span class="r-red"></span><span class="r-navy"></span></div>
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.32</span>
+    <span class="badge">v8.33</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
