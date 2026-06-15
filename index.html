@@ -152,9 +152,27 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .sp-mode label{padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--gray);background:#fff;border:0;letter-spacing:.4px;text-transform:uppercase}
 .sp-mode label.active{background:var(--navy);color:#fff}
 .sp-mode input[type=radio]{display:none}
+
+/* ── Logo Import tab ── */
+.imp-tbl{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.imp-tbl th{background:var(--ntint);padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);border-bottom:2px solid var(--nmid);white-space:nowrap}
+.imp-tbl td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:middle}
+.imp-tbl input{width:100%;padding:5px 7px;border:1.5px solid #dde1f0;border-radius:5px;font-size:12px;color:var(--navy);background:#fff;font-family:inherit}
+.imp-tbl input:focus{outline:none;border-color:var(--navy)}
+.imp-tbl input.warn{border-color:var(--red);background:#fff5f5}
+.imp-copy{background:#1a1c2e;border-radius:8px;padding:14px;position:relative;margin-top:8px}
+.imp-copy pre{color:#e5e7eb;font-size:12px;font-family:monospace;white-space:pre;overflow-x:auto;padding-right:90px;line-height:1.6}
+.imp-copy-btn{position:absolute;top:10px;right:10px;background:#374151;color:#e5e7eb;border:none;border-radius:5px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+.imp-copy-btn:hover{background:#4b5563}
+.imp-copy-btn.copied{background:#065f46;color:#6ee7b7}
+.imp-st{padding:10px 14px;border-radius:7px;font-size:12px;font-weight:600;margin-bottom:12px;border:1px solid}
+.imp-st.loading{background:#fef9c3;border-color:#fde68a;color:#92400e}
+.imp-st.ok{background:#d1fae5;border-color:#a7f3d0;color:#065f46}
+.imp-st.err{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div class="top-bar">Rhoback &mdash; Sew-Out Approver</div>
@@ -167,6 +185,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="tab-bar">
   <button class="tab-btn active" id="tabBtnGen" onclick="switchTab('gen')">Generator</button>
   <button class="tab-btn" id="tabBtnApp" onclick="switchTab('app')">Approver</button>
+  <button class="tab-btn" id="tabBtnImp" onclick="switchTab('imp')">Logo Import</button>
 </div>
 <div class="layout">
 <div class="page" id="tabGen">
@@ -176,7 +195,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.34</span>
+      <span class="badge">v8.35</span>
     </div>
   </div>
   <div class="body">
@@ -308,7 +327,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.34</span>
+    <span class="badge">v8.35</span>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -353,6 +372,68 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
   </div>
 </div>
 </div>
+
+<div class="page" id="tabImp" style="display:none">
+<div class="card">
+  <div class="card-hdr">
+    <div><h1>Logo Import</h1><p>EpicStitch / Insignias &rarr; Excel row formatter</p></div>
+    <div class="hdr-actions">
+      <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
+      <span class="badge">v8.35</span>
+    </div>
+  </div>
+  <div class="body">
+    <div class="sec">1 &nbsp; Screenshot or Paste</div>
+    <p class="hint" style="margin-bottom:10px">Paste a screenshot with <strong>Ctrl+V</strong>, drag &amp; drop an image, or click to browse. OCR reads the table automatically. Cost is always 5.25.</p>
+    <div class="dst" id="impDrop" style="margin-bottom:12px">
+      <input type="file" id="impFile" accept="image/*" onchange="impHandleFile(this.files[0])">
+      <div class="di">&#128247;</div>
+      <div class="dt">Paste screenshot (Ctrl+V) &middot; drag &amp; drop &middot; or click to browse</div>
+      <div class="ds">PNG or JPEG &middot; EpicStitch / Insignias profile table</div>
+    </div>
+    <div id="impImgWrap" style="display:none;margin-bottom:12px">
+      <img id="impImg" style="max-width:100%;max-height:200px;border-radius:7px;border:1px solid var(--nmid)">
+    </div>
+    <div id="impSt" class="imp-st" style="display:none"></div>
+
+    <div class="sec">2 &nbsp; Review &amp; Edit
+      <button onclick="impAddRow({})" style="font-size:10px;font-weight:700;background:var(--ntint);border:1px solid var(--nmid);border-radius:5px;padding:3px 9px;cursor:pointer;color:var(--navy);font-family:inherit;text-transform:uppercase;letter-spacing:.4px">+ Add Row</button>
+    </div>
+    <p class="hint" style="margin-bottom:10px">CustomerName is not in EpicStitch &mdash; fill in column C manually. Rows with the same logo description are labeled Small&nbsp;/&nbsp;Large by width.</p>
+    <div style="overflow-x:auto">
+      <table class="imp-tbl">
+        <thead><tr>
+          <th style="width:26px">#</th>
+          <th>Logo#</th>
+          <th style="width:100px">CustomerCode</th>
+          <th style="min-width:140px">CustomerName</th>
+          <th style="min-width:110px">LogoDescription</th>
+          <th style="width:72px">Stitches</th>
+          <th style="width:66px">Height</th>
+          <th style="width:66px">Width</th>
+          <th style="width:58px">Cost</th>
+          <th style="width:28px"></th>
+        </tr></thead>
+        <tbody id="impTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px">
+      <button class="gen" onclick="impGenerate()">&#8595; Generate Copy Row</button>
+    </div>
+
+    <div id="impOutput" style="display:none;margin-top:18px">
+      <div class="sec">3 &nbsp; Copy to Excel <span style="font-weight:400;font-size:10px;letter-spacing:0;text-transform:none;color:var(--gray)">&mdash; no headers &middot; paste directly into spreadsheet</span></div>
+      <div class="imp-copy">
+        <pre id="impPre"></pre>
+        <button class="imp-copy-btn" id="impCopyBtn" onclick="impCopyAll(this)">Copy All</button>
+      </div>
+      <div id="impWarnBlock" style="margin-top:8px;font-size:11px;color:var(--red);font-weight:600;line-height:1.7"></div>
+    </div>
+  </div>
+</div>
+</div>
+
 </div>
 <script>
 
@@ -1785,11 +1866,220 @@ function spImpUpdateUI(){const has=!!_spImpRows&&_spImpRows.length>1;const btn=d
 function spImpApply(){if(!_spImpRows)return;const ci=parseInt(document.getElementById('spImpColSel').value)||1;const sections=spImpParseRows(_spImpRows,ci);if(!Object.keys(sections).length){alert('No placement data found — check which column is selected.');return;}_spData.sections=sections;_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name="spMode"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
 document.addEventListener('DOMContentLoaded',function(){const ta=document.getElementById('spImpPasteTxt');if(ta)ta.addEventListener('input',function(){if(!this.value.trim()){_spImpRows=null;spImpUpdateUI();return;}spImpSetRows(spImpParseTSV(this.value));});const fi=document.getElementById('spImpFile');if(fi)fi.addEventListener('change',function(){const file=this.files[0];if(!file)return;document.getElementById('spImpFileName').textContent=file.name;const ext=file.name.split('.').pop().toLowerCase();if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){alert('SheetJS not loaded. Try CSV instead.');return;}const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];spImpSetRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));spImpUpdateUI();};r.readAsArrayBuffer(file);}else{const r=new FileReader();r.onload=e=>{spImpSetRows(ext==='tsv'?spImpParseTSV(e.target.result):spImpParseCSV(e.target.result));spImpUpdateUI();};r.readAsText(file);}});const sel=document.getElementById('spImpColSel');if(sel)sel.addEventListener('change',spImpUpdateUI);});
 function switchTab(tab) {
-  var gen=document.getElementById('tabGen'),app=document.getElementById('tabApp');
-  var bg=document.getElementById('tabBtnGen'),ba=document.getElementById('tabBtnApp');
-  if(tab==='gen'){gen.style.display='';app.style.display='none';bg.classList.add('active');ba.classList.remove('active');}
-  else{gen.style.display='none';app.style.display='';ba.classList.add('active');bg.classList.remove('active');}
+  var gen=document.getElementById('tabGen'),app=document.getElementById('tabApp'),imp=document.getElementById('tabImp');
+  var bg=document.getElementById('tabBtnGen'),ba=document.getElementById('tabBtnApp'),bi=document.getElementById('tabBtnImp');
+  [gen,app,imp].forEach(function(el){if(el)el.style.display='none';});
+  [bg,ba,bi].forEach(function(el){if(el)el.classList.remove('active');});
+  if(tab==='gen'){if(gen)gen.style.display='';if(bg)bg.classList.add('active');}
+  else if(tab==='app'){if(app)app.style.display='';if(ba)ba.classList.add('active');}
+  else{if(imp)imp.style.display='';if(bi)bi.classList.add('active');}
 }
+
+
+// ── LOGO IMPORT TAB ────────────────────────────────────────────
+var _impRows=[], _impRowCount=0;
+
+// Paste handler (only active when Logo Import tab is visible)
+document.addEventListener('paste', function(e){
+  var tab=document.getElementById('tabImp');
+  if(!tab||tab.style.display==='none') return;
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items) return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.startsWith('image/')){
+      impHandleFile(items[i].getAsFile());
+      break;
+    }
+  }
+});
+
+// Drag & drop on impDrop
+document.addEventListener('DOMContentLoaded',function(){
+  var zone=document.getElementById('impDrop');
+  if(!zone) return;
+  zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('over');});
+  zone.addEventListener('dragleave',function(){zone.classList.remove('over');});
+  zone.addEventListener('drop',function(e){
+    e.preventDefault(); zone.classList.remove('over');
+    var f=e.dataTransfer.files[0];
+    if(f&&f.type.startsWith('image/')) impHandleFile(f);
+  });
+  // start with one blank row
+  impAddRow({});
+});
+
+async function impHandleFile(file){
+  if(!file) return;
+  var url=URL.createObjectURL(file);
+  document.getElementById('impImg').src=url;
+  document.getElementById('impImgWrap').style.display='';
+  var st=document.getElementById('impSt');
+  st.className='imp-st loading'; st.style.display=''; st.textContent='⏳ Reading image with OCR…';
+  try{
+    if(typeof Tesseract==='undefined') throw new Error('Tesseract not loaded');
+    var worker=await Tesseract.createWorker('eng',1,{
+      workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/worker.min.js',
+      langPath:'https://tessdata.projectnaptha.com/4.0.0',
+      corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@4/tesseract-core-lstm.wasm.js',
+      logger:function(m){if(m.status==='recognizing text') st.textContent='⏳ OCR '+Math.round(m.progress*100)+'%…';}
+    });
+    var res=await worker.recognize(url);
+    await worker.terminate();
+    var parsed=impParseText(res.data.text);
+    if(parsed.length){
+      st.className='imp-st ok';
+      st.textContent='✓ Found '+parsed.length+' row'+(parsed.length>1?'s':'')+' — review below, then fill in CustomerName (column C)';
+      document.getElementById('impTbody').innerHTML='';
+      _impRows=[]; _impRowCount=0;
+      impApplySmallLarge(parsed);
+      parsed.forEach(function(r){impAddRow(r);});
+    } else {
+      st.className='imp-st err';
+      st.textContent='⚠ Couldn't detect rows automatically — enter manually below.';
+      if(!_impRows.length) impAddRow({});
+    }
+  } catch(err){
+    st.className='imp-st err';
+    st.textContent='⚠ OCR unavailable. Enter rows manually below.';
+    if(!_impRows.length) impAddRow({});
+    console.error(err);
+  }
+}
+
+function impParseText(raw){
+  var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+  var dataLines=lines.filter(function(l){return !/^Logo\s*ID/i.test(l);});
+  var parsed=[];
+  dataLines.forEach(function(line){
+    // Logo ID: 5+ digits + 1-2 letters
+    var logoIdMatch=line.match(/(\d{5,})[A-Za-z]{1,2}/);
+    if(!logoIdMatch) return;
+    var ccode=logoIdMatch[1];
+    // Description: PascalCase_Desc_SizeIn_v#
+    var descMatch=line.match(/([A-Z][A-Za-z0-9]+_[A-Za-z0-9]+_[\d.]+in_v\d+)/);
+    var fullDesc=descMatch?descMatch[1]:'';
+    var ldesc='', widthFromDesc='';
+    if(fullDesc){
+      var parts=fullDesc.split('_');
+      var sizeIdx=-1;
+      for(var i=0;i<parts.length;i++){if(/^\d+\.?\d*in$/.test(parts[i])){sizeIdx=i;break;}}
+      if(sizeIdx>1){
+        ldesc=parts.slice(1,sizeIdx).join(' ');
+        widthFromDesc=parts[sizeIdx].replace('in','');
+      }
+    }
+    // Size info: W-H Inches
+    var sizeMatch=line.match(/([\d.]+)-([\d.]+)\s*[Ii]nches?/);
+    var width='', height='';
+    if(sizeMatch){width=sizeMatch[1];height=sizeMatch[2];}
+    else if(widthFromDesc){width=widthFromDesc;}
+    // Stitch count: last large number on line
+    var nums=line.match(/\b(\d{3,6})\b/g)||[];
+    var stitches=nums.filter(function(n){return parseInt(n)>100;}).pop()||'';
+    // Customer name from account prefix
+    var acct=fullDesc?fullDesc.split('_')[0]:'';
+    var cname=impExpandName(acct);
+    var logo=fullDesc?fullDesc+'.png':'';
+    parsed.push({logo:logo,ccode:ccode,cname:cname,ldesc:ldesc,stitches:stitches,height:height,width:width,cost:'5.25'});
+  });
+  return parsed;
+}
+
+function impExpandName(s){
+  // Split PascalCase and expand common abbreviations
+  var exp=s.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g,'$1 $2');
+  exp=exp.replace(/\bCC\b/g,'Country Club').replace(/\bGC\b/g,'Golf Club');
+  return exp.trim();
+}
+
+function impApplySmallLarge(rows){
+  var groups={};
+  rows.forEach(function(r){if(!groups[r.ldesc])groups[r.ldesc]=[];groups[r.ldesc].push(r);});
+  Object.keys(groups).forEach(function(key){
+    var g=groups[key];
+    if(g.length<2) return;
+    g.sort(function(a,b){return parseFloat(b.width)-parseFloat(a.width);});
+    g[0].ldesc=key+' Large';
+    g[g.length-1].ldesc=key+' Small';
+  });
+}
+
+function impAddRow(data){
+  data=data||{};
+  _impRowCount++;
+  var n=_impRowCount;
+  _impRows.push(n);
+  var tbody=document.getElementById('impTbody');
+  var tr=document.createElement('tr');
+  tr.id='impRow'+n;
+  function inp(id,val,ph,w,extra){
+    var s=w?'width:'+w+';':'';
+    return '<td><input id="imp'+id+n+'" value="'+(_esc(val||''))+'" placeholder="'+ph+'" style="'+s+'" '+(extra||'')+'></td>';
+  }
+  tr.innerHTML=
+    '<td style="font-size:11px;color:var(--gray);text-align:center;white-space:nowrap;padding:0 4px">'+n+'</td>'+
+    inp('Logo',data.logo,'AccountName_Desc_0.00in_v1.png','220px','oninput="impCheckLen('+n+',this)"')+
+    inp('Ccode',data.ccode,'5132707','88px','')+
+    inp('Cname',data.cname,'Island Country Club','','style="min-width:130px"')+
+    inp('Ldesc',data.ldesc,'Hat','','style="min-width:100px"')+
+    inp('Stitch',data.stitches,'3914','68px','')+
+    inp('H',data.height,'1.03','58px','')+
+    inp('W',data.width,'2.06','58px','')+
+    inp('Cost',data.cost||'5.25','5.25','52px','')+
+    '<td><button onclick="impDelRow('+n+')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;padding:2px 6px" title="Remove">&times;</button></td>';
+  tbody.appendChild(tr);
+}
+function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function impDelRow(n){
+  var el=document.getElementById('impRow'+n);
+  if(el) el.remove();
+  _impRows=_impRows.filter(function(x){return x!==n;});
+}
+
+function impCheckLen(n,el){
+  var len=el.value.trim().length;
+  if(len>44){el.classList.add('warn');el.title='⚠ '+len+' chars (max 44)';}
+  else{el.classList.remove('warn');el.title='';}
+}
+
+function impGenerate(){
+  var rows=[];
+  var trs=document.getElementById('impTbody').querySelectorAll('tr');
+  trs.forEach(function(tr){
+    var id=tr.id.replace('impRow','');
+    function gv(pfx){var el=document.getElementById('imp'+pfx+id);return el?el.value.trim():'';}
+    var logo=gv('Logo'),ccode=gv('Ccode'),cname=gv('Cname'),ldesc=gv('Ldesc');
+    var stitch=gv('Stitch'),h=gv('H'),w=gv('W'),cost=gv('Cost')||'5.25';
+    if(logo||ccode) rows.push([logo,ccode,cname,ldesc,stitch,h,w,cost]);
+  });
+  if(!rows.length) return;
+  var text=rows.map(function(r){return r.join('\t');}).join('\n');
+  document.getElementById('impPre').textContent=text;
+  document.getElementById('impOutput').style.display='';
+  var warns=rows.filter(function(r){return r[0].length>44;})
+               .map(function(r){return '⚠ "'+r[0]+'" is '+r[0].length+' chars (max 44)';});
+  document.getElementById('impWarnBlock').textContent=warns.join('\n');
+  document.getElementById('impOutput').scrollIntoView({behavior:'smooth'});
+}
+
+function impCopyAll(btn){
+  var text=document.getElementById('impPre').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    btn.textContent='Copied!'; btn.classList.add('copied');
+    setTimeout(function(){btn.textContent='Copy All';btn.classList.remove('copied');},2000);
+  });
+}
+
+function impClear(){
+  document.getElementById('impTbody').innerHTML='';
+  document.getElementById('impOutput').style.display='none';
+  document.getElementById('impImgWrap').style.display='none';
+  document.getElementById('impSt').style.display='none';
+  _impRows=[]; _impRowCount=0;
+  impAddRow({});
+}
+// ── END LOGO IMPORT ───────────────────────────────────────────
 
 </script>
 <div id="spImportModal">
