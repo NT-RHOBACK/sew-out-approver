@@ -1923,7 +1923,7 @@ async function impHandleFile(file){
     var parsed=impParseText(res.data.text);
     if(parsed.length){
       st.className='imp-st ok';
-      st.textContent='✓ Found '+parsed.length+' row'+(parsed.length>1?'s':'')+' — review below, then fill in CustomerName (column C)';
+      st.textContent='✓ Found '+parsed.length+' row'+(parsed.length>1?'s':'')+' — review below';
       document.getElementById('impTbody').innerHTML='';
       _impRows=[]; _impRowCount=0;
       impApplySmallLarge(parsed);
@@ -1943,6 +1943,16 @@ async function impHandleFile(file){
 
 function impParseText(raw){
   var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+  // Extract customer name from EpicStitch title line: "Account Name (CUSTxxxxxxx)"
+  var titleCname='';
+  for(var ti=0;ti<lines.length;ti++){
+    var tm=lines[ti].match(/^(.+?)\s*\(CUST\d+\)/i);
+    if(tm){titleCname=tm[1].trim();break;}
+    if(/Insignias\s+File\s+Manager/i.test(lines[ti])&&ti+1<lines.length){
+      var nm=lines[ti+1].match(/^(.+?)\s*\(CUST\d+\)/i);
+      if(nm){titleCname=nm[1].trim();break;}
+    }
+  }
   var dataLines=lines.filter(function(l){return !/^Logo\s*ID/i.test(l);});
   var parsed=[];
   dataLines.forEach(function(line){
@@ -1950,30 +1960,26 @@ function impParseText(raw){
     var logoIdMatch=line.match(/(\d{5,})[A-Za-z]{1,2}/);
     if(!logoIdMatch) return;
     var ccode=logoIdMatch[1];
-    // Description: PascalCase_Desc_SizeIn_v#
-    var descMatch=line.match(/([A-Z][A-Za-z0-9]+_[A-Za-z0-9]+_[\d.]+in_v\d+)/);
+    // Description: AccountName_LogoDesc_WidthIn_v#
+    var descMatch=line.match(/([A-Za-z][A-Za-z0-9]+_[A-Za-z0-9]+_[\d.]+in_v\d+)/);
     var fullDesc=descMatch?descMatch[1]:'';
-    var ldesc='', widthFromDesc='';
+    var ldesc='';
     if(fullDesc){
       var parts=fullDesc.split('_');
       var sizeIdx=-1;
       for(var i=0;i<parts.length;i++){if(/^\d+\.?\d*in$/.test(parts[i])){sizeIdx=i;break;}}
-      if(sizeIdx>1){
-        ldesc=parts.slice(1,sizeIdx).join(' ');
-        widthFromDesc=parts[sizeIdx].replace('in','');
-      }
+      if(sizeIdx>1) ldesc=parts.slice(1,sizeIdx).join(' ');
     }
-    // Size info: W-H Inches
-    var sizeMatch=line.match(/([\d.]+)-([\d.]+)\s*[Ii]nches?/);
+    // Size info: W-H — "Inches" may be on next OCR line, so match decimal-dash-decimal only
+    var sizeMatch=line.match(/(\d+\.\d+)-(\d+\.\d+)/);
     var width='', height='';
     if(sizeMatch){width=sizeMatch[1];height=sizeMatch[2];}
-    else if(widthFromDesc){width=widthFromDesc;}
-    // Stitch count: last large number on line
+    // Stitch count: last 4-6 digit number on line (>999 avoids years/thread counts)
     var nums=line.match(/\b(\d{3,6})\b/g)||[];
-    var stitches=nums.filter(function(n){return parseInt(n)>100;}).pop()||'';
-    // Customer name from account prefix
+    var stitches=nums.filter(function(n){return parseInt(n)>999;}).pop()||'';
+    // Customer name: from EpicStitch title if found, else expand account prefix
     var acct=fullDesc?fullDesc.split('_')[0]:'';
-    var cname=impExpandName(acct);
+    var cname=titleCname||impExpandName(acct);
     var logo=fullDesc?fullDesc+'.png':'';
     parsed.push({logo:logo,ccode:ccode,cname:cname,ldesc:ldesc,stitches:stitches,height:height,width:width,cost:'5.25'});
   });
@@ -2126,16 +2132,4 @@ function impClear(){
         <div class="crop-handle se" data-handle="se"></div>
         <div class="crop-handle s"  data-handle="s"></div>
         <div class="crop-handle sw" data-handle="sw"></div>
-        <div class="crop-handle w"  data-handle="w"></div>
-      </div>
-    </div>
-    <div class="crop-actions">
-      <span class="lhs">Tip: ↻ rotates first if your photo is sideways</span>
-      <button onclick="cropRotate()">↻ Rotate 90°</button>
-      <button onclick="cropCancel()">Cancel</button>
-      <button class="primary" onclick="cropApply()">✓ Apply</button>
-    </div>
-  </div>
-</div>
-</body>
-</html>
+        <div class
