@@ -1178,6 +1178,9 @@ async function generateSheet(data){
     } catch(e){ console.warn('DA patch failed:', name, e); }
   });
 
+  // NOTES: pin font size so updateFieldAppearances() doesn't auto-size it huge in the tall box
+  try { form.getTextField('NOTES').acroField.dict.set(PDFName.of('DA'), PDFString.of('/Helv 11 Tf 0.051 0.118 0.314 rg')); } catch(e){}
+
   const setText = (name, val) => {
     try { form.getTextField(name).setText(val || ''); } catch(e){ console.warn('field missing:', name); }
   };
@@ -1515,6 +1518,7 @@ async function apDownload() {
     ['HEIGHT', 'WIDTH'].forEach(name => {
       try { form.getTextField(name).acroField.dict.set(PDFName.of('DA'), PDFString.of('/Helv 10 Tf 0.051 0.118 0.314 rg')); } catch(e){}
     });
+    try { form.getTextField('NOTES').acroField.dict.set(PDFName.of('DA'), PDFString.of('/Helv 11 Tf 0.051 0.118 0.314 rg')); } catch(e){}
 
     try { form.updateFieldAppearances(); } catch(e){}
 
