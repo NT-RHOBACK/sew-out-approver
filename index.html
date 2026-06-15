@@ -1935,7 +1935,7 @@ async function impHandleFile(file){
       parsed.forEach(function(r){impAddRow(r);});
     } else {
       st.className='imp-st err';
-      st.textContent='⚠ Couldn't detect rows automatically — enter manually below.';
+      st.textContent='⚠ Couldn\'t detect rows automatically — enter manually below.';
       if(!_impRows.length) impAddRow({});
     }
   } catch(err){
