@@ -270,6 +270,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       <div class="us"><span id="swatchName"></span></div>
     </div>
     <div class="sw-prev" id="swPrev"><img id="swImg" alt="Swatch"></div>
+    <div id="keepSwatchWrap" style="display:none;margin-top:6px">
+      <label style="font-size:11px;color:var(--gray);cursor:pointer;display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="keepSwatchChk" style="width:13px;height:13px"> Keep this photo on Clear Form
+      </label>
+    </div>
     <div class="sec">5 &nbsp; Customer Reference Images <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">(optional &middot; page 2)</span></div>
     <div class="up" id="refZone">
       <input type="file" id="refFiles" accept="image/*" multiple>
@@ -661,7 +666,7 @@ function setF(id,v){document.getElementById(id).value=v;}
 document.getElementById('swatchFile').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   document.getElementById('swatchName').textContent=f.name;
-  toB64(f,b=>{swB64=b;swType=f.type;const img=document.getElementById('swImg');img.src='data:'+f.type+';base64,'+b;document.getElementById('swPrev').style.display='block';});
+  toB64(f,b=>{swB64=b;swType=f.type;const img=document.getElementById('swImg');img.src='data:'+f.type+';base64,'+b;document.getElementById('swPrev').style.display='block';document.getElementById('keepSwatchWrap').style.display='';});
 });
 const rz=document.getElementById('refZone');
 rz.addEventListener('dragover',e=>{e.preventDefault();rz.classList.add('over')});
@@ -1050,10 +1055,11 @@ function clear_form(){
   const _spSec = document.getElementById('spSections');   if (_spSec) _spSec.innerHTML = '';
   document.querySelectorAll('input[name=spMode]').forEach(rb => rb.checked = (rb.value === 'filled'));
   document.getElementById('fnIncludeWidth').checked=false;document.getElementById('fnIncludeVer').checked=false;
-  swB64=null;swType=null;refImgs=[];
-  document.getElementById('swPrev').style.display='none';document.getElementById('swatchName').textContent='';
+  const _keepSw = document.getElementById('keepSwatchChk');
+  if(!_keepSw || !_keepSw.checked){ swB64=null; swType=null; document.getElementById('swPrev').style.display='none'; document.getElementById('swatchName').textContent=''; document.getElementById('keepSwatchWrap').style.display='none'; document.getElementById('swatchFile').value=''; }
+  refImgs=[];
   document.getElementById('refGrid').innerHTML='';document.getElementById('parsedBadge').classList.remove('on');
-  ['swatchFile','refFiles','dstFile'].forEach(id=>document.getElementById(id).value='');
+  ['refFiles','dstFile'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('msg').textContent='';
   updateFnPreview();
 }
@@ -1193,20 +1199,28 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
       page.drawText(code + '  \u2014  ' + PLACEMENT_NAMES[code], { x: M_L + 12, y: y - 17, size: 11, color: NAVY, font: helvB });
       y -= 24 + 8;
 
-      // Rows as plain text lines
+      // Rows as plain text lines — category in bold, SKU in regular
       const lineMaxW = PAGE_W - M_L - M_R - 30;
       let remaining = 0;
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const text = _composeRowLine(r.category, r.sku);
-        if (!text) continue;
-        if (y < 60) {
-          remaining = rows.length - i;
-          break;
+        const cat = (r.category || '').trim();
+        const sku = (r.sku || '').trim();
+        if (!cat && !sku) continue;
+        if (y < 60) { remaining = rows.length - i; break; }
+        const fullText = _composeRowLine(r.category, r.sku);
+        const showCat = cat && cat.toLowerCase() !== 'unisex';
+        if (showCat) {
+          const catLabel = cat + '  —  ';
+          const catW = helvB.widthOfTextAtSize(catLabel, 9);
+          page.drawText(catLabel, { x: M_L + 18, y: y - 12, size: 9, color: NAVY, font: helvB });
+          const skuDisplay = _truncLine(sku, lineMaxW - catW, 10, helv);
+          page.drawText(skuDisplay, { x: M_L + 18 + catW, y: y - 12, size: 10, color: NAVY, font: helv });
+        } else {
+          const display = _truncLine(sku || cat, lineMaxW, 10, helv);
+          page.drawText(display, { x: M_L + 18, y: y - 12, size: 10, color: NAVY, font: helv });
         }
-        const display = _truncLine(text, lineMaxW, 10, helv);
-        page.drawText(display, { x: M_L + 18, y: y - 12, size: 10, color: NAVY, font: helv });
-        try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(text); tf.setFontSize(10); tf.addToPage(page,{x:M_L+10,y:y-15,width:lineMaxW+12,height:14,borderWidth:0}); } catch(e){}
+        try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(fullText); tf.setFontSize(10); tf.addToPage(page,{x:M_L+10,y:y-15,width:lineMaxW+12,height:14,borderWidth:0}); } catch(e){}
         y -= 16;
       }
       if (remaining > 0) {
@@ -1277,7 +1291,15 @@ async function generateSheet(data){
   setText('HEIGHT', (data.h || '').replace(/"/g,'').trim());
   setText('WIDTH',  (data.w || '').replace(/"/g,'').trim());
   setText('THREAD COLOR INSTRUCTIONS', data.thread);
-  setText('NOTES', data.notes);
+  // Append page-reference notes when extra pages are included
+  (function(){
+    const pageRefs = [];
+    let pg = 2;
+    if (data.refImgs && data.refImgs.length > 0) { pageRefs.push('↓ Reference images — page ' + pg++); }
+    if (data.specialProject && data.specialProject.include) { pageRefs.push('↓ Placement info — page ' + pg); }
+    const base = (data.notes || '').trimEnd();
+    setText('NOTES', pageRefs.length ? (base ? base + '\n' + pageRefs.join('\n') : pageRefs.join('\n')) : base);
+  })();
   setText('CUSTOMER SIGNATURE', data.signedBy);
 
   const setCheck = (name, on) => {
