@@ -2026,14 +2026,13 @@ function impParseText(raw){
     var winEnd=i+1;
     while(winEnd<lines.length && winEnd<i+6 && !lines[winEnd].match(/(\d{5,})[A-Za-z]{1,2}/)){winEnd++;}
     var winLines=lines.slice(i,winEnd);
-    // Size info: search window for W-H decimal pattern
+    // Size info: join window lines and anchor on "Inches" keyword to handle OCR hyphen vs space ambiguity
     var width='', height='';
-    for(var k=0;k<winLines.length;k++){
-      var sm=winLines[k].match(/(\d+\.\d+)-(\d+\.\d+)/);
-      if(sm){width=sm[1];height=sm[2];break;}
-    }
-    // Stitch count: last >999 number in window
     var winText=winLines.join(' ');
+    var inchAnchor=winText.match(/(\d+\.\d+)\s*[-–]?\s*(\d+\.\d+)\s+[Ii]nches/);
+    if(inchAnchor){width=inchAnchor[1];height=inchAnchor[2];}
+    else{var sm2=winText.match(/(\d+\.\d+)[-–](\d+\.\d+)/);if(sm2){width=sm2[1];height=sm2[2];}}
+    // Stitch count: last >999 number in window
     var allNums=winText.match(/\b(\d{3,6})\b/g)||[];
     var stitches=allNums.filter(function(n){return parseInt(n)>999;}).pop()||'';
     // Customer name: from EpicStitch title if found, else expand account prefix
