@@ -393,6 +393,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     </div>
     <div id="impImgWrap" style="display:none;margin-bottom:12px">
       <img id="impImg" style="max-width:100%;max-height:200px;border-radius:7px;border:1px solid var(--nmid)">
+      <button onclick="impReset()" style="margin-top:6px;display:block;font-size:11px;font-weight:700;background:var(--ntint);border:1px solid var(--nmid);border-radius:5px;padding:4px 12px;cursor:pointer;color:var(--navy);font-family:inherit">↺ Re-scan this image</button>
     </div>
     <div id="impSt" class="imp-st" style="display:none"></div>
 
@@ -1877,7 +1878,7 @@ function switchTab(tab) {
 
 
 // ── LOGO IMPORT TAB ────────────────────────────────────────────
-var _impRows=[], _impRowCount=0;
+var _impRows=[], _impRowCount=0, _impLastFile=null;
 
 // Paste handler (only active when Logo Import tab is visible)
 document.addEventListener('paste', function(e){
@@ -1910,6 +1911,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 async function impHandleFile(file){
   if(!file) return;
+  _impLastFile=file;
   var url=URL.createObjectURL(file);
   document.getElementById('impImg').src=url;
   document.getElementById('impImgWrap').style.display='';
@@ -2036,15 +2038,25 @@ function impAddRow(data){
     inp('H',data.height,'1.03','58px','')+
     inp('W',data.width,'2.06','58px','')+
     inp('Cost',data.cost||'5.25','5.25','52px','')+
-    '<td><button onclick="impDelRow('+n+')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;padding:2px 6px" title="Remove">&times;</button></td>';
+    '<td><button id="impDelBtn'+n+'" onclick="impToggleRow('+n+')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;padding:2px 6px" title="Hide row">&times;</button></td>';
   tbody.appendChild(tr);
 }
 function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
-function impDelRow(n){
-  var el=document.getElementById('impRow'+n);
-  if(el) el.remove();
-  _impRows=_impRows.filter(function(x){return x!==n;});
+function impToggleRow(n){
+  var tr=document.getElementById('impRow'+n);
+  var btn=document.getElementById('impDelBtn'+n);
+  if(!tr) return;
+  var hidden=tr.dataset.hidden==='1';
+  if(hidden){
+    tr.dataset.hidden='0';
+    tr.style.opacity='';tr.style.pointerEvents='';
+    btn.textContent='×';btn.title='Hide row';btn.style.color='#ccc';
+  } else {
+    tr.dataset.hidden='1';
+    tr.style.opacity='0.3';tr.style.pointerEvents='none';
+    btn.textContent='↩';btn.title='Restore row';btn.style.color='var(--navy)';btn.style.pointerEvents='auto';
+  }
 }
 
 function impCheckLen(n,el){
@@ -2057,6 +2069,7 @@ function impGenerate(){
   var rows=[];
   var trs=document.getElementById('impTbody').querySelectorAll('tr');
   trs.forEach(function(tr){
+    if(tr.dataset.hidden==='1') return;
     var id=tr.id.replace('impRow','');
     function gv(pfx){var el=document.getElementById('imp'+pfx+id);return el?el.value.trim():'';}
     var logo=gv('Logo'),ccode=gv('Ccode'),cname=gv('Cname'),ldesc=gv('Ldesc');
@@ -2079,6 +2092,14 @@ function impCopyAll(btn){
     btn.textContent='Copied!'; btn.classList.add('copied');
     setTimeout(function(){btn.textContent='Copy All';btn.classList.remove('copied');},2000);
   });
+}
+
+function impReset(){
+  if(!_impLastFile) return;
+  document.getElementById('impTbody').innerHTML='';
+  document.getElementById('impOutput').style.display='none';
+  _impRows=[]; _impRowCount=0;
+  impHandleFile(_impLastFile);
 }
 
 function impClear(){
