@@ -327,7 +327,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 <div class="card">
   <div class="card-hdr">
     <div><h1>Sew-Out Approver</h1><p>Rhoback Embroidery</p></div>
-    <span class="badge">v8.35</span>
+    <div class="hdr-actions">
+      <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
+      <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
+      <span class="badge">v8.35</span>
+    </div>
   </div>
   <div class="body">
     <div class="sec">1 &nbsp; Sew-Out PDF</div>
@@ -421,6 +425,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 
     <div class="btn-row" style="margin-top:14px">
       <button class="gen" onclick="impGenerate()">&#8595; Generate Copy Row</button>
+      <button class="clr" onclick="impClear()">Clear</button>
     </div>
 
     <div id="impOutput" style="display:none;margin-top:18px">
@@ -1500,6 +1505,7 @@ function apClear() {
   apInitSigDate();
   apUpdateSigPreview();
   document.getElementById('apDlBtn').disabled = true;
+  document.getElementById('apDlBtnTop').disabled = true;
   document.getElementById('apMsg').textContent = '';
   apState2 = 'ok';
   document.getElementById('apBtnOk').className = 'ap ok';
@@ -1546,6 +1552,7 @@ async function apHandlePdf(file) {
     document.getElementById('apInfoTxt').innerHTML = parts.join('&ensp;&bull;&ensp;');
     document.getElementById('apInfoStrip').classList.add('on');
     document.getElementById('apDlBtn').disabled = false;
+    document.getElementById('apDlBtnTop').disabled = false;
     apUpdateSigPreview();
     document.getElementById('apMsg').textContent = '';
   } catch(e) {
