@@ -1953,12 +1953,12 @@ function impParseText(raw){
       if(nm){titleCname=nm[1].trim();break;}
     }
   }
-  var dataLines=lines.filter(function(l){return !/^Logo\s*ID/i.test(l);});
   var parsed=[];
-  dataLines.forEach(function(line){
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
     // Logo ID: 5+ digits + 1-2 letters
     var logoIdMatch=line.match(/(\d{5,})[A-Za-z]{1,2}/);
-    if(!logoIdMatch) return;
+    if(!logoIdMatch) continue;
     var ccode=logoIdMatch[1];
     // Description: AccountName_LogoDesc_WidthIn_v#
     var descMatch=line.match(/([A-Za-z][A-Za-z0-9]+_[A-Za-z0-9]+_[\d.]+in_v\d+)/);
@@ -1967,22 +1967,29 @@ function impParseText(raw){
     if(fullDesc){
       var parts=fullDesc.split('_');
       var sizeIdx=-1;
-      for(var i=0;i<parts.length;i++){if(/^\d+\.?\d*in$/.test(parts[i])){sizeIdx=i;break;}}
+      for(var j=0;j<parts.length;j++){if(/^\d+\.?\d*in$/.test(parts[j])){sizeIdx=j;break;}}
       if(sizeIdx>1) ldesc=parts.slice(1,sizeIdx).join(' ');
     }
-    // Size info: W-H — "Inches" may be on next OCR line, so match decimal-dash-decimal only
-    var sizeMatch=line.match(/(\d+\.\d+)-(\d+\.\d+)/);
+    // Build a search window: current line + following lines until the next logo ID (max 5)
+    var winEnd=i+1;
+    while(winEnd<lines.length && winEnd<i+6 && !lines[winEnd].match(/(\d{5,})[A-Za-z]{1,2}/)){winEnd++;}
+    var winLines=lines.slice(i,winEnd);
+    // Size info: search window for W-H decimal pattern
     var width='', height='';
-    if(sizeMatch){width=sizeMatch[1];height=sizeMatch[2];}
-    // Stitch count: last 4-6 digit number on line (>999 avoids years/thread counts)
-    var nums=line.match(/\b(\d{3,6})\b/g)||[];
-    var stitches=nums.filter(function(n){return parseInt(n)>999;}).pop()||'';
+    for(var k=0;k<winLines.length;k++){
+      var sm=winLines[k].match(/(\d+\.\d+)-(\d+\.\d+)/);
+      if(sm){width=sm[1];height=sm[2];break;}
+    }
+    // Stitch count: last >999 number in window
+    var winText=winLines.join(' ');
+    var allNums=winText.match(/\b(\d{3,6})\b/g)||[];
+    var stitches=allNums.filter(function(n){return parseInt(n)>999;}).pop()||'';
     // Customer name: from EpicStitch title if found, else expand account prefix
     var acct=fullDesc?fullDesc.split('_')[0]:'';
     var cname=titleCname||impExpandName(acct);
     var logo=fullDesc?fullDesc+'.png':'';
     parsed.push({logo:logo,ccode:ccode,cname:cname,ldesc:ldesc,stitches:stitches,height:height,width:width,cost:'5.25'});
-  });
+  }
   return parsed;
 }
 
