@@ -137,10 +137,15 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .sp-section{background:#f8f9fc;border:1px solid #dde1f0;border-radius:8px;padding:10px;margin-bottom:10px}
 .sp-section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .sp-section-name{flex:1;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:700;color:var(--navy);background:#fff;text-transform:uppercase;letter-spacing:.6px;font-family:inherit}
-.sp-row{display:flex;gap:8px;margin-bottom:5px;align-items:center}
-.sp-row-sku{flex:1;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy)}
+.sp-row{display:flex;gap:6px;margin-bottom:5px;align-items:center;flex-wrap:nowrap}
+.sp-row-gender{display:flex;gap:3px;flex-shrink:0}
+.sp-row-gender label{display:flex;align-items:center;gap:3px;font-size:10px;padding:4px 7px;border:1px solid #d1d5db;border-radius:5px;cursor:pointer;background:#fff;color:var(--gray);white-space:nowrap;user-select:none;transition:background .1s,border-color .1s}
+.sp-row-gender input[type=checkbox]{width:11px;height:11px;accent-color:var(--navy);cursor:pointer}
+.sp-gender-checked{background:var(--ntint)!important;border-color:var(--nmid)!important;color:var(--navy)!important;font-weight:700}
+.sp-row-type{width:110px;padding:5px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy)}
+.sp-row-color{flex:1;padding:5px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy)}
 .sp-row-code{width:74px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:var(--navy);text-align:center;font-weight:700;cursor:pointer}
-.sp-row-cat{width:155px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;font-family:inherit;background:#fff;color:var(--navy);cursor:pointer;flex-shrink:0}
+.sp-col-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);opacity:.7}
 .sp-placement-chip{flex:1;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:800;color:var(--navy);letter-spacing:.5px;border:1px solid rgba(0,0,0,.08)}
 .sp-add-picker{width:auto;padding:6px 12px;border:1px solid var(--nmid);border-radius:6px;font-size:11px;font-weight:700;background:var(--ntint);color:var(--navy);cursor:pointer;font-family:inherit;letter-spacing:.4px;text-transform:uppercase}
 .sp-add-picker:hover{background:#dde3f4;border-color:var(--navy)}
@@ -1147,12 +1152,13 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
   const isBlank = sp.mode === 'blank';
   const sections = sp.sections || {};
 
-  // Compose row text: '<category> <sku>' (no prefix if category is blank or Unisex)
-  function _composeRowLine(category, sku) {
-    const cat = (category || '').trim();
-    const s = (sku || '').trim();
-    if (!cat || cat.toLowerCase() === 'unisex') return s;
-    return cat + ' ' + s;
+  // Compose row text from gender/type/color (also handles legacy category/sku)
+  function _composeRowLine(r) {
+    const gender = (r.gender || r.category || '').trim();
+    const type   = (r.type || '').trim();
+    const color  = (r.color || r.sku || '').trim();
+    const parts = [gender, type, color].filter(Boolean);
+    return parts.join('  ·  ');
   }
 
   // Truncate a single line with ellipsis at the given fontSize so it fits in maxW
@@ -1199,28 +1205,26 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
       page.drawText(code + '  \u2014  ' + PLACEMENT_NAMES[code], { x: M_L + 12, y: y - 17, size: 11, color: NAVY, font: helvB });
       y -= 24 + 8;
 
-      // Rows as plain text lines — category in bold, SKU in regular
-      const lineMaxW = PAGE_W - M_L - M_R - 30;
+      // 3-column rows: Gender (bold) | Type | Color
+      const COL1_W = 110, COL2_W = 160, COL_GAP = 12;
+      const COL1_X = M_L + 18;
+      const COL2_X = COL1_X + COL1_W + COL_GAP;
+      const COL3_X = COL2_X + COL2_W + COL_GAP;
+      const COL3_W = PAGE_W - M_R - COL3_X;
+      const MUTED = rgb(0.35, 0.38, 0.48);
       let remaining = 0;
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
-        const cat = (r.category || '').trim();
-        const sku = (r.sku || '').trim();
-        if (!cat && !sku) continue;
+        const gender = (r.gender || r.category || '').trim();
+        const type   = (r.type || '').trim();
+        const color  = (r.color || r.sku || '').trim();
+        if (!gender && !type && !color) continue;
         if (y < 60) { remaining = rows.length - i; break; }
-        const fullText = _composeRowLine(r.category, r.sku);
-        const showCat = cat && cat.toLowerCase() !== 'unisex';
-        if (showCat) {
-          const catLabel = cat + '  —  ';
-          const catW = helvB.widthOfTextAtSize(catLabel, 9);
-          page.drawText(catLabel, { x: M_L + 18, y: y - 12, size: 9, color: NAVY, font: helvB });
-          const skuDisplay = _truncLine(sku, lineMaxW - catW, 10, helv);
-          page.drawText(skuDisplay, { x: M_L + 18 + catW, y: y - 12, size: 10, color: NAVY, font: helv });
-        } else {
-          const display = _truncLine(sku || cat, lineMaxW, 10, helv);
-          page.drawText(display, { x: M_L + 18, y: y - 12, size: 10, color: NAVY, font: helv });
-        }
-        try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(fullText); tf.setFontSize(10); tf.addToPage(page,{x:M_L+10,y:y-15,width:lineMaxW+12,height:14,borderWidth:0}); } catch(e){}
+        if (gender) page.drawText(_truncLine(gender, COL1_W, 9, helvB), { x: COL1_X, y: y - 12, size: 9, color: NAVY, font: helvB });
+        if (type)   page.drawText(_truncLine(type,   COL2_W, 10, helv),  { x: COL2_X, y: y - 12, size: 10, color: NAVY, font: helv });
+        if (color)  page.drawText(_truncLine(color,  COL3_W, 10, helv),  { x: COL3_X, y: y - 12, size: 10, color: MUTED, font: helv });
+        const fullText = _composeRowLine(r);
+        try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(fullText); tf.setFontSize(10); tf.addToPage(page,{x:M_L+10,y:y-15,width:PAGE_W-M_L-M_R-10,height:14,borderWidth:0}); } catch(e){}
         y -= 16;
       }
       if (remaining > 0) {
@@ -1691,7 +1695,7 @@ let _spData = {
 };
 
 function _spEnsureSection(code) {
-  if (!_spData.sections[code]) _spData.sections[code] = [{ category: '', sku: '' }];
+  if (!_spData.sections[code]) _spData.sections[code] = [{ gender: '', type: '', color: '' }];
 }
 function spAddSection(code) {
   if (!code) return;
@@ -1707,14 +1711,14 @@ function spDeleteSection(code) {
 }
 function spAddRow(code) {
   if (!_spData.sections[code]) return;
-  _spData.sections[code].push({ category: '', sku: '' });
+  _spData.sections[code].push({ gender: '', type: '', color: '' });
   spRenderEditor();
 }
 function spDeleteRow(code, ri) {
   if (!_spData.sections[code]) return;
   _spData.sections[code].splice(ri, 1);
   if (_spData.sections[code].length === 0) {
-    _spData.sections[code].push({ category: '', sku: '' });
+    _spData.sections[code].push({ gender: '', type: '', color: '' });
   }
   spRenderEditor();
 }
@@ -1755,27 +1759,43 @@ function spRenderEditor() {
       const rdiv = document.createElement('div');
       rdiv.className = 'sp-row';
 
-      // Category dropdown
-      const catSel = document.createElement('select');
-      catSel.className = 'sp-row-cat';
-      SP_CATEGORIES.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c || '\u2014';
-        catSel.appendChild(opt);
+      // Gender multi-select (3 checkboxes)
+      const genderWrap = document.createElement('div');
+      genderWrap.className = 'sp-row-gender';
+      const GENDERS = ["Men's", "Women's", "Toddler"];
+      const currentGenders = (row.gender || '').split(/\s*&\s*/).map(s => s.trim()).filter(Boolean);
+      function _genderUpdate() {
+        const checked = GENDERS.filter(g => genderWrap.querySelector('input[data-g="'+g+'"]')?.checked);
+        _spData.sections[code][ri].gender = checked.join(' & ');
+      }
+      GENDERS.forEach(g => {
+        const lbl = document.createElement('label');
+        const chk = document.createElement('input');
+        chk.type = 'checkbox'; chk.setAttribute('data-g', g);
+        chk.checked = currentGenders.includes(g);
+        if (chk.checked) lbl.classList.add('sp-gender-checked');
+        chk.onchange = () => { lbl.classList.toggle('sp-gender-checked', chk.checked); _genderUpdate(); };
+        lbl.appendChild(chk);
+        lbl.appendChild(document.createTextNode(' ' + g));
+        genderWrap.appendChild(lbl);
       });
-      catSel.value = row.category;
-      catSel.onchange = (e) => { _spData.sections[code][ri].category = e.target.value; };
-      rdiv.appendChild(catSel);
+      rdiv.appendChild(genderWrap);
 
-      // SKU input
-      const skuInp = document.createElement('input');
-      skuInp.type = 'text';
-      skuInp.className = 'sp-row-sku';
-      skuInp.placeholder = 'Garment SKU (e.g. Polo - TPC Sawgrass Course Map 2.0)';
-      skuInp.value = row.sku;
-      skuInp.oninput = (e) => { _spData.sections[code][ri].sku = e.target.value; };
-      rdiv.appendChild(skuInp);
+      // Garment type input
+      const typeInp = document.createElement('input');
+      typeInp.type = 'text'; typeInp.className = 'sp-row-type';
+      typeInp.placeholder = 'Type (e.g. Polo)';
+      typeInp.value = row.type || '';
+      typeInp.oninput = (e) => { _spData.sections[code][ri].type = e.target.value; };
+      rdiv.appendChild(typeInp);
+
+      // Color input
+      const colorInp = document.createElement('input');
+      colorInp.type = 'text'; colorInp.className = 'sp-row-color';
+      colorInp.placeholder = 'Color (e.g. Solid Fleet Navy)';
+      colorInp.value = row.color || '';
+      colorInp.oninput = (e) => { _spData.sections[code][ri].color = e.target.value; };
+      rdiv.appendChild(colorInp);
 
       // Delete row
       const rdel = document.createElement('button');
@@ -1851,7 +1871,7 @@ function spInit() {
     editor.style.display = chk.checked ? '' : 'none';
     if (chk.checked && Object.keys(_spData.sections).length === 0) {
       // Seed with Left Chest (most common placement)
-      _spData.sections['LC'] = [{ category: '', sku: '' }];
+      _spData.sections['LC'] = [{ gender: '', type: '', color: '' }];
       spRenderEditor();
       spUpdateProjectName();
     }
@@ -1892,7 +1912,7 @@ function spImpMode(mode){document.getElementById('spImpPasteArea').style.display
 function spImpParseTSV(text){return text.trim().split('\n').map(l=>l.split('\t').map(c=>c.replace(/^"|"$/g,'').trim()));}
 function spImpParseCSV(text){return text.trim().split('\n').map(line=>{const row=[];let cur='',inQ=false;for(const ch of line){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){row.push(cur.trim());cur='';}else{cur+=ch;}}row.push(cur.trim());return row;});}
 function spImpSetRows(rows){if(!rows||rows.length<2)return;_spImpRows=rows;const headers=rows[0];const sel=document.getElementById('spImpColSel');sel.innerHTML='';let has=false;for(let i=1;i<headers.length;i++){if(!headers[i])continue;const o=document.createElement('option');o.value=i;o.textContent=headers[i];sel.appendChild(o);has=true;}document.getElementById('spImpColWrap').style.display=has&&sel.options.length>1?'':'none';spImpUpdateUI();}
-function spImpParseRows(rows,ci){const sec={};let cat='';for(let i=1;i<rows.length;i++){const sku=(rows[i][0]||'').trim();const code=((rows[i][ci]||'').trim().toUpperCase());if(!sku)continue;if(!code){const m=_SP_CAT_MAP[sku.toUpperCase().trim()];if(m)cat=m;continue;}if(!['LC','CC','CF','RS','LS'].includes(code))continue;if(!sec[code])sec[code]=[];sec[code].push({category:cat,sku});}return sec;}
+function spImpParseRows(rows,ci){const sec={};let gender='';for(let i=1;i<rows.length;i++){const rawSku=(rows[i][0]||'').trim();const code=((rows[i][ci]||'').trim().toUpperCase());if(!rawSku)continue;if(!code){const m=_SP_CAT_MAP[rawSku.toUpperCase().trim()];if(m)gender=m;continue;}if(!['LC','CC','CF','RS','LS'].includes(code))continue;if(!sec[code])sec[code]=[];const dashIdx=rawSku.indexOf(' - ');const type=dashIdx>=0?rawSku.slice(0,dashIdx).trim():rawSku;const color=dashIdx>=0?rawSku.slice(dashIdx+3).trim():'';sec[code].push({gender,type,color});}return sec;}
 function spImpUpdateUI(){const has=!!_spImpRows&&_spImpRows.length>1;const btn=document.getElementById('spImpApplyBtn');const prev=document.getElementById('spImpPreview');if(btn){btn.disabled=!has;btn.style.opacity=has?'1':'.4';}if(has){const ci=parseInt(document.getElementById('spImpColSel').value)||1;const p=spImpParseRows(_spImpRows,ci);const tot=Object.values(p).reduce((s,a)=>s+a.length,0);const codes=Object.keys(p).join(', ');if(prev){prev.style.display=tot>0?'':'none';prev.textContent=`Found ${tot} item(s) across placements: ${codes||'none'}`;}}else if(prev){prev.style.display='none';}}
 function spImpApply(){if(!_spImpRows)return;const ci=parseInt(document.getElementById('spImpColSel').value)||1;const sections=spImpParseRows(_spImpRows,ci);if(!Object.keys(sections).length){alert('No placement data found — check which column is selected.');return;}_spData.sections=sections;_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name="spMode"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
 document.addEventListener('DOMContentLoaded',function(){const ta=document.getElementById('spImpPasteTxt');if(ta)ta.addEventListener('input',function(){if(!this.value.trim()){_spImpRows=null;spImpUpdateUI();return;}spImpSetRows(spImpParseTSV(this.value));});const fi=document.getElementById('spImpFile');if(fi)fi.addEventListener('change',function(){const file=this.files[0];if(!file)return;document.getElementById('spImpFileName').textContent=file.name;const ext=file.name.split('.').pop().toLowerCase();if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){alert('SheetJS not loaded. Try CSV instead.');return;}const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];spImpSetRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));spImpUpdateUI();};r.readAsArrayBuffer(file);}else{const r=new FileReader();r.onload=e=>{spImpSetRows(ext==='tsv'?spImpParseTSV(e.target.result):spImpParseCSV(e.target.result));spImpUpdateUI();};r.readAsText(file);}});const sel=document.getElementById('spImpColSel');if(sel)sel.addEventListener('change',spImpUpdateUI);});
