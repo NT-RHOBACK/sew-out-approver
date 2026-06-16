@@ -1990,6 +1990,8 @@ function impExpandName(s){
   // Split PascalCase and expand common abbreviations
   var exp=s.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g,'$1 $2');
   exp=exp.replace(/\bCC\b/g,'Country Club').replace(/\bGC\b/g,'Golf Club');
+  // Rejoin Mc/Mac prefixes that PascalCase splitting incorrectly breaks
+  exp=exp.replace(/\bMc\s+([A-Z])/g,'Mc$1').replace(/\bMac\s+([A-Z])/g,'Mac$1');
   return exp.trim();
 }
 
@@ -2132,4 +2134,16 @@ function impClear(){
         <div class="crop-handle se" data-handle="se"></div>
         <div class="crop-handle s"  data-handle="s"></div>
         <div class="crop-handle sw" data-handle="sw"></div>
-        <div class
+        <div class="crop-handle w"  data-handle="w"></div>
+      </div>
+    </div>
+    <div class="crop-actions">
+      <span class="lhs">Tip: ↻ rotates first if your photo is sideways</span>
+      <button onclick="cropRotate()">↻ Rotate 90°</button>
+      <button onclick="cropCancel()">Cancel</button>
+      <button class="primary" onclick="cropApply()">✓ Apply</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
