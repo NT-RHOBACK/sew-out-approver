@@ -14,7 +14,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header{background:#fff;padding:8px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e6ef}
 .header-brand{display:flex;align-items:center;gap:10px}
 .header-title{font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--navy)}
-.tab-bar{background:#fff;border-bottom:1px solid #e2e6ef;padding:0 24px;display:flex;overflow-x:auto;align-items:stretch}
+.tab-bar{background:#fff;border-bottom:1px solid #e2e6ef;padding:0 24px;display:flex;overflow-x:auto;align-items:stretch;justify-content:space-between}
+.tab-bar-left{display:flex;align-items:stretch}
+.tab-clear-btn{margin:auto 0;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:transparent;border:1.5px solid #d1d5db;border-radius:6px;color:var(--gray);cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s}
+.tab-clear-btn:hover{border-color:var(--navy);color:var(--navy)}
 .tab-seg{display:inline-flex;align-items:center;gap:2px;padding:4px;background:var(--lgray);border:1px solid var(--nmid);border-radius:10px}
 .tab-btn{padding:12px 18px;font-size:14px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit;transition:color .15s}
 .tab-btn.active{color:var(--navy);border-bottom-color:var(--red)}
@@ -188,9 +191,12 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
   </div>
 </div>
 <div class="tab-bar">
-  <button class="tab-btn active" id="tabBtnGen" onclick="switchTab('gen')">Generator</button>
-  <button class="tab-btn" id="tabBtnApp" onclick="switchTab('app')">Approver</button>
-  <button class="tab-btn" id="tabBtnImp" onclick="switchTab('imp')">Logo Import</button>
+  <div class="tab-bar-left">
+    <button class="tab-btn active" id="tabBtnGen" onclick="switchTab('gen')">Generator</button>
+    <button class="tab-btn" id="tabBtnApp" onclick="switchTab('app')">Approver</button>
+    <button class="tab-btn" id="tabBtnImp" onclick="switchTab('imp')">Logo Import</button>
+  </div>
+  <button class="tab-clear-btn" onclick="tabClearActive()">Clear</button>
 </div>
 <div class="layout">
 <div class="page" id="tabGen">
@@ -1916,6 +1922,14 @@ function spImpParseRows(rows,ci){const sec={};let gender='';for(let i=1;i<rows.l
 function spImpUpdateUI(){const has=!!_spImpRows&&_spImpRows.length>1;const btn=document.getElementById('spImpApplyBtn');const prev=document.getElementById('spImpPreview');if(btn){btn.disabled=!has;btn.style.opacity=has?'1':'.4';}if(has){const ci=parseInt(document.getElementById('spImpColSel').value)||1;const p=spImpParseRows(_spImpRows,ci);const tot=Object.values(p).reduce((s,a)=>s+a.length,0);const codes=Object.keys(p).join(', ');if(prev){prev.style.display=tot>0?'':'none';prev.textContent=`Found ${tot} item(s) across placements: ${codes||'none'}`;}}else if(prev){prev.style.display='none';}}
 function spImpApply(){if(!_spImpRows)return;const ci=parseInt(document.getElementById('spImpColSel').value)||1;const sections=spImpParseRows(_spImpRows,ci);if(!Object.keys(sections).length){alert('No placement data found — check which column is selected.');return;}_spData.sections=sections;_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name="spMode"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
 document.addEventListener('DOMContentLoaded',function(){const ta=document.getElementById('spImpPasteTxt');if(ta)ta.addEventListener('input',function(){if(!this.value.trim()){_spImpRows=null;spImpUpdateUI();return;}spImpSetRows(spImpParseTSV(this.value));});const fi=document.getElementById('spImpFile');if(fi)fi.addEventListener('change',function(){const file=this.files[0];if(!file)return;document.getElementById('spImpFileName').textContent=file.name;const ext=file.name.split('.').pop().toLowerCase();if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){alert('SheetJS not loaded. Try CSV instead.');return;}const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];spImpSetRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));spImpUpdateUI();};r.readAsArrayBuffer(file);}else{const r=new FileReader();r.onload=e=>{spImpSetRows(ext==='tsv'?spImpParseTSV(e.target.result):spImpParseCSV(e.target.result));spImpUpdateUI();};r.readAsText(file);}});const sel=document.getElementById('spImpColSel');if(sel)sel.addEventListener('change',spImpUpdateUI);});
+function tabClearActive(){
+  var gen=document.getElementById('tabGen');
+  var app=document.getElementById('tabApp');
+  var imp=document.getElementById('tabImp');
+  if(gen&&gen.style.display!=='none') clear_form();
+  else if(app&&app.style.display!=='none') apClear();
+  else if(imp&&imp.style.display!=='none') impClear();
+}
 function switchTab(tab) {
   var gen=document.getElementById('tabGen'),app=document.getElementById('tabApp'),imp=document.getElementById('tabImp');
   var bg=document.getElementById('tabBtnGen'),ba=document.getElementById('tabBtnApp'),bi=document.getElementById('tabBtnImp');
