@@ -1299,8 +1299,8 @@ async function generateSheet(data){
   (function(){
     const pageRefs = [];
     let pg = 2;
-    if (data.refImgs && data.refImgs.length > 0) { pageRefs.push('↓ Reference images — page ' + pg++); }
-    if (data.specialProject && data.specialProject.include) { pageRefs.push('↓ Placement info — page ' + pg); }
+    if (data.refImgs && data.refImgs.length > 0) { pageRefs.push('>> Reference images: page ' + pg++); }
+    if (data.specialProject && data.specialProject.include) { pageRefs.push('>> Placement info: page ' + pg); }
     const base = (data.notes || '').trimEnd();
     setText('NOTES', pageRefs.length ? (base ? base + '\n' + pageRefs.join('\n') : pageRefs.join('\n')) : base);
   })();
