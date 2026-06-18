@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.42</span>
+      <span class="badge">v8.43</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.42</span>
+      <span class="badge">v8.43</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.42</span>
+      <span class="badge">v8.43</span>
     </div>
   </div>
   <div class="body">
@@ -2027,16 +2027,26 @@ function impParseText(raw){
     var logoIdMatch=line.match(/(\d{5,})[A-Za-z]{1,2}/);
     if(!logoIdMatch) continue;
     var ccode=logoIdMatch[1];
+    // Build search window FIRST (needed for description and size extraction)
+    var winEnd=i+1;
+    while(winEnd<lines.length && winEnd<i+9 && !lines[winEnd].match(/(\d{5,})[A-Za-z]{1,2}/)){winEnd++;}
+    var winLines=lines.slice(i,winEnd);
+    var winText=winLines.join(' ');
     // Description: AccountName_LogoDesc_WidthIn_v# — hyphens allowed (e.g. IndianHill-IL_...)
     var _DST_RE=/([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/;
     var descMatch=line.match(_DST_RE);
     var fullDesc=descMatch?descMatch[1]:'';
-    // Fallback 1: description may be on next OCR line (wrapping) — search window text
+    // Fallback 1: description on next OCR line — search full window (no spaces, no backtracking risk)
     if(!fullDesc){var wdm=winText.match(_DST_RE);if(wdm)fullDesc=wdm[1];}
-    // Fallback 2: OCR may insert spaces within segments — allow spaces then normalize
+    // Fallback 2: OCR inserts spaces within a segment — line only (prevents backtracking on long winText)
     if(!fullDesc){
-      var dm2=winText.match(/([A-Za-z][A-Za-z0-9-]+_[A-Za-z0-9-][A-Za-z0-9- ]+?_[\d.]+in_v\d+)/);
+      var dm2=line.match(/([A-Za-z][A-Za-z0-9-]+_[A-Za-z0-9-][A-Za-z0-9 ]+?_[\d.]+in_v\d+)/);
       if(dm2) fullDesc=dm2[1].replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2').replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2');
+    }
+    // Fallback 3: description wraps at hyphen across OCR lines — join hyphen fragment with continuation
+    if(!fullDesc){
+      var hm=winText.match(/([A-Za-z][A-Za-z0-9]*-)\s+([A-Za-z][A-Za-z0-9_]*_[\d.]+in_v\d+)/);
+      if(hm)fullDesc=hm[1]+hm[2];
     }
     var ldesc='';
     if(fullDesc){
@@ -2045,26 +2055,26 @@ function impParseText(raw){
       for(var j=0;j<parts.length;j++){if(/^\d+\.?\d*in$/.test(parts[j])){sizeIdx=j;break;}}
       if(sizeIdx>1) ldesc=parts.slice(1,sizeIdx).join(' ');
     }
-    // Build a search window: current line + following lines until the next logo ID (max 8 lines)
-    var winEnd=i+1;
-    while(winEnd<lines.length && winEnd<i+9 && !lines[winEnd].match(/(\d{5,})[A-Za-z]{1,2}/)){winEnd++;}
-    var winLines=lines.slice(i,winEnd);
-    var winText=winLines.join(' ');
-    // Width: pull directly from DST filename (most reliable — already parsed in fullDesc)
+    // Width: pull directly from DST filename (most reliable)
     var width='', height='';
     if(fullDesc){var fwm=fullDesc.match(/_(\d+\.?\d*)in_/i);if(fwm)width=fwm[1];}
-    // Height: find the second size decimal in the OCR window, anchored on any "inch" variation
+    // Height: anchored on "inch" keyword in window
     var inchM=winText.match(/(\d+\.\d+)\s*[-–]?\s*(\d+\.\d+)\s*inch/i);
     if(inchM){if(!width)width=inchM[1];height=inchM[2];}
     else{
-      // Fallback: find any decimal pair, skip ones that match the filename width
       var dm=winText.match(/(\d+\.\d+)\s*[-–]\s*(\d+\.\d+)/);
       if(dm){if(!width)width=dm[1];height=dm[2];}
     }
-    // Stitch count: last >999 number in window
-    var allNums=winText.match(/\b(\d{3,6})\b/g)||[];
-    // Filter year-range numbers (1800-2030) to avoid reading text from logo PNG artwork
-    var stitches=allNums.filter(function(n){var v=parseInt(n);return v>999&&!(v>=1800&&v<=2030);}).pop()||'';
+    // Stitch count: primary — extract from "X.XX-X.XX Inches ThreadCount StitchCount" table structure
+    var stitches='';
+    var inchStitch=winText.match(/inches?\s+(\d+)\s+(\d{3,6})\b/i);
+    if(inchStitch){stitches=inchStitch[2];}
+    else{
+      // Fallback: last >999 number in window, prefer non-year-range to avoid logo PNG founding year text
+      var allNums=winText.match(/\b(\d{3,6})\b/g)||[];
+      var nonYr=allNums.filter(function(n){var v=parseInt(n);return v>999&&!(v>=1800&&v<=2030);}).pop()||'';
+      stitches=nonYr||(allNums.filter(function(n){return parseInt(n)>999;}).pop()||'');
+    }
     // Customer name: from EpicStitch title if found, else expand account prefix
     var acct=fullDesc?fullDesc.split('_')[0]:'';
     var cname=titleCname||impExpandName(acct);
@@ -2241,4 +2251,16 @@ function impClear(){
         <div class="crop-handle se" data-handle="se"></div>
         <div class="crop-handle s"  data-handle="s"></div>
         <div class="crop-handle sw" data-handle="sw"></div>
-        <div class
+        <div class="crop-handle w"  data-handle="w"></div>
+      </div>
+    </div>
+    <div class="crop-actions">
+      <span class="lhs">Tip: ↻ rotates first if your photo is sideways</span>
+      <button onclick="cropRotate()">↻ Rotate 90°</button>
+      <button onclick="cropCancel()">Cancel</button>
+      <button class="primary" onclick="cropApply()">✓ Apply</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
