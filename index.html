@@ -2026,9 +2026,14 @@ function impParseText(raw){
     var logoIdMatch=line.match(/(\d{5,})[A-Za-z]{1,2}/);
     if(!logoIdMatch) continue;
     var ccode=logoIdMatch[1];
-    // Description: AccountName_LogoDesc_WidthIn_v#
-    var descMatch=line.match(/([A-Za-z][A-Za-z0-9]+_[A-Za-z0-9]+_[\d.]+in_v\d+)/);
+    // Description: AccountName_LogoDesc_WidthIn_v# (multi-segment descriptions OK)
+    var descMatch=line.match(/([A-Za-z][A-Za-z0-9]+(?:_[A-Za-z0-9]+)*_[\d.]+in_v\d+)/);
     var fullDesc=descMatch?descMatch[1]:'';
+    // Fallback: OCR may insert spaces within filename segments — allow spaces then normalize
+    if(!fullDesc){
+      var dm2=line.match(/([A-Za-z][A-Za-z0-9]+_[A-Za-z0-9][A-Za-z0-9 ]+?_[\d.]+in_v\d+)/);
+      if(dm2) fullDesc=dm2[1].replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2').replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2');
+    }
     var ldesc='';
     if(fullDesc){
       var parts=fullDesc.split('_');
