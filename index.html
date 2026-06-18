@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.41</span>
+      <span class="badge">v8.42</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.41</span>
+      <span class="badge">v8.42</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.41</span>
+      <span class="badge">v8.42</span>
     </div>
   </div>
   <div class="body">
@@ -2010,12 +2010,13 @@ async function impHandleFile(file){
 function impParseText(raw){
   var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
   // Extract customer name from EpicStitch title line: "Account Name (CUSTxxxxxxx)"
+  // CUST regex uses [A-Za-z0-9]+ to handle OCR misreading 0 as O
   var titleCname='';
   for(var ti=0;ti<lines.length;ti++){
-    var tm=lines[ti].match(/^(.+?)\s*\(CUST\d+\)/i);
+    var tm=lines[ti].match(/^(.+?)\s*\(CUST[A-Za-z0-9]+\)/i);
     if(tm){titleCname=tm[1].trim();break;}
     if(/Insignias\s+File\s+Manager/i.test(lines[ti])&&ti+1<lines.length){
-      var nm=lines[ti+1].match(/^(.+?)\s*\(CUST\d+\)/i);
+      var nm=lines[ti+1].match(/^(.+?)\s*\(CUST[A-Za-z0-9]+\)/i);
       if(nm){titleCname=nm[1].trim();break;}
     }
   }
@@ -2026,12 +2027,15 @@ function impParseText(raw){
     var logoIdMatch=line.match(/(\d{5,})[A-Za-z]{1,2}/);
     if(!logoIdMatch) continue;
     var ccode=logoIdMatch[1];
-    // Description: AccountName_LogoDesc_WidthIn_v# (multi-segment descriptions OK)
-    var descMatch=line.match(/([A-Za-z][A-Za-z0-9]+(?:_[A-Za-z0-9]+)*_[\d.]+in_v\d+)/);
+    // Description: AccountName_LogoDesc_WidthIn_v# — hyphens allowed (e.g. IndianHill-IL_...)
+    var _DST_RE=/([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/;
+    var descMatch=line.match(_DST_RE);
     var fullDesc=descMatch?descMatch[1]:'';
-    // Fallback: OCR may insert spaces within filename segments — allow spaces then normalize
+    // Fallback 1: description may be on next OCR line (wrapping) — search window text
+    if(!fullDesc){var wdm=winText.match(_DST_RE);if(wdm)fullDesc=wdm[1];}
+    // Fallback 2: OCR may insert spaces within segments — allow spaces then normalize
     if(!fullDesc){
-      var dm2=line.match(/([A-Za-z][A-Za-z0-9]+_[A-Za-z0-9][A-Za-z0-9 ]+?_[\d.]+in_v\d+)/);
+      var dm2=winText.match(/([A-Za-z][A-Za-z0-9-]+_[A-Za-z0-9-][A-Za-z0-9- ]+?_[\d.]+in_v\d+)/);
       if(dm2) fullDesc=dm2[1].replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2').replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2');
     }
     var ldesc='';
@@ -2059,7 +2063,8 @@ function impParseText(raw){
     }
     // Stitch count: last >999 number in window
     var allNums=winText.match(/\b(\d{3,6})\b/g)||[];
-    var stitches=allNums.filter(function(n){return parseInt(n)>999;}).pop()||'';
+    // Filter year-range numbers (1800-2030) to avoid reading text from logo PNG artwork
+    var stitches=allNums.filter(function(n){var v=parseInt(n);return v>999&&!(v>=1800&&v<=2030);}).pop()||'';
     // Customer name: from EpicStitch title if found, else expand account prefix
     var acct=fullDesc?fullDesc.split('_')[0]:'';
     var cname=titleCname||impExpandName(acct);
@@ -2236,16 +2241,4 @@ function impClear(){
         <div class="crop-handle se" data-handle="se"></div>
         <div class="crop-handle s"  data-handle="s"></div>
         <div class="crop-handle sw" data-handle="sw"></div>
-        <div class="crop-handle w"  data-handle="w"></div>
-      </div>
-    </div>
-    <div class="crop-actions">
-      <span class="lhs">Tip: ↻ rotates first if your photo is sideways</span>
-      <button onclick="cropRotate()">↻ Rotate 90°</button>
-      <button onclick="cropCancel()">Cancel</button>
-      <button class="primary" onclick="cropApply()">✓ Apply</button>
-    </div>
-  </div>
-</div>
-</body>
-</html>
+        <div class
