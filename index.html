@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.43</span>
+      <span class="badge">v8.44</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.43</span>
+      <span class="badge">v8.44</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.43</span>
+      <span class="badge">v8.44</span>
     </div>
   </div>
   <div class="body">
@@ -2013,10 +2013,10 @@ function impParseText(raw){
   // CUST regex uses [A-Za-z0-9]+ to handle OCR misreading 0 as O
   var titleCname='';
   for(var ti=0;ti<lines.length;ti++){
-    var tm=lines[ti].match(/^(.+?)\s*\(CUST[A-Za-z0-9]+\)/i);
+    var tm=lines[ti].match(/^(.+?)\s*\(CUST\s*[A-Za-z0-9]+\)/i);
     if(tm){titleCname=tm[1].trim();break;}
     if(/Insignias\s+File\s+Manager/i.test(lines[ti])&&ti+1<lines.length){
-      var nm=lines[ti+1].match(/^(.+?)\s*\(CUST[A-Za-z0-9]+\)/i);
+      var nm=lines[ti+1].match(/^(.+?)\s*\(CUST\s*[A-Za-z0-9]+\)/i);
       if(nm){titleCname=nm[1].trim();break;}
     }
   }
@@ -2032,6 +2032,8 @@ function impParseText(raw){
     while(winEnd<lines.length && winEnd<i+9 && !lines[winEnd].match(/(\d{5,})[A-Za-z]{1,2}/)){winEnd++;}
     var winLines=lines.slice(i,winEnd);
     var winText=winLines.join(' ');
+    // Normalize OCR decimal-point artifacts: "1 50" or "1,50" → "1.50" for better size matching
+    var winNorm=winText.replace(/\b(\d)\s(\d{2})\b/g,'$1.$2').replace(/\b(\d),(\d{2})\b/g,'$1.$2');
     // Description: AccountName_LogoDesc_WidthIn_v# — hyphens allowed (e.g. IndianHill-IL_...)
     var _DST_RE=/([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/;
     var descMatch=line.match(_DST_RE);
@@ -2045,7 +2047,7 @@ function impParseText(raw){
     }
     // Fallback 3: description wraps at hyphen across OCR lines — join hyphen fragment with continuation
     if(!fullDesc){
-      var hm=winText.match(/([A-Za-z][A-Za-z0-9]*-)\s+([A-Za-z][A-Za-z0-9_]*_[\d.]+in_v\d+)/);
+      var hm=winText.match(/([A-Za-z][A-Za-z0-9]*-)\s+([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/);
       if(hm)fullDesc=hm[1]+hm[2];
     }
     var ldesc='';
@@ -2058,20 +2060,20 @@ function impParseText(raw){
     // Width: pull directly from DST filename (most reliable)
     var width='', height='';
     if(fullDesc){var fwm=fullDesc.match(/_(\d+\.?\d*)in_/i);if(fwm)width=fwm[1];}
-    // Height: anchored on "inch" keyword in window
-    var inchM=winText.match(/(\d+\.\d+)\s*[-–]?\s*(\d+\.\d+)\s*inch/i);
+    // Height: use normalized window (fixes OCR reading "1.50" as "1 50")
+    var inchM=winNorm.match(/(\d+\.\d+)\s*[-–—]?\s*(\d+\.\d+)\s*inch/i);
     if(inchM){if(!width)width=inchM[1];height=inchM[2];}
     else{
-      var dm=winText.match(/(\d+\.\d+)\s*[-–]\s*(\d+\.\d+)/);
+      var dm=winNorm.match(/(\d+\.\d+)\s*[-–—]\s*(\d+\.\d+)/);
       if(dm){if(!width)width=dm[1];height=dm[2];}
     }
     // Stitch count: primary — extract from "X.XX-X.XX Inches ThreadCount StitchCount" table structure
     var stitches='';
-    var inchStitch=winText.match(/inches?\s+(\d+)\s+(\d{3,6})\b/i);
+    var inchStitch=winNorm.match(/inches?\s+(\d+)\s+(\d{3,6})\b/i);
     if(inchStitch){stitches=inchStitch[2];}
     else{
       // Fallback: last >999 number in window, prefer non-year-range to avoid logo PNG founding year text
-      var allNums=winText.match(/\b(\d{3,6})\b/g)||[];
+      var allNums=winNorm.match(/\b(\d{3,6})\b/g)||[];
       var nonYr=allNums.filter(function(n){var v=parseInt(n);return v>999&&!(v>=1800&&v<=2030);}).pop()||'';
       stitches=nonYr||(allNums.filter(function(n){return parseInt(n)>999;}).pop()||'');
     }
