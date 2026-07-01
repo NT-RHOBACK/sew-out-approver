@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.44</span>
+      <span class="badge">v8.45</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.44</span>
+      <span class="badge">v8.45</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.44</span>
+      <span class="badge">v8.45</span>
     </div>
   </div>
   <div class="body">
@@ -2067,6 +2067,8 @@ function impParseText(raw){
       var dm=winNorm.match(/(\d+\.\d+)\s*[-–—]\s*(\d+\.\d+)/);
       if(dm){if(!width)width=dm[1];height=dm[2];}
     }
+    // v8.45: OCR drops decimal points — "163-136 Inches" = 1.63 x 1.36
+    if(!height){var intM=winNorm.match(/\b(\d{2,3})\s*[-–—]\s*(\d{2,3})\s*inch/i);if(intM){if(!width)width=(parseInt(intM[1])/100).toFixed(2);height=(parseInt(intM[2])/100).toFixed(2);}}
     // Stitch count: primary — extract from "X.XX-X.XX Inches ThreadCount StitchCount" table structure
     var stitches='';
     var inchStitch=winNorm.match(/inches?\s+(\d+)\s+(\d{3,6})\b/i);
