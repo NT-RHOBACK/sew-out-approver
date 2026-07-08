@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.45</span>
+      <span class="badge">v8.46</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.45</span>
+      <span class="badge">v8.46</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.45</span>
+      <span class="badge">v8.46</span>
     </div>
   </div>
   <div class="body">
@@ -1986,6 +1986,7 @@ async function impHandleFile(file){
     var res=await Tesseract.recognize(url,'eng',{
       logger:function(m){if(m.status==='recognizing text') st.textContent='⏳ OCR '+Math.round(m.progress*100)+'%…';}
     });
+    console.log('[SOA OCR raw text]\n'+res.data.text);
     var parsed=impParseText(res.data.text);
     if(parsed.length){
       st.className='imp-st ok';
@@ -2023,13 +2024,13 @@ function impParseText(raw){
   var parsed=[];
   for(var i=0;i<lines.length;i++){
     var line=lines[i];
-    // Logo ID: 5+ digits + 1-2 letters
-    var logoIdMatch=line.match(/(\d{5,})[A-Za-z]{1,2}/);
+    // Logo ID: 5+ digits + 1-2 letters. v8.46: \s? tolerates OCR splitting the cell ("7156403 AB")
+    var logoIdMatch=line.match(/(\d{5,})\s?[A-Za-z]{1,2}\b/);
     if(!logoIdMatch) continue;
     var ccode=logoIdMatch[1];
     // Build search window FIRST (needed for description and size extraction)
     var winEnd=i+1;
-    while(winEnd<lines.length && winEnd<i+9 && !lines[winEnd].match(/(\d{5,})[A-Za-z]{1,2}/)){winEnd++;}
+    while(winEnd<lines.length && winEnd<i+9 && !lines[winEnd].match(/(\d{5,})\s?[A-Za-z]{1,2}\b/)){winEnd++;}
     var winLines=lines.slice(i,winEnd);
     var winText=winLines.join(' ');
     // Normalize OCR decimal-point artifacts: "1 50" or "1,50" → "1.50" for better size matching
