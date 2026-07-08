@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.47</span>
+      <span class="badge">v8.48</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.47</span>
+      <span class="badge">v8.48</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.47</span>
+      <span class="badge">v8.48</span>
     </div>
   </div>
   <div class="body">
@@ -475,8 +475,9 @@ async function parseDSTBin(file){
         // Round UP to 2 decimals so 0.985 → 0.99, never under-report
         let wIn=wMM>0?(Math.ceil((wMM/25.4)*100)/100).toFixed(2):'';
         let hIn=hMM>0?(Math.ceil((hMM/25.4)*100)/100).toFixed(2):'';
-        // Sanity check: if height < 30% of width, the Y extents are likely bad — clear it
-        if(wIn&&hIn&&parseFloat(hIn)<parseFloat(wIn)*0.30){hIn='';}
+        // Sanity check: only clear height if extents look like garbage (>10:1 aspect).
+        // v8.48: was 30%, which wrongly blanked valid wide wordmark logos (e.g. "QUAIL" 3.01"x0.86" = 29%).
+        if(wIn&&hIn&&parseFloat(hIn)<parseFloat(wIn)*0.10){hIn='';}
         resolve({widthIn:wIn,heightIn:hIn});
       }catch(e){resolve({});}
     };
