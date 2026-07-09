@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.52</span>
+      <span class="badge">v8.53</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.52</span>
+      <span class="badge">v8.53</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.52</span>
+      <span class="badge">v8.53</span>
     </div>
   </div>
   <div class="body">
@@ -2127,6 +2127,9 @@ function impParseText(raw){
       else{var dm=winNorm.match(/(\d+\.\d+)\s*[-–—]\s*(\d+\.\d+)/);if(dm){if(!width)width=dm[1];height=dm[2];}}
     }
     if(!height){var intM=winNorm.match(/\b(\d{2,3})\s*[-–—]\s*(\d{2,3})\s*inch/i);if(intM){if(!width)width=(parseInt(intM[1])/100).toFixed(2);height=(parseInt(intM[2])/100).toFixed(2);}}
+    // v8.53: OCR dropped BOTH decimals AND the separator ("2.47-2.03" → "247203"). If a digit run
+    // begins with width×100, the trailing 2-3 digits are the height.
+    if(!height&&width){var w100s=String(Math.round(parseFloat(width)*100));var nm=winNorm.match(new RegExp('\\b'+w100s+'(\\d{2,3})\\b'));if(nm)height=(parseInt(nm[1])/100).toFixed(2);}
     // v8.52: Stitch count = rightmost real integer on the anchor line (Thread Count then Stitch Count
     // are the last text columns). Strip dates / decimals / size-range / Logo ID first, then take the
     // last 2-6 digit number, preferring non-year values (PNG logos may OCR a founding year).
@@ -2154,7 +2157,9 @@ function impParseText(raw){
     var acct=fullDesc?fullDesc.split('_')[0]:'';
     var cname=titleCname||impExpandName(acct);
     var logo=fullDesc?fullDesc+'.png':'';
-    parsed.push({logo:logo,ccode:ccode,cname:cname,ldesc:ldesc,stitches:stitches,height:height,width:width,cost:'5.25'});
+    // v8.53: drop phantom anchors (e.g. a dropped-decimal size like "247203 O" matching the Logo ID
+    // pattern). A real row always has a description OR a 7-digit customer code.
+    if(fullDesc||ccode) parsed.push({logo:logo,ccode:ccode,cname:cname,ldesc:ldesc,stitches:stitches,height:height,width:width,cost:'5.25'});
     if(winEnd>i+1) i=winEnd-1;  // skip lines already consumed by this row's window
   }
   return parsed;
