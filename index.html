@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.51</span>
+      <span class="badge">v8.52</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.51</span>
+      <span class="badge">v8.52</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.51</span>
+      <span class="badge">v8.52</span>
     </div>
   </div>
   <div class="body">
@@ -2077,26 +2077,29 @@ function impParseText(raw){
     // v8.50: join OCR spaces around underscores ("Lansdowne _HSPDirect" → "Lansdowne_HSPDirect")
     var descLine=line.replace(/\s+_/g,'_').replace(/_\s+/g,'_');
     var descWin=winText.replace(/\s+_/g,'_').replace(/_\s+/g,'_');
+    // Strict match (handles multi-underscore names, no internal spaces)
     var descMatch=descLine.match(_DST_RE);
     var fullDesc=descMatch?descMatch[1]:'';
+    // v8.52: OCR sometimes splits a filename segment with a space ("SwirlONLY"→"Swirl ONLY") so the
+    // strict match only catches the tail. Retry space-tolerant on the Logo-ID-stripped line and keep
+    // the longer (more complete) result; internal spaces are then removed.
+    var afterId=descLine.replace(/^\D*\d{5,}[A-Za-z]{0,2}\s*/,'');
+    var tolM=afterId.match(/([A-Za-z][A-Za-z0-9 -]*(?:_[A-Za-z0-9 -]+)*_[\d.]+in_v\d+)/);
+    if(tolM){var tol=tolM[1].replace(/\s+/g,'');if(tol.length>fullDesc.length)fullDesc=tol;}
     // Fallback 1: description on another window line
     if(!fullDesc){var wdm=descWin.match(_DST_RE);if(wdm)fullDesc=wdm[1];}
-    // Fallback 2: OCR inserts spaces within a segment — line only (prevents backtracking on long winText)
-    if(!fullDesc){
-      var dm2=line.match(/([A-Za-z][A-Za-z0-9-]+_[A-Za-z0-9-][A-Za-z0-9 ]+?_[\d.]+in_v\d+)/);
-      if(dm2) fullDesc=dm2[1].replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2').replace(/([A-Za-z0-9])\s+([A-Za-z0-9])/g,'$1$2');
-    }
-    // Fallback 3: description wraps at hyphen across OCR lines — join hyphen fragment with continuation
+    // Fallback 2: description wraps at a hyphen across OCR lines — join fragment with continuation
     if(!fullDesc){
       var hm=descWin.match(/([A-Za-z][A-Za-z0-9]*-)\s+([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/);
       if(hm)fullDesc=hm[1]+hm[2];
     }
-    // v8.51: Customer code = Logo ID's 7-digit account code, taken from the digits DIRECTLY BEFORE the
-    // description on the anchor line (the Logo ID is the first table column). Robust to OCR splitting or
-    // injecting chars into the ID, and structurally never grabs the title's CUST number.
+    // v8.51/52: Customer code = Logo ID's 7-digit account code = digits BEFORE the description's first
+    // segment on the anchor line (Logo ID is the first table column). Never grabs the title CUST number.
     var ccode='';
-    var descLineForId=(descLine.indexOf(fullDesc)>0 && fullDesc)?descLine.slice(0,descLine.indexOf(fullDesc)):'';
-    var beforeDigits=(descLineForId.match(/\d/g)||[]).join('');
+    var firstSeg=fullDesc?fullDesc.split('_')[0]:'';
+    var cutIdx=firstSeg?descLine.indexOf(firstSeg):-1;
+    var before=cutIdx>0?descLine.slice(0,cutIdx):(descLine.split(/\s+/)[0]||'');
+    var beforeDigits=(before.match(/\d/g)||[]).join('');
     if(beforeDigits.length>=7) ccode=beforeDigits.slice(0,7);
     else{var ccm=descLine.match(/\b(\d{7})/)||winText.match(/\b(\d{7})/);if(ccm)ccode=ccm[1];}
     var ldesc='';
@@ -2124,15 +2127,28 @@ function impParseText(raw){
       else{var dm=winNorm.match(/(\d+\.\d+)\s*[-–—]\s*(\d+\.\d+)/);if(dm){if(!width)width=dm[1];height=dm[2];}}
     }
     if(!height){var intM=winNorm.match(/\b(\d{2,3})\s*[-–—]\s*(\d{2,3})\s*inch/i);if(intM){if(!width)width=(parseInt(intM[1])/100).toFixed(2);height=(parseInt(intM[2])/100).toFixed(2);}}
-    // Stitch count: primary — extract from "X.XX-X.XX Inches ThreadCount StitchCount" table structure
+    // v8.52: Stitch count = rightmost real integer on the anchor line (Thread Count then Stitch Count
+    // are the last text columns). Strip dates / decimals / size-range / Logo ID first, then take the
+    // last 2-6 digit number, preferring non-year values (PNG logos may OCR a founding year).
+    // NOTE: earlier logic assumed stitch counts are >999, which wrongly dropped small counts (e.g. 683).
     var stitches='';
-    var inchStitch=winNorm.match(/inches?\s+(\d+)\s+(\d{3,6})\b/i);
-    if(inchStitch){stitches=inchStitch[2];}
-    else{
-      // Fallback: last >999 number in window, prefer non-year-range to avoid logo PNG founding year text
-      var allNums=winNorm.match(/\b(\d{3,6})\b/g)||[];
-      var nonYr=allNums.filter(function(n){var v=parseInt(n);return v>999&&!(v>=1800&&v<=2030);}).pop()||'';
-      stitches=nonYr||(allNums.filter(function(n){return parseInt(n)>999;}).pop()||'');
+    var stLine=descLine
+      .replace(/\b\d{1,4}[-\/]\d{1,4}[-\/]\d{1,4}\b/g,' ')  // dates (07/09/2026, 13-01-2026)
+      .replace(/\d+\.\d+/g,' ')                              // decimals (size)
+      .replace(/\b\d{2,3}\s*[-–—]\s*\d{2,3}\b/g,' ')         // dropped-decimal size range (200-165)
+      .replace(/\b\d{7,}[A-Za-z]*\b/g,' ');                  // Logo ID (7+ digits)
+    var stNums=stLine.match(/\b\d{2,6}\b/g)||[];
+    var stNonYr=stNums.filter(function(n){return !(n.length===4&&+n>=1900&&+n<=2030);});
+    stitches=(stNonYr.length?stNonYr:stNums).slice(-1)[0]||'';
+    // Fallback: stitch count wrapped to another line — scan the window
+    if(!stitches){
+      var inchStitch=winNorm.match(/inches?\s+(\d+)\s+(\d{3,6})\b/i);
+      if(inchStitch){stitches=inchStitch[2];}
+      else{
+        var allNums=winNorm.match(/\b(\d{3,6})\b/g)||[];
+        var nonYr=allNums.filter(function(n){var v=parseInt(n);return v>999&&!(v>=1800&&v<=2030);}).pop()||'';
+        stitches=nonYr||(allNums.filter(function(n){return parseInt(n)>999;}).pop()||'');
+      }
     }
     // Customer name: from EpicStitch title if found, else expand account prefix
     var acct=fullDesc?fullDesc.split('_')[0]:'';
