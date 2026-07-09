@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.50</span>
+      <span class="badge">v8.51</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.50</span>
+      <span class="badge">v8.51</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.50</span>
+      <span class="badge">v8.51</span>
     </div>
   </div>
   <div class="body">
@@ -2074,9 +2074,6 @@ function impParseText(raw){
     var winText=winLines.join(' ');
     // Normalize OCR decimal-point artifacts: "1 50" or "1,50" → "1.50" for better size matching
     var winNorm=winText.replace(/\b(\d)\s(\d{2})\b/g,'$1.$2').replace(/\b(\d),(\d{2})\b/g,'$1.$2');
-    // Customer code: Logo ID = 7-digit account code + 1-2 letter suffix. Take the first 7 digits
-    // (robust when OCR reads the letter suffix as digits, e.g. "3399158AA"→"339915844").
-    var ccode=''; var ccm=winText.match(/\b(\d{7})\d{0,2}[A-Za-z]{0,2}\b/); if(ccm)ccode=ccm[1];
     // v8.50: join OCR spaces around underscores ("Lansdowne _HSPDirect" → "Lansdowne_HSPDirect")
     var descLine=line.replace(/\s+_/g,'_').replace(/_\s+/g,'_');
     var descWin=winText.replace(/\s+_/g,'_').replace(/_\s+/g,'_');
@@ -2094,6 +2091,14 @@ function impParseText(raw){
       var hm=descWin.match(/([A-Za-z][A-Za-z0-9]*-)\s+([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/);
       if(hm)fullDesc=hm[1]+hm[2];
     }
+    // v8.51: Customer code = Logo ID's 7-digit account code, taken from the digits DIRECTLY BEFORE the
+    // description on the anchor line (the Logo ID is the first table column). Robust to OCR splitting or
+    // injecting chars into the ID, and structurally never grabs the title's CUST number.
+    var ccode='';
+    var descLineForId=(descLine.indexOf(fullDesc)>0 && fullDesc)?descLine.slice(0,descLine.indexOf(fullDesc)):'';
+    var beforeDigits=(descLineForId.match(/\d/g)||[]).join('');
+    if(beforeDigits.length>=7) ccode=beforeDigits.slice(0,7);
+    else{var ccm=descLine.match(/\b(\d{7})/)||winText.match(/\b(\d{7})/);if(ccm)ccode=ccm[1];}
     var ldesc='';
     if(fullDesc){
       var parts=fullDesc.split('_');
