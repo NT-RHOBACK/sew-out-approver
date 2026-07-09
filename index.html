@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.49</span>
+      <span class="badge">v8.50</span>
     </div>
   </div>
   <div class="body">
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.49</span>
+      <span class="badge">v8.50</span>
     </div>
   </div>
   <div class="body">
@@ -400,7 +400,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.49</span>
+      <span class="badge">v8.50</span>
     </div>
   </div>
   <div class="body">
@@ -2056,25 +2056,34 @@ function impParseText(raw){
     }
   }
   var parsed=[];
+  // Description pattern: AccountName_LogoDesc_WidthIn_v# — hyphens allowed (e.g. IndianHill-IL_...)
+  var _DST_RE=/([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/;
+  var _ID_RE=/(\d{5,})\s?[A-Za-z]{1,2}\b/;
+  function _isRow(s){return _ID_RE.test(s)||_DST_RE.test(s);}
   for(var i=0;i<lines.length;i++){
     var line=lines[i];
-    // Logo ID: 5+ digits + 1-2 letters. v8.46: \s? tolerates OCR splitting the cell ("7156403 AB")
-    var logoIdMatch=line.match(/(\d{5,})\s?[A-Za-z]{1,2}\b/);
-    if(!logoIdMatch) continue;
-    var ccode=logoIdMatch[1];
-    // Build search window FIRST (needed for description and size extraction)
-    var winEnd=i+1;
-    while(winEnd<lines.length && winEnd<i+9 && !lines[winEnd].match(/(\d{5,})\s?[A-Za-z]{1,2}\b/)){winEnd++;}
-    var winLines=lines.slice(i,winEnd);
+    // v8.50: anchor a row on a Logo ID OR a DST-filename description. OCR sometimes reads the Logo
+    // ID's letter suffix as digits ("3399158AA"→"339915844"), leaving no letters — the description
+    // then anchors the row instead.
+    if(!_isRow(line)) continue;
+    // Window: include the line BEFORE the anchor (size often sits one line above the ID/desc),
+    // through to just before the next row anchor (cap 9 lines).
+    var winStart=Math.max(0,i-1), winEnd=i+1;
+    while(winEnd<lines.length && winEnd<i+9 && !_isRow(lines[winEnd])){winEnd++;}
+    var winLines=lines.slice(winStart,winEnd);
     var winText=winLines.join(' ');
     // Normalize OCR decimal-point artifacts: "1 50" or "1,50" → "1.50" for better size matching
     var winNorm=winText.replace(/\b(\d)\s(\d{2})\b/g,'$1.$2').replace(/\b(\d),(\d{2})\b/g,'$1.$2');
-    // Description: AccountName_LogoDesc_WidthIn_v# — hyphens allowed (e.g. IndianHill-IL_...)
-    var _DST_RE=/([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/;
-    var descMatch=line.match(_DST_RE);
+    // Customer code: Logo ID = 7-digit account code + 1-2 letter suffix. Take the first 7 digits
+    // (robust when OCR reads the letter suffix as digits, e.g. "3399158AA"→"339915844").
+    var ccode=''; var ccm=winText.match(/\b(\d{7})\d{0,2}[A-Za-z]{0,2}\b/); if(ccm)ccode=ccm[1];
+    // v8.50: join OCR spaces around underscores ("Lansdowne _HSPDirect" → "Lansdowne_HSPDirect")
+    var descLine=line.replace(/\s+_/g,'_').replace(/_\s+/g,'_');
+    var descWin=winText.replace(/\s+_/g,'_').replace(/_\s+/g,'_');
+    var descMatch=descLine.match(_DST_RE);
     var fullDesc=descMatch?descMatch[1]:'';
-    // Fallback 1: description on next OCR line — search full window (no spaces, no backtracking risk)
-    if(!fullDesc){var wdm=winText.match(_DST_RE);if(wdm)fullDesc=wdm[1];}
+    // Fallback 1: description on another window line
+    if(!fullDesc){var wdm=descWin.match(_DST_RE);if(wdm)fullDesc=wdm[1];}
     // Fallback 2: OCR inserts spaces within a segment — line only (prevents backtracking on long winText)
     if(!fullDesc){
       var dm2=line.match(/([A-Za-z][A-Za-z0-9-]+_[A-Za-z0-9-][A-Za-z0-9 ]+?_[\d.]+in_v\d+)/);
@@ -2082,7 +2091,7 @@ function impParseText(raw){
     }
     // Fallback 3: description wraps at hyphen across OCR lines — join hyphen fragment with continuation
     if(!fullDesc){
-      var hm=winText.match(/([A-Za-z][A-Za-z0-9]*-)\s+([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/);
+      var hm=descWin.match(/([A-Za-z][A-Za-z0-9]*-)\s+([A-Za-z][A-Za-z0-9-]*(?:_[A-Za-z0-9-]+)*_[\d.]+in_v\d+)/);
       if(hm)fullDesc=hm[1]+hm[2];
     }
     var ldesc='';
@@ -2095,23 +2104,21 @@ function impParseText(raw){
     // Width: pull directly from DST filename (most reliable)
     var width='', height='';
     if(fullDesc){var fwm=fullDesc.match(/_(\d+\.?\d*)in_/i);if(fwm)width=fwm[1];}
-    // Height: use normalized window (fixes OCR reading "1.50" as "1 50")
-    var inchM=winNorm.match(/(\d+\.\d+)\s*[-–—]?\s*(\d+\.\d+)\s*inch/i);
-    if(inchM){if(!width)width=inchM[1];height=inchM[2];}
-    else{
-      var dm=winNorm.match(/(\d+\.\d+)\s*[-–—]\s*(\d+\.\d+)/);
-      if(dm){if(!width)width=dm[1];height=dm[2];}
+    // v8.50: when width is known, pick the size range whose FIRST value ≈ width. Robust against
+    // dropped decimals ("159-167"=1.59x1.67) AND multi-row bleed (ignores the OTHER row's range).
+    if(width){
+      var w100=Math.round(parseFloat(width)*100), reD=/(\d+\.\d+)\s*[-–—]\s*(\d+\.\d+)/g, md;
+      while((md=reD.exec(winNorm))){if(Math.abs(Math.round(parseFloat(md[1])*100)-w100)<=1){height=md[2];break;}}
+      if(!height){var reI=/\b(\d{2,3})\s*[-–—]\s*(\d{2,3})\b/g, mi;
+        while((mi=reI.exec(winNorm))){if(Math.abs(parseInt(mi[1])-w100)<=1){height=(parseInt(mi[2])/100).toFixed(2);break;}}}
     }
-    // v8.45: OCR drops decimal points — "163-136 Inches" = 1.63 x 1.36
+    // Fallbacks when width unknown or no width-matched range found
+    if(!height){
+      var inchM=winNorm.match(/(\d+\.\d+)\s*[-–—]?\s*(\d+\.\d+)\s*inch/i);
+      if(inchM){if(!width)width=inchM[1];height=inchM[2];}
+      else{var dm=winNorm.match(/(\d+\.\d+)\s*[-–—]\s*(\d+\.\d+)/);if(dm){if(!width)width=dm[1];height=dm[2];}}
+    }
     if(!height){var intM=winNorm.match(/\b(\d{2,3})\s*[-–—]\s*(\d{2,3})\s*inch/i);if(intM){if(!width)width=(parseInt(intM[1])/100).toFixed(2);height=(parseInt(intM[2])/100).toFixed(2);}}
-    // v8.49: decimals dropped AND "Inches" not adjacent ("200-165 1 2393 ... Inches" on next line).
-    // Anchor on known filename width: first int/100 must ≈ width, then height = second int/100.
-    if(!height&&width){
-      var w100=Math.round(parseFloat(width)*100), rangeRe=/\b(\d{2,3})\s*[-–—]\s*(\d{2,3})\b/g, rm;
-      while((rm=rangeRe.exec(winNorm))){
-        if(Math.abs(parseInt(rm[1])-w100)<=1){height=(parseInt(rm[2])/100).toFixed(2);break;}
-      }
-    }
     // Stitch count: primary — extract from "X.XX-X.XX Inches ThreadCount StitchCount" table structure
     var stitches='';
     var inchStitch=winNorm.match(/inches?\s+(\d+)\s+(\d{3,6})\b/i);
@@ -2127,6 +2134,7 @@ function impParseText(raw){
     var cname=titleCname||impExpandName(acct);
     var logo=fullDesc?fullDesc+'.png':'';
     parsed.push({logo:logo,ccode:ccode,cname:cname,ldesc:ldesc,stitches:stitches,height:height,width:width,cost:'5.25'});
+    if(winEnd>i+1) i=winEnd-1;  // skip lines already consumed by this row's window
   }
   return parsed;
 }
