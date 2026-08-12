@@ -207,7 +207,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.54</span>
+      <span class="badge">v8.55</span>
     </div>
   </div>
   <div class="body">
@@ -303,6 +303,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       </label>
     </div>
     <div id="spEditor" style="display:none;margin-top:8px">
+      <div class="field" style="margin-bottom:8px">
+        <label class="lbl">Embroidery ID <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:10px">(one per sheet &middot; auto-fills from logo name)</span></label>
+        <input type="text" id="spEmbId" placeholder="e.g. VAL 1 BLACK">
+      </div>
       <div class="sp-row-hdr">
         <div class="field" style="margin-bottom:0">
           <label class="lbl">Project Name <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:10px">(auto-fills from logo info)</span></label>
@@ -347,7 +351,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.54</span>
+      <span class="badge">v8.55</span>
     </div>
   </div>
   <div class="body">
@@ -401,7 +405,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.54</span>
+      <span class="badge">v8.55</span>
     </div>
   </div>
   <div class="body">
@@ -620,7 +624,7 @@ async function handleExistingPdf(file){
         const sp = JSON.parse(spRaw);
         // v8.26 — sections is now a code-keyed object. Reject old array shape silently.
         if (Array.isArray(sp.sections)) sp.sections = {};
-        _spData = Object.assign({ include:false, mode:'filled', projectName:'', manualName:false, sections:{} }, sp);
+        _spData = Object.assign({ include:false, mode:'filled', projectName:'', manualName:false, embId:'', manualEmbId:false, sections:{} }, sp);
         const chk = document.getElementById('spIncludeChk');
         if (chk) { chk.checked = !!_spData.include; document.getElementById('spEditor').style.display = _spData.include ? '' : 'none'; }
         document.querySelectorAll('input[name=spMode]').forEach(rb => { rb.checked = (rb.value === (_spData.mode || 'filled')); });
@@ -632,6 +636,8 @@ async function handleExistingPdf(file){
         document.getElementById('spBlankNote').style.display  = _spData.mode === 'blank' ? '' : 'none';
         const pn = document.getElementById('spProjectName');
         if (pn) pn.value = _spData.projectName || '';
+        const embEl = document.getElementById('spEmbId');
+        if (embEl) embEl.value = _spData.embId || '';
         spRenderEditor();
       } catch(e){ console.warn('SP data parse:', e); }
     }
@@ -1061,10 +1067,11 @@ function clear_form(){
   document.getElementById('threadCount').value='';document.getElementById('threadColors').value='';
   const _te = document.getElementById('threadExtra'); if(_te) _te.value='';
   // Reset special project state
-  _spData = { include:false, mode:'filled', projectName:'', manualName:false, sections:{} };
+  _spData = { include:false, mode:'filled', projectName:'', manualName:false, embId:'', manualEmbId:false, sections:{} };
   const _spChk = document.getElementById('spIncludeChk'); if (_spChk) _spChk.checked = false;
   const _spEd  = document.getElementById('spEditor');     if (_spEd)  _spEd.style.display = 'none';
   const _spPn  = document.getElementById('spProjectName');if (_spPn)  _spPn.value = '';
+  const _spEmb = document.getElementById('spEmbId');       if (_spEmb) _spEmb.value = '';
   const _spSec = document.getElementById('spSections');   if (_spSec) _spSec.innerHTML = '';
   document.querySelectorAll('input[name=spMode]').forEach(rb => rb.checked = (rb.value === 'filled'));
   document.getElementById('fnIncludeWidth').checked=false;document.getElementById('fnIncludeVer').checked=false;
@@ -1195,11 +1202,12 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
       y -= 10;
     }
   } else {
-    // Filled mode — regroup every row by Embroidery ID, then by placement (v8.54).
-    // Editor/import store rows in placement-keyed sections; each row carries its embId.
+    // Filled mode — one Embroidery ID per sheet (sp.embId), then grouped by placement (v8.55).
+    // Legacy per-row embId is honored as a fallback for older saved PDFs.
     const byEmb = {};      // embId -> { placementCode -> [ {gender, garment, print} ] }
     const embOrder = [];   // embroidery IDs in first-seen order
     const NO_EMB = '(No Embroidery ID)';
+    const sheetEmb = (sp.embId || '').trim();
     for (const code of PLACEMENT_ORDER) {
       const rows = sections[code];
       if (!rows || rows.length === 0) continue;
@@ -1207,8 +1215,8 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
         const gender  = (r.gender || r.category || '').trim();
         const garment = (r.garment || r.type || '').trim();
         const print   = (r.sku || r.color || '').trim();
-        const embId   = (r.embId || '').trim();
-        if (!gender && !garment && !print && !embId) return;   // skip fully-empty rows
+        const embId   = sheetEmb || (r.embId || '').trim();
+        if (!gender && !garment && !print) return;   // skip fully-empty rows
         const key = embId || NO_EMB;
         if (!byEmb[key]) { byEmb[key] = {}; embOrder.push(key); }
         if (!byEmb[key][code]) byEmb[key][code] = [];
@@ -1716,11 +1724,28 @@ let _spData = {
   mode: 'filled',
   projectName: '',
   manualName: false,
+  embId: '',
+  manualEmbId: false,
   sections: {}
 };
 
+// EMB ID defaults to the current logo name (editable per row).
+function _spCurrentLogoName() {
+  const el = document.getElementById('logoName');
+  return el ? el.value.trim() : '';
+}
+function _spNewRow() {
+  return { gender: '', garment: '', sku: '' };
+}
+// Set the single sheet-level Embroidery ID (and mirror to the input field).
+function _spSetEmbId(val) {
+  _spData.embId = val;
+  const el = document.getElementById('spEmbId');
+  if (el && el.value !== val) el.value = val;
+}
+
 function _spEnsureSection(code) {
-  if (!_spData.sections[code]) _spData.sections[code] = [{ embId: '', gender: '', garment: '', sku: '' }];
+  if (!_spData.sections[code]) _spData.sections[code] = [_spNewRow()];
 }
 function spAddSection(code) {
   if (!code) return;
@@ -1736,14 +1761,14 @@ function spDeleteSection(code) {
 }
 function spAddRow(code) {
   if (!_spData.sections[code]) return;
-  _spData.sections[code].push({ embId: '', gender: '', garment: '', sku: '' });
+  _spData.sections[code].push(_spNewRow());
   spRenderEditor();
 }
 function spDeleteRow(code, ri) {
   if (!_spData.sections[code]) return;
   _spData.sections[code].splice(ri, 1);
   if (_spData.sections[code].length === 0) {
-    _spData.sections[code].push({ embId: '', gender: '', garment: '', sku: '' });
+    _spData.sections[code].push(_spNewRow());
   }
   spRenderEditor();
 }
@@ -1783,14 +1808,6 @@ function spRenderEditor() {
     _spData.sections[code].forEach((row, ri) => {
       const rdiv = document.createElement('div');
       rdiv.className = 'sp-row';
-
-      // Embroidery ID input (e.g. VAL 1 BLACK)
-      const embInp = document.createElement('input');
-      embInp.type = 'text'; embInp.className = 'sp-row-emb';
-      embInp.placeholder = 'Emb ID (VAL 1 BLACK)';
-      embInp.value = row.embId || '';
-      embInp.oninput = (e) => { _spData.sections[code][ri].embId = e.target.value; };
-      rdiv.appendChild(embInp);
 
       // Gender multi-select (3 checkboxes)
       const genderWrap = document.createElement('div');
@@ -1895,6 +1912,13 @@ function spUpdateProjectName() {
   _spData.projectName = proj;
 }
 
+// The sheet's single Embroidery ID pulls from the logo name until the user
+// edits the Embroidery ID field directly (then it stays as they set it).
+function spSyncEmbFromLogo() {
+  if (_spData.manualEmbId) return;
+  _spSetEmbId(_spCurrentLogoName());
+}
+
 function spInit() {
   const chk = document.getElementById('spIncludeChk');
   const editor = document.getElementById('spEditor');
@@ -1904,9 +1928,10 @@ function spInit() {
     editor.style.display = chk.checked ? '' : 'none';
     if (chk.checked && Object.keys(_spData.sections).length === 0) {
       // Seed with Left Chest (most common placement)
-      _spData.sections['LC'] = [{ embId: '', gender: '', garment: '', sku: '' }];
+      _spData.sections['LC'] = [_spNewRow()];
       spRenderEditor();
       spUpdateProjectName();
+      spSyncEmbFromLogo();
     }
   });
   document.querySelectorAll('input[name=spMode]').forEach(rb => {
@@ -1931,6 +1956,13 @@ function spInit() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', spUpdateProjectName);
   });
+  const _lnEmb = document.getElementById('logoName');
+  if (_lnEmb) _lnEmb.addEventListener('input', spSyncEmbFromLogo);
+  const _embEl = document.getElementById('spEmbId');
+  if (_embEl) _embEl.addEventListener('input', () => {
+    _spData.embId = _embEl.value;
+    _spData.manualEmbId = _embEl.value.trim() !== '';
+  });
   // Initial render (in case old data is present or for the empty picker)
   spRenderAddPicker();
 }
@@ -1939,17 +1971,17 @@ else spInit();
 // ── Special Project spreadsheet import ────────────────────────
 let _spImpRows = null;
 const _SP_CAT_MAP = {"MEN'S":"Men's","MENS":"Men's","MEN":"Men's","WOMEN'S":"Women's","WOMENS":"Women's","WOMEN":"Women's","TODDLER":"Toddler","TODDLERS":"Toddler","YOUTH":"Men's","KIDS":"Toddler","UNISEX":"Unisex","BOYS":"Men's","GIRLS":"Women's"};
-function spShowImportModal(){const m=document.getElementById('spImportModal');if(!m)return;m.classList.add('open');document.getElementById('spImpPasteTxt').value='';document.getElementById('spImpFileName').textContent='';_spImpRows=null;spImpUpdateUI();}
+function spShowImportModal(){const m=document.getElementById('spImportModal');if(!m)return;m.classList.add('open');document.getElementById('spImpPasteTxt').value='';document.getElementById('spImpFileName').textContent='';_spImpRows=null;const sel=document.getElementById('spImpColSel');if(sel){sel.innerHTML='';SP_PLACEMENT_ORDER.forEach(c=>{const p=SP_PLACEMENT_BY_CODE[c];const o=document.createElement('option');o.value=c;o.textContent=p.code+' — '+p.name;sel.appendChild(o);});}const cw=document.getElementById('spImpColWrap');if(cw)cw.style.display='';spImpUpdateUI();}
 function spImpClose(){const m=document.getElementById('spImportModal');if(m)m.classList.remove('open');}
 function spImpMode(mode){document.getElementById('spImpPasteArea').style.display=mode==='paste'?'':'none';document.getElementById('spImpFileArea').style.display=mode==='file'?'':'none';document.getElementById('spImpTabPaste').classList.toggle('active',mode==='paste');document.getElementById('spImpTabFile').classList.toggle('active',mode==='file');_spImpRows=null;spImpUpdateUI();}
 function spImpParseTSV(text){return text.trim().split('\n').map(l=>l.split('\t').map(c=>c.replace(/^"|"$/g,'').trim()));}
 function spImpParseCSV(text){return text.trim().split('\n').map(line=>{const row=[];let cur='',inQ=false;for(const ch of line){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){row.push(cur.trim());cur='';}else{cur+=ch;}}row.push(cur.trim());return row;});}
-function spImpSetRows(rows){if(!rows||rows.length<2)return;_spImpRows=rows;const cw=document.getElementById('spImpColWrap');if(cw)cw.style.display='none';spImpUpdateUI();}
-function _spIsPlacementCode(s){const c=((s||'').trim().toUpperCase().match(/^[A-Z]+/)||[''])[0];return ['LC','CC','CF','RS','LS'].includes(c);}
-function _spFindHeaderRow(rows){for(let i=0;i<Math.min(rows.length,8);i++){const r=rows[i]||[];let cnt=0,legendish=0;for(let c=1;c<r.length;c++){const v=(r[c]||'').trim();if(!v)continue;cnt++;if(_spIsPlacementCode(v)||v.indexOf('=')>=0)legendish++;}if(cnt>=2&&legendish<cnt)return i;}return 0;}
-function spImpParseRows(rows){const sec={};if(!rows||rows.length<2)return sec;const hr=_spFindHeaderRow(rows);const headers=rows[hr]||[];let gender='';for(let i=hr+1;i<rows.length;i++){const r=rows[i]||[];const first=(r[0]||'').trim();if(!first)continue;let anyCode=false;for(let c=1;c<r.length;c++){if(_spIsPlacementCode(r[c])){anyCode=true;break;}}const mapped=_SP_CAT_MAP[first.toUpperCase()];if(mapped&&!anyCode){gender=mapped;continue;}const dash=first.indexOf(' - ');const garment=dash>=0?first.slice(0,dash).trim():first;const print=dash>=0?first.slice(dash+3).trim():'';for(let c=1;c<r.length;c++){const code=((r[c]||'').trim().toUpperCase().match(/^[A-Z]+/)||[''])[0];if(!['LC','CC','CF','RS','LS'].includes(code))continue;const embId=(headers[c]||'').trim();if(!sec[code])sec[code]=[];sec[code].push({embId,gender,garment,sku:print});}}return sec;}
-function spImpUpdateUI(){const has=!!_spImpRows&&_spImpRows.length>1;const btn=document.getElementById('spImpApplyBtn');const prev=document.getElementById('spImpPreview');if(btn){btn.disabled=!has;btn.style.opacity=has?'1':'.4';}if(has){const p=spImpParseRows(_spImpRows);const tot=Object.values(p).reduce((s,a)=>s+a.length,0);const embSet=new Set();Object.values(p).forEach(a=>a.forEach(r=>{if(r.embId)embSet.add(r.embId);}));if(prev){prev.style.display=tot>0?'':'none';prev.textContent='Found '+tot+' placement(s) across '+embSet.size+' embroidery ID(s)'+(embSet.size?': '+Array.from(embSet).join(', '):'');}}else if(prev){prev.style.display='none';}}
-function spImpApply(){if(!_spImpRows)return;const sections=spImpParseRows(_spImpRows);const _hr=_spFindHeaderRow(_spImpRows);const _hdr=_spImpRows[_hr]||[];const _eo=[];for(let c=1;c<_hdr.length;c++){const h=(_hdr[c]||'').trim();if(h&&!_eo.includes(h))_eo.push(h);}_spData.embOrder=_eo;if(!Object.keys(sections).length){alert('No placement data found. Make sure the pasted matrix has embroidery ID column headers and placement codes (LC / CC / LS / CF / RS) in the cells.');return;}_spData.sections=sections;_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name=\"spMode\"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
+function spImpSetRows(rows){if(!rows||!rows.length)return;_spImpRows=rows;spImpUpdateUI();}
+
+
+function spImpParseList(rows){const out=[];if(!rows)return out;let gender='';for(let i=0;i<rows.length;i++){const cell=((rows[i]&&rows[i][0])||'').toString().trim();if(!cell)continue;if(cell.toLowerCase()==='garment sku')continue;const mapped=_SP_CAT_MAP[cell.toUpperCase()];if(mapped&&cell.indexOf(' - ')<0){gender=mapped;continue;}const dash=cell.indexOf(' - ');const garment=dash>=0?cell.slice(0,dash).trim():cell;const sku=dash>=0?cell.slice(dash+3).trim():'';out.push({gender,garment,sku});}return out;}
+function spImpUpdateUI(){const has=!!_spImpRows&&_spImpRows.length>=1;const btn=document.getElementById('spImpApplyBtn');const prev=document.getElementById('spImpPreview');let list=[];if(has)list=spImpParseList(_spImpRows);const ok=list.length>0;if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'.4';}if(prev){if(ok){prev.style.display='';prev.textContent='Found '+list.length+' garment(s)';}else{prev.style.display='none';}}}
+function spImpApply(){if(!_spImpRows)return;const list=spImpParseList(_spImpRows);if(!list.length){alert("No garments found. Paste the Garment SKU column — the garment lines plus the MEN'S / TODDLER headers.");return;}const sel=document.getElementById('spImpColSel');const code=(sel&&sel.value)||'LC';if(!_spData.sections[code])_spData.sections[code]=[];_spData.sections[code]=_spData.sections[code].filter(r=>((r.gender||'')+(r.garment||'')+(r.sku||'')).trim());list.forEach(it=>_spData.sections[code].push({gender:it.gender,garment:it.garment,sku:it.sku}));_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name="spMode"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
 document.addEventListener('DOMContentLoaded',function(){const ta=document.getElementById('spImpPasteTxt');if(ta)ta.addEventListener('input',function(){if(!this.value.trim()){_spImpRows=null;spImpUpdateUI();return;}spImpSetRows(spImpParseTSV(this.value));});const fi=document.getElementById('spImpFile');if(fi)fi.addEventListener('change',function(){const file=this.files[0];if(!file)return;document.getElementById('spImpFileName').textContent=file.name;const ext=file.name.split('.').pop().toLowerCase();if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){alert('SheetJS not loaded. Try CSV instead.');return;}const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];spImpSetRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));spImpUpdateUI();};r.readAsArrayBuffer(file);}else{const r=new FileReader();r.onload=e=>{spImpSetRows(ext==='tsv'?spImpParseTSV(e.target.result):spImpParseCSV(e.target.result));spImpUpdateUI();};r.readAsText(file);}});const sel=document.getElementById('spImpColSel');if(sel)sel.addEventListener('change',spImpUpdateUI);});
 function tabClearActive(){
   var gen=document.getElementById('tabGen');
@@ -2319,7 +2351,7 @@ function impClear(){
       <button class="sp-imp-tab" id="spImpTabFile" onclick="spImpMode('file')">Upload .csv / .xlsx</button>
     </div>
     <div id="spImpPasteArea">
-      <p style="font-size:11px;color:var(--gray);margin-bottom:6px">Copy the whole placement matrix from Excel or Google Sheets then paste below (Ctrl+V). Include the embroidery-ID header row (VAL 1 BLACK, VAL 2 WHITE&hellip;), the gender rows (MEN'S, TODDLER&hellip;), and the placement cells (LC / CC / LS&hellip;). Every embroidery ID becomes its own list on the sheet.</p>
+      <p style="font-size:11px;color:var(--gray);margin-bottom:6px">Copy the <b>Garment SKU</b> column from Excel or Google Sheets and paste it below (Ctrl+V) &mdash; the garment lines (e.g. <i>Polo - The PGA Texas Wedge Print</i>) plus the <b>MEN'S</b> / <b>TODDLER</b> gender headers. Pick the placement these garments go on, then Import. Repeat for each placement.</p>
       <textarea class="sp-imp-ta" id="spImpPasteTxt" placeholder="Paste spreadsheet data here…"></textarea>
     </div>
     <div id="spImpFileArea" style="display:none">
@@ -2330,7 +2362,7 @@ function impClear(){
       <p id="spImpFileName" style="font-size:11px;color:var(--navy);margin-top:6px;text-align:center"></p>
     </div>
     <div id="spImpColWrap" style="display:none;margin-top:12px">
-      <label style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Which logo column to import?</label>
+      <label style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Add these garments to which placement?</label>
       <select id="spImpColSel" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit"></select>
     </div>
     <div id="spImpPreview" style="display:none;margin-top:10px;font-size:11px;color:#1a5e28;background:#e8f4eb;border-radius:6px;padding:8px 12px"></div>
