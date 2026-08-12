@@ -207,7 +207,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.55</span>
+      <span class="badge">v8.56</span>
     </div>
   </div>
   <div class="body">
@@ -351,7 +351,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.55</span>
+      <span class="badge">v8.56</span>
     </div>
   </div>
   <div class="body">
@@ -405,7 +405,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.55</span>
+      <span class="badge">v8.56</span>
     </div>
   </div>
   <div class="body">
@@ -1213,14 +1213,15 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
       if (!rows || rows.length === 0) continue;
       rows.forEach(r => {
         const gender  = (r.gender || r.category || '').trim();
-        const garment = (r.garment || r.type || '').trim();
-        const print   = (r.sku || r.color || '').trim();
+        const garment = (r.garment || r.type || '').trim();   // legacy only
+        const print   = (r.sku || r.color || '').trim();      // now the full SKU line
         const embId   = sheetEmb || (r.embId || '').trim();
         if (!gender && !garment && !print) return;   // skip fully-empty rows
+        const label = garment ? (print ? garment + ' - ' + print : garment) : print;
         const key = embId || NO_EMB;
         if (!byEmb[key]) { byEmb[key] = {}; embOrder.push(key); }
         if (!byEmb[key][code]) byEmb[key][code] = [];
-        byEmb[key][code].push({ gender, garment, print });
+        byEmb[key][code].push({ gender, label });
       });
     }
 
@@ -1239,12 +1240,7 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
 
     for (const embId of finalOrder) {
       const placements = byEmb[embId];
-      // Embroidery ID header — navy bar; keep it with its first placement + line
-      _ensureSpace(22 + 8 + 18 + 15);
-      page.drawRectangle({ x: M_L, y: y - 22, width: PAGE_W - M_L - M_R, height: 22, color: NAVY });
-      page.drawText(_truncLine(embId, PAGE_W - M_L - M_R - 20, 11, helvB), { x: M_L + 10, y: y - 15, size: 11, color: WHITE, font: helvB });
-      y -= 22 + 8;
-
+      // Embroidery ID is shown once in the top banner subtitle — no per-ID bar here.
       for (const code of PLACEMENT_ORDER) {
         const items = placements[code];
         if (!items || !items.length) continue;
@@ -1256,8 +1252,7 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
 
         items.forEach(it => {
           _ensureSpace(15);
-          const left = [it.gender, it.garment].filter(Boolean).join(' ');
-          const line = it.print ? (left ? left + ' — ' + it.print : it.print) : left;
+          const line = it.label ? (it.gender ? it.gender + ' — ' + it.label : it.label) : it.gender;
           page.drawText(_truncLine(line, LINE_MAXW, 10, helv), { x: LINE_X, y: y - 11, size: 10, color: rgb(0.2, 0.23, 0.32), font: helv });
           try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(line); tf.setFontSize(10); tf.addToPage(page,{x:M_L+24,y:y-14,width:PAGE_W-M_L-M_R-24,height:13,borderWidth:0}); } catch(e){}
           y -= 15;
@@ -1735,7 +1730,7 @@ function _spCurrentLogoName() {
   return el ? el.value.trim() : '';
 }
 function _spNewRow() {
-  return { gender: '', garment: '', sku: '' };
+  return { gender: '', sku: '' };
 }
 // Set the single sheet-level Embroidery ID (and mirror to the input field).
 function _spSetEmbId(val) {
@@ -1831,18 +1826,10 @@ function spRenderEditor() {
       });
       rdiv.appendChild(genderWrap);
 
-      // Garment input (e.g. Polo, Hesi Hoodie)
-      const garmInp = document.createElement('input');
-      garmInp.type = 'text'; garmInp.className = 'sp-row-type';
-      garmInp.placeholder = 'Garment (Polo, Hesi Hoodie)';
-      garmInp.value = (row.garment != null && row.garment !== '') ? row.garment : (row.type || '');
-      garmInp.oninput = (e) => { _spData.sections[code][ri].garment = e.target.value; };
-      rdiv.appendChild(garmInp);
-
-      // SKU / Print input (e.g. The PGA Texas Wedge Print)
+      // SKU input — the full garment SKU line (e.g. Hesi Hoodie - Fleet Navy)
       const skuInp = document.createElement('input');
       skuInp.type = 'text'; skuInp.className = 'sp-row-color';
-      skuInp.placeholder = 'SKU / Print (e.g. The PGA Texas Wedge Print)';
+      skuInp.placeholder = 'SKU (e.g. Hesi Hoodie - Fleet Navy)';
       skuInp.value = (row.sku != null && row.sku !== '') ? row.sku : (row.color || '');
       skuInp.oninput = (e) => { _spData.sections[code][ri].sku = e.target.value; };
       rdiv.appendChild(skuInp);
@@ -1979,9 +1966,9 @@ function spImpParseCSV(text){return text.trim().split('\n').map(line=>{const row
 function spImpSetRows(rows){if(!rows||!rows.length)return;_spImpRows=rows;spImpUpdateUI();}
 
 
-function spImpParseList(rows){const out=[];if(!rows)return out;let gender='';for(let i=0;i<rows.length;i++){const cell=((rows[i]&&rows[i][0])||'').toString().trim();if(!cell)continue;if(cell.toLowerCase()==='garment sku')continue;const mapped=_SP_CAT_MAP[cell.toUpperCase()];if(mapped&&cell.indexOf(' - ')<0){gender=mapped;continue;}const dash=cell.indexOf(' - ');const garment=dash>=0?cell.slice(0,dash).trim():cell;const sku=dash>=0?cell.slice(dash+3).trim():'';out.push({gender,garment,sku});}return out;}
+function spImpParseList(rows){const out=[];if(!rows)return out;let gender='';for(let i=0;i<rows.length;i++){const cell=((rows[i]&&rows[i][0])||'').toString().trim();if(!cell)continue;if(cell.toLowerCase()==='garment sku')continue;const mapped=_SP_CAT_MAP[cell.toUpperCase()];if(mapped&&cell.indexOf(' - ')<0){gender=mapped;continue;}out.push({gender,sku:cell});}return out;}
 function spImpUpdateUI(){const has=!!_spImpRows&&_spImpRows.length>=1;const btn=document.getElementById('spImpApplyBtn');const prev=document.getElementById('spImpPreview');let list=[];if(has)list=spImpParseList(_spImpRows);const ok=list.length>0;if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'.4';}if(prev){if(ok){prev.style.display='';prev.textContent='Found '+list.length+' garment(s)';}else{prev.style.display='none';}}}
-function spImpApply(){if(!_spImpRows)return;const list=spImpParseList(_spImpRows);if(!list.length){alert("No garments found. Paste the Garment SKU column — the garment lines plus the MEN'S / TODDLER headers.");return;}const sel=document.getElementById('spImpColSel');const code=(sel&&sel.value)||'LC';if(!_spData.sections[code])_spData.sections[code]=[];_spData.sections[code]=_spData.sections[code].filter(r=>((r.gender||'')+(r.garment||'')+(r.sku||'')).trim());list.forEach(it=>_spData.sections[code].push({gender:it.gender,garment:it.garment,sku:it.sku}));_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name="spMode"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
+function spImpApply(){if(!_spImpRows)return;const list=spImpParseList(_spImpRows);if(!list.length){alert("No garments found. Paste the Garment SKU column — the garment lines plus the MEN'S / TODDLER headers.");return;}const sel=document.getElementById('spImpColSel');const code=(sel&&sel.value)||'LC';if(!_spData.sections[code])_spData.sections[code]=[];_spData.sections[code]=_spData.sections[code].filter(r=>((r.gender||'')+(r.garment||'')+(r.sku||'')).trim());list.forEach(it=>_spData.sections[code].push({gender:it.gender,sku:it.sku}));_spData.mode='filled';['spModeFilledLbl','spModeBlankLbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',id==='spModeFilledLbl');});document.querySelectorAll('[name="spMode"]').forEach(r=>{r.checked=r.value==='filled';});spRenderEditor();spImpClose();}
 document.addEventListener('DOMContentLoaded',function(){const ta=document.getElementById('spImpPasteTxt');if(ta)ta.addEventListener('input',function(){if(!this.value.trim()){_spImpRows=null;spImpUpdateUI();return;}spImpSetRows(spImpParseTSV(this.value));});const fi=document.getElementById('spImpFile');if(fi)fi.addEventListener('change',function(){const file=this.files[0];if(!file)return;document.getElementById('spImpFileName').textContent=file.name;const ext=file.name.split('.').pop().toLowerCase();if(ext==='xlsx'||ext==='xls'){if(typeof XLSX==='undefined'){alert('SheetJS not loaded. Try CSV instead.');return;}const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];spImpSetRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));spImpUpdateUI();};r.readAsArrayBuffer(file);}else{const r=new FileReader();r.onload=e=>{spImpSetRows(ext==='tsv'?spImpParseTSV(e.target.result):spImpParseCSV(e.target.result));spImpUpdateUI();};r.readAsText(file);}});const sel=document.getElementById('spImpColSel');if(sel)sel.addEventListener('change',spImpUpdateUI);});
 function tabClearActive(){
   var gen=document.getElementById('tabGen');
