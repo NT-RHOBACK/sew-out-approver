@@ -207,7 +207,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.56</span>
+      <span class="badge">v8.57</span>
     </div>
   </div>
   <div class="body">
@@ -351,7 +351,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.56</span>
+      <span class="badge">v8.57</span>
     </div>
   </div>
   <div class="body">
@@ -405,7 +405,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.56</span>
+      <span class="badge">v8.57</span>
     </div>
   </div>
   <div class="body">
@@ -1250,14 +1250,38 @@ async function _drawSpecialProjectPage(pdfDoc, form, sp) {
         page.drawText(code + '  —  ' + PLACEMENT_NAMES[code], { x: M_L + 18, y: y - 13, size: 9, color: NAVY, font: helvB });
         y -= 18 + 6;
 
+        // Sub-group by gender. A garment with 2+ genders selected is listed
+        // under each of those genders. Rows with no gender get no sub-header.
+        const GENDER_ORDER = ["Men's", "Women's", "Toddler"];
+        const byGender = {};
+        const genderSeen = [];
         items.forEach(it => {
-          _ensureSpace(15);
-          const line = it.label ? (it.gender ? it.gender + ' — ' + it.label : it.label) : it.gender;
-          page.drawText(_truncLine(line, LINE_MAXW, 10, helv), { x: LINE_X, y: y - 11, size: 10, color: rgb(0.2, 0.23, 0.32), font: helv });
-          try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(line); tf.setFontSize(10); tf.addToPage(page,{x:M_L+24,y:y-14,width:PAGE_W-M_L-M_R-24,height:13,borderWidth:0}); } catch(e){}
-          y -= 15;
+          const gs = (it.gender || '').split(/\s*&\s*/).map(s => s.trim()).filter(Boolean);
+          (gs.length ? gs : ['']).forEach(g => {
+            if (!byGender[g]) { byGender[g] = []; genderSeen.push(g); }
+            byGender[g].push(it.label || '');
+          });
         });
-        y -= 6;
+        const orderedGenders = GENDER_ORDER.filter(g => byGender[g])
+          .concat(genderSeen.filter(g => g && !GENDER_ORDER.includes(g)))
+          .concat(byGender[''] ? [''] : []);
+        orderedGenders.forEach(g => {
+          const labels = byGender[g].filter(Boolean);
+          if (!labels.length) return;
+          if (g) {
+            _ensureSpace(14 + 14);
+            page.drawText(g.toUpperCase(), { x: M_L + 20, y: y - 11, size: 9, color: NAVY, font: helvB });
+            y -= 15;
+          }
+          labels.forEach(label => {
+            _ensureSpace(14);
+            page.drawText(_truncLine(label, PAGE_W - M_R - (M_L + 34), 10, helv), { x: M_L + 34, y: y - 11, size: 10, color: rgb(0.2, 0.23, 0.32), font: helv });
+            try { const tf=form.createTextField('SPROW_'+(spFieldIdx++)); tf.setText(label); tf.setFontSize(10); tf.addToPage(page,{x:M_L+32,y:y-14,width:PAGE_W-M_L-M_R-32,height:13,borderWidth:0}); } catch(e){}
+            y -= 14;
+          });
+          y -= 3;
+        });
+        y -= 5;
       }
       y -= 10;
     }
