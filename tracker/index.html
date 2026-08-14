@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sew-Out Tracker</title>
+<style>
+  :root{
+    --navy:#1b2a4a; --navy2:#26385f; --ink:#1a2230; --muted:#6b7280;
+    --line:#e4e7ec; --bg:#f5f6f8; --card:#ffffff;
+    --ok:#15803d; --okbg:#e7f6ec;
+    --warn:#b45309; --warnbg:#fdf2e2;
+    --late:#b91c1c; --latebg:#fdeaea;
+    --blue:#1d4ed8; --bluebg:#e8effc;
+    --chip:#eef1f5;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.1);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.4}
+  header{background:var(--navy);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+  header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  header .sub{font-size:11px;opacity:.7;margin-left:-8px}
+  .tabs{display:flex;gap:4px;margin-left:auto}
+  .tabs button{background:transparent;border:0;color:#c7d0e0;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer}
+  .tabs button.active{background:rgba(255,255,255,.14);color:#fff}
+  .tabs button:hover{color:#fff}
+  .hbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;padding:6px 11px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}
+  .hbtn:hover{background:rgba(255,255,255,.2)}
+  main{max-width:1080px;margin:0 auto;padding:18px}
+  .view{display:none}
+  .view.active{display:block}
+
+  /* Quick add */
+  .quickadd{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow);margin-bottom:16px}
+  .quickadd .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .quickadd input,.quickadd select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:#fff}
+  .quickadd input:focus,.quickadd select:focus{outline:2px solid var(--bluebg);border-color:var(--blue)}
+  .f-acct{flex:1 1 160px} .f-logo{flex:1 1 180px} .f-rep{flex:1 1 120px}
+  .addbtn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:9px 18px;font-weight:650;cursor:pointer;font-size:13px}
+  .addbtn:hover{background:var(--navy2)}
+  .qa-hint{font-size:11px;color:var(--muted);margin-top:7px}
+  .prio-toggle{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+
+  /* Attention strip */
+  .attention{margin-bottom:18px}
+  .attention h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--late);margin:0 0 8px}
+  .att-item{display:flex;align-items:center;gap:12px;background:var(--latebg);border:1px solid #f3c6c6;border-left:4px solid var(--late);border-radius:9px;padding:10px 12px;margin-bottom:7px}
+  .att-item.warn{background:var(--warnbg);border-color:#f0d29a;border-left-color:var(--warn)}
+  .att-item .what{flex:1}
+  .att-item .who{font-weight:650}
+  .att-item .act{font-size:12.5px;color:var(--ink)}
+  .att-item .clock{font-size:11px;font-weight:700;color:var(--late);white-space:nowrap}
+  .att-item.warn .clock{color:var(--warn)}
+  .att-empty{color:var(--muted);font-size:13px;background:var(--okbg);border:1px solid #c9e9d3;border-radius:9px;padding:10px 12px}
+
+  /* Columns */
+  .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .col{background:transparent}
+  .col h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between}
+  .col h3 .n{background:var(--chip);border-radius:20px;padding:0 8px;color:var(--ink);font-weight:700}
+
+  /* Card */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 12px;box-shadow:var(--shadow);margin-bottom:10px;position:relative}
+  .card.late{border-left:4px solid var(--late)}
+  .card.warn2{border-left:4px solid var(--warn)}
+  .card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .card .acct{font-weight:700;font-size:14px}
+  .card .logo{color:var(--ink);font-size:13px}
+  .card .meta{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:8px}
+  .card .chip{background:var(--chip);border-radius:6px;padding:1px 7px;font-size:11px;color:#3d4658;font-weight:600}
+  .chip.dept{background:#eaf0fb;color:#2545a0}
+  .chip.wholesale{background:#eaf0fb;color:#2545a0}
+  .chip.qt{background:#f0eafb;color:#6b3fa0}
+  .chip.collegiate{background:#eafbf3;color:#1c7a54}
+  .chip.special{background:#fbf2ea;color:#a05a1c}
+  .star{color:#e0a500;cursor:pointer;font-size:16px;line-height:1}
+  .star.off{color:#d5d8de}
+  .clocks{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .sla{font-size:10.5px;font-weight:700;border-radius:6px;padding:2px 7px;display:inline-flex;gap:4px;align-items:center}
+  .sla.ok{background:var(--okbg);color:var(--ok)} .sla.warn{background:var(--warnbg);color:var(--warn)} .sla.late{background:var(--latebg);color:var(--late)} .sla.done{background:#eef1f5;color:#6b7280}
+  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .actions button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink)}
+  .actions button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .actions button.primary:hover{background:var(--navy2)}
+  .actions button.follow{background:#fff3e6;border-color:#f0cfa0;color:#8a4b00}
+  .actions button:hover{background:#f3f5f8}
+  .actions button.primary:hover{background:var(--navy2)}
+  .link{background:none;border:0;color:var(--blue);cursor:pointer;font-size:11.5px;padding:0;font-weight:600}
+  .hist-mini{margin-top:8px;font-size:11px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px;display:none}
+  .hist-mini.show{display:block}
+  .hist-mini div{padding:1px 0}
+
+  /* History view */
+  .datebar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .datebar input[type=date]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+  .daygroup{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:12px}
+  .daygroup h4{margin:0 0 4px;font-size:14px}
+  .ev{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #f1f2f5;font-size:13px}
+  .ev:last-child{border-bottom:0}
+  .ev .t{color:var(--muted);width:66px;flex:none;font-variant-numeric:tabular-nums}
+  .ev .badge{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;flex:none;align-self:center}
+  .stat{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+  .stat .box{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 16px;box-shadow:var(--shadow);min-width:120px}
+  .stat .box .num{font-size:24px;font-weight:750;color:var(--navy)}
+  .stat .box .lab{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+  /* Report view */
+  .report-controls{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .report-controls button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 16px;font-weight:650;cursor:pointer;font-size:13px}
+  .report-controls button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .report-out{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px;box-shadow:var(--shadow)}
+  .report-out textarea{width:100%;min-height:340px;border:1px solid var(--line);border-radius:9px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.5;resize:vertical}
+  .copybtn{margin-top:10px;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:9px 18px;font-weight:650;cursor:pointer}
+  .copybtn:hover{background:var(--navy2)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .empty{color:var(--muted);text-align:center;padding:30px;font-size:14px}
+  .savednote{font-size:11px;color:#c7d0e0}
+  details.help{margin-bottom:14px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:4px 14px;box-shadow:var(--shadow)}
+  details.help summary{cursor:pointer;font-weight:650;padding:8px 0;font-size:13px;color:var(--navy)}
+  details.help ul{margin:4px 0 12px;padding-left:18px;color:#41485a}
+  details.help li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Sew-Out Tracker</h1>
+  </div>
+  <div class="savednote" id="savednote"></div>
+  <div class="tabs">
+    <button data-tab="board" class="active">Board</button>
+    <button data-tab="history">History</button>
+    <button data-tab="report">Report</button>
+  </div>
+  <button class="hbtn" id="exportBtn" title="Download a JSON backup for OneDrive">Export</button>
+  <button class="hbtn" id="importBtn" title="Load a JSON backup">Import</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none" />
+</header>
+
+<main>
+  <!-- BOARD -->
+  <section class="view active" id="view-board">
+    <details class="help">
+      <summary>How this works (30-second read)</summary>
+      <ul>
+        <li><b>Log once, then click to advance.</b> Add a request with the bar below. After that, every button on a card stamps the time automatically — those clicks are your log.</li>
+        <li><b>The red strip up top</b> is your "do this now" list — overdue SLAs, with the exact next action (e.g. follow up with Barrett + cc Renée).</li>
+        <li><b>SLA clocks:</b> 48 hrs to get a request to Barrett · 24 hrs for Barrett to send the sew-out (else follow up) · forward to the rep the same day it's received.</li>
+        <li><b>Nothing is deleted.</b> Completed requests leave the board but stay in <b>History</b> — pick any past date to see what happened.</li>
+        <li><b>Report tab</b> writes your morning + end-of-day messages from the timestamps. <b>Export</b> saves a JSON backup to OneDrive.</li>
+      </ul>
+    </details>
+
+    <div class="quickadd">
+      <div class="row">
+        <input class="f-acct" id="qa-acct" placeholder="Account (e.g. Colleton River)" />
+        <input class="f-logo" id="qa-logo" placeholder="Logo (e.g. Key Club Arrow 1.03in)" />
+        <input class="f-rep" id="qa-rep" placeholder="Sales rep" />
+        <select id="qa-dept" title="Department">
+          <option value="Wholesale">Wholesale</option>
+          <option value="QT">Quick Turn</option>
+          <option value="Collegiate">Collegiate</option>
+          <option value="Special">Special Project</option>
+        </select>
+        <select id="qa-dig" title="Digitizing">
+          <option value="Abcoln">Digitize · Abcoln</option>
+          <option value="VLead">Digitize · VLead</option>
+          <option value="Provided">DST provided</option>
+          <option value="None">No digitize</option>
+        </select>
+        <input type="date" id="qa-need" title="Needed by (optional)" />
+        <label class="prio-toggle"><input type="checkbox" id="qa-prio" /> Urgent</label>
+        <button class="addbtn" id="qa-add">Log request</button>
+      </div>
+      <div class="qa-hint">Tip: fill Account + Logo and press <b>Enter</b> to log fast. Everything else is optional.</div>
+    </div>
+
+    <div class="attention" id="attention"></div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="view" id="view-history">
+    <div class="datebar">
+      <label style="font-weight:650">Show everything logged on:</label>
+      <input type="date" id="hist-date" />
+      <button class="hbtn" id="hist-today" style="background:var(--navy)">Today</button>
+      <span style="color:var(--muted);font-size:12px" id="hist-count"></span>
+    </div>
+    <div id="history-out"></div>
+  </section>
+
+  <!-- REPORT -->
+  <section class="view" id="view-report">
+    <div class="report-controls">
+      <button data-rep="morning" class="active">☀️ Morning — today's plan</button>
+      <button data-rep="eod">🌙 End of day — what I did</button>
+    </div>
+    <div class="report-out">
+      <textarea id="report-text" readonly></textarea>
+      <button class="copybtn" id="report-copy">Copy to clipboard</button>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------------- Data model ---------------- */
+const KEY = "sewOutTracker_v1";
+const HOUR = 3600*1000;
+
+// Stage pipeline. Each request sits in one stage. Actions advance stage + stamp time + push event.
+const STAGES = [
+  {key:"new",       label:"Logged"},
+  {key:"digitizing",label:"Digitizing"},
+  {key:"barrett",   label:"At Barrett"},
+  {key:"received",  label:"Sew-out in"},
+  {key:"rep",       label:"With rep"},
+  {key:"approved",  label:"Approved"},
+];
+const STAGE_LABEL = Object.fromEntries(STAGES.map(s=>[s.key,s.label]));
+
+// Event badge colors
+const EVCOLOR = {
+  created:"#eaf0fb;#2545a0", digitize:"#f0eafb;#6b3fa0", barrett:"#e8effc;#1d4ed8",
+  followup:"#fdf2e2;#b45309", received:"#e7f6ec;#15803d", rep:"#e8effc;#1d4ed8",
+  approved:"#e7f6ec;#15803d", revision:"#fdeaea;#b91c1c", complete:"#eef1f5;#41485a",
+  note:"#eef1f5;#41485a"
+};
+
+let state = load();
+
+function load(){
+  try{ const raw = localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return { requests:[], seq:1 };
+}
+function save(){
+  localStorage.setItem(KEY, JSON.stringify(state));
+  const d = new Date();
+  document.getElementById("savednote").textContent =
+    "Saved " + d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+}
+function uid(){ return "r"+(state.seq++); }
+function now(){ return Date.now(); }
+
+function addEvent(r, type, note){
+  r.events.push({ type, at: now(), note: note||"" });
+}
+
+/* ---------------- Actions ---------------- */
+function logRequest(){
+  const acct = val("qa-acct").trim();
+  const logo = val("qa-logo").trim();
+  if(!acct && !logo){ toast("Add an account or logo name first"); return; }
+  const r = {
+    id: uid(),
+    acct, logo,
+    rep: val("qa-rep").trim(),
+    dept: val("qa-dept"),
+    digitizer: val("qa-dig"),
+    neededBy: val("qa-need") || "",
+    priority: document.getElementById("qa-prio").checked,
+    // DST provided or no-digitize skips straight past the digitize step conceptually,
+    // but everyone still starts at "new" until you send to Barrett.
+    stage: "new",
+    createdAt: now(),
+    events: [],
+    // milestone stamps
+    digitizeSentAt:0, sentToBarrettAt:0, lastFollowUpAt:0,
+    receivedAt:0, sentToRepAt:0, approvedAt:0, completedAt:0
+  };
+  addEvent(r, "created", `${acct||"—"} · ${logo||"—"}${r.priority?" · URGENT":""}`);
+  state.requests.unshift(r);
+  save(); render();
+  // reset entry
+  ["qa-acct","qa-logo","qa-rep"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("qa-need").value="";
+  document.getElementById("qa-prio").checked=false;
+  document.getElementById("qa-acct").focus();
+  toast("Request logged");
+}
+
+function advance(id, to){
+  const r = get(id); if(!r) return;
+  const t = now();
+  switch(to){
+    case "digitizing":
+      r.stage="digitizing"; r.digitizeSentAt=t;
+      addEvent(r,"digitize",`Sent to ${r.digitizer==="VLead"?"VLead":"Abcoln"} to digitize`); break;
+    case "barrett":
+      r.stage="barrett"; r.sentToBarrettAt=t;
+      addEvent(r,"barrett","Sew-out request sent to Barrett"); break;
+    case "followup":
+      r.lastFollowUpAt=t;
+      addEvent(r,"followup","Followed up with Barrett (cc Renée)"); break;
+    case "received":
+      r.stage="received"; r.receivedAt=t;
+      addEvent(r,"received","Sew-out received from Barrett"); break;
+    case "rep":
+      r.stage="rep"; r.sentToRepAt=t;
+      addEvent(r,"rep",`Sent to ${r.rep||"sales rep"} for approval`); break;
+    case "approved":
+      r.stage="approved"; r.approvedAt=t;
+      addEvent(r,"approved","Approved by rep"); break;
+    case "revision":
+      r.stage="digitizing";
+      addEvent(r,"revision","Needs revision — back to digitize/edit"); break;
+    case "complete":
+      r.completedAt=t;
+      addEvent(r,"complete","Uploaded to EpicStitch — complete"); break;
+  }
+  save(); render();
+}
+
+function delReq(id){
+  if(!confirm("Delete this request permanently? (History for it will be lost.)")) return;
+  state.requests = state.requests.filter(r=>r.id!==id);
+  save(); render();
+}
+
+function get(id){ return state.requests.find(r=>r.id===id); }
+function val(id){ return document.getElementById(id).value; }
+
+/* ---------------- SLA logic ---------------- */
+// Returns array of {level:'ok|warn|late', label, action} for a request
+function slaFor(r){
+  const out=[]; const t=now();
+  if(r.completedAt) return [{level:"done",label:"Complete",action:null}];
+
+  // 1) 48h to get to Barrett (request sent). Applies until stage reaches barrett/received/...
+  if(["new","digitizing"].includes(r.stage)){
+    const age = t - r.createdAt;
+    const hrs = age/HOUR;
+    let level = hrs>48?"late":(hrs>40?"warn":"ok");
+    out.push({level, label:`Send to Barrett · ${fmtCountdown(48*HOUR-age)}`,
+      action: level==="ok"?null:`Get ${r.acct||"this logo"} digitized + sew-out request to Barrett`});
+  }
+
+  // 2) 24h Barrett -> sew-out back, else follow up (cc Renée)
+  if(r.stage==="barrett"){
+    const base = Math.max(r.sentToBarrettAt, r.lastFollowUpAt||0);
+    const age = t - base;
+    const hrs = age/HOUR;
+    let level = hrs>24?"late":(hrs>20?"warn":"ok");
+    const lbl = r.lastFollowUpAt ? "Barrett (followed up) · " : "Barrett sew-out · ";
+    out.push({level, label:lbl+fmtCountdown(24*HOUR-age),
+      action: level==="ok"?null:`Follow up with Barrett on ${r.acct||"this logo"} — cc Renée`});
+  }
+
+  // 3) forward to rep same day it's received
+  if(r.stage==="received"){
+    const sameDay = isToday(r.receivedAt);
+    out.push({level: sameDay?"warn":"late", label: sameDay?"Forward to rep today":"Overdue — forward to rep",
+      action:`Send ${r.acct||"this"} approval to ${r.rep||"the rep"}`});
+  }
+  return out;
+}
+
+// worst level in a sla array
+function worst(slas){
+  if(slas.some(s=>s.level==="late")) return "late";
+  if(slas.some(s=>s.level==="warn")) return "warn";
+  return "ok";
+}
+
+/* ---------------- Rendering ---------------- */
+function render(){
+  renderAttention();
+  renderBoard();
+  if(currentTab==="history") renderHistory();
+  if(currentTab==="report") renderReport();
+}
+
+function renderAttention(){
+  const box = document.getElementById("attention");
+  const items=[];
+  active().forEach(r=>{
+    slaFor(r).forEach(s=>{
+      if(s.action && (s.level==="late"||s.level==="warn")){
+        items.push({r,s});
+      }
+    });
+  });
+  items.sort((a,b)=> rank(b.s.level)-rank(a.s.level) || (b.r.priority-a.r.priority));
+  if(!items.length){
+    box.innerHTML = `<h2>Needs attention now</h2><div class="att-empty">✓ All clear — nothing is past its SLA right now.</div>`;
+    return;
+  }
+  box.innerHTML = `<h2>Needs attention now · ${items.length}</h2>` + items.map(({r,s})=>`
+    <div class="att-item ${s.level==="warn"?"warn":""}">
+      <div class="what">
+        <div class="who">${esc(r.acct||"—")} <span style="font-weight:400;color:#555">· ${esc(r.logo||"")}</span> ${r.priority?"⭐":""}</div>
+        <div class="act">${esc(s.action)}</div>
+      </div>
+      <div class="clock">${esc(s.label.split("·").pop().trim())}</div>
+    </div>`).join("");
+}
+
+function renderBoard(){
+  const board = document.getElementById("board");
+  const act = active();
+  if(!act.length){
+    board.innerHTML = `<div class="empty" style="grid-column:1/-1">No active requests. Log one above to get started. ✂️</div>`;
+    return;
+  }
+  // group by stage in pipeline order
+  board.innerHTML = STAGES.map(st=>{
+    const list = act.filter(r=>r.stage===st.key)
+      .sort((a,b)=> (b.priority-a.priority) || sortByWorst(a,b));
+    if(!list.length) return "";
+    return `<div class="col"><h3>${st.label} <span class="n">${list.length}</span></h3>${list.map(card).join("")}</div>`;
+  }).join("") || `<div class="empty" style="grid-column:1/-1">No active requests.</div>`;
+}
+
+function card(r){
+  const slas = slaFor(r);
+  const w = worst(slas);
+  const cls = w==="late"?"late":(w==="warn"?"warn2":"");
+  const deptClass = r.dept.toLowerCase().includes("whole")?"wholesale":
+                    r.dept==="QT"?"qt":r.dept==="Collegiate"?"collegiate":"special";
+  const clocks = slas.map(s=>`<span class="sla ${s.level}">${esc(s.label)}</span>`).join("");
+  return `<div class="card ${cls}">
+    <div class="top">
+      <div>
+        <div class="acct">${esc(r.acct||"—")}</div>
+        <div class="logo">${esc(r.logo||"")}</div>
+      </div>
+      <span class="star ${r.priority?"":"off"}" onclick="togglePrio('${r.id}')" title="Urgent">★</span>
+    </div>
+    <div class="meta">
+      <span class="chip dept ${deptClass}">${esc(r.dept)}</span>
+      ${r.rep?`<span class="chip">Rep: ${esc(r.rep)}</span>`:""}
+      ${r.digitizer && r.digitizer!=="None"?`<span class="chip">${r.digitizer==="Provided"?"DST provided":r.digitizer}</span>`:""}
+      ${r.neededBy?`<span class="chip">Need by ${fmtShort(r.neededBy)}</span>`:""}
+      <span class="chip">Logged ${ago(r.createdAt)}</span>
+    </div>
+    <div class="clocks">${clocks}</div>
+    <div class="actions">${actionButtons(r)}</div>
+    <span class="link" onclick="toggleMini('${r.id}')">history</span>
+    <div class="hist-mini" id="mini-${r.id}">${miniHistory(r)}</div>
+  </div>`;
+}
+
+function actionButtons(r){
+  const b=[];
+  switch(r.stage){
+    case "new":
+      if(r.digitizer==="Provided"||r.digitizer==="None"){
+        b.push(btn(r.id,"barrett","Send to Barrett","primary"));
+      }else{
+        b.push(btn(r.id,"digitizing","Digitize sent","primary"));
+        b.push(btn(r.id,"barrett","Skip → Barrett",""));
+      }
+      break;
+    case "digitizing":
+      b.push(btn(r.id,"barrett","Send to Barrett","primary"));
+      break;
+    case "barrett":
+      b.push(btn(r.id,"received","Sew-out received","primary"));
+      b.push(btn(r.id,"followup","Log follow-up (cc Renée)","follow"));
+      break;
+    case "received":
+      b.push(btn(r.id,"rep","Sent to rep","primary"));
+      b.push(btn(r.id,"revision","Needs revision",""));
+      break;
+    case "rep":
+      b.push(btn(r.id,"approved","Approved","primary"));
+      b.push(btn(r.id,"revision","Needs revision",""));
+      break;
+    case "approved":
+      b.push(btn(r.id,"complete","Uploaded to ES ✓","primary"));
+      break;
+  }
+  return b.join("");
+}
+function btn(id,to,label,cls){ return `<button class="${cls}" onclick="advance('${id}','${to}')">${label}</button>`; }
+
+function miniHistory(r){
+  return r.events.slice().reverse().map(e=>
+    `<div>${fmtTime(e.at)} · ${STAGE_ish(e.type)} — ${esc(e.note)}</div>`).join("");
+}
+function STAGE_ish(t){ return t.charAt(0).toUpperCase()+t.slice(1); }
+
+function togglePrio(id){ const r=get(id); if(r){ r.priority=!r.priority; save(); render(); } }
+function toggleMini(id){ document.getElementById("mini-"+id).classList.toggle("show"); }
+
+/* ---------------- History view ---------------- */
+function renderHistory(){
+  const dv = document.getElementById("hist-date").value;
+  const out = document.getElementById("history-out");
+  if(!dv){ out.innerHTML = `<div class="empty">Pick a date above to see everything logged that day.</div>`; return; }
+  const [Y,M,D] = dv.split("-").map(Number);
+  const start = new Date(Y,M-1,D,0,0,0).getTime();
+  const end = start + 24*HOUR;
+
+  // gather events across all requests within the day
+  const rows=[];
+  state.requests.forEach(r=>{
+    r.events.forEach(e=>{
+      if(e.at>=start && e.at<end) rows.push({r,e});
+    });
+  });
+  rows.sort((a,b)=>a.e.at-b.e.at);
+  document.getElementById("hist-count").textContent = rows.length? `${rows.length} events` : "";
+
+  // stats for the day
+  const created = rows.filter(x=>x.e.type==="created").length;
+  const toBarrett = rows.filter(x=>x.e.type==="barrett").length;
+  const received = rows.filter(x=>x.e.type==="received").length;
+  const toRep = rows.filter(x=>x.e.type==="rep").length;
+  const approved = rows.filter(x=>x.e.type==="approved").length;
+  const followed = rows.filter(x=>x.e.type==="followup").length;
+
+  if(!rows.length){ out.innerHTML = `<div class="empty">Nothing was logged on ${fmtShort(dv)}.</div>`; return; }
+
+  const statHtml = `<div class="stat">
+    ${statBox(created,"Logged")}${statBox(toBarrett,"To Barrett")}${statBox(received,"Sew-outs in")}
+    ${statBox(toRep,"Sent to rep")}${statBox(approved,"Approved")}${statBox(followed,"Follow-ups")}
+  </div>`;
+
+  // group by request
+  const byReq = {};
+  rows.forEach(({r,e})=>{ (byReq[r.id]=byReq[r.id]||{r,evs:[]}).evs.push(e); });
+  const groups = Object.values(byReq).map(({r,evs})=>`
+    <div class="daygroup">
+      <h4>${esc(r.acct||"—")} <span style="font-weight:400;color:#666">· ${esc(r.logo||"")}</span></h4>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">${esc(r.dept)}${r.rep?" · "+esc(r.rep):""}</div>
+      ${evs.map(e=>`<div class="ev"><span class="t">${fmtTime(e.at)}</span>${badge(e.type)}<span>${esc(e.note)}</span></div>`).join("")}
+    </div>`).join("");
+  out.innerHTML = statHtml + groups;
+}
+function statBox(n,l){ return `<div class="box"><div class="num">${n}</div><div class="lab">${l}</div></div>`; }
+function badge(type){
+  const [bg,fg]=(EVCOLOR[type]||"#eee;#444").split(";");
+  return `<span class="badge" style="background:${bg};color:${fg}">${STAGE_ish(type)}</span>`;
+}
+
+/* ---------------- Report view ---------------- */
+let repMode="morning";
+function renderReport(){
+  const ta = document.getElementById("report-text");
+  ta.value = repMode==="morning"? morningReport() : eodReport();
+}
+function morningReport(){
+  const d = new Date();
+  const act = active();
+  const lines=[];
+  lines.push(`Good morning — here's my plan for ${d.toLocaleDateString([], {weekday:"long",month:"long",day:"numeric"})}.`);
+  lines.push("");
+
+  // Priorities = overdue first, then urgent, then needed-by soonest
+  const scored = act.map(r=>({r, w:worst(slaFor(r))}))
+    .sort((a,b)=> rank(b.w)-rank(a.w) || (b.r.priority-a.r.priority) || needSort(a.r,b.r));
+  lines.push("TOP PRIORITIES TODAY");
+  const pr = scored.filter(x=>x.w!=="ok"||x.r.priority).slice(0,8);
+  if(pr.length){
+    pr.forEach(({r})=>{
+      const a = slaFor(r).find(s=>s.action);
+      lines.push(` • ${r.acct||"—"} — ${r.logo||""}${r.priority?" ⭐":""}${a?"  →  "+a.action:"  →  "+STAGE_LABEL[r.stage]}`);
+    });
+  } else lines.push(" • Nothing overdue — working the queue in order.");
+  lines.push("");
+
+  // Wholesale open list w/ ages
+  lines.push("WHOLESALE — OPEN REQUESTS");
+  const w = act.filter(r=>r.dept.toLowerCase().includes("whole"))
+    .sort((a,b)=>a.createdAt-b.createdAt);
+  if(w.length){
+    w.forEach(r=>{
+      const hrs = (now()-r.createdAt)/HOUR;
+      const flag = hrs>48? "  ⚠ OVER 48H":"";
+      lines.push(` • ${r.acct||"—"} — ${r.logo||""} · ${STAGE_LABEL[r.stage]} · logged ${ago(r.createdAt)}${flag}`);
+    });
+  } else lines.push(" • None open.");
+  lines.push("");
+  lines.push(`(${act.length} active across all departments.)`);
+  return lines.join("\n");
+}
+function eodReport(){
+  const d = new Date();
+  const start = new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+  const rows=[];
+  state.requests.forEach(r=> r.events.forEach(e=>{ if(e.at>=start) rows.push({r,e}); }));
+  const c=t=>rows.filter(x=>x.e.type===t).length;
+  const lines=[];
+  lines.push(`End of day — ${d.toLocaleDateString([], {weekday:"long",month:"long",day:"numeric"})}.`);
+  lines.push("");
+  lines.push("WHAT I DID TODAY");
+  const summ=[];
+  if(c("created")) summ.push(`Logged ${c("created")} new request${c("created")>1?"s":""}`);
+  if(c("digitize")) summ.push(`Sent ${c("digitize")} to digitize`);
+  if(c("barrett")) summ.push(`Sent ${c("barrett")} to Barrett`);
+  if(c("followup")) summ.push(`Followed up on ${c("followup")} (cc Renée)`);
+  if(c("received")) summ.push(`Received ${c("received")} sew-out${c("received")>1?"s":""}`);
+  if(c("rep")) summ.push(`Forwarded ${c("rep")} to reps for approval`);
+  if(c("approved")) summ.push(`Got ${c("approved")} approved`);
+  if(c("complete")) summ.push(`Completed/uploaded ${c("complete")}`);
+  if(summ.length) summ.forEach(s=>lines.push(" • "+s)); else lines.push(" • (No status changes logged today.)");
+  lines.push("");
+
+  // detail per request touched
+  const byReq={};
+  rows.forEach(({r,e})=>{ (byReq[r.id]=byReq[r.id]||{r,evs:[]}).evs.push(e); });
+  if(Object.keys(byReq).length){
+    lines.push("DETAIL");
+    Object.values(byReq).forEach(({r,evs})=>{
+      const acts = evs.map(e=>STAGE_ish(e.type)).join(" → ");
+      lines.push(` • ${r.acct||"—"} — ${r.logo||""}: ${acts}`);
+    });
+    lines.push("");
+  }
+
+  // wholesale still open, with 48h flag
+  lines.push("WHOLESALE — STILL OPEN");
+  const w = active().filter(r=>r.dept.toLowerCase().includes("whole")).sort((a,b)=>a.createdAt-b.createdAt);
+  if(w.length){
+    w.forEach(r=>{
+      const hrs=(now()-r.createdAt)/HOUR;
+      lines.push(` • ${r.acct||"—"} — ${r.logo||""} · ${STAGE_LABEL[r.stage]} · logged ${ago(r.createdAt)}${hrs>48?"  ⚠ OVER 48H":""}`);
+    });
+  } else lines.push(" • None — wholesale board is clear. ✓");
+  return lines.join("\n");
+}
+
+/* ---------------- Helpers ---------------- */
+function active(){ return state.requests.filter(r=>!r.completedAt); }
+function rank(l){ return l==="late"?2:l==="warn"?1:0; }
+function sortByWorst(a,b){ return rank(worst(slaFor(b)))-rank(worst(slaFor(a))); }
+function needSort(a,b){
+  if(a.neededBy && b.neededBy) return a.neededBy<b.neededBy?-1:1;
+  if(a.neededBy) return -1; if(b.neededBy) return 1; return a.createdAt-b.createdAt;
+}
+function isToday(ts){ if(!ts) return false; const d=new Date(); const s=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); return ts>=s && ts<s+24*HOUR; }
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
+function fmtShort(iso){ const [Y,M,D]=iso.split("-").map(Number); return new Date(Y,M-1,D).toLocaleDateString([], {month:"short",day:"numeric"}); }
+function ago(ts){
+  const h=(now()-ts)/HOUR;
+  if(h<1) return Math.max(1,Math.round(h*60))+"m ago";
+  if(h<24) return Math.round(h)+"h ago";
+  return Math.round(h/24)+"d ago";
+}
+function fmtCountdown(ms){
+  if(ms<=0){ const over=-ms/HOUR; return over<24?`${Math.round(over)}h over`:`${Math.round(over/24)}d over`; }
+  const h=ms/HOUR; return h<24?`${Math.round(h)}h left`:`${Math.round(h/24)}d left`;
+}
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* ---------------- Tabs ---------------- */
+let currentTab="board";
+document.querySelectorAll(".tabs button").forEach(b=>{
+  b.onclick=()=>{
+    currentTab=b.dataset.tab;
+    document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active",x===b));
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.getElementById("view-"+currentTab).classList.add("active");
+    if(currentTab==="history"){ if(!document.getElementById("hist-date").value) setHistToday(); renderHistory(); }
+    if(currentTab==="report") renderReport();
+  };
+});
+document.querySelectorAll(".report-controls button").forEach(b=>{
+  b.onclick=()=>{
+    repMode=b.dataset.rep;
+    document.querySelectorAll(".report-controls button").forEach(x=>x.classList.toggle("active",x===b));
+    renderReport();
+  };
+});
+
+/* ---------------- Wiring ---------------- */
+document.getElementById("qa-add").onclick=logRequest;
+["qa-acct","qa-logo","qa-rep"].forEach(id=>{
+  document.getElementById(id).addEventListener("keydown",e=>{ if(e.key==="Enter") logRequest(); });
+});
+document.getElementById("hist-date").addEventListener("change",renderHistory);
+document.getElementById("hist-today").onclick=()=>{ setHistToday(); renderHistory(); };
+function setHistToday(){ const d=new Date(); const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; document.getElementById("hist-date").value=iso; }
+document.getElementById("report-copy").onclick=()=>{
+  const ta=document.getElementById("report-text"); ta.removeAttribute("readonly"); ta.select();
+  navigator.clipboard.writeText(ta.value).then(()=>toast("Copied — paste into email/Teams")).catch(()=>{document.execCommand("copy");toast("Copied");});
+  ta.setAttribute("readonly","readonly");
+};
+
+// Export / Import (OneDrive backup + future shared JSON)
+document.getElementById("exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); const d=new Date();
+  a.href=URL.createObjectURL(blob);
+  a.download=`sew-out-tracker_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  a.click(); toast("Backup downloaded — save it to OneDrive");
+};
+document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+document.getElementById("importFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!d.requests) throw 0;
+    if(confirm("Replace everything currently in the tracker with this file?")){ state=d; save(); render(); toast("Imported"); } }
+    catch(err){ toast("That file isn't a valid tracker backup"); } };
+  rd.readAsText(f);
+};
+
+// live clocks: re-render board/attention every minute so countdowns stay current
+setInterval(()=>{ if(currentTab==="board") { renderAttention(); renderBoard(); } }, 60*1000);
+
+render();
+document.getElementById("qa-acct").focus();
+</script>
+</body>
+</html>
