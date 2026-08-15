@@ -129,12 +129,14 @@
     <h1>Sew-Out Tracker</h1>
   </div>
   <div class="savednote" id="savednote"></div>
+  <div class="savednote" id="cloudnote" style="color:#8fd0a0"></div>
   <div class="tabs">
     <button data-tab="board" class="active">Board</button>
     <button data-tab="history">History</button>
     <button data-tab="report">Report</button>
   </div>
-  <button class="hbtn" id="exportBtn" title="Download a JSON backup for OneDrive">Export</button>
+  <button class="hbtn" id="cloudBtn" title="Connect a tracker.json in OneDrive so it auto-syncs and Claude can read it">☁ OneDrive</button>
+  <button class="hbtn" id="exportBtn" title="Download a one-off JSON backup">Export</button>
   <button class="hbtn" id="importBtn" title="Load a JSON backup">Import</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" />
 </header>
@@ -239,10 +241,12 @@ function load(){
   return { requests:[], seq:1 };
 }
 function save(){
+  state.savedAt = Date.now();
   localStorage.setItem(KEY, JSON.stringify(state));
   const d = new Date();
   document.getElementById("savednote").textContent =
     "Saved " + d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  cloudAutoSave();
 }
 function uid(){ return "r"+(state.seq++); }
 function now(){ return Date.now(); }
@@ -705,10 +709,70 @@ document.getElementById("importFile").onchange=e=>{
   rd.readAsText(f);
 };
 
+/* ---------------- OneDrive sync (File System Access API) ---------------- */
+// Point this at a tracker.json inside OneDrive. It auto-saves on every change and
+// reconnects each session with one click. That file is what Claude reads for reminders/reports.
+let cloudHandle=null, cloudTimer=null;
+const IDB="sewOutTrackerDB";
+function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open(IDB,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore("h"); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbSet(k,v){ const db=await idb(); return new Promise((res,rej)=>{ const t=db.transaction("h","readwrite"); t.objectStore("h").put(v,k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function idbGet(k){ const db=await idb(); return new Promise((res,rej)=>{ const t=db.transaction("h","readonly"); const q=t.objectStore("h").get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
+function cloudSupported(){ return "showSaveFilePicker" in window; }
+function setCloudNote(txt,color){ const n=document.getElementById("cloudnote"); n.textContent=txt||""; n.style.color=color||"#8fd0a0"; }
+
+async function cloudConnect(){
+  if(!cloudSupported()){ toast("This browser can't auto-sync — use Export/Import (works in Edge/Chrome)"); return; }
+  try{
+    const h=await window.showSaveFilePicker({ suggestedName:"tracker.json",
+      types:[{description:"Tracker data",accept:{"application/json":[".json"]}}] });
+    cloudHandle=h; await idbSet("handle",h); await cloudWrite();
+    setCloudNote("☁ Synced: "+h.name);
+    toast("Connected — keep this file in your OneDrive Sew-Out Tracker folder");
+  }catch(e){ /* user cancelled picker */ }
+}
+async function cloudWrite(){
+  if(!cloudHandle) return;
+  try{ const w=await cloudHandle.createWritable(); await w.write(JSON.stringify(state,null,2)); await w.close(); }
+  catch(e){ setCloudNote("⚠ Sync paused — click ☁ OneDrive to reconnect","#f0b48a"); cloudHandle=null; }
+}
+function cloudAutoSave(){ if(!cloudHandle) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(cloudWrite,1500); }
+async function cloudLoadFrom(onlyIfNewer){
+  if(!cloudHandle) return false;
+  try{
+    const f=await cloudHandle.getFile(); const d=JSON.parse(await f.text());
+    if(d && d.requests){
+      if(onlyIfNewer && (d.savedAt||0)<=(state.savedAt||0)) return false;
+      state=d; localStorage.setItem(KEY,JSON.stringify(state)); render(); return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function cloudInit(){
+  if(!cloudSupported()){ document.getElementById("cloudBtn").title="Auto-sync needs Edge/Chrome — use Export/Import here"; return; }
+  try{
+    const h=await idbGet("handle");
+    if(h){ cloudHandle=h;
+      const perm=await h.queryPermission({mode:"readwrite"});
+      if(perm==="granted"){ setCloudNote("☁ Synced: "+h.name); await cloudLoadFrom(true); }
+      else setCloudNote("☁ Click ☁ OneDrive to reconnect: "+h.name,"#e6c07a");
+    }
+  }catch(e){}
+}
+document.getElementById("cloudBtn").onclick=async()=>{
+  if(cloudHandle){
+    try{ const perm=await cloudHandle.requestPermission({mode:"readwrite"});
+      if(perm==="granted"){ await cloudLoadFrom(false); setCloudNote("☁ Synced: "+cloudHandle.name); toast("Reconnected & pulled latest"); return; } }
+    catch(e){}
+  }
+  cloudConnect();
+};
+
 // live clocks: re-render board/attention every minute so countdowns stay current
 setInterval(()=>{ if(currentTab==="board") { renderAttention(); renderBoard(); } }, 60*1000);
 
 render();
+cloudInit();
 document.getElementById("qa-acct").focus();
 </script>
 </body>
