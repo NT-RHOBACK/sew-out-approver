@@ -113,6 +113,26 @@
   .report-out textarea{width:100%;min-height:340px;border:1px solid var(--line);border-radius:9px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.5;resize:vertical}
   .copybtn{margin-top:10px;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:9px 18px;font-weight:650;cursor:pointer}
   .copybtn:hover{background:var(--navy2)}
+  /* Sheet (spreadsheet) view */
+  .sheet-bar{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .sheet-toggle{font-size:12px;color:var(--muted);display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+  .sheet-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);background:#fff}
+  table.sheet{border-collapse:collapse;width:100%;font-size:12.5px}
+  table.sheet th,table.sheet td{border:1px solid var(--line);padding:0;white-space:nowrap}
+  table.sheet th{background:var(--navy);color:#fff;font-weight:600;padding:7px 9px;position:sticky;top:0;z-index:2;text-align:left;font-size:11px;letter-spacing:.3px;text-transform:uppercase}
+  table.sheet tr:nth-child(even) td{background:#fafbfc}
+  table.sheet tr.done td{background:#f1f5f2;color:#7a8574}
+  table.sheet input,table.sheet select{border:0;background:transparent;font:inherit;color:inherit;padding:6px 8px;width:100%;box-sizing:border-box}
+  table.sheet input:focus,table.sheet select:focus{outline:2px solid var(--bluebg);background:#fff;border-radius:3px}
+  table.sheet td.num input{text-align:center}
+  table.sheet td.star{text-align:center;cursor:pointer;font-size:15px;width:30px;color:#e0a500}
+  table.sheet select{cursor:pointer}
+  td.st-barrett select{color:#1d4ed8;font-weight:600} td.st-received select{color:#15803d;font-weight:600}
+  td.st-rep select{color:#a05a1c;font-weight:600} td.st-approved select{color:#15803d;font-weight:700}
+  td.st-complete select{color:#7a8574} td.st-digitizing select{color:#6b3fa0;font-weight:600}
+  .col-acct{min-width:150px} .col-logo{min-width:170px} .col-rep{min-width:90px}
+  .col-date{min-width:120px} .col-inhand{min-width:120px} .col-status{min-width:120px}
+
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
   .toast.show{opacity:1}
   .empty{color:var(--muted);text-align:center;padding:30px;font-size:14px}
@@ -132,6 +152,7 @@
   <div class="savednote" id="cloudnote" style="color:#8fd0a0"></div>
   <div class="tabs">
     <button data-tab="board" class="active">Board</button>
+    <button data-tab="sheet">Sheet</button>
     <button data-tab="history">History</button>
     <button data-tab="report">Report</button>
   </div>
@@ -205,6 +226,17 @@
       <button class="copybtn" id="report-copy">Copy to clipboard</button>
     </div>
   </section>
+
+  <!-- SHEET -->
+  <section class="view" id="view-sheet">
+    <div class="sheet-bar">
+      <button class="hbtn" id="sheet-add" style="background:var(--navy)">+ New row</button>
+      <label class="sheet-toggle"><input type="checkbox" id="sheet-done" /> Show completed</label>
+      <span id="sheet-count" style="color:var(--muted);font-size:12px"></span>
+      <span style="color:var(--muted);font-size:11px;margin-left:auto">Edit any cell · dropdowns for Dept &amp; Status · ★ = urgent</span>
+    </div>
+    <div class="sheet-wrap"><table class="sheet" id="sheet-table"></table></div>
+  </section>
 </main>
 
 <div class="toast" id="toast"></div>
@@ -273,6 +305,7 @@ function logRequest(){
     stage: "new",
     createdAt: now(),
     events: [],
+    logoCount: 1, inHand: "",
     // milestone stamps
     digitizeSentAt:0, sentToBarrettAt:0, lastFollowUpAt:0,
     receivedAt:0, sentToRepAt:0, approvedAt:0, completedAt:0
@@ -377,6 +410,7 @@ function render(){
   renderBoard();
   if(currentTab==="history") renderHistory();
   if(currentTab==="report") renderReport();
+  if(currentTab==="sheet") renderSheet();
 }
 
 function renderAttention(){
@@ -665,8 +699,10 @@ document.querySelectorAll(".tabs button").forEach(b=>{
     document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active",x===b));
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
     document.getElementById("view-"+currentTab).classList.add("active");
+    if(currentTab==="board") render();
     if(currentTab==="history"){ if(!document.getElementById("hist-date").value) setHistToday(); renderHistory(); }
     if(currentTab==="report") renderReport();
+    if(currentTab==="sheet") renderSheet();
   };
 });
 document.querySelectorAll(".report-controls button").forEach(b=>{
@@ -779,6 +815,65 @@ document.getElementById("cloudBtn").onclick=async()=>{
   }
   cloudConnect();
 };
+
+/* ---------------- Sheet (spreadsheet) view ---------------- */
+const SHEET_STAGES=[["new","Logged"],["digitizing","Digitizing"],["barrett","At Barrett"],["received","Sew-out in"],["rep","With rep"],["approved","Approved"],["complete","Complete"]];
+const SHEET_DEPTS=["Wholesale","QT","Collegiate","Special"];
+function toDateInput(ts){ if(!ts) return ""; const d=new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function fromDateInput(s){ if(!s) return 0; const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,12,0,0).getTime(); }
+function stageOf(r){ return r.completedAt?"complete":r.stage; }
+
+function renderSheet(){
+  const showDone=document.getElementById("sheet-done").checked;
+  const list=state.requests.filter(r=>showDone||!r.completedAt)
+    .sort((a,b)=> (a.completedAt?1:0)-(b.completedAt?1:0) || a.createdAt-b.createdAt);
+  document.getElementById("sheet-count").textContent = list.length+" row"+(list.length!==1?"s":"");
+  const head=`<thead><tr>
+    <th class="star">★</th><th class="col-acct">Account</th><th class="col-logo">Logo / description</th>
+    <th># Logos</th><th>Dept</th><th class="col-rep">Rep</th><th class="col-date">Requested</th>
+    <th class="col-inhand">In-Hand</th><th class="col-status">Status</th></tr></thead>`;
+  const rows=list.map(r=>{
+    const st=stageOf(r);
+    const deptOpts=SHEET_DEPTS.map(d=>`<option ${d===r.dept?"selected":""}>${d}</option>`).join("");
+    const stOpts=SHEET_STAGES.map(([k,l])=>`<option value="${k}" ${k===st?"selected":""}>${l}</option>`).join("");
+    return `<tr class="${r.completedAt?"done":""}">
+      <td class="star" onclick="sheetStar('${r.id}')">${r.priority?"★":"☆"}</td>
+      <td class="col-acct"><input value="${esc(r.acct)}" onchange="sheetEdit('${r.id}','acct',this.value)"></td>
+      <td class="col-logo"><input value="${esc(r.logo)}" onchange="sheetEdit('${r.id}','logo',this.value)"></td>
+      <td class="num"><input type="number" min="1" value="${r.logoCount||1}" onchange="sheetEdit('${r.id}','logoCount',this.value)"></td>
+      <td><select onchange="sheetEdit('${r.id}','dept',this.value)">${deptOpts}</select></td>
+      <td class="col-rep"><input value="${esc(r.rep)}" onchange="sheetEdit('${r.id}','rep',this.value)"></td>
+      <td class="col-date"><input type="date" value="${toDateInput(r.createdAt)}" onchange="sheetEdit('${r.id}','createdAt',this.value)"></td>
+      <td class="col-inhand"><input value="${esc(r.inHand||'')}" placeholder="—" onchange="sheetEdit('${r.id}','inHand',this.value)"></td>
+      <td class="col-status st-${st}"><select onchange="sheetStage('${r.id}',this.value)">${stOpts}</select></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("sheet-table").innerHTML=head+"<tbody>"+rows+"</tbody>";
+}
+function sheetEdit(id,field,value){
+  const r=get(id); if(!r) return;
+  if(field==="logoCount") value=Math.max(1,parseInt(value)||1);
+  if(field==="createdAt") value=fromDateInput(value);
+  r[field]=value; save();
+}
+function sheetStage(id,val){
+  const r=get(id); if(!r) return;
+  const label=(SHEET_STAGES.find(s=>s[0]===val)||[,val])[1];
+  if(val==="complete"){ if(!r.completedAt){ r.completedAt=now(); addEvent(r,"complete","Marked complete (Sheet)"); } }
+  else { if(r.completedAt){ r.completedAt=0; addEvent(r,"note","Reopened (Sheet)"); }
+    if(r.stage!==val){ r.stage=val; addEvent(r,"note","Status → "+label+" (Sheet)"); } }
+  save(); render();
+}
+function sheetStar(id){ const r=get(id); if(r){ r.priority=!r.priority; save(); render(); } }
+function sheetAddRow(){
+  const r={ id:uid(), acct:"", logo:"", rep:"", dept:"Wholesale", digitizer:"None",
+    neededBy:"", inHand:"", logoCount:1, priority:false, stage:"new", createdAt:now(), events:[],
+    digitizeSentAt:0, sentToBarrettAt:0, lastFollowUpAt:0, receivedAt:0, sentToRepAt:0, approvedAt:0, completedAt:0 };
+  addEvent(r,"created","Added from Sheet");
+  state.requests.unshift(r); save(); renderSheet();
+}
+document.getElementById("sheet-add").onclick=sheetAddRow;
+document.getElementById("sheet-done").onchange=renderSheet;
 
 // live clocks: re-render board/attention every minute so countdowns stay current
 setInterval(()=>{ if(currentTab==="board") { renderAttention(); renderBoard(); } }, 60*1000);
