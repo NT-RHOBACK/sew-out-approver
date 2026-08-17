@@ -726,9 +726,21 @@ async function cloudConnect(){
   try{
     const h=await window.showSaveFilePicker({ suggestedName:"tracker.json",
       types:[{description:"Tracker data",accept:{"application/json":[".json"]}}] });
-    cloudHandle=h; await idbSet("handle",h); await cloudWrite();
+    cloudHandle=h; await idbSet("handle",h);
+    // If the picked file already holds a board, load it instead of overwriting.
+    let loaded=false;
+    try{ const f=await h.getFile();
+      if(f.size){ const d=JSON.parse(await f.text());
+        if(d && Array.isArray(d.requests) && d.requests.length){
+          if(confirm(`This file already has ${d.requests.length} logged requests. Load them into the tracker?`)){
+            state=d; localStorage.setItem(KEY,JSON.stringify(state)); render(); loaded=true;
+          }
+        }
+      }
+    }catch(e){}
+    if(!loaded) await cloudWrite();
     setCloudNote("☁ Synced: "+h.name);
-    toast("Connected — keep this file in your OneDrive Sew-Out Tracker folder");
+    toast(loaded ? "Loaded "+state.requests.length+" requests — now syncing" : "Connected — keep this file in your OneDrive Sew-Out Tracker folder");
   }catch(e){ /* user cancelled picker */ }
 }
 async function cloudWrite(){
