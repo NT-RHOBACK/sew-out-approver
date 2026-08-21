@@ -79,7 +79,13 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .up .ut{font-size:13px;font-weight:600;color:var(--navy)}
 .up .us{font-size:11px;color:var(--gray);margin-top:2px}
 .sw-prev{margin-top:10px;display:none}
-.sw-prev img{max-width:100%;max-height:150px;border-radius:6px;border:1px solid #dde}
+.sw-prev img{max-width:100%;max-height:150px;border-radius:6px;border:1px solid #dde;display:block}
+.sw-prev .sw-prev-wrap{position:relative;display:inline-block}
+.sw-prev .sw-prev-wrap span{position:absolute;background:#fff;color:#1a1a2e;border-radius:50%;width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.sw-prev .sw-prev-wrap span:hover{transform:scale(1.08)}
+.sw-prev .sw-prev-wrap .a-rot{top:-8px;left:-8px}
+.sw-prev .sw-prev-wrap .a-crp{bottom:-8px;right:-8px}
+.sw-prev .sw-prev-wrap .a-rev{bottom:-8px;left:-8px}
 .ref-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
 .ref-grid img{height:78px;width:78px;object-fit:cover;border-radius:6px;border:1px solid #dde;display:block}
 .ref-grid .ref-del{position:relative;display:inline-block;cursor:pointer}
@@ -207,7 +213,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.57</span>
+      <span class="badge">v8.58</span>
     </div>
   </div>
   <div class="body">
@@ -281,7 +287,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       <div class="ui">&#128247;</div><div class="ut">Upload sew-out photo</div>
       <div class="us"><span id="swatchName"></span></div>
     </div>
-    <div class="sw-prev" id="swPrev"><img id="swImg" alt="Swatch"></div>
+    <div class="sw-prev" id="swPrev"><div class="sw-prev-wrap"><img id="swImg" alt="Swatch"><span class="a-rot" onclick="rotateSwatch()" title="Rotate 90&deg;">&#8635;</span><span class="a-crp" onclick="openCropModal('sw')" title="Crop">&#9986;</span><span class="a-rev" id="swRevBtn" style="display:none" onclick="revertSwatch()" title="Revert to original">&#10226;</span></div></div>
     <div id="keepSwatchWrap" style="display:none;margin-top:6px">
       <label style="font-size:11px;color:var(--gray);cursor:pointer;display:flex;align-items:center;gap:6px">
         <input type="checkbox" id="keepSwatchChk" style="width:13px;height:13px"> Keep this photo on Clear Form
@@ -351,7 +357,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.57</span>
+      <span class="badge">v8.58</span>
     </div>
   </div>
   <div class="body">
@@ -405,7 +411,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.57</span>
+      <span class="badge">v8.58</span>
     </div>
   </div>
   <div class="body">
@@ -465,7 +471,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 </div>
 <script>
 
-let swB64=null,swType=null,refImgs=[];
+let swB64=null,swType=null,swOrigB64=null,swOrigType=null,refImgs=[];
 
 async function parseDSTBin(file){
   return new Promise(resolve=>{
@@ -685,8 +691,28 @@ function setF(id,v){document.getElementById(id).value=v;}
 document.getElementById('swatchFile').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   document.getElementById('swatchName').textContent=f.name;
-  toB64(f,b=>{swB64=b;swType=f.type;const img=document.getElementById('swImg');img.src='data:'+f.type+';base64,'+b;document.getElementById('swPrev').style.display='block';document.getElementById('keepSwatchWrap').style.display='';});
+  toB64(f,b=>{swB64=b;swType=f.type;swOrigB64=b;swOrigType=f.type;const img=document.getElementById('swImg');img.src='data:'+f.type+';base64,'+b;document.getElementById('swPrev').style.display='block';document.getElementById('keepSwatchWrap').style.display='';const rb=document.getElementById('swRevBtn');if(rb)rb.style.display='none';});
 });
+
+// Refresh the swatch preview image + revert-button visibility from swB64/swOrig.
+function _swRefreshPreview(){
+  const img=document.getElementById('swImg'); if(img&&swB64) img.src='data:'+swType+';base64,'+swB64;
+  const rb=document.getElementById('swRevBtn'); if(rb) rb.style.display=(swOrigB64&&swB64!==swOrigB64)?'flex':'none';
+}
+// Rotate the swatch 90° clockwise via canvas.
+function rotateSwatch(){
+  if(!swB64)return;
+  const im=new Image();
+  im.onload=()=>{
+    const c=document.createElement('canvas');c.width=im.height;c.height=im.width;
+    const ctx=c.getContext('2d');ctx.translate(c.width,0);ctx.rotate(Math.PI/2);ctx.drawImage(im,0,0);
+    const d=c.toDataURL('image/jpeg',0.92);swB64=d.split(',')[1];swType='image/jpeg';
+    _swRefreshPreview();
+  };
+  im.src='data:'+swType+';base64,'+swB64;
+}
+// Revert the swatch to the originally uploaded photo.
+function revertSwatch(){ if(!swOrigB64)return; swB64=swOrigB64; swType=swOrigType; _swRefreshPreview(); }
 const rz=document.getElementById('refZone');
 rz.addEventListener('dragover',e=>{e.preventDefault();rz.classList.add('over')});
 rz.addEventListener('dragleave',()=>rz.classList.remove('over'));
@@ -805,7 +831,8 @@ function _snapBoxToAspect() {
   _cropState.box = { x: bx, y: by, w: Math.round(w), h: Math.round(h) };
 }
 function openCropModal(i) {
-  const ri = refImgs[i];
+  const ri = (i === 'sw') ? { b64: swB64, type: swType } : refImgs[i];
+  if (!ri || !ri.b64) return;
   const modal = document.getElementById('cropModal');
   const canv  = document.getElementById('cropCanvas');
   const im    = new Image();
@@ -989,13 +1016,18 @@ function cropApply() {
   c.height = sh;
   c.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, sw, sh);
   const dataUrl = c.toDataURL('image/jpeg', 0.92);
-  const prev = refImgs[i];
-  refImgs[i] = {
-    b64: dataUrl.split(',')[1], type: 'image/jpeg',
-    originalB64: prev.originalB64 || prev.b64,
-    originalType: prev.originalType || prev.type
-  };
-  renderRefs();
+  if (i === 'sw') {
+    swB64 = dataUrl.split(',')[1]; swType = 'image/jpeg';
+    _swRefreshPreview();
+  } else {
+    const prev = refImgs[i];
+    refImgs[i] = {
+      b64: dataUrl.split(',')[1], type: 'image/jpeg',
+      originalB64: prev.originalB64 || prev.b64,
+      originalType: prev.originalType || prev.type
+    };
+    renderRefs();
+  }
   cropCancel();
 }
 function cropCancel() {
@@ -1006,7 +1038,8 @@ function cropRotate() {
   if (!_cropState) return;
   const i = _cropState.i;
   cropCancel();
-  rotateRef(i);
+  if (i === 'sw') { rotateSwatch(); }
+  else { rotateRef(i); }
   // Re-open after rotation completes (small delay for canvas re-render)
   setTimeout(() => openCropModal(i), 80);
 }
@@ -1076,7 +1109,7 @@ function clear_form(){
   document.querySelectorAll('input[name=spMode]').forEach(rb => rb.checked = (rb.value === 'filled'));
   document.getElementById('fnIncludeWidth').checked=false;document.getElementById('fnIncludeVer').checked=false;
   const _keepSw = document.getElementById('keepSwatchChk');
-  if(!_keepSw || !_keepSw.checked){ swB64=null; swType=null; document.getElementById('swPrev').style.display='none'; document.getElementById('swatchName').textContent=''; document.getElementById('keepSwatchWrap').style.display='none'; document.getElementById('swatchFile').value=''; }
+  if(!_keepSw || !_keepSw.checked){ swB64=null; swType=null; swOrigB64=null; swOrigType=null; document.getElementById('swPrev').style.display='none'; document.getElementById('swatchName').textContent=''; document.getElementById('keepSwatchWrap').style.display='none'; document.getElementById('swatchFile').value=''; const _srb=document.getElementById('swRevBtn'); if(_srb)_srb.style.display='none'; }
   refImgs=[];
   document.getElementById('refGrid').innerHTML='';document.getElementById('parsedBadge').classList.remove('on');
   ['refFiles','dstFile'].forEach(id=>document.getElementById(id).value='');
@@ -1369,8 +1402,11 @@ async function generateSheet(data){
     try {
       const img = await embedImageInto(pdfDoc, data.swB64, data.swType);
       const page = pdfDoc.getPage(0);
-      const pad = 0.95;
-      const scale = Math.min((SWATCH_RECT.w*pad)/img.width, (SWATCH_RECT.h*pad)/img.height);
+      // Keep the swatch small and centered — cap by a reduced height (so tall/
+      // portrait photos don't dominate the box) with a looser width limit.
+      const maxW = SWATCH_RECT.w * 0.85;
+      const maxH = SWATCH_RECT.h * 0.62;
+      const scale = Math.min(maxW/img.width, maxH/img.height);
       const drawW = img.width * scale;
       const drawH = img.height * scale;
       const drawX = SWATCH_RECT.x + (SWATCH_RECT.w - drawW)/2;
