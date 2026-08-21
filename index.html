@@ -213,7 +213,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.58</span>
+      <span class="badge">v8.59</span>
     </div>
   </div>
   <div class="body">
@@ -289,6 +289,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     </div>
     <div class="sw-prev" id="swPrev"><div class="sw-prev-wrap"><img id="swImg" alt="Swatch"><span class="a-rot" onclick="rotateSwatch()" title="Rotate 90&deg;">&#8635;</span><span class="a-crp" onclick="openCropModal('sw')" title="Crop">&#9986;</span><span class="a-rev" id="swRevBtn" style="display:none" onclick="revertSwatch()" title="Revert to original">&#10226;</span></div></div>
     <div id="keepSwatchWrap" style="display:none;margin-top:6px">
+      <label style="font-size:11px;color:var(--gray);cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <input type="checkbox" id="swSquareChk" style="width:13px;height:13px"> Put photo in a square box (smaller)
+      </label>
       <label style="font-size:11px;color:var(--gray);cursor:pointer;display:flex;align-items:center;gap:6px">
         <input type="checkbox" id="keepSwatchChk" style="width:13px;height:13px"> Keep this photo on Clear Form
       </label>
@@ -357,7 +360,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.58</span>
+      <span class="badge">v8.59</span>
     </div>
   </div>
   <div class="body">
@@ -411,7 +414,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.58</span>
+      <span class="badge">v8.59</span>
     </div>
   </div>
   <div class="body">
@@ -842,19 +845,44 @@ function openCropModal(i) {
     const scale = Math.min(maxW / im.width, maxH / im.height, 1);
     canv.width  = Math.round(im.width  * scale);
     canv.height = Math.round(im.height * scale);
-    const ctx = canv.getContext('2d');
-    ctx.drawImage(im, 0, 0, canv.width, canv.height);
     // Default crop box: 80% centered
     const bw = Math.round(canv.width * 0.8);
     const bh = Math.round(canv.height * 0.8);
     const bx = Math.round((canv.width - bw) / 2);
     const by = Math.round((canv.height - bh) / 2);
-    _cropState = { i, im, scale, box: { x: bx, y: by, w: bw, h: bh }, drag: null };
+    _cropState = { i, im, scale, box: { x: bx, y: by, w: bw, h: bh }, drag: null, angle: 0 };
+    const angEl = document.getElementById('cropAngle'); if (angEl) angEl.value = 0;
+    const angVal = document.getElementById('cropAngleVal'); if (angVal) angVal.textContent = '0°';
+    _cropDrawCanvas();
     _snapBoxToAspect();
     _updateCropBox();
     modal.classList.add('open');
   };
   im.src = 'data:' + ri.type + ';base64,' + ri.b64;
+}
+// Redraw the crop canvas with the current straighten angle (image rotates under
+// the fixed crop box; corners show white).
+function _cropDrawCanvas() {
+  if (!_cropState) return;
+  const canv = document.getElementById('cropCanvas');
+  const ctx = canv.getContext('2d');
+  ctx.save();
+  ctx.clearRect(0, 0, canv.width, canv.height);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canv.width, canv.height);
+  ctx.translate(canv.width / 2, canv.height / 2);
+  ctx.rotate((_cropState.angle || 0) * Math.PI / 180);
+  const dw = _cropState.im.width * _cropState.scale;
+  const dh = _cropState.im.height * _cropState.scale;
+  ctx.drawImage(_cropState.im, -dw / 2, -dh / 2, dw, dh);
+  ctx.restore();
+}
+function _cropSetAngle(v) {
+  if (!_cropState) return;
+  _cropState.angle = parseFloat(v) || 0;
+  const lbl = document.getElementById('cropAngleVal');
+  if (lbl) lbl.textContent = (_cropState.angle > 0 ? '+' : '') + _cropState.angle + '°';
+  _cropDrawCanvas();
 }
 function _updateCropBox() {
   if (!_cropState) return;
@@ -1004,9 +1032,17 @@ function _cropMouseUp(e) {
 }
 function cropApply() {
   if (!_cropState) return;
-  const { i, im, scale, box } = _cropState;
+  const { i, im, scale, box, angle } = _cropState;
   if (box.w < 4 || box.h < 4) { cropCancel(); return; }
-  // Translate crop coords back to original-image pixels
+  // Render the (optionally straightened) image at full resolution, then crop the
+  // selected box. Box coords are in display space, so divide by scale.
+  const fullW = im.width, fullH = im.height;
+  const rc = document.createElement('canvas'); rc.width = fullW; rc.height = fullH;
+  const rctx = rc.getContext('2d');
+  rctx.fillStyle = '#fff'; rctx.fillRect(0, 0, fullW, fullH);
+  rctx.translate(fullW / 2, fullH / 2);
+  rctx.rotate((angle || 0) * Math.PI / 180);
+  rctx.drawImage(im, -fullW / 2, -fullH / 2, fullW, fullH);
   const sx = Math.round(box.x / scale);
   const sy = Math.round(box.y / scale);
   const sw = Math.round(box.w / scale);
@@ -1014,7 +1050,7 @@ function cropApply() {
   const c = document.createElement('canvas');
   c.width = sw;
   c.height = sh;
-  c.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, sw, sh);
+  c.getContext('2d').drawImage(rc, sx, sy, sw, sh, 0, 0, sw, sh);
   const dataUrl = c.toDataURL('image/jpeg', 0.92);
   if (i === 'sw') {
     swB64 = dataUrl.split(',')[1]; swType = 'image/jpeg';
@@ -1070,7 +1106,12 @@ function threadDisplay(){
 }
 function threadCountNote(){const c=document.getElementById('threadCount').value,col=document.getElementById('threadColors').value;if(col==='Other / Special'&&c)return c+' colors \u2014 ';return'';}
 function getBaseName(logoName){
-  return (logoName||'').replace(/_v\d+\b/gi,'').replace(/_\d+\.?\d*in\b/gi,'');
+  // Strip version (_v3), dimension-with-unit (_3.64in), and a bare decimal
+  // dimension (_3.64). The width only goes in the name when ADD WIDTH is on.
+  return (logoName||'')
+    .replace(/_v\d+\b/gi,'')
+    .replace(/_\d+\.?\d*in\b/gi,'')
+    .replace(/_\d+\.\d+\b/g,'');
 }
 function sheetFn(){
   const logoName = (document.getElementById('logoName')||{value:''}).value.trim();
@@ -1109,7 +1150,7 @@ function clear_form(){
   document.querySelectorAll('input[name=spMode]').forEach(rb => rb.checked = (rb.value === 'filled'));
   document.getElementById('fnIncludeWidth').checked=false;document.getElementById('fnIncludeVer').checked=false;
   const _keepSw = document.getElementById('keepSwatchChk');
-  if(!_keepSw || !_keepSw.checked){ swB64=null; swType=null; swOrigB64=null; swOrigType=null; document.getElementById('swPrev').style.display='none'; document.getElementById('swatchName').textContent=''; document.getElementById('keepSwatchWrap').style.display='none'; document.getElementById('swatchFile').value=''; const _srb=document.getElementById('swRevBtn'); if(_srb)_srb.style.display='none'; }
+  if(!_keepSw || !_keepSw.checked){ swB64=null; swType=null; swOrigB64=null; swOrigType=null; document.getElementById('swPrev').style.display='none'; document.getElementById('swatchName').textContent=''; document.getElementById('keepSwatchWrap').style.display='none'; document.getElementById('swatchFile').value=''; const _srb=document.getElementById('swRevBtn'); if(_srb)_srb.style.display='none'; const _sq=document.getElementById('swSquareChk'); if(_sq)_sq.checked=false; }
   refImgs=[];
   document.getElementById('refGrid').innerHTML='';document.getElementById('parsedBadge').classList.remove('on');
   ['refFiles','dstFile'].forEach(id=>document.getElementById(id).value='');
@@ -1402,10 +1443,19 @@ async function generateSheet(data){
     try {
       const img = await embedImageInto(pdfDoc, data.swB64, data.swType);
       const page = pdfDoc.getPage(0);
-      // Keep the swatch small and centered — cap by a reduced height (so tall/
-      // portrait photos don't dominate the box) with a looser width limit.
-      const maxW = SWATCH_RECT.w * 0.85;
-      const maxH = SWATCH_RECT.h * 0.62;
+      let maxW, maxH;
+      if (data.swSquare) {
+        // Fit inside a white square box centered in the swatch area (smaller).
+        const side = SWATCH_RECT.h * 0.7;
+        const boxX = SWATCH_RECT.x + (SWATCH_RECT.w - side)/2;
+        const boxY = SWATCH_RECT.y + (SWATCH_RECT.h - side)/2;
+        page.drawRectangle({ x: boxX, y: boxY, width: side, height: side, color: PDFLib.rgb(1,1,1) });
+        maxW = side; maxH = side;
+      } else {
+        // Small & centered: cap by a reduced height so tall photos don't dominate.
+        maxW = SWATCH_RECT.w * 0.85;
+        maxH = SWATCH_RECT.h * 0.62;
+      }
       const scale = Math.min(maxW/img.width, maxH/img.height);
       const drawW = img.width * scale;
       const drawH = img.height * scale;
@@ -1468,6 +1518,7 @@ function _buildData(){
     thread:    threadDisplay(),
     notes:     threadCountNote() + notes0,
     swB64, swType, refImgs,
+    swSquare: (document.getElementById('swSquareChk')||{}).checked || false,
     specialProject: _spData,
   };
 }
@@ -2422,8 +2473,8 @@ function impClear(){
 <div class="crop-mod" id="cropModal">
   <div class="crop-mod-card">
     <div class="crop-mod-hdr">
-      <span>Edit Reference Image</span>
-      <span class="crop-mod-hint">Drag to select crop area</span>
+      <span>Edit Image</span>
+      <span class="crop-mod-hint">Drag to select crop area &middot; slider to straighten</span>
     </div>
     <div class="crop-aspect" id="cropAspect">
       <button class="active" data-mode="free" onclick="setCropAspect('free')">Freeform</button>
@@ -2442,8 +2493,13 @@ function impClear(){
         <div class="crop-handle w"  data-handle="w"></div>
       </div>
     </div>
+    <div class="crop-straighten" style="display:flex;align-items:center;gap:10px;margin:12px 4px 2px">
+      <span style="font-size:11px;color:var(--gray);white-space:nowrap;font-weight:700">Straighten</span>
+      <input type="range" id="cropAngle" min="-45" max="45" step="0.5" value="0" style="flex:1" oninput="_cropSetAngle(this.value)">
+      <span id="cropAngleVal" style="font-size:11px;font-weight:700;color:var(--navy);width:44px;text-align:right">0°</span>
+    </div>
     <div class="crop-actions">
-      <span class="lhs">Tip: ↻ rotates first if your photo is sideways</span>
+      <span class="lhs">Tip: ↻ rotates 90° · slider fine-tunes the tilt</span>
       <button onclick="cropRotate()">↻ Rotate 90°</button>
       <button onclick="cropCancel()">Cancel</button>
       <button class="primary" onclick="cropApply()">✓ Apply</button>
