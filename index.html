@@ -213,7 +213,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">v8.60</span>
+      <span class="badge">v8.61</span>
     </div>
   </div>
   <div class="body">
@@ -235,19 +235,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       <input type="text" id="dstFilename" placeholder="e.g. PinehurstCC_PutterboyDate_1.52in_v1">
     </div>
         <div class="sec">2 &nbsp; Sheet Filename</div>
-    <div class="two">
-      <div class="field">
-        <label class="lbl" style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;font-weight:700">
-          <input type="checkbox" id="fnIncludeWidth" style="width:14px;height:14px"> ADD WIDTH
-        </label>
-        <input type="text" id="fnWidth" placeholder='e.g. 3.00 (auto-fills from DST)'>
-      </div>
-      <div class="field">
-        <label class="lbl" style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;font-weight:700">
-          <input type="checkbox" id="fnIncludeVer" style="width:14px;height:14px"> ADD VERSION
-        </label>
-        <input type="text" id="fnVer" placeholder='e.g. 2'>
-      </div>
+    <div class="field">
+      <label class="lbl" style="display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px;font-weight:700">
+        <input type="checkbox" id="fnIncludeVer" style="width:14px;height:14px"> ADD VERSION
+      </label>
+      <input type="text" id="fnVer" placeholder='e.g. 2'>
     </div>
     <div id="fnPreview" style="font-family:monospace;background:#edf0f9;padding:10px 12px;border-radius:7px;color:#0D1E50;font-size:12px;font-weight:600;word-break:break-all;margin-top:6px">SOA_&hellip;.pdf</div>
     <div class="sec">3 &nbsp; Logo Info</div>
@@ -360,7 +352,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">v8.60</span>
+      <span class="badge">v8.61</span>
     </div>
   </div>
   <div class="body">
@@ -414,7 +406,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">v8.60</span>
+      <span class="badge">v8.61</span>
     </div>
   </div>
   <div class="body">
@@ -594,17 +586,6 @@ async function handleExistingPdf(file){
     const droppedName = (file.name || '').replace(/\.pdf$/i, '').trim();
     const parsed = _parseSheetFilename(droppedName);
 
-    // ── ADD WIDTH ─ always check + populate (filename → form WIDTH field fallback)
-    let widthForFn = parsed.width;
-    if (!widthForFn && width) {
-      widthForFn = width.replace(/"/g, '').replace(/in$/i, '').trim();
-    }
-    if (widthForFn) {
-      setF('fnWidth', widthForFn);
-      const cb = document.getElementById('fnIncludeWidth');
-      if (cb) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
-    }
-
     // ── ADD VERSION ─ always check; bump if version found, else default to v2
     let nextVer;
     if (parsed.version !== null) nextVer = parsed.version + 1;
@@ -681,7 +662,7 @@ async function handleDST(file){
   const name=file.name.replace(/\.dst$/i,'').trim();
   setF('logoName',name);setF('customer',dePascal(name.split('_')[0]));
   if(info.heightIn)setF('logoH',info.heightIn+'"');
-  if(info.widthIn){setF('logoW',info.widthIn+'"'); setF('fnWidth',info.widthIn);}
+  if(info.widthIn){setF('logoW',info.widthIn+'"');}
   let s=name;if(info.heightIn&&info.widthIn)s+=' \xb7 '+info.heightIn+'"H \xd7 '+info.widthIn+'"W';
   document.getElementById('parsedTxt').textContent=s;
   document.getElementById('parsedBadge').classList.add('on');
@@ -689,7 +670,7 @@ async function handleDST(file){
 }
 function fill(info){if(info.customer)sv('customer',info.customer);if(info.logoName)sv('logoName',info.logoName);if(info.heightIn)sv('logoH',info.heightIn+'"');if(info.widthIn)sv('logoW',info.widthIn+'"');}
 function sv(id,v){const el=document.getElementById(id);if(!el.value||el===document.activeElement)return;el.value=v;}
-function setF(id,v){document.getElementById(id).value=v;}
+function setF(id,v){const e=document.getElementById(id); if(e) e.value=v;}
 
 document.getElementById('swatchFile').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
@@ -879,6 +860,20 @@ function _cropDrawCanvas() {
   const dh = _cropState.im.height * _cropState.scale * z;
   ctx.drawImage(_cropState.im, -dw / 2, -dh / 2, dw, dh);
   ctx.restore();
+  // Rule-of-thirds grid (screen-aligned) to help level the image while straightening.
+  // Display-only — it is not part of the cropped output.
+  const _grid = (x0, y0, x1, y1) => {
+    ctx.strokeStyle = 'rgba(0,0,0,0.30)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  };
+  for (let k = 1; k < 3; k++) {
+    const gx = Math.round(canv.width * k / 3) + 0.5;
+    const gy = Math.round(canv.height * k / 3) + 0.5;
+    _grid(gx, 0, gx, canv.height);
+    _grid(0, gy, canv.width, gy);
+  }
 }
 function _cropSetZoom(v) {
   if (!_cropState) return;
@@ -1128,13 +1123,7 @@ function sheetFn(){
   const logoName = (document.getElementById('logoName')||{value:''}).value.trim();
   const base = getBaseName(logoName) || 'Sheet';
   let name = 'SOA_' + base;
-  const incW = document.getElementById('fnIncludeWidth');
   const incV = document.getElementById('fnIncludeVer');
-  if(incW && incW.checked){
-    const raw = (document.getElementById('fnWidth').value||'').trim().replace(/in$/i,'').trim();
-    const n = parseFloat(raw);
-    if(!isNaN(n)) name += '_' + (Math.ceil(n*100)/100).toFixed(2) + 'in';
-  }
   if(incV && incV.checked){
     const v = (document.getElementById('fnVer').value||'').trim().replace(/^v/i,'');
     if(v) name += '_v' + v;
@@ -1148,7 +1137,7 @@ function updateFnPreview(){
 function toB64(file,cb){const r=new FileReader();r.onload=e=>cb(e.target.result.split(',')[1]);r.readAsDataURL(file);}
 
 function clear_form(){
-  ['dstFilename','customer','logoName','logoH','logoW','notes','fnWidth','fnVer'].forEach(id=>document.getElementById(id).value='');
+  ['dstFilename','customer','logoName','logoH','logoW','notes','fnVer'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('threadCount').value='';document.getElementById('threadColors').value='';
   const _te = document.getElementById('threadExtra'); if(_te) _te.value='';
   // Reset special project state
@@ -1159,7 +1148,7 @@ function clear_form(){
   const _spEmb = document.getElementById('spEmbId');       if (_spEmb) _spEmb.value = '';
   const _spSec = document.getElementById('spSections');   if (_spSec) _spSec.innerHTML = '';
   document.querySelectorAll('input[name=spMode]').forEach(rb => rb.checked = (rb.value === 'filled'));
-  document.getElementById('fnIncludeWidth').checked=false;document.getElementById('fnIncludeVer').checked=false;
+  document.getElementById('fnIncludeVer').checked=false;
   const _keepSw = document.getElementById('keepSwatchChk');
   if(!_keepSw || !_keepSw.checked){ swB64=null; swType=null; swOrigB64=null; swOrigType=null; document.getElementById('swPrev').style.display='none'; document.getElementById('swatchName').textContent=''; document.getElementById('keepSwatchWrap').style.display='none'; document.getElementById('swatchFile').value=''; const _srb=document.getElementById('swRevBtn'); if(_srb)_srb.style.display='none'; const _sq=document.getElementById('swSquareChk'); if(_sq)_sq.checked=false; }
   refImgs=[];
@@ -1583,11 +1572,11 @@ function toggleManualDST(){
 }
 
 // Filename preview wiring
-['logoName','fnWidth','fnVer'].forEach(id => {
+['logoName','fnVer'].forEach(id => {
   const el = document.getElementById(id);
   if(el) el.addEventListener('input', updateFnPreview);
 });
-['fnIncludeWidth','fnIncludeVer'].forEach(id => {
+['fnIncludeVer'].forEach(id => {
   const el = document.getElementById(id);
   if(el) el.addEventListener('change', updateFnPreview);
 });
