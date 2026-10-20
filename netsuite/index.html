@@ -213,10 +213,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">NS v1.00</span>
+      <span class="badge">NS v1.01</span>
     </div>
   </div>
   <div class="body">
+<div id="nsBanner" style="display:none;background:#eaf4f8;border:1px solid #b8dae4;border-left:4px solid #509aaa;border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:12px;color:#1c3a48;line-height:1.5"></div>
 <div class="gen-cols">
 <div class="gen-col-left">
     <div class="sec">1 &nbsp; DST or PDF</div>
@@ -352,7 +353,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.00</span>
+      <span class="badge">NS v1.01</span>
     </div>
   </div>
   <div class="body">
@@ -406,7 +407,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.00</span>
+      <span class="badge">NS v1.01</span>
     </div>
   </div>
   <div class="body">
@@ -1603,6 +1604,62 @@ let _prefillItemId = null;
     }
   } catch(e) { console.error('Prefill error:', e); }
 })();
+
+// NS v1.01: fill in from the NetSuite link.
+// NetSuite opens: .../sew-out-approver/netsuite/#customer=..&logo=..&h=..&w=..&count=..&colortype=..&thread=..&notes=..&ver=..&id=..
+// Values are URL-encoded. The #hash keeps the logo info off GitHub's servers (?query works too).
+// Runs on load, and again if NetSuite reuses an open tab and only changes the #hash.
+function nsFillFromLink(){
+  try {
+    const raw = (location.hash || '').replace(/^#/, '') || (location.search || '').replace(/^\?/, '');
+    if (!raw) return;
+    const p = new URLSearchParams(raw);
+    const get = k => (p.get(k) || '').trim();
+    if (!['customer','logo','h','w','size','count','colortype','thread','notes','ver','id'].some(k => get(k))) return;
+    const set = (id, v) => {
+      const el = document.getElementById(id);
+      if (!el || !v) return;
+      el.value = v;
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+      el.dispatchEvent(new Event('change', {bubbles:true}));
+    };
+    const noUnit = v => (v || '').replace(/\s*(in|inches|")\s*$/i, '').trim();
+    set('customer', get('customer'));
+    set('logoName', get('logo'));
+    let h = get('h'), w = get('w');
+    if (!h && !w && get('size')) { const m = get('size').split(/\s*[x×]\s*/i); h = m[0] || ''; w = m[1] || ''; }
+    set('logoH', noUnit(h));
+    set('logoW', noUnit(w));
+    // Number of Thread Colors (NetSuite: "1 color" .. "6+ colors", "Varies", "N/A - Club Colors")
+    const c = get('count').toLowerCase(), n = parseInt(c, 10);
+    set('threadCount', /club|n\/a/.test(c) ? '' : (n === 1 || c === 'one') ? 'One' : (n === 2 || c === 'two') ? 'Two'
+      : (n === 3 || c === 'three') ? 'Three' : (n > 3 || /vari|multi|\+/.test(c)) ? 'Multiple' : '');
+    // Color Type
+    const ct = get('colortype').toLowerCase();
+    set('threadColors', /club/.test(ct) ? 'Club Colors' : /coord/.test(ct) ? 'Color Coordinate' : /tonal/.test(ct) ? 'Tonal'
+      : /other|special/.test(ct) ? 'Other / Special' : '');
+    set('threadExtra', get('thread'));
+    set('notes', get('notes'));
+    const ver = get('ver').replace(/^v/i, '');
+    if (ver) { set('fnVer', ver); const inc = document.getElementById('fnIncludeVer'); if (inc) inc.checked = true; }
+    if (get('id')) _prefillItemId = get('id');
+    updateFnPreview();
+    // Banner (built with textContent so link text can never become page code)
+    const b = document.getElementById('nsBanner');
+    if (b) {
+      b.textContent = '';
+      const strong = document.createElement('strong');
+      strong.textContent = 'Filled in from NetSuite' + (get('id') ? ' (record ' + get('id') + ')' : '') + ': ';
+      b.appendChild(strong);
+      b.appendChild(document.createTextNode((get('logo') || 'logo') + '. Check the info, add the sew-out photo, then Download PDF and upload it in NetSuite’s Approval Sheet box.'));
+      b.style.display = '';
+    }
+    // Clear the link data from the address bar so a refresh doesn't overwrite edits
+    history.replaceState(null, '', location.pathname);
+  } catch(e) { console.error('NetSuite link fill-in error:', e); }
+}
+nsFillFromLink();
+window.addEventListener('hashchange', nsFillFromLink);
 
 // -- APPROVER PANEL ----------------------------------------------------------
 let apPdfBytes = null, apPdfName = null, apState2 = 'ok', apNotesMode = 'replace';
