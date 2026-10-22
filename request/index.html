@@ -63,7 +63,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 
     <div><h1>Sew-Out Request</h1><p>Rhoback Embroidery &middot; to Barrett</p></div>
     <div class="hdr-actions">
       <button class="icon-btn" onclick="clearForm()" title="Clear form">&times;</button>
-      <span class="badge">SR v1.00</span>
+      <span class="badge">SR v1.01</span>
     </div>
   </div>
   <div class="body">
@@ -120,13 +120,15 @@ input:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 
 </div>
 
 <script>
-// SR v1.00: Sew-Out Request for Barrett.
+// SR v1.01: Sew-Out Request for Barrett. (v1.01: can also send back to Noelle's Embroidery Portal on this same site; NetSuite works as before.)
 // NetSuite opens this page with the logo info in the link:
 //   .../sew-out-approver/request/#customer=..&logo=..&inhand=YYYY-MM-DD&id=..   (values URL-encoded; ?query also works)
 // "Send to NetSuite" posts the answers + finished email back to the NetSuite tab that opened it (window.opener).
-const VERSION = 'SR v1.00';
+const VERSION = 'SR v1.01';
 const NS_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com'];
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) NS_ORIGINS.push(location.origin);   // local testing only
+const PORTAL_ORIGINS = ['https://nt-rhoback.github.io'];   // Noelle's Embroidery Portal (/sew-out-approver/embroidery-portal/)
+const TARGETS = NS_ORIGINS.concat(PORTAL_ORIGINS);
 const TO = ['Rhobackembroideryteam@barrettdistribution.com', 'Carla Gotera <carla.gotera@barrettdistribution.com>'];
 const CC = ['Rosemarie Lincoln <rosemarie.lincoln@barrettdistribution.com>', 'Paulina Rivas <paulina.rivas@barrettdistribution.com>'];
 
@@ -261,15 +263,16 @@ function sendToNetSuite(){
     return;
   }
   const data = payload();
-  NS_ORIGINS.forEach(o => { try { window.opener.postMessage(data, o); } catch(e) {} });
+  TARGETS.forEach(o => { try { window.opener.postMessage(data, o); } catch(e) {} });   // only the tab that opened this page gets it
   say('Sending to NetSuite…', 'info');
   clearTimeout(ackTimer);
   ackTimer = setTimeout(() => say('No reply from NetSuite yet. If the Send Sew-Out Request box didn’t fill in, use Copy email instead.', 'err'), 5000);
 }
 window.addEventListener('message', e => {
-  if (!NS_ORIGINS.includes(e.origin) || !e.data || e.data.type !== 'rhoback-sewout-received') return;
+  if (!TARGETS.includes(e.origin) || !e.data || e.data.type !== 'rhoback-sewout-received') return;
   clearTimeout(ackTimer);
-  say('✓ NetSuite got it. Switch back to the NetSuite tab, attach the DST and color card, and click Send.', 'ok');
+  if (PORTAL_ORIGINS.includes(e.origin)) say('✓ Your Embroidery Portal got it. Switch back to that tab, copy the email, and send it from Outlook.', 'ok');
+  else say('✓ NetSuite got it. Switch back to the NetSuite tab, attach the DST and color card, and click Send.', 'ok');
 });
 
 // ---- Copy (fallback) ----
