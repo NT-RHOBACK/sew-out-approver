@@ -263,7 +263,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">EP v1.02</span>
+    <span class="vbadge">EP v1.03</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -274,10 +274,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.02: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.03: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.02';
+const VERSION = 'EP v1.03';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -330,7 +330,8 @@ const time12 = ts => { const m = String(ts || '').match(/T(\d{2}):(\d{2})/); if 
 function bizDays(n){ if (n < 0) return -1; let c = 0; const d = new Date(today); for (let i = 0; i < n; i++){ d.setDate(d.getDate()+1); const w = d.getDay(); if (w && w !== 6) c++; } return c; }
 function urg(n){ if (n === null || n === undefined) return ''; if (n < 0 || bizDays(n) <= 4) return 'red'; if (n <= 14) return 'yellow'; return ''; }   // In Hand Date
 const DONE = ['Completed','Archive'], SUB_MET = ['Need to Upload','Completed','Archive'];
-function subUrg(l){ if (SUB_MET.includes(l.status)) return ''; const n = off(l.submitted); if (n === null) return ''; const left = bizDays(n + 14); return left <= 4 ? 'red' : left <= 7 ? 'yellow' : ''; }   // business days left until 14 days since submitted
+function bizSince(s){ const d = parseIso(s); if (!d) return 0; let c = 0; while (d < today){ d.setDate(d.getDate() + 1); const w = d.getDay(); if (w && w !== 6) c++; } return c; }   // business days in the queue since s (weekends don't count)
+function subUrg(l){ if (SUB_MET.includes(l.status) || !l.submitted) return ''; const n = bizSince(l.submitted); return n >= 10 ? 'red' : n >= 7 ? 'yellow' : ''; }   // Submitted: yellow after 7-9 business days, red after 10+
 function needsAttention(l){ if (DONE.includes(l.status)) return false; const s = off(l.submitted), ih = off(l.inHand); return (s !== null && -s >= 14) || (ih !== null && ih <= 14); }
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -564,7 +565,7 @@ function columns(tab, section){
     {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span></span></div>'},
     {k:'account', h:'Account', v:l => l.account.toLowerCase(), td:l => '<span class="acct">' + esc(l.account) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
-    {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted)},   // no highlight on Submitted
+    {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted, subUrg(l))},
     {k:'ih', h:'In Hand Date', v:l => l.inHand || '9999', td:l => dateOnly(l.inHand, DONE.includes(l.status) ? '' : urg(off(l.inHand)))},
     {k:'type', h:'Type', v:l => l.type, td:l => esc(l.type)}
   ];
