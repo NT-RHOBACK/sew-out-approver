@@ -247,6 +247,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .rv td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 .rv-k{width:240px;font-weight:600;color:var(--grey);font-size:13px}
 .f input:disabled,.f textarea:disabled{background:#FAFAFA;color:var(--grey)}
+.dtag{display:inline-block;font-size:11px;font-weight:600;border-radius:10px;padding:1px 8px;margin-left:6px;white-space:nowrap;vertical-align:1px}
 @media(max-width:700px){.msearch input{width:180px}.header-user{display:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -263,7 +264,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">EP v1.04</span>
+    <span class="vbadge">EP v1.05</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -274,10 +275,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.04: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.05: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.04';
+const VERSION = 'EP v1.05';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -286,6 +287,8 @@ const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSu
 const BARRETT_TO = ['Rhobackembroideryteam@barrettdistribution.com', 'carla.gotera@barrettdistribution.com'];
 const BARRETT_CC = ['rosemarie.lincoln@barrettdistribution.com', 'paulina.rivas@barrettdistribution.com'];
 const DEPTS = ['Wholesale','Special Projects','Collegiate','Mainline','Custom'];
+const DEPT_COLORS = {'Wholesale':['#e6eefc','#1f4f8f'], 'Special Projects':['#f1e6fb','#6a2fa0'], 'Collegiate':['#fbe7ef','#9b1f52'], 'Mainline':['#e6f4e7','#2e6b31'], 'Custom':['#f3ece2','#6b4a1f']};
+const deptTag = l => { if (!l.dept) return ''; const c = DEPT_COLORS[l.dept] || ['#eef0f6','#49516C']; return '<span class="dtag" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(l.dept) + '</span>'; };
 const AUTO = 'System (auto)';   // who, for moves the portal makes on its own
 
 const STATUS_COLORS = {
@@ -572,7 +575,7 @@ function openLogo(l){ msearch = ''; document.getElementById('msearch').value = '
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
-    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span></span></div>'},
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + '</span></div>'},
     {k:'account', h:'Account', v:l => l.account.toLowerCase(), td:l => '<span class="acct">' + esc(l.account) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
     {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted, subUrg(l))},
