@@ -210,6 +210,9 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .sf-unit{position:relative}.sf-unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;color:#49516C}
 .sf-dig{margin-top:12px;background:#fdf8ec;border:1px solid #f0e0b0;border-radius:8px;padding:14px 16px}
 .sf-dig-h{font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);margin-bottom:8px}
+.sf-depts{display:flex;flex-wrap:wrap;gap:8px}
+.sf-dept{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:14px;color:var(--navy);cursor:pointer}
+.sf-dept input{margin:0;cursor:pointer}
 .sf-check{display:flex;gap:10px;align-items:flex-start;font-size:14px;background:#fff;border:1px solid #f0e0b0;border-radius:6px;padding:10px 12px;cursor:pointer}
 .sf-tipnote{font-size:13px;background:#f3f0fb;border:1px solid #e0d8f5;color:#4b3a78;border-radius:6px;padding:9px 12px;line-height:1.45}
 .sf-italic{font-size:13px;color:#49516C;font-style:italic;margin-top:4px}
@@ -276,7 +279,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.12</span>
+    <span class="vbadge">EP v1.13</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -287,10 +290,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.12: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.13: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.12';
+const VERSION = 'EP v1.13';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -819,13 +822,16 @@ const SF_DESC = {'Club Colors':'Specific club colors — matched to Madeira Poly
 const SF_COUNTS = ['1 color','2 colors','3 colors','4 colors','5 colors','6+ colors','Varies','N/A - Club Colors'];
 const SF_WORD = {'1 color':'One','2 colors':'Two','3 colors':'Three','4 colors':'Four','5 colors':'Five','6+ colors':'Six+','Varies':'Varies'};
 const REPS = ['Mason','Steve','Ryan','Will','Rob','Knox'];
-const sfBlank = () => ({rep:'', account:'', logo:'', placement:'', dept:'', type:'', h:'', w:'', sizeNotes:'', scratch:false, count:'', color:'', thread:'', start:'', date:'', notes:'', files:[], review:false, errs:[]});
+const sfBlank = () => ({rep:'', account:'', logo:'', placement:'', dept:'Wholesale', altName:'', type:'', h:'', w:'', sizeNotes:'', scratch:false, count:'', color:'', thread:'', start:'', date:'', notes:'', files:[], review:false, errs:[]});
 let sf = sfBlank();
 function bizDaysTo(iso){ const n = off(iso); return n === null ? null : n < 0 ? -1 : bizDays(n); }
 function sfSize(){ if (sf.type !== 'digitize') return 'DST provided'; return sf.h && sf.w ? sf.h + ' x ' + sf.w + ' in' : sf.h ? sf.h + ' in high' : sf.w ? sf.w + ' in wide' : ''; }
 function sfMissing(){
   const m = [], club = sf.color === 'Club Colors';
-  if (!sf.rep.trim()) m.push('Submitting on behalf of'); if (!sf.account.trim()) m.push('Account'); if (!sf.logo.trim()) m.push('Logo / Design Name');
+  if (!sf.dept) m.push('Department');
+  if (sf.dept === 'Wholesale'){ if (!sf.rep.trim()) m.push('Submitting on behalf of'); if (!sf.account.trim()) m.push('Account'); }
+  else if (!sf.altName.trim()) m.push('Name (school, program, or project)');
+  if (!sf.logo.trim()) m.push('Logo / Design Name');
   if (!sf.type) m.push('Request Type'); if (sf.type === 'digitize' && !sf.h && !sf.w && !sf.sizeNotes.trim()) m.push('Size (a height, a width, or size notes)');
   if (!club && !sf.count) m.push('Number of Thread Colors'); if (!sf.color) m.push('Color Type');
   if (!sf.thread.trim() && !(sf.count === '1 color' && sf.color === 'Color Coordinate')) m.push('Thread Color Notes');
@@ -841,7 +847,8 @@ function renderSubmit(tab){
   if (sf.review){
     const row = (k, val) => '<tr><td class="rv-k">' + k + '</td><td>' + (val ? esc(val) : '<span class="muted">&mdash;</span>') + '</td></tr>';
     document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">Check it, then click Submit.</div><div class="lcard sf"><table class="rv">' +
-      row('Submitting on behalf of', sf.rep) + row('Account', sf.account) + row('Logo / Design Name', sf.logo) + row('Placement', sf.placement) + row('Department', sf.dept) +
+      row('Department', sf.dept) + row('Submitting on behalf of', sf.dept === 'Wholesale' ? sf.rep : 'Noelle Thompson') +
+      (sf.dept === 'Wholesale' ? row('Account', sf.account) : row('Name (school, program, or project)', sf.altName)) + row('Logo / Design Name', sf.logo) + row('Placement', sf.placement) +
       row('Request Type', sf.type === 'digitize' ? 'Digitize' : 'Sew-Out') + row('Size', sfSize()) + (sf.sizeNotes ? row('Size notes', sf.sizeNotes) : '') +
       (sf.type === 'digitize' ? row('Creating from scratch ($75)', sf.scratch ? 'Yes' : 'No') : '') +
       row('Number of Thread Colors', sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count) + row('Color Type', sf.color) + row('Thread Color Notes', sf.thread) +
@@ -858,16 +865,21 @@ function renderSubmit(tab){
   const notesOptional = sf.count === '1 color' && sf.color === 'Color Coordinate';
   const tag = sf.color && (club || sf.count) ? '<span class="sf-tag">' + (club ? 'Club Colors' : ((SF_WORD[sf.count] ? SF_WORD[sf.count] + ' ' : '') + (sf.color === 'Color Coordinate' ? 'Color Coordinate' : 'Color ' + sf.color))) + '</span>' : '';
   const bd = bizDaysTo(sf.date);
+  const W = sf.dept === 'Wholesale';   // other departments: Noelle is the rep, and a name replaces the account (EP v1.13)
   document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + '</div>' +
   '<datalist id="repList">' + reps.map(r => '<option value="' + esc(r) + '">').join('') + '</datalist>' +
   '<div class="lcard sf">' +
     '<div class="sf-red">&#9888; <b>One form per logo, please.</b> Submit a separate request for each individual logo. Each one is tracked as its own task. Do not combine multiple logos in a single submission.</div>' +
+    sec('Department', true) + '<div class="sf-depts">' + DEPTS.map(d => '<label class="sf-dept' + pick(sf.dept === d) + '"><input type="checkbox" data-sf="dept" data-v="' + esc(d) + '"' + (sf.dept === d ? ' checked' : '') + '> ' + esc(d) + '</label>').join('') + '</div>' +
+      (W ? '' : '<div class="sf-lav"><div class="sf-mini">Name (school, program, or project) <span class="req">*</span></div><input class="sf-in" list="acctList" data-sfv="altName" value="' + v('altName') + '" placeholder="e.g. QT Collegiate" style="max-width:420px">' +
+        '<div class="sf-italic">Used in place of the account name. You&rsquo;re the sales rep for ' + esc(sf.dept) + ' requests.</div></div>') +
     sec('Who Is Submitting') + '<div class="sf-grid"><div><label class="sf-lbl">Submitted by</label><input class="sf-in" value="Noelle Thompson" disabled></div>' +
-      '<div><label class="sf-lbl">Submitting on behalf of <span class="req">*</span></label><input class="sf-in" list="repList" data-sfv="rep" value="' + v('rep') + '" placeholder="Select or type a rep..."></div></div>' +
-    sec('Logo Info') + '<div class="sf-grid"><div><label class="sf-lbl">Account <span class="req">*</span></label><input class="sf-in" list="acctList" data-sfv="account" value="' + v('account') + '" placeholder="Select or type an account..."></div>' +
+      (W ? '<div><label class="sf-lbl">Submitting on behalf of <span class="req">*</span></label><input class="sf-in" list="repList" data-sfv="rep" value="' + v('rep') + '" placeholder="Select or type a rep..."></div></div>'
+         : '<div><label class="sf-lbl">Submitting on behalf of</label><input class="sf-in" value="Noelle Thompson" disabled></div></div>') +
+    sec('Logo Info') + '<div class="sf-grid">' + (W ? '<div><label class="sf-lbl">Account <span class="req">*</span></label><input class="sf-in" list="acctList" data-sfv="account" value="' + v('account') + '" placeholder="Select or type an account..."></div>'
+         : '<div><label class="sf-lbl">Account</label><input class="sf-in" value="" placeholder="Not needed for ' + esc(sf.dept) + '" disabled></div>') +
       '<div><label class="sf-lbl">Logo / Design Name <span class="req">*</span></label><input class="sf-in" data-sfv="logo" value="' + v('logo') + '"></div>' +
-      '<div><label class="sf-lbl">Placement</label><input class="sf-in" data-sfv="placement" value="' + v('placement') + '" placeholder="e.g. Left chest, center back"></div>' +
-      '<div><label class="sf-lbl">Department</label><select class="sf-in" data-sfv="dept"><option value="">Select...</option>' + DEPTS.map(d => '<option' + (sf.dept === d ? ' selected' : '') + '>' + d + '</option>').join('') + '</select></div></div>' +
+      '<div><label class="sf-lbl">Placement</label><input class="sf-in" data-sfv="placement" value="' + v('placement') + '" placeholder="e.g. Left chest, center back"></div></div>' +
     sec('Request Type', true) + '<div class="sf-grid"><div class="sf-use">Use when: customer provides DST</div><div class="sf-use">Use when: artwork needs to be converted to DST</div>' +
       typeCard('sewout', 'Sew-Out', 'Barrett', 'Customer provided DST &mdash; ready to sew-out. No digitizing or only <em>minor</em> edits needed.') +
       typeCard('digitize', 'Digitize', 'QDigitizing', 'No DST file exists, DST needs edits, resize, or new creation from artwork (AI, PNG, PDF, etc.).') + '</div>' +
@@ -900,11 +912,11 @@ function renderSubmit(tab){
 }
 async function submitLogo(){
   if (!dirHandle){ toast('Connect Excel first (top right), so the logo and its files save to your OneDrive folder.'); return; }
-  const l = blankLogo();
-  Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:sf.account.trim(), rep:sf.rep.trim(), type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
+  const l = blankLogo(), W = sf.dept === 'Wholesale';
+  Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:(W ? sf.account : sf.altName).trim(), rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
     size:sfSize(), sizeNotes:sf.type === 'digitize' ? sf.sizeNotes.trim() : '', scratch:sf.type === 'digitize' && sf.scratch, count:sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count,
     colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
-  DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ') on behalf of ' + l.rep);
+  DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
   if (sf.files.length) await saveFiles(l, sf.files);
   sf = sfBlank(); touch(); openLogo(l); toast('Added to the Queue &rarr; New Request.');
 }
@@ -912,6 +924,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-stop]')) return;
   const el = e.target.closest('[data-sf]'); if (!el || state.tab !== 'submit') return;
   const k = el.dataset.sf, tab = TABS.find(t => t.key === 'submit');
+  if (k === 'dept'){ sf.dept = el.dataset.v; renderSubmit(tab); }
   if (k === 'type'){ sf.type = el.dataset.v; if (sf.type !== 'digitize'){ sf.scratch = false; sf.h = sf.w = sf.sizeNotes = ''; } renderSubmit(tab); }
   if (k === 'color'){ const was = sf.color; sf.color = el.dataset.v; if (sf.color === 'Club Colors') sf.count = 'N/A - Club Colors'; else if (was === 'Club Colors') sf.count = ''; renderSubmit(tab); }
   if (k === 'start'){ sf.start = el.dataset.v; if (sf.start === 'no') sf.date = ''; renderSubmit(tab); }
