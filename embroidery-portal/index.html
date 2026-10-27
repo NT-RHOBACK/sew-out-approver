@@ -248,6 +248,16 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .rv-k{width:240px;font-weight:600;color:var(--grey);font-size:13px}
 .f input:disabled,.f textarea:disabled{background:#FAFAFA;color:var(--grey)}
 .dtag{display:block;font-size:11px;color:#49516C;margin-top:2px}
+.notif{position:relative}
+.notif-btn{position:relative;font-size:17px;line-height:1;background:#fff;border:1px solid var(--line);border-radius:50%;width:36px;height:36px;cursor:pointer}
+.notif-n{position:absolute;top:-5px;right:-5px;background:#a61b1b;color:#fff;font-size:10px;font-weight:700;border-radius:9px;padding:2px 6px;line-height:1.2}
+.notif-n[hidden],.notif-panel[hidden]{display:none}
+.notif-panel{position:absolute;right:0;top:44px;width:360px;max-width:calc(100vw - 32px);max-height:440px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:60}
+.notif-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:700;font-size:13px;color:var(--navy)}
+.notif-item{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:#49516C;cursor:pointer}
+.notif-item.unread{background:#f3f5fa;color:var(--navy);font-weight:600}
+.notif-item .nt{flex:1}.notif-item .nwhen{display:block;font-size:11px;font-weight:400;color:#49516C;margin-top:2px}
+.notif-empty{padding:16px 14px;font-size:13px;color:#49516C}
 @media(max-width:700px){.msearch input{width:180px}.header-user{display:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -264,7 +274,8 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">EP v1.09</span>
+    <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
+    <span class="vbadge">EP v1.10</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -275,10 +286,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.09: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.10: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.09';
+const VERSION = 'EP v1.10';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -338,8 +349,8 @@ function needsAttention(l){ if (DONE.includes(l.status)) return false; const s =
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 // ---------------- Data (mirrored in this browser; the Excel file is the record) ----------------
-let DB = {logos:[], history:[], notes:[], savedAt:''};
-try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], savedAt:''}, s); } catch(e){}
+let DB = {logos:[], history:[], notes:[], notifs:[], savedAt:''};
+try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], savedAt:''}, s); } catch(e){}
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
 function newId(){ const n = DB.logos.concat(DB.history).reduce((m, x) => Math.max(m, parseInt(String(x.id || '').replace(/\D/g, ''), 10) || 0), 0); return 'EP-' + String(n + 1).padStart(4, '0'); }
 function blankLogo(){ return {id:'', nsId:'', logo:'', account:'', rep:'', type:'Sew-Out', dept:'', status:'New Request', submitted:todayIso(), inHand:'', size:'', sizeNotes:'', count:'', colorType:'', threadNotes:'', placement:'',
@@ -383,6 +394,9 @@ function buildWorkbook(){
   const ns = XLSX.utils.aoa_to_sheet([['Date','Time','ID','Logo','Note','By']].concat(notes));
   ns['!cols'] = [12, 10, 10, 30, 70, 14].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, ns, 'Notes');
+  const nf = XLSX.utils.aoa_to_sheet([['Date','Time','ID','Notification','Read']].concat((DB.notifs || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.id, n.text, n.read ? 'Yes' : 'No'])));
+  nf['!cols'] = [12, 10, 10, 70, 8].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, nf, 'Notifications');
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
   info['!cols'] = [{wch:12}, {wch:110}];
@@ -392,7 +406,7 @@ function buildWorkbook(){
 function readWorkbook(buf){
   const wb = XLSX.read(buf, {type:'array'});
   const rows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:'', raw:false}) : [];
-  const db = {logos:[], history:[], notes:[], savedAt:''};
+  const db = {logos:[], history:[], notes:[], notifs:[], savedAt:''};
   const lr = rows('Logos'), head = (lr[0] || []).map(String);
   lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
     const l = blankLogo(), get = h => { const i = head.indexOf(h); return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
@@ -408,6 +422,7 @@ function readWorkbook(buf){
   });
   rows('History').slice(1).filter(r => r[0]).forEach(r => db.history.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), logo:String(r[3]), account:String(r[4]), kind:String(r[5]), what:String(r[6]), by:String(r[7])}));
   rows('Notes').slice(1).filter(r => r[0]).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5])}));
+  rows('Notifications').slice(1).filter(r => r[0]).forEach(r => db.notifs.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[3]), read:/^y/i.test(String(r[4]))}));
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
   return db;
 }
@@ -506,8 +521,9 @@ async function checkSeed(){
 }
 function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
   const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
-  seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; DB.logos.push(l); log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')', AUTO); });
-  seedNew = []; touch(); showBanner();
+  seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; DB.logos.push(l); log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')', AUTO);
+    (DB.notifs = DB.notifs || []).push({ts:nowStamp(), id:l.id, text:'New from the live portal: #' + l.nsId + ' ' + l.logo + (l.account ? ' (' + l.account + ')' : ''), read:false}); });
+  seedNew = []; touch(); showBanner(); renderNotifs();
   (async () => { try { const w = await (await dirHandle.getFileHandle(SEED_NAME)).createWritable(); await w.write('[]'); await w.close(); } catch(e){} })();   // so a logo you delete later can't come back
   const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render();   // don't redraw while you're typing
   toast('Added ' + names.length + ' new logo' + (names.length === 1 ? '' : 's') + ' from the live portal: ' + esc(names.join(', ')));
@@ -936,8 +952,31 @@ function renderMasterSearch(){
     : '<div class="empty">No logos match.</div>';
   document.getElementById('page').innerHTML = html;
 }
+// Notifications (EP v1.10): stay until marked read
+let notifOpen = false;
+function renderNotifs(){
+  const list = (DB.notifs || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)), unread = list.filter(n => !n.read).length;
+  const badge = document.getElementById('notifN'); badge.hidden = !unread; badge.textContent = unread > 99 ? '99+' : unread;
+  const panel = document.getElementById('notifPanel'); panel.hidden = !notifOpen; if (!notifOpen) return;
+  panel.innerHTML = '<div class="notif-head"><span>Notifications</span>' + (unread ? '<button class="btn light small" data-nf="all">Mark all read</button>' : '') + '</div>' +
+    (list.length ? list.slice(0, 50).map(n => '<div class="notif-item' + (n.read ? '' : ' unread') + '" data-nf="open" data-ts="' + esc(n.ts) + '" data-id="' + esc(n.id) + '"><span class="nt">' + esc(n.text) +
+      '<span class="nwhen">' + fmt(n.ts) + ' ' + time12(n.ts) + '</span></span>' + (n.read ? '' : '<button class="btn light small" data-nf="read" data-ts="' + esc(n.ts) + '" data-id="' + esc(n.id) + '">Mark read</button>') + '</div>').join('')
+      : '<div class="notif-empty">No notifications yet.</div>');
+}
+const findNotif = el => (DB.notifs || []).find(n => n.ts === el.dataset.ts && n.id === el.dataset.id);
+document.addEventListener('click', e => {
+  if (e.target.closest('#notifBtn')){ notifOpen = !notifOpen; renderNotifs(); return; }
+  const el = e.target.closest('[data-nf]');
+  if (el){ const k = el.dataset.nf;
+    if (k === 'all'){ (DB.notifs || []).forEach(n => { n.read = true; }); touch(); renderNotifs(); return; }
+    const n = findNotif(el); if (!n) return;
+    if (k === 'read'){ n.read = true; touch(); renderNotifs(); return; }
+    if (k === 'open'){ n.read = true; touch(); notifOpen = false; renderNotifs(); const l = byId(n.id); if (l) openLogo(l); else toast('That logo isn&rsquo;t in your portal anymore.'); return; }
+  }
+  if (notifOpen && !e.target.closest('#notifPanel')){ notifOpen = false; renderNotifs(); }
+}, true);
 function render(){
-  refreshToday();
+  refreshToday(); renderNotifs();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
