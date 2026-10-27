@@ -248,6 +248,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .rv-k{width:240px;font-weight:600;color:var(--grey);font-size:13px}
 .f input:disabled,.f textarea:disabled{background:#FAFAFA;color:var(--grey)}
 .dtag{display:block;font-size:11px;color:#49516C;margin-top:2px}
+.box h3 .reqno{margin-left:auto;font-family:'Aptos','Segoe UI',sans-serif;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:#49516C}
 .notif{position:relative}
 .notif-btn{position:relative;font-size:17px;line-height:1;background:#fff;border:1px solid var(--line);border-radius:50%;width:36px;height:36px;cursor:pointer}
 .notif-n{position:absolute;top:-5px;right:-5px;background:#a61b1b;color:#fff;font-size:10px;font-weight:700;border-radius:9px;padding:2px 6px;line-height:1.2}
@@ -272,10 +273,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="brand-sub">Embroidery Portal</div>
   </div>
   <div class="header-right">
-    <div class="msearch"><input id="msearch" placeholder="Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
+    <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.11</span>
+    <span class="vbadge">EP v1.12</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -286,10 +287,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.11: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.12: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.11';
+const VERSION = 'EP v1.12';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -298,7 +299,8 @@ const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSu
 const BARRETT_TO = ['Rhobackembroideryteam@barrettdistribution.com', 'carla.gotera@barrettdistribution.com'];
 const BARRETT_CC = ['rosemarie.lincoln@barrettdistribution.com', 'paulina.rivas@barrettdistribution.com'];
 const DEPTS = ['Wholesale','Special Projects','Collegiate','Mainline','Custom'];
-const deptTag = l => { const bits = [l.nsId ? '#' + esc(l.nsId) : '', esc(l.dept || '')].filter(Boolean); return bits.length ? '<span class="dtag">' + bits.join(' &middot; ') + '</span>' : ''; };   // e.g. #78 · Wholesale
+const reqNo = l => l.nsId ? '#' + l.nsId : String(l.id || '');   // request number (EP v1.12)
+const deptTag = l => { const bits = [esc(reqNo(l)), esc(l.dept || '')].filter(Boolean); return bits.length ? '<span class="dtag">' + bits.join(' &middot; ') + '</span>' : ''; };   // e.g. #78 · Wholesale
 const AUTO = 'System (auto)';   // who, for moves the portal makes on its own
 
 const STATUS_COLORS = {
@@ -679,7 +681,7 @@ function card(l, ncols){
   const histLine = h => { const i = h.what.indexOf(':'); const w = i > 0 && i < 40 ? '<b>' + esc(h.what.slice(0, i)) + '</b>' + esc(h.what.slice(i)) : esc(h.what); return '<div>' + fmt(h.ts) + ' ' + time12(h.ts) + ' &middot; ' + w + (h.by ? ' &middot; ' + esc(h.by) : '') + '</div>'; };
   return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '"><div class="card">' +
     '<div>' +
-      '<div class="box"><h3><span class="num">1</span>Logo details</h3><div class="grid">' +
+      '<div class="box"><h3><span class="num">1</span>Logo details<span class="reqno">Request ' + esc(reqNo(l)) + '</span></h3><div class="grid">' +
         f('Account', inp('account', l, ' list="acctList"')) +
         f('Logo / Design Name', inp('logo', l)) +
         f('Request Type', '<input value="' + esc(l.type) + '" disabled>') +
@@ -714,7 +716,8 @@ function card(l, ncols){
 window.addEventListener('message', e => {
   if (e.origin !== location.origin || !e.data || e.data.type !== 'rhoback-sewout-request') return;
   const l = byId(e.data.id); if (!l) return;
-  l.sewReq = {subject:e.data.subject, html:e.data.html, text:e.data.text, urgency:e.data.urgency, fabricColor:e.data.fabricColor, substitutions:e.data.substitutions, notes:e.data.notes};
+  const rn = 'Request ' + reqNo(l);
+  l.sewReq = {subject:(e.data.subject || '') + ' — ' + rn, html:'<p style="margin:0 0 10px"><b>' + esc(rn) + '</b></p>' + (e.data.html || ''), text:rn + '\n\n' + (e.data.text || ''), urgency:e.data.urgency, fabricColor:e.data.fabricColor, substitutions:e.data.substitutions, notes:e.data.notes};
   delete l._waiting; log(l, 'Email', 'Sew-out request filled in (' + (e.data.urgency || '') + ')');
   try { e.source.postMessage({type:'rhoback-sewout-received', id:e.data.id}, e.origin); } catch(err){}
   touch(); state.open[l.id] = true; render(); toast('Sew-out request came back for ' + esc(l.logo) + '. Copy the email, send it, then click Mark sent to Barrett.');
@@ -932,7 +935,9 @@ document.addEventListener('input', e => {
 });
 
 // ---------------- Render ----------------
-const matchQ = (l, q) => !q || (l.logo + ' ' + l.account + ' ' + l.rep).toLowerCase().includes(q);
+const matchQ = (l, q) => { if (!q) return true; const n = q.trim().replace(/^#/, '');
+  if (/^\d+$/.test(n) && (l.nsId ? String(l.nsId) === n : parseInt(String(l.id).replace(/\D/g, ''), 10) === +n)) return true;   // request number
+  return (l.logo + ' ' + l.account + ' ' + l.rep + ' ' + (l.nsId ? '' : l.id)).toLowerCase().includes(q); };
 function rowsHtml(list, tab, cols){
   const sk = state.sort[tab.key] || {k: tab.defaultSort || 'sub', dir: 1};
   const col = cols.find(c => c.k === sk.k) || cols[0];
@@ -989,7 +994,7 @@ function render(){
   const group = state.group[tab.key] || 'status';
   let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div>'
                         : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Click a column name to sort.</div>') +
-    (tab.focus ? '' : '<div class="bar"><input id="search" placeholder="Search account, logo, or sales rep&hellip;" value="' + esc(state.search[tab.key] || '') + '">' +
+    (tab.focus ? '' : '<div class="bar"><input id="search" placeholder="Search account, logo, sales rep, or request #&hellip;" value="' + esc(state.search[tab.key] || '') + '">' +
     '<select id="group"><option value="status"' + (group === 'status' ? ' selected' : '') + '>Group by: Status</option><option value="account"' + (group === 'account' ? ' selected' : '') + '>Group by: Account</option><option value="rep"' + (group === 'rep' ? ' selected' : '') + '>Group by: Sales Rep</option><option value="none"' + (group === 'none' ? ' selected' : '') + '>No grouping</option></select>' +
     '<button class="btn light" id="reset">Reset filters</button></div>');
   let list = tab.sections ? DB.logos.filter(l => tab.sections.includes(l.status)) : DB.logos.filter(needsAttention);
