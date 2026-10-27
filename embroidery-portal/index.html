@@ -264,7 +264,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">EP v1.07</span>
+    <span class="vbadge">EP v1.08</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -275,10 +275,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.07: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.08: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.07';
+const VERSION = 'EP v1.08';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -488,7 +488,7 @@ async function boot(){
   if (await permOk(h, false)) await afterConnect(); else setSave('reconnect');
 }
 window.addEventListener('beforeunload', e => { if (dirHandle && dirty){ e.preventDefault(); e.returnValue = ''; } });   // changes not in Excel yet
-// EP v1.07: look for newly copied live-portal logos (portal-logos.json) every 5 minutes and when you come back to this tab
+// EP v1.07: look for newly copied live-portal logos (portal-logos.json) every 5 minutes and when you come back to this tab (v1.08: they're added right away)
 async function recheckSeed(){ if (!dirHandle || saveState === 'reconnect' || saveState === 'unsupported' || !(await permOk(dirHandle, false))) return; await checkSeed(); }
 setInterval(recheckSeed, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') recheckSeed(); });
@@ -502,7 +502,15 @@ async function checkSeed(){
     const have = new Set(DB.logos.map(l => String(l.nsId || '')).filter(Boolean));
     seedNew = (Array.isArray(arr) ? arr : arr.logos || []).filter(x => x && x.nsId && !have.has(String(x.nsId)) && !seedSkipped.has(String(x.nsId)));
   } catch(e){}
-  showBanner();
+  if (seedNew.length) addSeedAuto(); else showBanner();
+}
+function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
+  const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
+  seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; DB.logos.push(l); log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')', AUTO); });
+  seedNew = []; touch(); showBanner();
+  (async () => { try { const w = await (await dirHandle.getFileHandle(SEED_NAME)).createWritable(); await w.write('[]'); await w.close(); } catch(e){} })();   // so a logo you delete later can't come back
+  const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render();   // don't redraw while you're typing
+  toast('Added ' + names.length + ' new logo' + (names.length === 1 ? '' : 's') + ' from the live portal: ' + esc(names.join(', ')));
 }
 function importSeed(){
   seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; DB.logos.push(l); log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')'); });
