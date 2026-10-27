@@ -264,7 +264,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">EP v1.08</span>
+    <span class="vbadge">EP v1.09</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -275,10 +275,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.08: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.09: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.08';
+const VERSION = 'EP v1.09';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -287,7 +287,7 @@ const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSu
 const BARRETT_TO = ['Rhobackembroideryteam@barrettdistribution.com', 'carla.gotera@barrettdistribution.com'];
 const BARRETT_CC = ['rosemarie.lincoln@barrettdistribution.com', 'paulina.rivas@barrettdistribution.com'];
 const DEPTS = ['Wholesale','Special Projects','Collegiate','Mainline','Custom'];
-const deptTag = l => l.dept ? '<span class="dtag">' + esc(l.dept) + '</span>' : '';
+const deptTag = l => { const bits = [l.nsId ? '#' + esc(l.nsId) : '', esc(l.dept || '')].filter(Boolean); return bits.length ? '<span class="dtag">' + bits.join(' &middot; ') + '</span>' : ''; };   // e.g. #78 · Wholesale
 const AUTO = 'System (auto)';   // who, for moves the portal makes on its own
 
 const STATUS_COLORS = {
