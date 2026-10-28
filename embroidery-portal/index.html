@@ -266,8 +266,9 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .td-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .td-nav{display:flex;align-items:center;gap:6px}.td-nav b{font-size:15px;color:var(--navy);min-width:96px;text-align:center}
 .td-count{font-size:13px;color:#49516C}
-.td-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-@media(max-width:900px){.td-cols{grid-template-columns:1fr}}
+.td-subtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.td-subtab{padding:10px 18px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer}
+.td-subtab.on{color:var(--navy);border-bottom-color:var(--red)}
 .td-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .td-add{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px}
 .td-add select,.td-editbox select{padding:8px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff;max-width:200px}
@@ -300,7 +301,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.17</span>
+    <span class="vbadge">EP v1.18</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -311,10 +312,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.17: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.18: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.17';
+const VERSION = 'EP v1.18';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1070,7 +1071,7 @@ async function applyTodoImport(){
 function renderTodo(tab){
   const today = todayIso(); todoDay = todoDay || today;
   if (todoDay === today && tdReady() && startTodo()) touch();
-  const d = todoDay, tasks = tdTasks(d), did = tdDid(d);
+  const d = todoDay, tasks = tdTasks(d), did = tdDid(d), view = state.todoView === 'did' ? 'did' : 'todo';   // EP v1.18: one list at a time
   const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))].sort(), i = days.indexOf(d);
   const opts = (list, sel) => list.map(s => '<option' + (s === sel ? ' selected' : '') + '>' + esc(s) + '</option>').join('');
   const editBox = (o, list) => '<div class="td-editbox"><select id="ed-sec-' + o.id + '">' + opts(list, o.sec) + '</select><textarea id="ed-text-' + o.id + '" rows="2">' + esc(o.text) + '</textarea>' +
@@ -1095,14 +1096,15 @@ function renderTodo(tab){
     '<div class="td-top"><div class="td-nav"><button class="btn light small" data-td="day" data-v="' + (days[i - 1] || '') + '"' + (i > 0 ? '' : ' disabled') + '>&#9664;</button><b>' + dayName(d) + '</b>' +
       '<button class="btn light small" data-td="day" data-v="' + (days[i + 1] || '') + '"' + (i < days.length - 1 ? '' : ' disabled') + '>&#9654;</button>' + (d !== today ? '<button class="btn light small" data-td="day" data-v="' + today + '">Today</button>' : '') + '</div>' +
       '<span class="td-count">' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' &middot; ' + left + ' left</span></div>' +
-    '<div class="td-cols">' +
+    '<div class="td-subtabs"><button class="td-subtab' + (view === 'todo' ? ' on' : '') + '" data-td="view" data-v="todo">To Do</button>' +
+      '<button class="td-subtab' + (view === 'did' ? ' on' : '') + '" data-td="view" data-v="did">What I did</button></div>' +
+    (view === 'todo' ?
       '<div class="lcard"><div class="td-head"><div class="card-title">To Do &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyTodo">Copy list</button></div>' +
         '<div class="td-add"><select id="tdSec">' + opts(TODO_SECS, 'Other') + '</select><textarea id="tdText" rows="1" placeholder="Add a task (Shift+Enter for a, b sub-items)"></textarea><button class="btn small" data-td="add">Add</button></div>' +
-        sections(TODO_SECS, tasks, taskRow) + '</div>' +
+        sections(TODO_SECS, tasks, taskRow) + '</div>' :
       '<div class="lcard"><div class="td-head"><div class="card-title">What I did &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyDid">Copy list</button></div>' +
         '<div class="td-add"><select id="didSec">' + opts(DID_SECS, 'Other') + '</select><textarea id="didText" rows="1" placeholder="Write in something you did"></textarea><button class="btn small" data-td="addDid">Add</button></div>' +
-        sections(DID_SECS, did, didRow) + '</div>' +
-    '</div>';
+        sections(DID_SECS, did, didRow) + '</div>');
 }
 function tdCopy(secs, items, title){
   let html = title ? '<p><b>' + esc(title) + '</b></p>' : '', text = title ? title + '\n\n' : '';
@@ -1120,6 +1122,7 @@ document.addEventListener('click', async e => {
   const t = id ? (DB.tasks || []).find(x => x.id === id) : null, w = id ? (DB.did || []).find(x => x.id === id) : null;
   const redraw = () => renderTodo(tab);
   if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoPick = todoEdit = null; redraw(); } return; }
+  if (k === 'view'){ state.todoView = el.dataset.v; todoPick = todoEdit = null; save(); redraw(); return; }
   if (k === 'cancel'){ todoPick = todoEdit = null; redraw(); return; }
   if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay), longDay(todoDay));
     toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
