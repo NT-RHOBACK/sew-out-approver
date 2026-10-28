@@ -284,6 +284,9 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .td-icon{border:none;background:none;color:#49516C;font-size:15px;cursor:pointer;padding:2px 4px}.td-icon:hover{color:var(--navy)}
 .td-pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px;color:#49516C}.td-pick select{padding:6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px}
 .td-editbox{display:flex;flex-direction:column;gap:6px;width:100%}
+.td-meta{font-size:11px;color:#49516C;margin-top:3px}
+.td-link{border:none;background:none;padding:0;font:inherit;font-size:11px;color:#1f5fbf;text-decoration:underline;cursor:pointer}
+.td-hist{margin-top:6px;padding:8px 10px;background:#fafbfd;border:1px solid var(--line);border-radius:6px;font-size:12px;color:#49516C;line-height:1.6}
 @media(max-width:700px){.msearch input{width:180px}.header-user{display:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -301,7 +304,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.19</span>
+    <span class="vbadge">EP v1.20</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -312,10 +315,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.19: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.20: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.19';
+const VERSION = 'EP v1.20';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -377,8 +380,8 @@ function needsAttention(l){ if (DONE.includes(l.status)) return false; const s =
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 // ---------------- Data (mirrored in this browser; the Excel file is the record) ----------------
-let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], savedAt:''};
-try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], savedAt:''}, s); } catch(e){}
+let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''};
+try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''}, s); } catch(e){}
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
 function newId(){ const n = DB.logos.concat(DB.history).reduce((m, x) => Math.max(m, parseInt(String(x.id || '').replace(/\D/g, ''), 10) || 0), 0); return 'EP-' + String(n + 1).padStart(4, '0'); }
 function blankLogo(){ return {id:'', nsId:'', logo:'', account:'', rep:'', type:'Sew-Out', dept:'', status:'New Request', submitted:todayIso(), inHand:'', size:'', sizeNotes:'', count:'', colorType:'', threadNotes:'', placement:'',
@@ -431,12 +434,15 @@ function buildWorkbook(){
   XLSX.utils.book_append_sheet(wb, nf, 'Notifications');
   const stat = t => t.state === 'done' ? 'Done' : t.state === 'rolled' ? (t.auto ? 'Rolled over (end of day)' : 'Rolled over') : 'Open';
   const byDay = (a, b) => b.day.localeCompare(a.day) || a.ts.localeCompare(b.ts);
-  const td = XLSX.utils.aoa_to_sheet([['Day','Section','Task','Status','Done as','Added','ID']].concat((DB.tasks || []).slice().sort(byDay).map(t => [t.day, t.sec, t.text, stat(t), t.doneSec || '', t.ts || '', t.id])));
-  td['!cols'] = [12, 26, 50, 22, 26, 20, 16].map(w => ({wch:w}));
+  const td = XLSX.utils.aoa_to_sheet([['Day','Section','Task','Status','Done as','Added','ID','Chain']].concat((DB.tasks || []).slice().sort(byDay).map(t => [t.day, t.sec, t.text, stat(t), t.doneSec || '', t.ts || '', t.id, t.chain || t.id])));
+  td['!cols'] = [12, 26, 50, 22, 26, 20, 16, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, td, 'To Do');
-  const dd = XLSX.utils.aoa_to_sheet([['Day','Section','What I did','Added','ID','From task']].concat((DB.did || []).slice().sort(byDay).map(x => [x.day, x.sec, x.text, x.ts || '', x.id, x.taskId || ''])));
-  dd['!cols'] = [12, 26, 50, 20, 16, 16].map(w => ({wch:w}));
+  const dd = XLSX.utils.aoa_to_sheet([['Day','Section','What I did','Added','ID','From task','Chain']].concat((DB.did || []).slice().sort(byDay).map(x => [x.day, x.sec, x.text, x.ts || '', x.id, x.taskId || '', x.chain || x.id])));
+  dd['!cols'] = [12, 26, 50, 20, 16, 16, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, dd, 'What I Did');
+  const th = XLSX.utils.aoa_to_sheet([['Date','Time','Task','What happened','Chain']].concat((DB.taskLog || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(e => [e.ts.slice(0, 10), e.ts.slice(11), e.task, e.what, e.chain])));
+  th['!cols'] = [12, 10, 40, 60, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, th, 'To Do History');
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
   info['!cols'] = [{wch:12}, {wch:110}];
@@ -446,7 +452,7 @@ function buildWorkbook(){
 function readWorkbook(buf){
   const wb = XLSX.read(buf, {type:'array'});
   const rows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:'', raw:false}) : [];
-  const db = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], savedAt:''};
+  const db = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''};
   const lr = rows('Logos'), head = (lr[0] || []).map(String);
   lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
     const l = blankLogo(), get = h => { const i = head.indexOf(h); return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
@@ -463,8 +469,9 @@ function readWorkbook(buf){
   rows('History').slice(1).filter(r => r[0]).forEach(r => db.history.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), logo:String(r[3]), account:String(r[4]), kind:String(r[5]), what:String(r[6]), by:String(r[7])}));
   rows('Notes').slice(1).filter(r => r[0]).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5])}));
   rows('Notifications').slice(1).filter(r => r[0]).forEach(r => db.notifs.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[3]), read:/^y/i.test(String(r[4]))}));
-  rows('To Do').slice(1).filter(r => r[0]).forEach(r => db.tasks.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), state:/^done/i.test(r[3]) ? 'done' : /^rolled/i.test(r[3]) ? 'rolled' : '', doneSec:String(r[4] || ''), ts:String(r[5] || ''), id:String(r[6] || tdId())}, /end of day/i.test(r[3]) ? {auto:true} : {})));
-  rows('What I Did').slice(1).filter(r => r[0]).forEach(r => db.did.push({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), ts:String(r[3] || ''), id:String(r[4] || tdId()), taskId:String(r[5] || '')}));
+  rows('To Do').slice(1).filter(r => r[0]).forEach(r => db.tasks.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), state:/^done/i.test(r[3]) ? 'done' : /^rolled/i.test(r[3]) ? 'rolled' : '', doneSec:String(r[4] || ''), ts:String(r[5] || ''), id:String(r[6] || tdId())}, r[7] ? {chain:String(r[7])} : {}, /end of day/i.test(r[3]) ? {auto:true} : {})));
+  rows('What I Did').slice(1).filter(r => r[0]).forEach(r => db.did.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), ts:String(r[3] || ''), id:String(r[4] || tdId()), taskId:String(r[5] || '')}, r[6] ? {chain:String(r[6])} : {})));
+  rows('To Do History').slice(1).filter(r => r[0]).forEach(r => db.taskLog.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), what:String(r[3]), chain:String(r[4])}));
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
   const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
   return db;
@@ -1029,7 +1036,7 @@ const DID_SECS = ['Submitted for digitization','Sent for approval','Requested Se
 const DONE_DEFAULT = {'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
   'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on thread colors':'Submitted for digitization'};
 const NEXT_CHECK = {'Submitted for digitization':'Check on digitization', 'Requested Sew Out':'Check on Sew out requests'};   // what you did → the next day's list
-let todoDay = null, todoPick = null, todoEdit = null;   // day shown, task picking its Done section, item being edited
+let todoDay = null, todoPick = null, todoEdit = null, todoHist = null;   // day shown, task picking its Done section, item being edited, history open
 const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const tdTasks = d => (DB.tasks || []).filter(t => t.day === d);
 const tdDid = d => (DB.did || []).filter(x => x.day === d);
@@ -1038,6 +1045,17 @@ const longDay = d => { const x = parseIso(d); return x ? x.toLocaleDateString('e
 const tdLines = text => { const [first, ...rest] = String(text || '').split('\n'); return {first, subs:rest.map(s => s.trim()).filter(Boolean)}; };
 const tdHtml = text => { const t = tdLines(text); return esc(t.first) + (t.subs.length ? '<ol type="a" class="td-sub">' + t.subs.map(s => '<li>' + esc(s) + '</li>').join('') + '</ol>' : ''); };
 const tdReady = () => dirHandle && saveState !== 'reconnect' && saveState !== 'local';
+// Task history (EP v1.20): every task keeps one chain id as it rolls over or comes back as a check-on
+const tdChainOf = o => o.chain || (o.chain = o.id);
+function tlog(o, what){ (DB.taskLog = DB.taskLog || []).push({ts:nowStamp(), chain:tdChainOf(o), task:tdLines(o.text).first, what}); }
+const tdEvents = o => { const c = tdChainOf(o); return (DB.taskLog || []).map((e, i) => [e, i]).filter(x => x[0].chain === c).sort((x, y) => y[0].ts.localeCompare(x[0].ts) || y[1] - x[1]).map(x => x[0]); };   // newest first
+const tdRolls = o => tdEvents(o).filter(e => /^Rolled over/.test(e.what)).length;
+function tdMeta(o, added){
+  const ev = tdEvents(o), since = ev.length ? ev[ev.length - 1].ts : (o.ts || ''), n = tdRolls(o), open = todoHist === o.id;
+  return '<div class="td-meta">' + (added && since ? 'Added ' + fmt(since) + ' &middot; ' : '') + (n ? 'Rolled over ' + n + (n === 1 ? ' time' : ' times') + ' &middot; ' : '') +
+    '<button class="td-link" data-td="hist" data-id="' + o.id + '">' + (open ? 'Hide history' : 'History') + '</button></div>' +
+    (open ? '<div class="td-hist">' + (ev.map(e => '<div>' + fmt(e.ts) + ' ' + time12(e.ts) + ' &middot; ' + esc(e.what) + '</div>').join('') || '<div>No history yet.</div>') + '</div>' : '');
+}
 
 // A new day: anything not marked rolls over, and what you submitted yesterday becomes a check-on
 function startTodo(){
@@ -1046,9 +1064,11 @@ function startTodo(){
   const prev = [...new Set(DB.tasks.map(t => t.day).concat(DB.did.map(x => x.day)))].filter(d => d < today).sort().pop();
   DB.todoDays.push(today);
   if (prev){
-    const have = new Set(), add = (sec, text) => { const k = sec + '|' + String(text).trim().toLowerCase(); if (have.has(k)) return; have.add(k); DB.tasks.push({id:tdId(), day:today, sec, text, state:'', doneSec:'', ts:nowStamp()}); };
-    tdTasks(prev).forEach(t => { if (!t.state){ t.state = 'rolled'; t.auto = true; } if (t.state === 'rolled') add(t.sec, t.text); });
-    tdDid(prev).forEach(x => { if (!NEXT_CHECK[x.sec]) return; const src = x.taskId && DB.tasks.find(t => t.id === x.taskId); add(NEXT_CHECK[x.sec], src ? src.text : x.text); });   // a done task carries its original name
+    const have = new Set(), add = (sec, text, chain, note) => { const k = sec + '|' + String(text).trim().toLowerCase(); if (have.has(k)) return; have.add(k);
+      const t = {id:tdId(), day:today, sec, text, state:'', doneSec:'', ts:nowStamp(), chain}; DB.tasks.push(t); if (note) tlog(t, note); };
+    tdTasks(prev).forEach(t => { if (!t.state){ t.state = 'rolled'; t.auto = true; tlog(t, 'Rolled over (end of day)'); } if (t.state === 'rolled') add(t.sec, t.text, tdChainOf(t)); });
+    tdDid(prev).forEach(x => { if (!NEXT_CHECK[x.sec]) return; const src = x.taskId && DB.tasks.find(t => t.id === x.taskId);   // a done task carries its original name
+      add(NEXT_CHECK[x.sec], src ? src.text : x.text, src ? tdChainOf(src) : tdChainOf(x), 'Added as a check-on (' + NEXT_CHECK[x.sec] + ') after ' + x.sec + ' on ' + dayName(prev)); });
   }
   return true;
 }
@@ -1059,9 +1079,9 @@ async function applyTodoImport(){
   if (!o || !o.day || !Array.isArray(o.tasks)) return;
   DB.tasks = DB.tasks || []; DB.did = DB.did || []; DB.todoDays = DB.todoDays || [];
   if (!tdTasks(o.day).length){
-    o.tasks.forEach(x => { const t = {id:tdId(), day:o.day, sec:x.sec, text:x.text, state:x.doneAs ? 'done' : '', doneSec:x.doneAs || '', ts:nowStamp()}; DB.tasks.push(t);
-      if (x.doneAs) DB.did.push({id:tdId(), day:o.day, sec:x.doneAs, text:x.didText || x.text, ts:nowStamp(), taskId:t.id}); });
-    (o.did || []).forEach(x => DB.did.push({id:tdId(), day:o.day, sec:x.sec, text:x.text, ts:nowStamp(), taskId:''}));
+    o.tasks.forEach(x => { const t = {id:tdId(), day:o.day, sec:x.sec, text:x.text, state:x.doneAs ? 'done' : '', doneSec:x.doneAs || '', ts:nowStamp()}; DB.tasks.push(t); tlog(t, 'Added to To Do (' + x.sec + ', from your Google Doc list)');
+      if (x.doneAs){ DB.did.push({id:tdId(), day:o.day, sec:x.doneAs, text:x.didText || x.text, ts:nowStamp(), taskId:t.id, chain:tdChainOf(t)}); tlog(t, 'Done \u2192 ' + x.doneAs); } });
+    (o.did || []).forEach(x => { const y = {id:tdId(), day:o.day, sec:x.sec, text:x.text, ts:nowStamp(), taskId:''}; DB.did.push(y); tlog(y, 'Written in on What I did (' + x.sec + ')'); });
     if (!DB.todoDays.includes(o.day)) DB.todoDays.push(o.day);
     touch(); if (state.tab === 'todo'){ const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
   }
@@ -1083,11 +1103,11 @@ function renderTodo(tab){
     const btns = t.state ? '<button class="btn light small" data-td="undo" data-id="' + t.id + '">Undo</button>'
       : '<button class="btn small td-done" data-td="done" data-id="' + t.id + '">Done</button><button class="btn light small td-roll" data-td="roll" data-id="' + t.id + '">Roll over</button>';
     const tag = t.state === 'done' ? '<span class="td-tag">&rarr; ' + esc(t.doneSec) + '</span>' : t.state === 'rolled' ? '<span class="td-tag">Rolled over' + (t.auto ? ' (end of day)' : '') + '</span>' : '';
-    return '<div class="td-item' + (t.state ? ' ' + t.state : '') + '"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(t.text) + tag + pick + '</div>' +
+    return '<div class="td-item' + (t.state ? ' ' + t.state : '') + '"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(t.text) + tag + pick + tdMeta(t, true) + '</div>' +
       '<div class="td-btns">' + (pick ? '' : btns) + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + t.id + '">&#9998;</button><button class="td-icon" title="Remove" data-td="del" data-id="' + t.id + '">&times;</button></div></div>';
   };
   const didRow = (x, n) => todoEdit === x.id ? '<div class="td-item">' + editBox(x, DID_SECS) + '</div>'
-    : '<div class="td-item"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(x.text) + (x.taskId ? '' : '<span class="td-tag">write-in</span>') + '</div>' +
+    : '<div class="td-item"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(x.text) + (x.taskId ? '' : '<span class="td-tag">write-in</span>') + tdMeta(x, false) + '</div>' +
       '<div class="td-btns">' + (x.taskId ? '<button class="btn light small" data-td="undoDid" data-id="' + x.id + '">Undo</button>' : '') + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + x.id + '">&#9998;</button>' +
         (x.taskId ? '' : '<button class="td-icon" title="Remove" data-td="del" data-id="' + x.id + '">&times;</button>') + '</div></div>';
   const sections = (secs, items, row) => { const html = secs.map(s => { const list = items.filter(t => t.sec === s); return list.length ? '<div class="td-sec"><h4>' + esc(s) + ':</h4>' + list.map((t, k) => row(t, k + 1)).join('') + '</div>' : ''; }).join('');
@@ -1125,26 +1145,29 @@ document.addEventListener('click', async e => {
   if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoPick = todoEdit = null; redraw(); } return; }
   if (k === 'view'){ state.todoView = el.dataset.v; todoPick = todoEdit = null; save(); redraw(); return; }
   if (k === 'cancel'){ todoPick = todoEdit = null; redraw(); return; }
+  if (k === 'hist'){ todoHist = todoHist === id ? null : id; redraw(); return; }
   if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay), longDay(todoDay));
     toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
   if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); return; }
   if (k === 'add' || k === 'addDid'){ const isDid = k === 'addDid', ta = document.getElementById(isDid ? 'didText' : 'tdText'), text = ta.value.replace(/\s+$/, ''); if (!text.trim()) return;
     const sec = document.getElementById(isDid ? 'didSec' : 'tdSec').value;
-    if (isDid) (DB.did = DB.did || []).push({id:tdId(), day:todoDay, sec, text, ts:nowStamp(), taskId:''});
-    else (DB.tasks = DB.tasks || []).push({id:tdId(), day:todoDay, sec, text, state:'', doneSec:'', ts:nowStamp()});
+    if (isDid){ const y = {id:tdId(), day:todoDay, sec, text, ts:nowStamp(), taskId:''}; (DB.did = DB.did || []).push(y); tlog(y, 'Written in on What I did (' + sec + ')'); }
+    else { const y = {id:tdId(), day:todoDay, sec, text, state:'', doneSec:'', ts:nowStamp()}; (DB.tasks = DB.tasks || []).push(y); tlog(y, 'Added to To Do (' + sec + ')'); }
     touch(); redraw(); const n = document.getElementById(isDid ? 'didSec' : 'tdSec'); n.value = sec; document.getElementById(isDid ? 'didText' : 'tdText').focus(); return; }
   if (k === 'done' && t){ todoPick = t.id; todoEdit = null; redraw(); return; }
   if (k === 'doneSave' && t){ const sec = document.getElementById('pick-' + t.id).value; t.state = 'done'; t.doneSec = sec; delete t.auto;
-    (DB.did = DB.did || []).push({id:tdId(), day:t.day, sec, text:t.text, ts:nowStamp(), taskId:t.id}); todoPick = null; touch(); redraw(); toast('Moved to What I did &rarr; ' + esc(sec) + '.'); return; }
-  if (k === 'undoDid' && w){ const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } DB.did = DB.did.filter(x => x !== w); touch(); redraw(); toast('Moved back to To Do.'); return; }
-  if (k === 'roll' && t){ t.state = 'rolled'; delete t.auto; touch(); redraw(); return; }
-  if (k === 'undo' && t){ if (t.state === 'done') DB.did = (DB.did || []).filter(x => x.taskId !== t.id); t.state = ''; t.doneSec = ''; delete t.auto; touch(); redraw(); return; }
+    (DB.did = DB.did || []).push({id:tdId(), day:t.day, sec, text:t.text, ts:nowStamp(), taskId:t.id, chain:tdChainOf(t)}); tlog(t, 'Done \u2192 ' + sec); todoPick = null; touch(); redraw(); toast('Moved to What I did &rarr; ' + esc(sec) + '.'); return; }
+  if (k === 'undoDid' && w){ const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } tlog(src || w, 'Moved back to To Do (undo done)'); DB.did = DB.did.filter(x => x !== w); touch(); redraw(); toast('Moved back to To Do.'); return; }
+  if (k === 'roll' && t){ t.state = 'rolled'; delete t.auto; tlog(t, 'Rolled over'); touch(); redraw(); return; }
+  if (k === 'undo' && t){ tlog(t, t.state === 'done' ? 'Moved back to To Do (undo done)' : 'Undo roll over'); if (t.state === 'done') DB.did = (DB.did || []).filter(x => x.taskId !== t.id); t.state = ''; t.doneSec = ''; delete t.auto; touch(); redraw(); return; }
   if (k === 'edit'){ todoEdit = id; todoPick = null; redraw(); return; }
   if (k === 'editSave' && (t || w)){ const o = t || w, text = document.getElementById('ed-text-' + id).value.replace(/\s+$/, ''); if (!text.trim()) return;
-    o.text = text; o.sec = document.getElementById('ed-sec-' + id).value;
+    const sec2 = document.getElementById('ed-sec-' + id).value, ch = [];
+    if (text !== o.text) ch.push('Renamed: "' + tdLines(o.text).first + '" > "' + tdLines(text).first + '"'); if (sec2 !== o.sec) ch.push((w && w.taskId ? 'Done as changed to ' : 'Moved to ') + sec2);
+    if (ch.length) tlog(o, ch.join('; ')); o.text = text; o.sec = sec2;
     if (w && w.taskId){ const src = (DB.tasks || []).find(x => x.id === w.taskId); if (src) src.doneSec = w.sec; }
     todoEdit = null; touch(); redraw(); return; }
-  if (k === 'del' && (t || w)){ if (!confirm('Remove this from the list?')) return;
+  if (k === 'del' && (t || w)){ if (!confirm('Remove this from the list?')) return; tlog(t || w, 'Removed');
     if (t){ DB.tasks = DB.tasks.filter(x => x !== t); DB.did = (DB.did || []).filter(x => x.taskId !== t.id); }
     if (w){ DB.did = DB.did.filter(x => x !== w); const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } }
     touch(); redraw(); return; }
