@@ -301,7 +301,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.18</span>
+    <span class="vbadge">EP v1.19</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -312,10 +312,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.18: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.19: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.18';
+const VERSION = 'EP v1.19';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1088,7 +1088,8 @@ function renderTodo(tab){
   };
   const didRow = (x, n) => todoEdit === x.id ? '<div class="td-item">' + editBox(x, DID_SECS) + '</div>'
     : '<div class="td-item"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(x.text) + (x.taskId ? '' : '<span class="td-tag">write-in</span>') + '</div>' +
-      '<div class="td-btns"><button class="td-icon" title="Edit" data-td="edit" data-id="' + x.id + '">&#9998;</button><button class="td-icon" title="Remove" data-td="del" data-id="' + x.id + '">&times;</button></div></div>';
+      '<div class="td-btns">' + (x.taskId ? '<button class="btn light small" data-td="undoDid" data-id="' + x.id + '">Undo</button>' : '') + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + x.id + '">&#9998;</button>' +
+        (x.taskId ? '' : '<button class="td-icon" title="Remove" data-td="del" data-id="' + x.id + '">&times;</button>') + '</div></div>';
   const sections = (secs, items, row) => { const html = secs.map(s => { const list = items.filter(t => t.sec === s); return list.length ? '<div class="td-sec"><h4>' + esc(s) + ':</h4>' + list.map((t, k) => row(t, k + 1)).join('') + '</div>' : ''; }).join('');
     return html || '<div class="empty" style="margin-top:12px">Nothing here yet.</div>'; };
   const left = tasks.filter(t => !t.state).length;
@@ -1101,7 +1102,7 @@ function renderTodo(tab){
     (view === 'todo' ?
       '<div class="lcard"><div class="td-head"><div class="card-title">To Do &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyTodo">Copy list</button></div>' +
         '<div class="td-add"><select id="tdSec">' + opts(TODO_SECS, 'Other') + '</select><textarea id="tdText" rows="1" placeholder="Add a task (Shift+Enter for a, b sub-items)"></textarea><button class="btn small" data-td="add">Add</button></div>' +
-        sections(TODO_SECS, tasks, taskRow) + '</div>' :
+        sections(TODO_SECS, tasks.filter(t => t.state !== 'done'), taskRow) + '</div>' :   // EP v1.19: done ones move to What I did
       '<div class="lcard"><div class="td-head"><div class="card-title">What I did &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyDid">Copy list</button></div>' +
         '<div class="td-add"><select id="didSec">' + opts(DID_SECS, 'Other') + '</select><textarea id="didText" rows="1" placeholder="Write in something you did"></textarea><button class="btn small" data-td="addDid">Add</button></div>' +
         sections(DID_SECS, did, didRow) + '</div>');
@@ -1134,7 +1135,8 @@ document.addEventListener('click', async e => {
     touch(); redraw(); const n = document.getElementById(isDid ? 'didSec' : 'tdSec'); n.value = sec; document.getElementById(isDid ? 'didText' : 'tdText').focus(); return; }
   if (k === 'done' && t){ todoPick = t.id; todoEdit = null; redraw(); return; }
   if (k === 'doneSave' && t){ const sec = document.getElementById('pick-' + t.id).value; t.state = 'done'; t.doneSec = sec; delete t.auto;
-    (DB.did = DB.did || []).push({id:tdId(), day:t.day, sec, text:t.text, ts:nowStamp(), taskId:t.id}); todoPick = null; touch(); redraw(); return; }
+    (DB.did = DB.did || []).push({id:tdId(), day:t.day, sec, text:t.text, ts:nowStamp(), taskId:t.id}); todoPick = null; touch(); redraw(); toast('Moved to What I did &rarr; ' + esc(sec) + '.'); return; }
+  if (k === 'undoDid' && w){ const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } DB.did = DB.did.filter(x => x !== w); touch(); redraw(); toast('Moved back to To Do.'); return; }
   if (k === 'roll' && t){ t.state = 'rolled'; delete t.auto; touch(); redraw(); return; }
   if (k === 'undo' && t){ if (t.state === 'done') DB.did = (DB.did || []).filter(x => x.taskId !== t.id); t.state = ''; t.doneSec = ''; delete t.auto; touch(); redraw(); return; }
   if (k === 'edit'){ todoEdit = id; todoPick = null; redraw(); return; }
