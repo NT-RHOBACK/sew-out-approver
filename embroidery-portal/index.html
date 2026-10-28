@@ -285,6 +285,11 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .td-pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px;color:#49516C}.td-pick select{padding:6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px}
 .td-editbox{display:flex;flex-direction:column;gap:6px;width:100%}
 .td-meta{font-size:11px;color:#49516C;margin-top:3px}
+.td-metrics{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.td-metric{display:flex;align-items:baseline;gap:8px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 16px}
+.td-mnum{font-size:22px;font-weight:700;color:var(--navy)}.td-mlbl{font-size:13px;color:#49516C}
+.td-res{cursor:pointer}.td-res:hover{background:#f3f5fa}.td-res.done{background:#e2f5dc}.td-res.rolled{background:#ece6f8}
+.td-day{font-size:12px;font-weight:600;color:#49516C;min-width:76px;padding-top:2px}
 .td-link{border:none;background:none;padding:0;font:inherit;font-size:11px;color:#1f5fbf;text-decoration:underline;cursor:pointer}
 .td-hist{margin-top:6px;padding:8px 10px;background:#fafbfd;border:1px solid var(--line);border-radius:6px;font-size:12px;color:#49516C;line-height:1.6}
 @media(max-width:700px){.msearch input{width:180px}.header-user{display:none}}
@@ -304,7 +309,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.20</span>
+    <span class="vbadge">EP v1.21</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -315,10 +320,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.20: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.21: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.20';
+const VERSION = 'EP v1.21';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1036,7 +1041,7 @@ const DID_SECS = ['Submitted for digitization','Sent for approval','Requested Se
 const DONE_DEFAULT = {'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
   'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on thread colors':'Submitted for digitization'};
 const NEXT_CHECK = {'Submitted for digitization':'Check on digitization', 'Requested Sew Out':'Check on Sew out requests'};   // what you did → the next day's list
-let todoDay = null, todoPick = null, todoEdit = null, todoHist = null;   // day shown, task picking its Done section, item being edited, history open
+let todoDay = null, todoPick = null, todoEdit = null, todoHist = null, todoQ = '';   // todoQ: search across every day (EP v1.21)   // day shown, task picking its Done section, item being edited, history open
 const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const tdTasks = d => (DB.tasks || []).filter(t => t.day === d);
 const tdDid = d => (DB.did || []).filter(x => x.day === d);
@@ -1117,6 +1122,11 @@ function renderTodo(tab){
     '<div class="td-top"><div class="td-nav"><button class="btn light small" data-td="day" data-v="' + (days[i - 1] || '') + '"' + (i > 0 ? '' : ' disabled') + '>&#9664;</button><b>' + dayName(d) + '</b>' +
       '<button class="btn light small" data-td="day" data-v="' + (days[i + 1] || '') + '"' + (i < days.length - 1 ? '' : ' disabled') + '>&#9654;</button>' + (d !== today ? '<button class="btn light small" data-td="day" data-v="' + today + '">Today</button>' : '') + '</div>' +
       '<span class="td-count">' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' &middot; ' + left + ' left</span></div>' +
+    '<div class="td-metrics">' + [['Check on digitization', 'Pending digitization'], ['Check on Sew out requests', 'Pending sew out']].map(([sec, label]) => {
+        const n = tasks.filter(t => t.sec === sec && t.state !== 'done').reduce((a, t) => a + (tdLines(t.text).subs.length || 1), 0);   // logos: sub-items count separately (UAF 3 LOGOS a, b = 2)
+        return '<div class="td-metric"><span class="td-mnum">' + n + '</span><span class="td-mlbl">' + label + '</span></div>'; }).join('') + '</div>' +
+    '<div class="bar"><input id="tdSearch" placeholder="Search every day&rsquo;s To Do and What I did&hellip;" value="' + esc(todoQ) + '" autocomplete="off"></div>' +
+    (todoQ.trim() ? tdResults(todoQ.trim().toLowerCase()) :
     '<div class="td-subtabs"><button class="td-subtab' + (view === 'todo' ? ' on' : '') + '" data-td="view" data-v="todo">To Do</button>' +
       '<button class="td-subtab' + (view === 'did' ? ' on' : '') + '" data-td="view" data-v="did">What I did</button></div>' +
     (view === 'todo' ?
@@ -1125,8 +1135,24 @@ function renderTodo(tab){
         sections(TODO_SECS, tasks.filter(t => t.state !== 'done'), taskRow) + '</div>' :   // EP v1.19: done ones move to What I did
       '<div class="lcard"><div class="td-head"><div class="card-title">What I did &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyDid">Copy list</button></div>' +
         '<div class="td-add"><select id="didSec">' + opts(DID_SECS, 'Other') + '</select><textarea id="didText" rows="1" placeholder="Write in something you did"></textarea><button class="btn small" data-td="addDid">Add</button></div>' +
-        sections(DID_SECS, did, didRow) + '</div>');
+        sections(DID_SECS, did, didRow) + '</div>'));
 }
+function tdResults(q){   // every day, newest first; click one to go to it
+  const hit = o => String(o.text || '').toLowerCase().includes(q);
+  const doneAs = t => t.state === 'done' && (DB.did || []).find(x => x.taskId === t.id);   // done tasks live under What I did
+  const rows = (DB.tasks || []).filter(t => hit(t) && !doneAs(t)).map(t => ({o:t, day:t.day, view:'todo', go:doneAs(t), where:'To Do &middot; ' + esc(t.sec) + ' &middot; ' + (t.state === 'done' ? 'Done &rarr; ' + esc(t.doneSec) : t.state === 'rolled' ? 'Rolled over' : 'Open')}))
+    .concat((DB.did || []).filter(hit).map(x => ({o:x, day:x.day, view:'did', where:'What I did &middot; ' + esc(x.sec)})))
+    .sort((a, b) => b.day.localeCompare(a.day) || (a.view === b.view ? 0 : a.view === 'todo' ? -1 : 1));
+  return '<div class="lcard"><div class="card-title" style="margin-bottom:10px">' + rows.length + ' match' + (rows.length === 1 ? '' : 'es') + ' for &ldquo;' + esc(q) + '&rdquo;</div>' +
+    (rows.length ? rows.slice(0, 200).map(r => '<div class="td-item td-res' + (r.view === 'todo' && r.o.state ? ' ' + r.o.state : '') + '" data-td="goto" data-id="' + (r.go ? r.go.id : r.o.id) + '" data-day="' + r.day + '" data-v="' + (r.go ? 'did' : r.view) + '">' +
+      '<span class="td-day">' + dayName(r.day) + '</span><div class="td-text">' + tdHtml(r.o.text) + '<div class="td-meta">' + r.where + '</div></div></div>').join('')
+      : '<div class="empty">Nothing matches.</div>') + '</div>';
+}
+document.addEventListener('input', e => {
+  if (!e.target || e.target.id !== 'tdSearch') return;
+  todoQ = e.target.value; const pos = e.target.selectionStart; renderTodo(TABS.find(x => x.key === 'todo'));
+  const n = document.getElementById('tdSearch'); if (n){ n.focus(); n.setSelectionRange(pos, pos); }
+});
 function tdCopy(secs, items, title){
   let html = title ? '<p><b>' + esc(title) + '</b></p>' : '', text = title ? title + '\n\n' : '';
   secs.forEach(s => { const list = items.filter(t => t.sec === s); if (!list.length) return;
@@ -1146,6 +1172,8 @@ document.addEventListener('click', async e => {
   if (k === 'view'){ state.todoView = el.dataset.v; todoPick = todoEdit = null; save(); redraw(); return; }
   if (k === 'cancel'){ todoPick = todoEdit = null; redraw(); return; }
   if (k === 'hist'){ todoHist = todoHist === id ? null : id; redraw(); return; }
+  if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoHist = id; todoPick = todoEdit = null; save(); redraw();
+    const h = document.querySelector('.td-hist'); if (h) h.closest('.td-item').scrollIntoView({block:'center'}); return; }
   if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay), longDay(todoDay));
     toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
   if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); return; }
@@ -1256,7 +1284,7 @@ document.addEventListener('click', e => {
     if (l.ver !== ov) log(l, 'Edit', 'File Version: v' + ov + ' > v' + l.ver);
     if ((l.rev || 0) !== orv) log(l, 'Edit', 'Revisions: ' + orv + ' > ' + l.rev);
     touch(); render(); return; }
-  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoPick = todoEdit = null; } state.open = {}; save(); render(); return; }
+  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoPick = todoEdit = null; todoQ = ''; } state.open = {}; save(); render(); return; }
   const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
   const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
   const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk]; state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
