@@ -284,6 +284,21 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .td-icon{border:none;background:none;color:#49516C;font-size:15px;cursor:pointer;padding:2px 4px}.td-icon:hover{color:var(--navy)}
 .td-pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px;color:#49516C}.td-pick select{padding:6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px}
 .td-editbox{display:flex;flex-direction:column;gap:6px;width:100%}
+.td-list{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.td-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;background:#fff}
+.td-list>.td-row:last-child,.td-list>.td-card:last-child{border-bottom:none}
+.td-row:hover{background:#fafbfd}.td-row.open{background:#f3f5fa}.td-row.past{opacity:.5}
+.td-row .chev{color:var(--grey);font-size:11px;width:12px;flex-shrink:0}
+.td-name{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--navy);overflow-wrap:anywhere}.td-name .td-sub,.td-name .td-meta{font-weight:400}
+.td-st{width:210px;flex-shrink:0;font:inherit;font-size:12px;font-weight:600;padding:5px 8px;border:1px solid #d6dbe4;border-radius:6px;cursor:pointer}
+.td-was{width:210px;flex-shrink:0;font-size:12px;color:#49516C;text-align:right}
+.td-card{padding:12px 16px 14px 38px;background:#f3f5fa;border-bottom:1px solid var(--line);cursor:default}
+.td-card-grid{display:grid;grid-template-columns:1fr 240px;gap:12px}
+.td-card textarea,.td-card select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;color:var(--navy);background:#fff}
+.td-steps{margin-top:10px;font-size:13px;color:var(--navy)}.td-when{font-size:11px;color:#49516C}
+.td-card .td-hist{margin-top:10px;background:#fff}
+.td-res.past{opacity:.6}
+@media(max-width:700px){.td-st,.td-was{width:150px}.td-card-grid{grid-template-columns:1fr}}
 .td-meta{font-size:11px;color:#49516C;margin-top:3px}
 .td-metrics{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .td-metric{display:flex;align-items:baseline;gap:8px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 16px}
@@ -309,7 +324,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.22</span>
+    <span class="vbadge">EP v1.23</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -320,10 +335,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.22: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.23: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.22';
+const VERSION = 'EP v1.23';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -358,7 +373,7 @@ const TABS = [
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
   {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
-  {key:'todo',      title:'To Do', sub:'Your daily list. Click Done (and pick what you did) or Roll over. Anything not marked rolls over to the next day on its own, and what you submitted for digitization or sew-out comes back the next day as a check-on.', todo:true, right:true}
+  {key:'todo',      title:'To Do', sub:'Your daily list. Set a task&rsquo;s Status to what you did (it moves to What I did) or Roll over, and click a task for its details and history. Anything not marked rolls over to the next day on its own, and what you submitted for digitization or sew-out comes back the next day as a check-on.', todo:true, right:true}
 ];
 const KIND_COLOR = {Added:['#5b3a8e','#efe8f8'], Status:['#1f5fbf','#e8f0fb'], Email:['#7b2fb5','#f2e8fb'], Edit:['#49516C','#eef0f6'], File:['#a35a1f','#fdeee2'], Note:['#2e7d32','#e2f5dc'], Deleted:['#a61b1b','#f8d7d7']};
 
@@ -1035,13 +1050,16 @@ function rowsHtml(list, tab, cols){
   const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
   return '<div class="tblwrap"><table class="tbl">' + colgroup + '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
 }
-// ---------------- To Do (EP v1.17): Noelle's daily list (this portal only) ----------------
+// ---------------- To Do (EP v1.17+): Noelle's daily list (this portal only) ----------------
 const TODO_SECS = ['Request sew out','Review Barrett Sew Out','Add to ES/FTP','Other','Check on digitization','Check on Sew out requests','Waiting on thread colors'];
 const DID_SECS = ['Submitted for digitization','Sent for approval','Requested Sew Out','Added to ES/FTP','Other','Followed up on','Completed'];
 const DONE_DEFAULT = {'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
   'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on thread colors':'Submitted for digitization'};
 const NEXT_CHECK = {'Submitted for digitization':'Check on digitization', 'Requested Sew Out':'Check on Sew out requests'};   // what you did → the next day's list
-let todoDay = null, todoPick = null, todoEdit = null, todoHist = null, todoQ = '';   // todoQ: search across every day (EP v1.21)   // day shown, task picking its Done section, item being edited, history open
+// Status colors for the task banners (EP v1.23): [background, text, border]
+const TD_COLORS = {'To do':['#ffffff','#29304E','#d6dbe4'], 'Rolled over':['#ece6f8','#5b3a8e'], 'Submitted for digitization':['#d2f0ec','#0f5f58'], 'Sent for approval':['#e6f3fc','#1f6fa8'],
+  'Requested Sew Out':['#fdeee2','#a35a1f'], 'Added to ES/FTP':['#c6e4f7','#0b4f80'], 'Followed up on':['#fff6b3','#6b5600'], 'Completed':['#e2f5dc','#2e7d32'], 'Other':['#eef0f6','#49516C']};
+let todoDay = null, todoOpen = null, todoQ = '';   // day shown, task opened (single click), search across every day
 const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const tdTasks = d => (DB.tasks || []).filter(t => t.day === d);
 const tdDid = d => (DB.did || []).filter(x => x.day === d);
@@ -1049,20 +1067,28 @@ const dayName = d => { const x = parseIso(d); return x ? x.toLocaleDateString('e
 const longDay = d => { const x = parseIso(d); return x ? x.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : d; };   // Oct 28, 2026
 const tdLines = text => { const [first, ...rest] = String(text || '').split('\n'); return {first, subs:rest.map(s => s.trim()).filter(Boolean)}; };
 const tdHtml = text => { const t = tdLines(text); return esc(t.first) + (t.subs.length ? '<ol type="a" class="td-sub">' + t.subs.map(s => '<li>' + esc(s) + '</li>').join('') + '</ol>' : ''); };
+const tdOpts = (list, sel) => list.map(s => '<option' + (s === sel ? ' selected' : '') + '>' + esc(s) + '</option>').join('');
 const tdReady = () => dirHandle && saveState !== 'reconnect' && saveState !== 'local';
 // Task history (EP v1.20): every task keeps one chain id as it rolls over or comes back as a check-on
 const tdChainOf = o => o.chain || (o.chain = o.id);
 function tlog(o, what){ (DB.taskLog = DB.taskLog || []).push({ts:nowStamp(), chain:tdChainOf(o), task:tdLines(o.text).first, what}); }
 const tdEvents = o => { const c = tdChainOf(o); return (DB.taskLog || []).map((e, i) => [e, i]).filter(x => x[0].chain === c).sort((x, y) => y[0].ts.localeCompare(x[0].ts) || y[1] - x[1]).map(x => x[0]); };   // newest first
 const tdRolls = o => tdEvents(o).filter(e => /^Rolled over/.test(e.what)).length;
-function tdMeta(o, added){
-  const ev = tdEvents(o), since = ev.length ? ev[ev.length - 1].ts : (o.ts || ''), n = tdRolls(o), open = todoHist === o.id;
-  return '<div class="td-meta">' + (added && since ? 'Added ' + fmt(since) + ' &middot; ' : '') + (n ? 'Rolled over ' + n + (n === 1 ? ' time' : ' times') + ' &middot; ' : '') +
-    '<button class="td-link" data-td="hist" data-id="' + o.id + '">' + (open ? 'Hide history' : 'History') + '</button></div>' +
-    (open ? '<div class="td-hist">' + (ev.map(e => '<div>' + fmt(e.ts) + ' ' + time12(e.ts) + ' &middot; ' + esc(e.what) + '</div>').join('') || '<div>No history yet.</div>') + '</div>' : '');
+// Steps (EP v1.23): one task can go through several What I did sections in a day; the latest one is where it is now
+const tdKey = x => x.day + '|' + (x.taskId ? 't:' + x.taskId : 'c:' + tdChainOf(x));
+const tdSteps = x => { const k = tdKey(x); return (DB.did || []).map((y, i) => [y, i]).filter(p => tdKey(p[0]) === k).sort((a, b) => a[0].ts.localeCompare(b[0].ts) || a[1] - b[1]).map(p => p[0]); };   // oldest first
+const tdTaskSteps = t => tdSteps({day:t.day, taskId:t.id});
+const tdCurrent = x => { const s = tdSteps(x); return s[s.length - 1] || x; };
+function tdSync(t){ const s = tdTaskSteps(t); if (s.length){ t.state = 'done'; t.doneSec = s[s.length - 1].sec; delete t.auto; } else if (t.state === 'done'){ t.state = ''; t.doneSec = ''; } }
+function tdAddStep(o, sec){   // o: a To Do task, or a What I did item
+  const t = (DB.tasks || []).includes(o) ? o : (o.taskId && (DB.tasks || []).find(y => y.id === o.taskId));
+  const first = t ? !tdTaskSteps(t).length : false;
+  const y = {id:tdId(), day:o.day, sec, text:o.text, ts:nowStamp(), taskId:t ? t.id : '', chain:tdChainOf(t || o)};
+  (DB.did = DB.did || []).push(y); tlog(t || o, (first ? 'Done' : 'Next step') + ' → ' + sec); if (t) tdSync(t);
+  return y;
 }
 
-// A new day: anything not marked rolls over, and what you submitted yesterday becomes a check-on
+// A new day: anything not marked rolls over, and where each task ended up yesterday can come back as a check-on
 function startTodo(){
   DB.tasks = DB.tasks || []; DB.did = DB.did || []; DB.todoDays = DB.todoDays || [];
   const today = todayIso(); if (DB.todoDays.includes(today)) return false;
@@ -1072,13 +1098,14 @@ function startTodo(){
     const have = new Set(), add = (sec, text, chain, note) => { const k = sec + '|' + String(text).trim().toLowerCase(); if (have.has(k)) return; have.add(k);
       const t = {id:tdId(), day:today, sec, text, state:'', doneSec:'', ts:nowStamp(), chain}; DB.tasks.push(t); if (note) tlog(t, note); };
     tdTasks(prev).forEach(t => { if (!t.state){ t.state = 'rolled'; t.auto = true; tlog(t, 'Rolled over (end of day)'); } if (t.state === 'rolled') add(t.sec, t.text, tdChainOf(t)); });
-    tdDid(prev).forEach(x => { if (!NEXT_CHECK[x.sec]) return; const src = x.taskId && DB.tasks.find(t => t.id === x.taskId);   // a done task carries its original name
+    const latest = {}; tdDid(prev).forEach(x => { latest[tdKey(x)] = tdCurrent(x); });   // only the most recent step counts
+    Object.values(latest).forEach(x => { if (!NEXT_CHECK[x.sec]) return; const src = x.taskId && DB.tasks.find(t => t.id === x.taskId);   // a done task carries its original name
       add(NEXT_CHECK[x.sec], src ? src.text : x.text, src ? tdChainOf(src) : tdChainOf(x), 'Added as a check-on (' + NEXT_CHECK[x.sec] + ') after ' + x.sec + ' on ' + dayName(prev)); });
   }
   return true;
 }
 
-// todo-import.json (from Claude): fills a day that has no tasks yet, then empties the file
+// todo-import.json (from Claude): fills a day that has no tasks yet ("replace" starts the day over), then empties the file
 async function applyTodoImport(){
   let o; try { o = JSON.parse(await (await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).getFile()).text()); } catch(e){ return; }
   if (!o || !o.day || !Array.isArray(o.tasks)) return;
@@ -1088,8 +1115,8 @@ async function applyTodoImport(){
     DB.tasks = DB.tasks.filter(t => t.day !== o.day); DB.did = DB.did.filter(x => x.day !== o.day);
   }
   if (!tdTasks(o.day).length){
-    o.tasks.forEach(x => { const t = {id:tdId(), day:o.day, sec:x.sec, text:x.text, state:x.doneAs ? 'done' : '', doneSec:x.doneAs || '', ts:nowStamp()}; DB.tasks.push(t); tlog(t, 'Added to To Do (' + x.sec + ', from your Google Doc list)');
-      if (x.doneAs){ DB.did.push({id:tdId(), day:o.day, sec:x.doneAs, text:x.didText || x.text, ts:nowStamp(), taskId:t.id, chain:tdChainOf(t)}); tlog(t, 'Done \u2192 ' + x.doneAs); } });
+    o.tasks.forEach(x => { const t = {id:tdId(), day:o.day, sec:x.sec, text:x.text, state:'', doneSec:'', ts:nowStamp()}; DB.tasks.push(t); tlog(t, 'Added to To Do (' + x.sec + ', from your Google Doc list)');
+      if (x.doneAs){ const y = tdAddStep(t, x.doneAs); if (x.didText) y.text = x.didText; } });
     (o.did || []).forEach(x => { const y = {id:tdId(), day:o.day, sec:x.sec, text:x.text, ts:nowStamp(), taskId:''}; DB.did.push(y); tlog(y, 'Written in on What I did (' + x.sec + ')'); });
     if (!DB.todoDays.includes(o.day)) DB.todoDays.push(o.day);
     touch(); if (state.tab === 'todo'){ const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
@@ -1098,29 +1125,44 @@ async function applyTodoImport(){
   try { const w = await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).createWritable(); await w.write('{}'); await w.close(); } catch(e){}
 }
 
+// Banners (EP v1.23): one row per task with a colored Status dropdown; single click opens its details
+function tdSelect(o, value, list, kind){
+  const c = TD_COLORS[value] || TD_COLORS.Other;
+  return '<select class="td-st" data-tdst="' + kind + '" data-id="' + o.id + '" onclick="event.stopPropagation()" style="background:' + c[0] + ';color:' + c[1] + ';border-color:' + (c[2] || c[0]) + '">' + tdOpts(list, value) + '</select>';
+}
+function tdCard(o, kind){   // kind: 'task' (To Do) or 'did' (What I did)
+  const t = kind === 'task' ? o : (o.taskId && (DB.tasks || []).find(y => y.id === o.taskId));
+  const steps = kind === 'task' ? tdTaskSteps(o) : tdSteps(o), last = steps[steps.length - 1];
+  const undo = kind === 'task' ? (o.state === 'rolled' ? ['undoRoll', 'Undo roll over'] : null) : (last ? ['undoStep', 'Undo last step (' + last.sec + ')'] : null);
+  const ev = tdEvents(t || o);
+  return '<div class="td-card">' +
+    '<div class="td-card-grid"><div><div class="sf-mini">Task</div><textarea id="ed-text-' + o.id + '" rows="2">' + esc(o.text) + '</textarea></div>' +
+      (kind === 'task' ? '<div><div class="sf-mini">To Do section</div><select id="ed-sec-' + o.id + '">' + tdOpts(TODO_SECS, o.sec) + '</select></div>' : '') + '</div>' +
+    '<div class="td-btns" style="margin-top:8px"><button class="btn small" data-td="save" data-id="' + o.id + '" data-k="' + kind + '">Save</button>' +
+      (undo ? '<button class="btn light small" data-td="' + undo[0] + '" data-id="' + o.id + '">' + esc(undo[1]) + '</button>' : '') +
+      (kind === 'task' || !o.taskId ? '<button class="btn danger small" data-td="del" data-id="' + o.id + '" data-k="' + kind + '">Remove</button>' : '') + '</div>' +
+    (steps.length > 1 ? '<div class="td-steps"><div class="sf-mini">Steps today</div>' + steps.map(s => esc(s.sec) + ' <span class="td-when">' + time12(s.ts) + '</span>').join(' &rarr; ') + '</div>' : '') +
+    '<div class="td-hist"><div class="sf-mini">History</div>' + (ev.map(e => '<div>' + fmt(e.ts) + ' ' + time12(e.ts) + ' &middot; ' + esc(e.what) + '</div>').join('') || '<div>No history yet.</div>') + '</div></div>';
+}
+function tdTaskRow(t){
+  const open = todoOpen === t.id, n = tdRolls(t), ev = tdEvents(t), since = ev.length ? ev[ev.length - 1].ts : t.ts;
+  return '<div class="td-row' + (open ? ' open' : '') + '" data-td="open" data-id="' + t.id + '"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span>' +
+    '<div class="td-name">' + tdHtml(t.text) + '<div class="td-meta">' + esc(t.sec) + (since ? ' &middot; Added ' + fmt(since) : '') + (n ? ' &middot; Rolled over ' + n + (n === 1 ? ' time' : ' times') : '') + '</div></div>' +
+    tdSelect(t, t.state === 'rolled' ? 'Rolled over' : 'To do', ['To do', 'Rolled over'].concat(DID_SECS), 'task') + '</div>' + (open ? tdCard(t, 'task') : '');
+}
+function tdDidRow(x){
+  const cur = tdCurrent(x), now = cur.id === x.id, open = todoOpen === x.id;
+  return '<div class="td-row' + (now ? '' : ' past') + (open ? ' open' : '') + '" data-td="open" data-id="' + x.id + '"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span>' +
+    '<div class="td-name">' + tdHtml(x.text) + '<div class="td-meta">' + (now ? (x.taskId ? 'From your To Do list' : 'Write-in') + ' &middot; ' + time12(x.ts) : 'Now in: ' + esc(cur.sec)) + '</div></div>' +
+    (now ? tdSelect(x, x.sec, DID_SECS, 'did') : '<span class="td-was">' + esc(x.sec) + ' &middot; ' + time12(x.ts) + '</span>') + '</div>' + (open ? tdCard(x, 'did') : '');
+}
+
 function renderTodo(tab){
   const today = todayIso(); todoDay = todoDay || today;
   if (todoDay === today && tdReady() && startTodo()) touch();
-  const d = todoDay, tasks = tdTasks(d), did = tdDid(d), view = state.todoView === 'did' ? 'did' : 'todo';   // EP v1.18: one list at a time
+  const d = todoDay, tasks = tdTasks(d), did = tdDid(d).sort((a, b) => a.ts.localeCompare(b.ts)), view = state.todoView === 'did' ? 'did' : 'todo';
   const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))].sort(), i = days.indexOf(d);
-  const opts = (list, sel) => list.map(s => '<option' + (s === sel ? ' selected' : '') + '>' + esc(s) + '</option>').join('');
-  const editBox = (o, list) => '<div class="td-editbox"><select id="ed-sec-' + o.id + '">' + opts(list, o.sec) + '</select><textarea id="ed-text-' + o.id + '" rows="2">' + esc(o.text) + '</textarea>' +
-    '<div class="td-btns"><button class="btn small" data-td="editSave" data-id="' + o.id + '">Save</button><button class="btn light small" data-td="cancel">Cancel</button></div></div>';
-  const taskRow = (t, n) => {
-    if (todoEdit === t.id) return '<div class="td-item">' + editBox(t, TODO_SECS) + '</div>';
-    const pick = todoPick === t.id ? '<div class="td-pick">Done as: <select id="pick-' + t.id + '">' + opts(DID_SECS, DONE_DEFAULT[t.sec] || 'Other') + '</select>' +
-      '<button class="btn small" data-td="doneSave" data-id="' + t.id + '">Save</button><button class="btn light small" data-td="cancel">Cancel</button></div>' : '';
-    const btns = t.state ? '<button class="btn light small" data-td="undo" data-id="' + t.id + '">Undo</button>'
-      : '<button class="btn small td-done" data-td="done" data-id="' + t.id + '">Done</button><button class="btn light small td-roll" data-td="roll" data-id="' + t.id + '">Roll over</button>';
-    const tag = t.state === 'done' ? '<span class="td-tag">&rarr; ' + esc(t.doneSec) + '</span>' : t.state === 'rolled' ? '<span class="td-tag">Rolled over' + (t.auto ? ' (end of day)' : '') + '</span>' : '';
-    return '<div class="td-item' + (t.state ? ' ' + t.state : '') + '"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(t.text) + tag + pick + tdMeta(t, true) + '</div>' +
-      '<div class="td-btns">' + (pick ? '' : btns) + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + t.id + '">&#9998;</button><button class="td-icon" title="Remove" data-td="del" data-id="' + t.id + '">&times;</button></div></div>';
-  };
-  const didRow = (x, n) => todoEdit === x.id ? '<div class="td-item">' + editBox(x, DID_SECS) + '</div>'
-    : '<div class="td-item"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(x.text) + (x.taskId ? '' : '<span class="td-tag">write-in</span>') + tdMeta(x, false) + '</div>' +
-      '<div class="td-btns">' + (x.taskId ? '<button class="btn light small" data-td="undoDid" data-id="' + x.id + '">Undo</button>' : '') + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + x.id + '">&#9998;</button>' +
-        (x.taskId ? '' : '<button class="td-icon" title="Remove" data-td="del" data-id="' + x.id + '">&times;</button>') + '</div></div>';
-  const sections = (secs, items, row) => { const html = secs.map(s => { const list = items.filter(t => t.sec === s); return list.length ? '<div class="td-sec"><h4>' + esc(s) + ':</h4>' + list.map((t, k) => row(t, k + 1)).join('') + '</div>' : ''; }).join('');
+  const sections = (secs, items, row) => { const html = secs.map(s => { const list = items.filter(t => t.sec === s); return list.length ? '<div class="td-sec"><h4>' + esc(s) + ':</h4><div class="td-list">' + list.map(row).join('') + '</div></div>' : ''; }).join('');
     return html || '<div class="empty" style="margin-top:12px">Nothing here yet.</div>'; };
   const left = tasks.filter(t => !t.state).length;
   document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + '</div>' +
@@ -1136,20 +1178,19 @@ function renderTodo(tab){
       '<button class="td-subtab' + (view === 'did' ? ' on' : '') + '" data-td="view" data-v="did">What I did</button></div>' +
     (view === 'todo' ?
       '<div class="lcard"><div class="td-head"><div class="card-title">To Do &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyTodo">Copy list</button></div>' +
-        '<div class="td-add"><select id="tdSec">' + opts(TODO_SECS, 'Other') + '</select><textarea id="tdText" rows="1" placeholder="Add a task (Shift+Enter for a, b sub-items)"></textarea><button class="btn small" data-td="add">Add</button></div>' +
-        sections(TODO_SECS, tasks.filter(t => t.state !== 'done'), taskRow) + '</div>' :   // EP v1.19: done ones move to What I did
+        '<div class="td-add"><select id="tdSec">' + tdOpts(TODO_SECS, 'Other') + '</select><textarea id="tdText" rows="1" placeholder="Add a task (Shift+Enter for a, b sub-items)"></textarea><button class="btn small" data-td="add">Add</button></div>' +
+        sections(TODO_SECS, tasks.filter(t => t.state !== 'done'), tdTaskRow) + '</div>' :   // done ones move to What I did
       '<div class="lcard"><div class="td-head"><div class="card-title">What I did &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyDid">Copy list</button></div>' +
-        '<div class="td-add"><select id="didSec">' + opts(DID_SECS, 'Other') + '</select><textarea id="didText" rows="1" placeholder="Write in something you did"></textarea><button class="btn small" data-td="addDid">Add</button></div>' +
-        sections(DID_SECS, did, didRow) + '</div>'));
+        '<div class="td-add"><select id="didSec">' + tdOpts(DID_SECS, 'Other') + '</select><textarea id="didText" rows="1" placeholder="Write in something you did"></textarea><button class="btn small" data-td="addDid">Add</button></div>' +
+        sections(DID_SECS, did, tdDidRow) + '</div>'));
 }
 function tdResults(q){   // every day, newest first; click one to go to it
   const hit = o => String(o.text || '').toLowerCase().includes(q);
-  const doneAs = t => t.state === 'done' && (DB.did || []).find(x => x.taskId === t.id);   // done tasks live under What I did
-  const rows = (DB.tasks || []).filter(t => hit(t) && !doneAs(t)).map(t => ({o:t, day:t.day, view:'todo', go:doneAs(t), where:'To Do &middot; ' + esc(t.sec) + ' &middot; ' + (t.state === 'done' ? 'Done &rarr; ' + esc(t.doneSec) : t.state === 'rolled' ? 'Rolled over' : 'Open')}))
-    .concat((DB.did || []).filter(hit).map(x => ({o:x, day:x.day, view:'did', where:'What I did &middot; ' + esc(x.sec)})))
+  const rows = (DB.tasks || []).filter(t => hit(t) && t.state !== 'done').map(t => ({o:t, day:t.day, view:'todo', where:'To Do &middot; ' + esc(t.sec) + ' &middot; ' + (t.state === 'rolled' ? 'Rolled over' : 'Open')}))
+    .concat((DB.did || []).filter(hit).map(x => { const cur = tdCurrent(x); return {o:x, day:x.day, view:'did', past:cur.id !== x.id, where:'What I did &middot; ' + esc(x.sec) + (cur.id !== x.id ? ' (now in ' + esc(cur.sec) + ')' : '')}; }))
     .sort((a, b) => b.day.localeCompare(a.day) || (a.view === b.view ? 0 : a.view === 'todo' ? -1 : 1));
   return '<div class="lcard"><div class="card-title" style="margin-bottom:10px">' + rows.length + ' match' + (rows.length === 1 ? '' : 'es') + ' for &ldquo;' + esc(q) + '&rdquo;</div>' +
-    (rows.length ? rows.slice(0, 200).map(r => '<div class="td-item td-res' + (r.view === 'todo' && r.o.state ? ' ' + r.o.state : '') + '" data-td="goto" data-id="' + (r.go ? r.go.id : r.o.id) + '" data-day="' + r.day + '" data-v="' + (r.go ? 'did' : r.view) + '">' +
+    (rows.length ? rows.slice(0, 200).map(r => '<div class="td-item td-res' + (r.o.state === 'rolled' ? ' rolled' : '') + (r.past ? ' past' : '') + '" data-td="goto" data-id="' + r.o.id + '" data-day="' + r.day + '" data-v="' + r.view + '">' +
       '<span class="td-day">' + dayName(r.day) + '</span><div class="td-text">' + tdHtml(r.o.text) + '<div class="td-meta">' + r.where + '</div></div></div>').join('')
       : '<div class="empty">Nothing matches.</div>') + '</div>';
 }
@@ -1158,7 +1199,7 @@ document.addEventListener('input', e => {
   todoQ = e.target.value; const pos = e.target.selectionStart; renderTodo(TABS.find(x => x.key === 'todo'));
   const n = document.getElementById('tdSearch'); if (n){ n.focus(); n.setSelectionRange(pos, pos); }
 });
-function tdCopy(secs, items, title){
+function tdCopy(secs, items, title){   // every section it went through, nothing greyed (for sending)
   let html = title ? '<p><b>' + esc(title) + '</b></p>' : '', text = title ? title + '\n\n' : '';
   secs.forEach(s => { const list = items.filter(t => t.sec === s); if (!list.length) return;
     html += '<p><b>' + esc(s) + ':</b></p><ol>' + list.map(t => '<li>' + tdHtml(t.text) + '</li>').join('') + '</ol>';
@@ -1168,18 +1209,30 @@ function tdCopy(secs, items, title){
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && e.target && (e.target.id === 'tdText' || e.target.id === 'didText')){ e.preventDefault(); const b = document.querySelector('[data-td="' + (e.target.id === 'tdText' ? 'add' : 'addDid') + '"]'); if (b) b.click(); }
 });
+// Status dropdown on a banner
+document.addEventListener('change', e => {
+  const s = e.target.closest && e.target.closest('select[data-tdst]'); if (!s || state.tab !== 'todo') return;
+  const tab = TABS.find(x => x.key === 'todo'), v = s.value, id = s.dataset.id;
+  if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); renderTodo(tab); return; }
+  if (s.dataset.tdst === 'task'){ const t = (DB.tasks || []).find(x => x.id === id); if (!t) return;
+    if (v === 'To do'){ if (t.state === 'rolled'){ t.state = ''; delete t.auto; tlog(t, 'Undo roll over'); } }
+    else if (v === 'Rolled over'){ t.state = 'rolled'; delete t.auto; tlog(t, 'Rolled over'); }
+    else { tdAddStep(t, v); if (todoOpen === t.id) todoOpen = null; toast('Moved to What I did &rarr; ' + esc(v) + '.'); }
+  } else { const x = (DB.did || []).find(y => y.id === id); if (!x || v === x.sec) return; const y = tdAddStep(x, v); if (todoOpen === x.id) todoOpen = y.id; }
+  touch(); renderTodo(tab);
+});
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-td]'); if (!el || state.tab !== 'todo') return;
+  if (el.dataset.td === 'open' && e.target.closest('.td-card, select, textarea, input, button')) return;
   const k = el.dataset.td, id = el.dataset.id, tab = TABS.find(x => x.key === 'todo');
   const t = id ? (DB.tasks || []).find(x => x.id === id) : null, w = id ? (DB.did || []).find(x => x.id === id) : null;
   const redraw = () => renderTodo(tab);
-  if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoPick = todoEdit = null; redraw(); } return; }
-  if (k === 'view'){ state.todoView = el.dataset.v; todoPick = todoEdit = null; save(); redraw(); return; }
-  if (k === 'cancel'){ todoPick = todoEdit = null; redraw(); return; }
-  if (k === 'hist'){ todoHist = todoHist === id ? null : id; redraw(); return; }
-  if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoHist = id; todoPick = todoEdit = null; save(); redraw();
-    const h = document.querySelector('.td-hist'); if (h) h.closest('.td-item').scrollIntoView({block:'center'}); return; }
-  if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay), longDay(todoDay));
+  if (k === 'open'){ todoOpen = todoOpen === id ? null : id; redraw(); return; }
+  if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoOpen = null; redraw(); } return; }
+  if (k === 'view'){ state.todoView = el.dataset.v; todoOpen = null; save(); redraw(); return; }
+  if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoOpen = id; save(); redraw();
+    const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
+  if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay).sort((a, b) => a.ts.localeCompare(b.ts)), longDay(todoDay));
     toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
   if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); return; }
   if (k === 'add' || k === 'addDid'){ const isDid = k === 'addDid', ta = document.getElementById(isDid ? 'didText' : 'tdText'), text = ta.value.replace(/\s+$/, ''); if (!text.trim()) return;
@@ -1187,23 +1240,20 @@ document.addEventListener('click', async e => {
     if (isDid){ const y = {id:tdId(), day:todoDay, sec, text, ts:nowStamp(), taskId:''}; (DB.did = DB.did || []).push(y); tlog(y, 'Written in on What I did (' + sec + ')'); }
     else { const y = {id:tdId(), day:todoDay, sec, text, state:'', doneSec:'', ts:nowStamp()}; (DB.tasks = DB.tasks || []).push(y); tlog(y, 'Added to To Do (' + sec + ')'); }
     touch(); redraw(); const n = document.getElementById(isDid ? 'didSec' : 'tdSec'); n.value = sec; document.getElementById(isDid ? 'didText' : 'tdText').focus(); return; }
-  if (k === 'done' && t){ todoPick = t.id; todoEdit = null; redraw(); return; }
-  if (k === 'doneSave' && t){ const sec = document.getElementById('pick-' + t.id).value; t.state = 'done'; t.doneSec = sec; delete t.auto;
-    (DB.did = DB.did || []).push({id:tdId(), day:t.day, sec, text:t.text, ts:nowStamp(), taskId:t.id, chain:tdChainOf(t)}); tlog(t, 'Done \u2192 ' + sec); todoPick = null; touch(); redraw(); toast('Moved to What I did &rarr; ' + esc(sec) + '.'); return; }
-  if (k === 'undoDid' && w){ const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } tlog(src || w, 'Moved back to To Do (undo done)'); DB.did = DB.did.filter(x => x !== w); touch(); redraw(); toast('Moved back to To Do.'); return; }
-  if (k === 'roll' && t){ t.state = 'rolled'; delete t.auto; tlog(t, 'Rolled over'); touch(); redraw(); return; }
-  if (k === 'undo' && t){ tlog(t, t.state === 'done' ? 'Moved back to To Do (undo done)' : 'Undo roll over'); if (t.state === 'done') DB.did = (DB.did || []).filter(x => x.taskId !== t.id); t.state = ''; t.doneSec = ''; delete t.auto; touch(); redraw(); return; }
-  if (k === 'edit'){ todoEdit = id; todoPick = null; redraw(); return; }
-  if (k === 'editSave' && (t || w)){ const o = t || w, text = document.getElementById('ed-text-' + id).value.replace(/\s+$/, ''); if (!text.trim()) return;
-    const sec2 = document.getElementById('ed-sec-' + id).value, ch = [];
-    if (text !== o.text) ch.push('Renamed: "' + tdLines(o.text).first + '" > "' + tdLines(text).first + '"'); if (sec2 !== o.sec) ch.push((w && w.taskId ? 'Done as changed to ' : 'Moved to ') + sec2);
-    if (ch.length) tlog(o, ch.join('; ')); o.text = text; o.sec = sec2;
-    if (w && w.taskId){ const src = (DB.tasks || []).find(x => x.id === w.taskId); if (src) src.doneSec = w.sec; }
-    todoEdit = null; touch(); redraw(); return; }
-  if (k === 'del' && (t || w)){ if (!confirm('Remove this from the list?')) return; tlog(t || w, 'Removed');
-    if (t){ DB.tasks = DB.tasks.filter(x => x !== t); DB.did = (DB.did || []).filter(x => x.taskId !== t.id); }
-    if (w){ DB.did = DB.did.filter(x => x !== w); const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } }
-    touch(); redraw(); return; }
+  if (k === 'save' && (t || w)){ const o = t || w, text = document.getElementById('ed-text-' + id).value.replace(/\s+$/, ''); if (!text.trim()) return;
+    const secEl = document.getElementById('ed-sec-' + id), sec2 = secEl ? secEl.value : o.sec, ch = [];
+    if (text !== o.text) ch.push('Renamed: "' + tdLines(o.text).first + '" > "' + tdLines(text).first + '"'); if (sec2 !== o.sec) ch.push('Moved to ' + sec2);
+    if (ch.length){ const src = w && w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); tlog(src || o, ch.join('; ')); }
+    o.text = text; o.sec = sec2; touch(); redraw(); toast('Saved.'); return; }
+  if (k === 'undoRoll' && t){ t.state = ''; delete t.auto; tlog(t, 'Undo roll over'); touch(); redraw(); return; }
+  if (k === 'undoStep' && w){ const steps = tdSteps(w), last = steps[steps.length - 1], src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId);
+    DB.did = DB.did.filter(x => x !== last); tlog(src || last, 'Undo step (' + last.sec + ')'); if (src) tdSync(src);
+    const left = steps.slice(0, -1); todoOpen = left.length ? left[left.length - 1].id : null;
+    touch(); redraw(); toast(left.length ? 'Undone. It&rsquo;s back in ' + esc(left[left.length - 1].sec) + '.' : src ? 'Undone. It&rsquo;s back on your To Do list.' : 'Undone.'); return; }
+  if (k === 'del' && (t || (w && !w.taskId))){ if (!confirm('Remove this from the list?')) return;
+    if (t){ tlog(t, 'Removed'); DB.tasks = DB.tasks.filter(x => x !== t); DB.did = (DB.did || []).filter(x => x.taskId !== t.id); }
+    else { const steps = tdSteps(w); tlog(w, 'Removed'); DB.did = DB.did.filter(x => !steps.includes(x)); }
+    todoOpen = null; touch(); redraw(); return; }
 });
 
 function renderMasterSearch(){
@@ -1289,7 +1339,7 @@ document.addEventListener('click', e => {
     if (l.ver !== ov) log(l, 'Edit', 'File Version: v' + ov + ' > v' + l.ver);
     if ((l.rev || 0) !== orv) log(l, 'Edit', 'Revisions: ' + orv + ' > ' + l.rev);
     touch(); render(); return; }
-  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoPick = todoEdit = null; todoQ = ''; } state.open = {}; save(); render(); return; }
+  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoOpen = null; todoQ = ''; } state.open = {}; save(); render(); return; }
   const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
   const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
   const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk]; state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
