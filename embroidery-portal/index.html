@@ -279,7 +279,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.14</span>
+    <span class="vbadge">EP v1.15</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -290,10 +290,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.14: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.15: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.14';
+const VERSION = 'EP v1.15';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -542,7 +542,9 @@ async function checkSeed(){
 }
 function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
   const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
-  seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; DB.logos.push(l); log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')', AUTO);
+  seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; delete l.submittedAt; delete l.submittedBy; DB.logos.push(l);
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x.submittedAt || '')) DB.history.push({ts:x.submittedAt.slice(0, 16) + ':00', id:l.id, logo:l.logo, account:l.account, kind:'Added', what:'Submitted in the live portal' + (x.submittedBy ? ' by ' + x.submittedBy : ''), by:x.submittedBy || 'Live portal'});   // EP v1.15
+    log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')', AUTO);
     (DB.notifs = DB.notifs || []).push({ts:nowStamp(), id:l.id, text:'New from the live portal: #' + l.nsId + ' ' + l.logo + (l.account ? ' (' + l.account + ')' : ''), read:false}); });
   seedNew = []; touch(); showBanner(); renderNotifs();
   clearSeedFile();
