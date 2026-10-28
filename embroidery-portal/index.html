@@ -262,6 +262,27 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .notif-item.unread{background:#f3f5fa;color:var(--navy);font-weight:600}
 .notif-item .nt{flex:1}.notif-item .nwhen{display:block;font-size:11px;font-weight:400;color:#49516C;margin-top:2px}
 .notif-empty{padding:16px 14px;font-size:13px;color:#49516C}
+.tab-right{margin-left:auto}
+.td-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.td-nav{display:flex;align-items:center;gap:6px}.td-nav b{font-size:15px;color:var(--navy);min-width:96px;text-align:center}
+.td-count{font-size:13px;color:#49516C}
+.td-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.td-cols{grid-template-columns:1fr}}
+.td-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.td-add{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px}
+.td-add select,.td-editbox select{padding:8px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff;max-width:200px}
+.td-add textarea,.td-editbox textarea{flex:1;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;color:var(--navy);resize:vertical}
+.td-sec{margin-top:16px}.td-sec h4{font-size:14px;font-weight:700;color:var(--navy);margin:0 0 6px}
+.td-item{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:6px;font-size:14px;color:var(--navy)}
+.td-item+.td-item{margin-top:2px}
+.td-item.done{background:#e2f5dc}.td-item.rolled{background:#ece6f8}
+.td-num{color:#49516C;min-width:22px}.td-text{flex:1;min-width:0;overflow-wrap:anywhere}
+.td-tag{font-size:12px;color:#49516C;margin-left:8px;white-space:nowrap}
+.td-sub{margin:2px 0 0 18px;padding:0}
+.td-btns{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.td-icon{border:none;background:none;color:#49516C;font-size:15px;cursor:pointer;padding:2px 4px}.td-icon:hover{color:var(--navy)}
+.td-pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px;color:#49516C}.td-pick select{padding:6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px}
+.td-editbox{display:flex;flex-direction:column;gap:6px;width:100%}
 @media(max-width:700px){.msearch input{width:180px}.header-user{display:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -279,7 +300,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.16</span>
+    <span class="vbadge">EP v1.17</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -290,12 +311,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.16: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.17: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.16';
+const VERSION = 'EP v1.17';
 const ME = 'Noelle';
-const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json';
+const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
 const REQUEST_URL  = new URL('../request/', location.href).href;    // the Sew-Out Request page (same repo)
 const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSuite copy of the Sew-Out Approver (fills itself in from the link)
@@ -327,7 +348,8 @@ const TABS = [
      extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Need to Upload':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
-  {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true}
+  {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
+  {key:'todo',      title:'To Do', sub:'Your daily list. Click Done (and pick what you did) or Roll over. Anything not marked rolls over to the next day on its own, and what you submitted for digitization or sew-out comes back the next day as a check-on.', todo:true, right:true}
 ];
 const KIND_COLOR = {Added:['#5b3a8e','#efe8f8'], Status:['#1f5fbf','#e8f0fb'], Email:['#7b2fb5','#f2e8fb'], Edit:['#49516C','#eef0f6'], File:['#a35a1f','#fdeee2'], Note:['#2e7d32','#e2f5dc'], Deleted:['#a61b1b','#f8d7d7']};
 
@@ -354,8 +376,8 @@ function needsAttention(l){ if (DONE.includes(l.status)) return false; const s =
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 // ---------------- Data (mirrored in this browser; the Excel file is the record) ----------------
-let DB = {logos:[], history:[], notes:[], notifs:[], savedAt:''};
-try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], savedAt:''}, s); } catch(e){}
+let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], savedAt:''};
+try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], savedAt:''}, s); } catch(e){}
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
 function newId(){ const n = DB.logos.concat(DB.history).reduce((m, x) => Math.max(m, parseInt(String(x.id || '').replace(/\D/g, ''), 10) || 0), 0); return 'EP-' + String(n + 1).padStart(4, '0'); }
 function blankLogo(){ return {id:'', nsId:'', logo:'', account:'', rep:'', type:'Sew-Out', dept:'', status:'New Request', submitted:todayIso(), inHand:'', size:'', sizeNotes:'', count:'', colorType:'', threadNotes:'', placement:'',
@@ -406,7 +428,15 @@ function buildWorkbook(){
   const nf = XLSX.utils.aoa_to_sheet([['Date','Time','ID','Notification','Read']].concat((DB.notifs || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.id, n.text, n.read ? 'Yes' : 'No'])));
   nf['!cols'] = [12, 10, 10, 70, 8].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, nf, 'Notifications');
-  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION],
+  const stat = t => t.state === 'done' ? 'Done' : t.state === 'rolled' ? (t.auto ? 'Rolled over (end of day)' : 'Rolled over') : 'Open';
+  const byDay = (a, b) => b.day.localeCompare(a.day) || a.ts.localeCompare(b.ts);
+  const td = XLSX.utils.aoa_to_sheet([['Day','Section','Task','Status','Done as','Added','ID']].concat((DB.tasks || []).slice().sort(byDay).map(t => [t.day, t.sec, t.text, stat(t), t.doneSec || '', t.ts || '', t.id])));
+  td['!cols'] = [12, 26, 50, 22, 26, 20, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, td, 'To Do');
+  const dd = XLSX.utils.aoa_to_sheet([['Day','Section','What I did','Added','ID','From task']].concat((DB.did || []).slice().sort(byDay).map(x => [x.day, x.sec, x.text, x.ts || '', x.id, x.taskId || ''])));
+  dd['!cols'] = [12, 26, 50, 20, 16, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, dd, 'What I Did');
+  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
   info['!cols'] = [{wch:12}, {wch:110}];
   XLSX.utils.book_append_sheet(wb, info, 'Info');
@@ -415,7 +445,7 @@ function buildWorkbook(){
 function readWorkbook(buf){
   const wb = XLSX.read(buf, {type:'array'});
   const rows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:'', raw:false}) : [];
-  const db = {logos:[], history:[], notes:[], notifs:[], savedAt:''};
+  const db = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], savedAt:''};
   const lr = rows('Logos'), head = (lr[0] || []).map(String);
   lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
     const l = blankLogo(), get = h => { const i = head.indexOf(h); return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
@@ -432,7 +462,10 @@ function readWorkbook(buf){
   rows('History').slice(1).filter(r => r[0]).forEach(r => db.history.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), logo:String(r[3]), account:String(r[4]), kind:String(r[5]), what:String(r[6]), by:String(r[7])}));
   rows('Notes').slice(1).filter(r => r[0]).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5])}));
   rows('Notifications').slice(1).filter(r => r[0]).forEach(r => db.notifs.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[3]), read:/^y/i.test(String(r[4]))}));
+  rows('To Do').slice(1).filter(r => r[0]).forEach(r => db.tasks.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), state:/^done/i.test(r[3]) ? 'done' : /^rolled/i.test(r[3]) ? 'rolled' : '', doneSec:String(r[4] || ''), ts:String(r[5] || ''), id:String(r[6] || tdId())}, /end of day/i.test(r[3]) ? {auto:true} : {})));
+  rows('What I Did').slice(1).filter(r => r[0]).forEach(r => db.did.push({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), ts:String(r[3] || ''), id:String(r[4] || tdId()), taskId:String(r[5] || '')}));
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
+  const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
   return db;
 }
 
@@ -502,7 +535,7 @@ async function afterConnect(){
       DB = file; dirty = false; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} lastSaved = file.savedAt ? new Date(file.savedAt) : null; setSave('saved');
     }
   } else { touch(); }
-  await checkSeed(); render();
+  await checkSeed(); if (startTodo()) touch(); render();
 }
 async function boot(){
   if (!FS_OK){ setSave('unsupported'); return; }
@@ -548,7 +581,7 @@ async function checkSeed(){
     seedNew = (Array.isArray(arr) ? arr : arr.logos || []).filter(x => x && x.nsId && !have.has(String(x.nsId)) && !seedSkipped.has(String(x.nsId)));
   } catch(e){}
   if (seedNew.length) addSeedAuto(); else { showBanner(); if (inFile) clearSeedFile(); }
-  await applySewSent(); await applySubmitted();
+  await applySewSent(); await applySubmitted(); await applyTodoImport();
 }
 function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
   const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
@@ -989,6 +1022,129 @@ function rowsHtml(list, tab, cols){
   const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
   return '<div class="tblwrap"><table class="tbl">' + colgroup + '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
 }
+// ---------------- To Do (EP v1.17): Noelle's daily list (this portal only) ----------------
+const TODO_SECS = ['Request sew out','Review Barrett Sew Out','Add to ES/FTP','Other','Check on digitization','Check on Sew out requests','Waiting on thread colors'];
+const DID_SECS = ['Submitted for digitization','Sent for approval','Requested Sew Out','Added to ES/FTP','Other','Followed up on','Completed'];
+const DONE_DEFAULT = {'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
+  'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on thread colors':'Submitted for digitization'};
+const NEXT_CHECK = {'Submitted for digitization':'Check on digitization', 'Requested Sew Out':'Check on Sew out requests'};   // what you did → the next day's list
+let todoDay = null, todoPick = null, todoEdit = null;   // day shown, task picking its Done section, item being edited
+const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const tdTasks = d => (DB.tasks || []).filter(t => t.day === d);
+const tdDid = d => (DB.did || []).filter(x => x.day === d);
+const dayName = d => { const x = parseIso(d); return x ? x.toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'}) : d; };   // Wed, 10/28
+const longDay = d => { const x = parseIso(d); return x ? x.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : d; };   // Oct 28, 2026
+const tdLines = text => { const [first, ...rest] = String(text || '').split('\n'); return {first, subs:rest.map(s => s.trim()).filter(Boolean)}; };
+const tdHtml = text => { const t = tdLines(text); return esc(t.first) + (t.subs.length ? '<ol type="a" class="td-sub">' + t.subs.map(s => '<li>' + esc(s) + '</li>').join('') + '</ol>' : ''); };
+const tdReady = () => dirHandle && saveState !== 'reconnect' && saveState !== 'local';
+
+// A new day: anything not marked rolls over, and what you submitted yesterday becomes a check-on
+function startTodo(){
+  DB.tasks = DB.tasks || []; DB.did = DB.did || []; DB.todoDays = DB.todoDays || [];
+  const today = todayIso(); if (DB.todoDays.includes(today)) return false;
+  const prev = [...new Set(DB.tasks.map(t => t.day).concat(DB.did.map(x => x.day)))].filter(d => d < today).sort().pop();
+  DB.todoDays.push(today);
+  if (prev){
+    const have = new Set(), add = (sec, text) => { const k = sec + '|' + String(text).trim().toLowerCase(); if (have.has(k)) return; have.add(k); DB.tasks.push({id:tdId(), day:today, sec, text, state:'', doneSec:'', ts:nowStamp()}); };
+    tdTasks(prev).forEach(t => { if (!t.state){ t.state = 'rolled'; t.auto = true; } if (t.state === 'rolled') add(t.sec, t.text); });
+    tdDid(prev).forEach(x => { if (!NEXT_CHECK[x.sec]) return; const src = x.taskId && DB.tasks.find(t => t.id === x.taskId); add(NEXT_CHECK[x.sec], src ? src.text : x.text); });   // a done task carries its original name
+  }
+  return true;
+}
+
+// todo-import.json (from Claude): fills a day that has no tasks yet, then empties the file
+async function applyTodoImport(){
+  let o; try { o = JSON.parse(await (await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).getFile()).text()); } catch(e){ return; }
+  if (!o || !o.day || !Array.isArray(o.tasks)) return;
+  DB.tasks = DB.tasks || []; DB.did = DB.did || []; DB.todoDays = DB.todoDays || [];
+  if (!tdTasks(o.day).length){
+    o.tasks.forEach(x => { const t = {id:tdId(), day:o.day, sec:x.sec, text:x.text, state:x.doneAs ? 'done' : '', doneSec:x.doneAs || '', ts:nowStamp()}; DB.tasks.push(t);
+      if (x.doneAs) DB.did.push({id:tdId(), day:o.day, sec:x.doneAs, text:x.didText || x.text, ts:nowStamp(), taskId:t.id}); });
+    (o.did || []).forEach(x => DB.did.push({id:tdId(), day:o.day, sec:x.sec, text:x.text, ts:nowStamp(), taskId:''}));
+    if (!DB.todoDays.includes(o.day)) DB.todoDays.push(o.day);
+    touch(); if (state.tab === 'todo'){ const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+  }
+  try { const w = await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).createWritable(); await w.write('{}'); await w.close(); } catch(e){}
+}
+
+function renderTodo(tab){
+  const today = todayIso(); todoDay = todoDay || today;
+  if (todoDay === today && tdReady() && startTodo()) touch();
+  const d = todoDay, tasks = tdTasks(d), did = tdDid(d);
+  const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))].sort(), i = days.indexOf(d);
+  const opts = (list, sel) => list.map(s => '<option' + (s === sel ? ' selected' : '') + '>' + esc(s) + '</option>').join('');
+  const editBox = (o, list) => '<div class="td-editbox"><select id="ed-sec-' + o.id + '">' + opts(list, o.sec) + '</select><textarea id="ed-text-' + o.id + '" rows="2">' + esc(o.text) + '</textarea>' +
+    '<div class="td-btns"><button class="btn small" data-td="editSave" data-id="' + o.id + '">Save</button><button class="btn light small" data-td="cancel">Cancel</button></div></div>';
+  const taskRow = (t, n) => {
+    if (todoEdit === t.id) return '<div class="td-item">' + editBox(t, TODO_SECS) + '</div>';
+    const pick = todoPick === t.id ? '<div class="td-pick">Done as: <select id="pick-' + t.id + '">' + opts(DID_SECS, DONE_DEFAULT[t.sec] || 'Other') + '</select>' +
+      '<button class="btn small" data-td="doneSave" data-id="' + t.id + '">Save</button><button class="btn light small" data-td="cancel">Cancel</button></div>' : '';
+    const btns = t.state ? '<button class="btn light small" data-td="undo" data-id="' + t.id + '">Undo</button>'
+      : '<button class="btn small td-done" data-td="done" data-id="' + t.id + '">Done</button><button class="btn light small td-roll" data-td="roll" data-id="' + t.id + '">Roll over</button>';
+    const tag = t.state === 'done' ? '<span class="td-tag">&rarr; ' + esc(t.doneSec) + '</span>' : t.state === 'rolled' ? '<span class="td-tag">Rolled over' + (t.auto ? ' (end of day)' : '') + '</span>' : '';
+    return '<div class="td-item' + (t.state ? ' ' + t.state : '') + '"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(t.text) + tag + pick + '</div>' +
+      '<div class="td-btns">' + (pick ? '' : btns) + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + t.id + '">&#9998;</button><button class="td-icon" title="Remove" data-td="del" data-id="' + t.id + '">&times;</button></div></div>';
+  };
+  const didRow = (x, n) => todoEdit === x.id ? '<div class="td-item">' + editBox(x, DID_SECS) + '</div>'
+    : '<div class="td-item"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(x.text) + (x.taskId ? '' : '<span class="td-tag">write-in</span>') + '</div>' +
+      '<div class="td-btns"><button class="td-icon" title="Edit" data-td="edit" data-id="' + x.id + '">&#9998;</button><button class="td-icon" title="Remove" data-td="del" data-id="' + x.id + '">&times;</button></div></div>';
+  const sections = (secs, items, row) => { const html = secs.map(s => { const list = items.filter(t => t.sec === s); return list.length ? '<div class="td-sec"><h4>' + esc(s) + ':</h4>' + list.map((t, k) => row(t, k + 1)).join('') + '</div>' : ''; }).join('');
+    return html || '<div class="empty" style="margin-top:12px">Nothing here yet.</div>'; };
+  const left = tasks.filter(t => !t.state).length;
+  document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + '</div>' +
+    '<div class="td-top"><div class="td-nav"><button class="btn light small" data-td="day" data-v="' + (days[i - 1] || '') + '"' + (i > 0 ? '' : ' disabled') + '>&#9664;</button><b>' + dayName(d) + '</b>' +
+      '<button class="btn light small" data-td="day" data-v="' + (days[i + 1] || '') + '"' + (i < days.length - 1 ? '' : ' disabled') + '>&#9654;</button>' + (d !== today ? '<button class="btn light small" data-td="day" data-v="' + today + '">Today</button>' : '') + '</div>' +
+      '<span class="td-count">' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' &middot; ' + left + ' left</span></div>' +
+    '<div class="td-cols">' +
+      '<div class="lcard"><div class="td-head"><div class="card-title">To Do &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyTodo">Copy list</button></div>' +
+        '<div class="td-add"><select id="tdSec">' + opts(TODO_SECS, 'Other') + '</select><textarea id="tdText" rows="1" placeholder="Add a task (Shift+Enter for a, b sub-items)"></textarea><button class="btn small" data-td="add">Add</button></div>' +
+        sections(TODO_SECS, tasks, taskRow) + '</div>' +
+      '<div class="lcard"><div class="td-head"><div class="card-title">What I did &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyDid">Copy list</button></div>' +
+        '<div class="td-add"><select id="didSec">' + opts(DID_SECS, 'Other') + '</select><textarea id="didText" rows="1" placeholder="Write in something you did"></textarea><button class="btn small" data-td="addDid">Add</button></div>' +
+        sections(DID_SECS, did, didRow) + '</div>' +
+    '</div>';
+}
+function tdCopy(secs, items, title){
+  let html = title ? '<p><b>' + esc(title) + '</b></p>' : '', text = title ? title + '\n\n' : '';
+  secs.forEach(s => { const list = items.filter(t => t.sec === s); if (!list.length) return;
+    html += '<p><b>' + esc(s) + ':</b></p><ol>' + list.map(t => '<li>' + tdHtml(t.text) + '</li>').join('') + '</ol>';
+    text += s + ':\n' + list.map((t, k) => { const l = tdLines(t.text); return (k + 1) + '. ' + l.first + l.subs.map((x, j) => '\n    ' + String.fromCharCode(97 + j) + '. ' + x).join(''); }).join('\n') + '\n\n'; });
+  return {html, text:text.trim()};
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target && (e.target.id === 'tdText' || e.target.id === 'didText')){ e.preventDefault(); const b = document.querySelector('[data-td="' + (e.target.id === 'tdText' ? 'add' : 'addDid') + '"]'); if (b) b.click(); }
+});
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-td]'); if (!el || state.tab !== 'todo') return;
+  const k = el.dataset.td, id = el.dataset.id, tab = TABS.find(x => x.key === 'todo');
+  const t = id ? (DB.tasks || []).find(x => x.id === id) : null, w = id ? (DB.did || []).find(x => x.id === id) : null;
+  const redraw = () => renderTodo(tab);
+  if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoPick = todoEdit = null; redraw(); } return; }
+  if (k === 'cancel'){ todoPick = todoEdit = null; redraw(); return; }
+  if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay), longDay(todoDay));
+    toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
+  if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); return; }
+  if (k === 'add' || k === 'addDid'){ const isDid = k === 'addDid', ta = document.getElementById(isDid ? 'didText' : 'tdText'), text = ta.value.replace(/\s+$/, ''); if (!text.trim()) return;
+    const sec = document.getElementById(isDid ? 'didSec' : 'tdSec').value;
+    if (isDid) (DB.did = DB.did || []).push({id:tdId(), day:todoDay, sec, text, ts:nowStamp(), taskId:''});
+    else (DB.tasks = DB.tasks || []).push({id:tdId(), day:todoDay, sec, text, state:'', doneSec:'', ts:nowStamp()});
+    touch(); redraw(); const n = document.getElementById(isDid ? 'didSec' : 'tdSec'); n.value = sec; document.getElementById(isDid ? 'didText' : 'tdText').focus(); return; }
+  if (k === 'done' && t){ todoPick = t.id; todoEdit = null; redraw(); return; }
+  if (k === 'doneSave' && t){ const sec = document.getElementById('pick-' + t.id).value; t.state = 'done'; t.doneSec = sec; delete t.auto;
+    (DB.did = DB.did || []).push({id:tdId(), day:t.day, sec, text:t.text, ts:nowStamp(), taskId:t.id}); todoPick = null; touch(); redraw(); return; }
+  if (k === 'roll' && t){ t.state = 'rolled'; delete t.auto; touch(); redraw(); return; }
+  if (k === 'undo' && t){ if (t.state === 'done') DB.did = (DB.did || []).filter(x => x.taskId !== t.id); t.state = ''; t.doneSec = ''; delete t.auto; touch(); redraw(); return; }
+  if (k === 'edit'){ todoEdit = id; todoPick = null; redraw(); return; }
+  if (k === 'editSave' && (t || w)){ const o = t || w, text = document.getElementById('ed-text-' + id).value.replace(/\s+$/, ''); if (!text.trim()) return;
+    o.text = text; o.sec = document.getElementById('ed-sec-' + id).value;
+    if (w && w.taskId){ const src = (DB.tasks || []).find(x => x.id === w.taskId); if (src) src.doneSec = w.sec; }
+    todoEdit = null; touch(); redraw(); return; }
+  if (k === 'del' && (t || w)){ if (!confirm('Remove this from the list?')) return;
+    if (t){ DB.tasks = DB.tasks.filter(x => x !== t); DB.did = (DB.did || []).filter(x => x.taskId !== t.id); }
+    if (w){ DB.did = DB.did.filter(x => x !== w); const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } }
+    touch(); redraw(); return; }
+});
+
 function renderMasterSearch(){
   const q = msearch.trim().toLowerCase(), hits = DB.logos.filter(l => matchQ(l, q));
   const tab = {key:'search', sections:STATUSES, extra:null};
@@ -1024,13 +1180,14 @@ document.addEventListener('click', e => {
 }, true);
 function render(){
   refreshToday(); renderNotifs();
-  document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
+  document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
   showBanner();
   if (msearch.trim()){ renderMasterSearch(); return; }
   const tab = TABS.find(t => t.key === state.tab);
   if (tab.audit){ renderAudit(tab); return; }
+  if (tab.todo){ renderTodo(tab); return; }
   if (tab.submit){ renderSubmit(tab); return; }
   const group = state.group[tab.key] || 'status';
   let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div>'
@@ -1071,7 +1228,7 @@ document.addEventListener('click', e => {
     if (l.ver !== ov) log(l, 'Edit', 'File Version: v' + ov + ' > v' + l.ver);
     if ((l.rev || 0) !== orv) log(l, 'Edit', 'Revisions: ' + orv + ' > ' + l.rev);
     touch(); render(); return; }
-  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; state.open = {}; save(); render(); return; }
+  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoPick = todoEdit = null; } state.open = {}; save(); render(); return; }
   const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
   const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
   const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk]; state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
