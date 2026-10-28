@@ -346,7 +346,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.32</span>
+    <span class="vbadge">EP v1.33</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -357,10 +357,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.32: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.33: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.32';
+const VERSION = 'EP v1.33';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -959,7 +959,7 @@ function renderAudit(tab){
     '<select id="aType"><option value="">All activity</option>' + Object.keys(KIND_COLOR).map(k => '<option' + (af.type === k ? ' selected' : '') + '>' + k + '</option>').join('') + '</select>' +
     '<label class="muted" style="font-size:12px">From <input type="date" id="aFrom" value="' + esc(af.from) + '" style="flex:none;min-width:0"></label>' +
     '<label class="muted" style="font-size:12px">To <input type="date" id="aTo" value="' + esc(af.to) + '" style="flex:none;min-width:0"></label>' +
-    '<button class="btn light" id="aClear">Clear</button></div>';
+    '<button class="btn light" data-collapse="all">Collapse all</button><button class="btn light" id="aClear">Clear</button></div>';
   html += days.length ? days.map(d => {
     const open = d in auditOpen ? auditOpen[d] : off(d) === 0, items = rows.filter(e => e.ts.slice(0, 10) === d).sort((a, b) => b.ts.localeCompare(a.ts));
     return '<div class="sec"><div class="sec-head aud-day" data-day="' + d + '"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span><span class="name">' + label(d) + '</span><span class="cnt">' + items.length + '</span></div>' +
@@ -969,7 +969,7 @@ function renderAudit(tab){
           '</td><td><span class="pill" style="color:' + kc[0] + ';background:' + kc[1] + '">' + esc(e.kind) + '</span></td><td class="wrap">' + esc(e.what) + '</td><td>' + esc(e.by) + '</td></tr>'; }).join('') +
         '</tbody></table></div>' : '') + '</div>';
   }).join('') : '<div class="empty">No activity yet.</div>';
-  document.getElementById('page').innerHTML = html;
+  document.getElementById('page').innerHTML = html; syncCollapse();
   const upd = () => { af.q = document.getElementById('aSearch').value; af.type = document.getElementById('aType').value; af.from = document.getElementById('aFrom').value; af.to = document.getElementById('aTo').value; save(); };
   const sEl = document.getElementById('aSearch');
   sEl.oninput = () => { upd(); const pos = sEl.selectionStart; render(); const n = document.getElementById('aSearch'); n.focus(); n.setSelectionRange(pos, pos); };
@@ -1391,13 +1391,14 @@ function renderTodo(tab){
     '<div class="bar"><input id="tdSearch" placeholder="Search every day&rsquo;s To Do and What I did&hellip;" value="' + esc(todoQ) + '" autocomplete="off">' +
       '<select id="tdDeptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.todoDept === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '<option value="none"' + (state.todoDept === 'none' ? ' selected' : '') + '>No department</option></select>' +
       '<select id="tdGroup">' + [['section', 'Group by: Section'], ['dept', 'Group by: Department'], ['none', 'No grouping']].map(([v, t]) => '<option value="' + v + '"' + ((state.todoGroup || 'section') === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>' +
-      '<button class="btn light" data-td="reset">Reset filters</button></div>' +
+      '<button class="btn light" data-collapse="all">Collapse all</button><button class="btn light" data-td="reset">Reset filters</button></div>' +
     (todoQ.trim() ? tdResults(todoQ.trim().toLowerCase()) :
     future ? tdFuture(d, today) :
     '<div class="td-subtabs"><button class="td-subtab' + (view === 'todo' ? ' on' : '') + '" data-td="view" data-v="todo">To Do</button>' +
       '<button class="td-subtab' + (view === 'did' ? ' on' : '') + '" data-td="view" data-v="did">What I did</button>' +
       '<button class="btn light small td-copy" data-td="' + (view === 'todo' ? 'copyTodo' : 'copyDid') + '">Copy list</button></div>' +
     ((view === 'todo' ? tdGroups(tasks.filter(t => t.state !== 'done'), 'task') : tdGroups(did, 'did')) || '<div class="empty" style="margin-top:12px">Nothing here yet.</div>'));   // done ones move to What I did
+  syncCollapse();
 }
 function tdPreview(today, day){   // EP v1.28: check-ons the next morning adds on its own (from today's latest steps)
   const latest = {}, have = new Set(tdTasks(day).map(t => t.sec + '|' + tdNorm(t.text))), out = [];
@@ -1516,12 +1517,12 @@ document.addEventListener('click', async e => {
 function renderMasterSearch(){
   const q = msearch.trim().toLowerCase(), hits = DB.logos.filter(l => matchQ(l, q));
   const tab = {key:'search', sections:STATUSES, extra:null};
-  let html = '<h1>Search results</h1><div class="sub">' + hits.length + ' logo' + (hits.length === 1 ? '' : 's') + ' matching &ldquo;' + esc(msearch.trim()) + '&rdquo; in every tab, including Completed and Archive. Click a row to open it. Clear the search or click a tab to go back.</div>';
+  let html = '<h1>Search results</h1><div class="sub">' + hits.length + ' logo' + (hits.length === 1 ? '' : 's') + ' matching &ldquo;' + esc(msearch.trim()) + '&rdquo; in every tab, including Completed and Archive. Click a row to open it. Clear the search or click a tab to go back.</div><div class="bar"><button class="btn light" data-collapse="all">Collapse all</button></div>';
   const groups = TABS.filter(t => t.sections).map(t => [t.label || t.title, hits.filter(l => t.sections.includes(l.status))]).filter(g => g[1].length);
   html += groups.length ? groups.map(([name, items]) => { const ck = 'search|' + name, closed = !!state.collapsed[ck];
     return '<div class="sec"><div class="sec-head" data-sec="' + esc(ck) + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name">' + name + '</span><span class="cnt">' + items.length + '</span></div>' + (closed ? '' : rowsHtml(items, tab, columns(tab, null))) + '</div>'; }).join('')
     : '<div class="empty">No logos match.</div>';
-  document.getElementById('page').innerHTML = html;
+  document.getElementById('page').innerHTML = html; syncCollapse();
 }
 // Notifications (EP v1.10): stay until marked read
 let notifOpen = false;
@@ -1546,6 +1547,11 @@ document.addEventListener('click', e => {
   }
   if (notifOpen && !e.target.closest('#notifPanel')){ notifOpen = false; renderNotifs(); }
 }, true);
+// Collapse all (EP v1.33): one button closes every section on the page, or opens them all again
+function collapseState(){ const heads = [...document.querySelectorAll('#page .sec-head[data-sec]')], days = [...document.querySelectorAll('#page .aud-day[data-day]')];
+  const dayOpen = d => d in auditOpen ? auditOpen[d] : off(d) === 0;
+  return {heads, days, any:heads.length + days.length > 0, open:heads.some(h => !state.collapsed[h.dataset.sec]) || days.some(x => dayOpen(x.dataset.day))}; }
+function syncCollapse(){ const b = document.querySelector('#page [data-collapse]'); if (!b) return; const c = collapseState(); b.style.display = c.any ? '' : 'none'; b.textContent = c.open ? 'Collapse all' : 'Expand all'; }
 function render(){
   refreshToday(); renderNotifs();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
@@ -1562,7 +1568,7 @@ function render(){
                         : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. RUSH logos show first; click a column name to sort another way.</div>') +
     (tab.focus ? '' : '<div class="bar"><input id="search" placeholder="Search account, logo, sales rep, or request #&hellip;" value="' + esc(state.search[tab.key] || '') + '">' +
     '<select id="group"><option value="status"' + (group === 'status' ? ' selected' : '') + '>Group by: Status</option><option value="account"' + (group === 'account' ? ' selected' : '') + '>Group by: Account</option><option value="rep"' + (group === 'rep' ? ' selected' : '') + '>Group by: Sales Rep</option><option value="none"' + (group === 'none' ? ' selected' : '') + '>No grouping</option></select>' +
-    '<button class="btn light" id="reset">Reset filters</button></div>');
+    '<button class="btn light" data-collapse="all">Collapse all</button><button class="btn light" id="reset">Reset filters</button></div>');
   let list = tab.sections ? DB.logos.filter(l => tab.sections.includes(l.status)) : DB.logos.filter(l => !DONE.includes(l.status) && (subUrg(l) || urg(off(l.inHand)) === 'red'));   // EP v1.30: In Hand 30 days or less (or past), or past its due time
   if (!tab.focus){ const q = (state.search[tab.key] || '').toLowerCase(); list = list.filter(l => matchQ(l, q)); }
   let groups;
@@ -1579,7 +1585,7 @@ function render(){
       (closed ? '' : (items.length ? rowsHtml(items, tab, columns(tab, name)) : '<div class="empty">No logos here.</div>')) + '</div>';
   }).join('');
   if (tab.focus) html += '</div>';
-  document.getElementById('page').innerHTML = html;
+  document.getElementById('page').innerHTML = html; syncCollapse();
   const s = document.getElementById('search'); if (s) s.oninput = () => { state.search[tab.key] = s.value; save(); const pos = s.selectionStart; render(); const n = document.getElementById('search'); n.focus(); n.setSelectionRange(pos, pos); };
   const fm = document.getElementById('focusMore'); if (fm) fm.onclick = () => { state.focusAll = !state.focusAll; save(); render(); };
   const g = document.getElementById('group'); if (g) g.onchange = () => { state.group[tab.key] = g.value; save(); render(); };
@@ -1603,6 +1609,7 @@ document.addEventListener('click', e => {
   const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
   const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
   const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk]; state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
+  const ca = e.target.closest('[data-collapse]'); if (ca){ const c = collapseState(); c.heads.forEach(h => { state.collapsed[h.dataset.sec] = c.open; }); c.days.forEach(x => { auditOpen[x.dataset.day] = !c.open; }); save(); render(); return; }
   const sh = e.target.closest('.sec-head'); if (sh){ const k = sh.dataset.sec; state.collapsed[k] = !state.collapsed[k]; save(); render(); return; }
   if (e.target.id === 'msclear'){ msearch = ''; document.getElementById('msearch').value = ''; render(); return; }
   const r = e.target.closest('.row'); if (r && !e.target.closest('select')){ const id = r.dataset.id; state.open[id] = !state.open[id]; delete stripOpen[id]; render(); }
