@@ -346,7 +346,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.31</span>
+    <span class="vbadge">EP v1.32</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -357,10 +357,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.31: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.32: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.31';
+const VERSION = 'EP v1.32';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -453,6 +453,7 @@ function setStatus(l, st, by){
   if (l.status === st) return;
   log(l, 'Status', 'Status: ' + l.status + ' > ' + st, by); l.status = st;
   tdFromPortal(l, st);   // EP v1.24: also lands in today's To Do / What I did
+  if (st === 'Pending Sew Out'){ const n = nowStamp(); l.sewSentDate = n.slice(0, 10); l.sewSentTime = n.slice(11, 16); }   // EP v1.32: Pending Sew Out = submitted for sew out
   if (st === 'Sent for Approval' && !l.sentDate) l.sentDate = todayIso();
   if (st === 'Need to Upload' && !l.approvedDate) l.approvedDate = todayIso();
   if (st === 'Completed' && !l.completedDate) l.completedDate = todayIso();
