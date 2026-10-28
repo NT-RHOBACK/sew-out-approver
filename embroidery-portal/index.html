@@ -268,6 +268,8 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .td-pickw{position:relative}.td-dayb{font:inherit;font-size:15px;font-weight:700;color:var(--navy);background:none;border:none;border-radius:6px;padding:4px 8px;min-width:110px;cursor:pointer}
 .td-dayb:hover{background:#f3f5fa}#tdDate{position:absolute;left:0;bottom:0;width:100%;height:1px;opacity:0;border:0;padding:0;pointer-events:none}
 .td-future{margin:8px 0 0;color:#49516C;font-size:14px}
+.pri{display:table;margin-top:4px;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.04em}.pri.red{background:#f8d7d7;color:#a61b1b}.pri.yellow{background:#fff3c4;color:#7a5b00}.pri.std{color:#49516C;border:1px solid #d6dbe4}
+.pri-due{font-size:11px;color:#49516C;margin-top:2px;white-space:normal}.pri-due.late{color:#a61b1b;font-weight:600}.pri-line{display:flex;align-items:center;gap:8px;margin-top:4px}.pri-line .pri,.pri-line .pri-due{margin-top:0}
 .td-row.td-pre{cursor:default}.td-row.td-pre:hover{background:#fff}
 .fu-btn{display:block;margin-top:4px;padding:3px 8px;font-size:11px;max-width:100%;white-space:normal;text-align:left}.fu-note{font-size:11px;color:#49516C;margin-top:3px}.fu-box{margin-top:12px}
 .td-count{font-size:13px;color:#49516C}
@@ -338,7 +340,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.28</span>
+    <span class="vbadge">EP v1.29</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -349,10 +351,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.28: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.29: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.28';
+const VERSION = 'EP v1.29';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -379,7 +381,7 @@ const STATUS_COLORS = {
 const STATUSES = Object.keys(STATUS_COLORS);
 const OPEN_STATUSES = STATUSES.slice(0, 7);
 const TABS = [
-  {key:'dashboard', title:'Dashboard',     sub:'Every open logo with a red or yellow date: Submitted (7+ business days in the queue) or In Hand Date (14 days away or less, or past).', focus:true},
+  {key:'dashboard', title:'Dashboard',     sub:'Every open logo with a red or yellow date: Submitted (past its due time) or In Hand Date (45 days away or less, or past).', focus:true},
   {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
   {key:'barrett',   title:'Barrett Queue',  sub:'Sorted by In Hand Date, soonest first.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
   {key:'approvals', title:'Approvals / Need to Upload', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Need to Upload (approved, waiting to be uploaded to EpicStitch).', sections:['Sent for Approval','Need to Upload'],
@@ -406,11 +408,28 @@ const off = s => { const d = parseIso(s); return d ? Math.round((d - today) / 86
 const fmt = s => { const d = parseIso(s); return d ? pad(d.getMonth()+1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2) : ''; };   // 10/20/26
 const time12 = ts => { const m = String(ts || '').match(/T(\d{2}):(\d{2})/); if (!m) return ''; const h = +m[1]; return ((h % 12) || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM'); };
 function bizDays(n){ if (n < 0) return -1; let c = 0; const d = new Date(today); for (let i = 0; i < n; i++){ d.setDate(d.getDate()+1); const w = d.getDay(); if (w && w !== 6) c++; } return c; }
-function urg(n){ if (n === null || n === undefined) return ''; if (n < 0 || bizDays(n) <= 4) return 'red'; if (n <= 14) return 'yellow'; return ''; }   // In Hand Date
-const DONE = ['Completed','Archive'], SUB_MET = ['Need to Upload','Completed','Archive'];
+function urg(n){ if (n === null || n === undefined) return ''; if (n <= 30) return 'red'; if (n <= 45) return 'yellow'; return ''; }   // In Hand Date (EP v1.29): 30 days or less (or past) red, 31-45 yellow
+const DONE = ['Completed','Archive'];
 const FOCUS_LIMIT = 10;   // Today's Focus shows this many, then "Show all" (EP v1.25)
-function bizSince(s){ const d = parseIso(s); if (!d) return 0; let c = 0; while (d < today){ d.setDate(d.getDate() + 1); const w = d.getDay(); if (w && w !== 6) c++; } return c; }   // business days in the queue since s (weekends don't count)
-function subUrg(l){ if (SUB_MET.includes(l.status) || !l.submitted) return ''; const n = bizSince(l.submitted); return n >= 10 ? 'red' : n >= 7 ? 'yellow' : ''; }   // Submitted: yellow after 7-9 business days, red after 10+
+// Turnaround (EP v1.29): how far away the In Hand Date is when the clock starts sets how fast it's due (weekends don't count):
+// 30 days or less (or past) RUSH 24 business hours, 31-45 IMPORTANT 72, 46+ (or no date) STANDARD 5 business days.
+// The clock runs until Sent for Approval or Waiting on Reply, and starts over when the logo moves back (Need to Upload, Completed, Archive keep it stopped).
+const CLOCK_RUN = ['New Request','Digitizing','Pending Sew Out','Review Sew Out'];
+const TIERS = [{max:30, name:'RUSH', cls:'red', hrs:24}, {max:45, name:'IMPORTANT', cls:'yellow', hrs:72}, {max:Infinity, name:'STANDARD', cls:'std', hrs:120}];
+function clockStart(l){   // the latest move back into the queue, or when it was submitted
+  const h = DB.history.filter(e => e.id === l.id);
+  const back = h.filter(e => { const m = e.kind === 'Status' && e.what.match(/^Status: (.+) > (.+)$/); return m && !CLOCK_RUN.includes(m[1]) && CLOCK_RUN.includes(m[2]); }).map(e => e.ts).sort().pop();
+  return back || h.filter(e => e.kind === 'Added' && /^Submitted/.test(e.what)).map(e => e.ts).sort()[0] || (l.submitted ? l.submitted + 'T00:00:00' : '');   // no time known: from the start of that day
+}
+function turnaround(l){   // {tier, due, late} while the clock runs, else null
+  if (!CLOCK_RUN.includes(l.status)) return null; const s = clockStart(l); if (!s) return null;
+  const ih = parseIso(l.inHand), n = ih ? Math.round((ih - parseIso(s)) / 86400000) : null, tier = n === null ? TIERS[2] : TIERS.find(t => n <= t.max);
+  const due = bizAdd(new Date(s), tier.hrs); return {tier, due, late:new Date() > due};
+}
+function subUrg(l){ const t = turnaround(l); return t && t.late ? 'red' : ''; }   // Submitted: red once it's past due
+function priTag(l){ const t = turnaround(l); if (!t) return '';
+  const when = (t.due.getMonth() + 1) + '/' + t.due.getDate() + ' ' + time12('T' + pad(t.due.getHours()) + ':' + pad(t.due.getMinutes()));
+  return '<div class="pri ' + t.tier.cls + '">' + t.tier.name + '</div><div class="pri-due' + (t.late ? ' late' : '') + '">' + (t.late ? 'Late &middot; due ' : 'Due ') + when + '</div>'; }
 function needsAttention(l){ if (DONE.includes(l.status)) return false; const s = off(l.submitted), ih = off(l.inHand); return (s !== null && -s >= 14) || (ih !== null && ih <= 14); }
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -444,9 +463,10 @@ function bizHoursSince(d){ let ms = 0; const t = new Date(d), now = new Date(); 
 // Follow-ups (EP v1.28): marking a logo followed up adds it to What I did and restarts the 24-business-hour clock (only follow-ups after the latest send count)
 const fuList = l => (l.followUps || []).filter(x => x.slice(0, 16) > sentStamp(l));
 const fuAt = l => fuList(l).pop() || '';
-function fuDue(l){ const s = fuAt(l), t = s ? new Date(s) : sewSentAt(l); if (!t) return null; let left = 24 * 3600000;   // 24 business hours later (weekends don't count)
+function bizAdd(d, hrs){ const t = new Date(d); let left = hrs * 3600000;   // hrs business hours later (weekends don't count)
   while (left > 0){ const end = new Date(t); end.setHours(24, 0, 0, 0); const w = t.getDay(); if (w && w !== 6){ const step = Math.min(end - t, left); t.setTime(t.getTime() + step); left -= step; } else t.setTime(end.getTime()); }
   return t; }
+function fuDue(l){ const s = fuAt(l), t = s ? new Date(s) : sewSentAt(l); return t ? bizAdd(t, 24) : null; }
 function fuMark(l, from){ (l.followUps = l.followUps || []).push(nowStamp()); log(l, 'Edit', 'Followed up' + (from || '') + (l.status === 'Pending Sew Out' ? ': Follow Up snoozed 24 business hours' : '')); }
 function fuUndo(l, from){ if ((l.followUps || []).length){ l.followUps.pop(); log(l, 'Edit', 'Follow-up undone' + (from || '')); } }
 const sewLate = l => l.status === 'Pending Sew Out' && !photoIn(l) && !!sewSentAt(l) && bizHoursSince(fuAt(l) ? new Date(fuAt(l)) : sewSentAt(l)) >= 24;
@@ -729,7 +749,7 @@ function columns(tab, section){
     {k:'account', h:'Account', v:l => l.account.toLowerCase(), td:l => '<span class="acct">' + esc(l.account) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
     {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted, subUrg(l))},
-    {k:'ih', h:'In Hand Date', v:l => l.inHand || '9999', td:l => dateOnly(l.inHand, DONE.includes(l.status) ? '' : urg(off(l.inHand)))},
+    {k:'ih', h:'In Hand Date', v:l => l.inHand || '9999', td:l => dateOnly(l.inHand, DONE.includes(l.status) ? '' : urg(off(l.inHand))) + priTag(l)},
     {k:'type', h:'Type', v:l => l.type, td:l => esc(l.type)}
   ];
   const extra = tab.extraBySection && tab.extraBySection[section] ? tab.extraBySection[section]
@@ -818,7 +838,7 @@ function card(l, ncols){
         f('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
         f('Thread Color Notes', '<textarea data-edit="threadNotes" data-id="' + id + '">' + esc(l.threadNotes) + '</textarea>', true) +
         f('Placement', inp('placement', l)) +
-        f('In Hand Date', '<input type="date" data-edit="inHand" data-id="' + id + '" value="' + esc(l.inHand) + '">') +
+        f('In Hand Date', '<input type="date" data-edit="inHand" data-id="' + id + '" value="' + esc(l.inHand) + '">' + (priTag(l) ? '<div class="pri-line">' + priTag(l) + '</div>' : '')) +
         f('File Version', '<div class="stepper"><button class="sbtn" data-act="ver-" data-id="' + id + '">&minus;</button><span class="sval">v' + l.ver + '</span><button class="sbtn" data-act="ver+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="ver-edit" data-id="' + id + '">Edit</button></div>') +
         f('Revisions', '<div class="stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="sval rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
         (l.submitNotes ? f('Notes from the request', '<textarea disabled>' + esc(l.submitNotes) + '</textarea>', true) : '') +
