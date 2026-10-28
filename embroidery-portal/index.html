@@ -279,7 +279,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.15</span>
+    <span class="vbadge">EP v1.16</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -290,12 +290,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.15: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.16: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.15';
+const VERSION = 'EP v1.16';
 const ME = 'Noelle';
-const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json';
+const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
 const REQUEST_URL  = new URL('../request/', location.href).href;    // the Sew-Out Request page (same repo)
 const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSuite copy of the Sew-Out Approver (fills itself in from the link)
@@ -529,6 +529,16 @@ async function applySewSent(){   // EP v1.14: when it moved to Pending Sew Out i
   try { const w = await (await dirHandle.getFileHandle(SEWSENT_NAME)).createWritable(); await w.write(JSON.stringify(keep)); await w.close(); } catch(e){}
   if (n){ touch(); const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
 }
+async function applySubmitted(){   // EP v1.16: "Submitted in the live portal by X" for logos copied before v1.15
+  let arr; try { arr = JSON.parse(await (await (await dirHandle.getFileHandle(SUBMITTED_NAME)).getFile()).text()); } catch(e){ return; }
+  if (!Array.isArray(arr) || !arr.length) return;
+  const keep = []; let n = 0;
+  arr.forEach(x => { const l = DB.logos.find(z => String(z.nsId) === String(x.nsId)); if (!l){ keep.push(x); return; } if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x.at || '')) return;
+    if (DB.history.some(h => h.id === l.id && /^Submitted in the live portal/.test(h.what))) return;
+    DB.history.push({ts:x.at.slice(0, 16) + ':00', id:l.id, logo:l.logo, account:l.account, kind:'Added', what:'Submitted in the live portal' + (x.by ? ' by ' + x.by : ''), by:x.by || 'Live portal'}); n++; });
+  try { const w = await (await dirHandle.getFileHandle(SUBMITTED_NAME)).createWritable(); await w.write(JSON.stringify(keep)); await w.close(); } catch(e){}
+  if (n){ touch(); const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+}
 async function clearSeedFile(){ try { const w = await (await dirHandle.getFileHandle(SEED_NAME)).createWritable(); await w.write('[]'); await w.close(); } catch(e){} }   // so a logo you delete later can't come back
 async function checkSeed(){
   seedNew = []; let inFile = 0;
@@ -538,7 +548,7 @@ async function checkSeed(){
     seedNew = (Array.isArray(arr) ? arr : arr.logos || []).filter(x => x && x.nsId && !have.has(String(x.nsId)) && !seedSkipped.has(String(x.nsId)));
   } catch(e){}
   if (seedNew.length) addSeedAuto(); else { showBanner(); if (inFile) clearSeedFile(); }
-  await applySewSent();
+  await applySewSent(); await applySubmitted();
 }
 function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
   const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
