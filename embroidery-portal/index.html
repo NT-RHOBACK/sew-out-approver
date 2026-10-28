@@ -279,7 +279,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.13</span>
+    <span class="vbadge">EP v1.14</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -290,12 +290,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.13: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.14: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.13';
+const VERSION = 'EP v1.14';
 const ME = 'Noelle';
-const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json';
+const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
 const REQUEST_URL  = new URL('../request/', location.href).href;    // the Sew-Out Request page (same repo)
 const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSuite copy of the Sew-Out Approver (fills itself in from the link)
@@ -369,14 +369,18 @@ function setStatus(l, st, by){
   if (st === 'Completed' && !l.completedDate) l.completedDate = todayIso();
 }
 function touch(){ DB.savedAt = new Date().toISOString(); dirty = true; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} scheduleSave(); }
-const photoIn = l => !!l.sewSentDate && (l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') >= l.sewSentDate);
+const photoIn = l => { const d = sentStamp(l).slice(0, 10); return !!d && (l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') >= d); };
 // Sew-out clock (EP v1.04): Follow Up when it's still Pending Sew Out with no sew-out photo 24 business hours after it was sent to Barrett (weekends don't count)
 const FOLLOW_UP = 'Follow Up';
 const sentTime = l => l.sewSentTime || (DB.history.filter(h => h.id === l.id && h.kind === 'Email' && /^Sew-out request sent to Barrett/.test(h.what) && h.ts.slice(0, 10) === l.sewSentDate).map(h => h.ts).sort().pop() || '').slice(11, 16);   // older ones: time from History
-function sewSentAt(l){ const d = parseIso(l.sewSentDate); if (!d) return null; const t = sentTime(l).match(/^(\d{1,2}):(\d{2})/); if (t) d.setHours(+t[1], +t[2]); return d; }   // no time known: counts from the start of that day
+function sentStamp(l){   // EP v1.14: no Sent to Barrett date → when it moved to Pending Sew Out (History)
+  if (l.sewSentDate) return l.sewSentDate + 'T' + (sentTime(l) || '00:00');   // no time known: counts from the start of that day
+  return (DB.history.filter(h => h.id === l.id && /> Pending Sew Out$/.test(h.what)).map(h => h.ts).sort().pop() || '').slice(0, 16);
+}
+function sewSentAt(l){ const s = sentStamp(l), d = parseIso(s); if (!d) return null; const t = s.slice(11).match(/^(\d{1,2}):(\d{2})/); if (t) d.setHours(+t[1], +t[2]); return d; }
 function bizHoursSince(d){ let ms = 0; const t = new Date(d), now = new Date(); while (t < now){ const end = new Date(t); end.setHours(24, 0, 0, 0); const stop = end < now ? end : now; const w = t.getDay(); if (w && w !== 6) ms += stop - t; t.setTime(stop); } return ms / 3600000; }
 const sewLate = l => l.status === 'Pending Sew Out' && !photoIn(l) && !!sewSentAt(l) && bizHoursSince(sewSentAt(l)) >= 24;
-const sentText = l => fmt(l.sewSentDate) + (sentTime(l) ? ' ' + time12('T' + sentTime(l)) : '');
+const sentText = l => { const s = sentStamp(l); return !s ? '' : fmt(s) + (l.sewSentDate && !sentTime(l) ? '' : ' ' + time12(s)); };
 
 // ---------------- Excel (SheetJS) ----------------
 const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','rep'],['Type','type'],['Department','dept'],['Status','status'],['Submitted','submitted'],['In Hand Date','inHand'],
@@ -515,6 +519,16 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // Logos copied from the live portal (portal-logos.json in the same folder)
 let seedNew = [], seedSkipped = new Set();   // seedSkipped: "Not now" hides these until the page is refreshed
+async function applySewSent(){   // EP v1.14: when it moved to Pending Sew Out in NetSuite; a date you entered or marked always wins
+  let arr; try { arr = JSON.parse(await (await (await dirHandle.getFileHandle(SEWSENT_NAME)).getFile()).text()); } catch(e){ return; }
+  if (!Array.isArray(arr) || !arr.length) return;
+  const keep = []; let n = 0;
+  arr.forEach(x => { const l = DB.logos.find(z => String(z.nsId) === String(x.nsId)); if (!l){ keep.push(x); return; } if (l.sewSentDate || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x.at || '')) return;
+    l.sewSentDate = x.at.slice(0, 10); l.sewSentTime = x.at.slice(11, 16); n++;
+    log(l, 'Edit', 'Sent to Barrett: ' + fmt(x.at) + ' ' + time12(x.at) + ' (when it moved to Pending Sew Out in NetSuite)', AUTO); });
+  try { const w = await (await dirHandle.getFileHandle(SEWSENT_NAME)).createWritable(); await w.write(JSON.stringify(keep)); await w.close(); } catch(e){}
+  if (n){ touch(); const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+}
 async function clearSeedFile(){ try { const w = await (await dirHandle.getFileHandle(SEED_NAME)).createWritable(); await w.write('[]'); await w.close(); } catch(e){} }   // so a logo you delete later can't come back
 async function checkSeed(){
   seedNew = []; let inFile = 0;
@@ -524,6 +538,7 @@ async function checkSeed(){
     seedNew = (Array.isArray(arr) ? arr : arr.logos || []).filter(x => x && x.nsId && !have.has(String(x.nsId)) && !seedSkipped.has(String(x.nsId)));
   } catch(e){}
   if (seedNew.length) addSeedAuto(); else { showBanner(); if (inFile) clearSeedFile(); }
+  await applySewSent();
 }
 function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
   const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
@@ -621,7 +636,7 @@ function columns(tab, section){
     const pickD = l => l.status === 'Need to Upload' ? l.approvedDate : l.sentDate;
     cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
   } else if (extra && extra.f === 'photo'){
-    cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => l.sewSentDate ? l.sewSentDate + 'T' + (sentTime(l) || '00:00') : '', td:l => !l.sewSentDate ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>'});
+    cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>'});
     cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp red">Late</span>' : '<span class="img-pend">Pending</span>'});
   } else if (extra){
     cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
@@ -662,7 +677,8 @@ function sewBox(l){
                   : '<div class="note">Opens the Sew-Out Request page first, then sends to Barrett with the DST and color card.</div>');
   }
   inner += '<div class="f" style="margin-top:12px"><label>Sent to Barrett (date and time)</label><div style="display:flex;gap:6px">' +
-    '<input type="date" data-edit="sewSentDate" data-id="' + esc(l.id) + '" value="' + esc(l.sewSentDate) + '"><input type="time" data-edit="sewSentTime" data-id="' + esc(l.id) + '" value="' + esc(sentTime(l)) + '"></div></div>';
+    '<input type="date" data-edit="sewSentDate" data-id="' + esc(l.id) + '" value="' + esc(l.sewSentDate) + '"><input type="time" data-edit="sewSentTime" data-id="' + esc(l.id) + '" value="' + esc(sentTime(l)) + '"></div>' +
+    (!l.sewSentDate && sentStamp(l) ? '<div class="note">The 24-hour clock counts from when it moved to Pending Sew Out: ' + sentText(l) + '.</div>' : '') + '</div>';
   return '<div class="box"><h3><span class="num">4</span>Sew-out request to Barrett</h3>' + inner + '</div>';
 }
 function sheetBox(l){
