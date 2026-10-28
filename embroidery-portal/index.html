@@ -309,7 +309,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.21</span>
+    <span class="vbadge">EP v1.22</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -320,10 +320,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.21: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.22: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.21';
+const VERSION = 'EP v1.22';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1083,12 +1083,17 @@ async function applyTodoImport(){
   let o; try { o = JSON.parse(await (await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).getFile()).text()); } catch(e){ return; }
   if (!o || !o.day || !Array.isArray(o.tasks)) return;
   DB.tasks = DB.tasks || []; DB.did = DB.did || []; DB.todoDays = DB.todoDays || [];
+  if (o.replace){   // EP v1.22: start the day over
+    tdTasks(o.day).forEach(t => tlog(t, 'Removed (list started over)')); tdDid(o.day).forEach(x => { if (!x.taskId) tlog(x, 'Removed (list started over)'); });
+    DB.tasks = DB.tasks.filter(t => t.day !== o.day); DB.did = DB.did.filter(x => x.day !== o.day);
+  }
   if (!tdTasks(o.day).length){
     o.tasks.forEach(x => { const t = {id:tdId(), day:o.day, sec:x.sec, text:x.text, state:x.doneAs ? 'done' : '', doneSec:x.doneAs || '', ts:nowStamp()}; DB.tasks.push(t); tlog(t, 'Added to To Do (' + x.sec + ', from your Google Doc list)');
       if (x.doneAs){ DB.did.push({id:tdId(), day:o.day, sec:x.doneAs, text:x.didText || x.text, ts:nowStamp(), taskId:t.id, chain:tdChainOf(t)}); tlog(t, 'Done \u2192 ' + x.doneAs); } });
     (o.did || []).forEach(x => { const y = {id:tdId(), day:o.day, sec:x.sec, text:x.text, ts:nowStamp(), taskId:''}; DB.did.push(y); tlog(y, 'Written in on What I did (' + x.sec + ')'); });
     if (!DB.todoDays.includes(o.day)) DB.todoDays.push(o.day);
     touch(); if (state.tab === 'todo'){ const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+    if (o.replace) toast('Today&rsquo;s To Do list was started over.');
   }
   try { const w = await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).createWritable(); await w.write('{}'); await w.close(); } catch(e){}
 }

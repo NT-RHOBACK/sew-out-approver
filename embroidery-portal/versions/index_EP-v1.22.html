@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Embroidery Portal</title>
+<style>
+/* Rhoback brand kit (same as the live portal): Admiral Navy, Old Glory Red, Steel text, #E8ECF0 borders.
+   Fonts: Futura PT for headings + tab names, Aptos for body text, tables, and forms (Segoe UI backup). */
+:root{--navy:#29304E;--navy-d:#29304E;--navy-h:#49516C;--red:#BF2033;--line:#E8ECF0;--bg:#FAFAFA;--text:#29304E;--grey:#6B7B8D;--lgrey:#9399A6;--pick:#E6EAF6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Aptos','Segoe UI',sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+h1,h2,.h2,.tab,.sec-head .name,.brand,.brand-sub,.box h3,.pipe .lbl{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic","Futura",sans-serif}
+.header{background:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.brand{font-size:22px;font-weight:700;letter-spacing:3px;color:var(--navy)}
+.ridge{display:flex;height:26px}.ridge span{width:4px}.ridge .r{background:var(--red)}.ridge .n{background:var(--navy)}
+.brand-sub{font-size:14px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--navy)}
+.draft-tag{margin-left:auto;font-size:11px;font-weight:700;background:#fff4d6;border:1px solid #f0d58a;color:#7a5800;border-radius:6px;padding:3px 9px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.tabs{background:#fff;border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:14px 18px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s}
+.tab:hover{color:var(--navy)}
+.tab.on{color:var(--navy);border-bottom-color:var(--red)}
+.page{max-width:1400px;margin:0 auto;padding:24px 24px 60px}
+h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.h2{font-size:18px;font-weight:700;color:var(--navy);margin:26px 0 4px}
+.sub{color:var(--grey);font-size:13px;margin-bottom:14px}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.bar input,.bar select{padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#fff;color:var(--text)}
+.bar input{flex:1;min-width:220px}
+.sec{margin-bottom:14px}
+.sec-head{display:flex;align-items:center;gap:8px;padding:8px 4px;cursor:pointer;user-select:none}
+.sec-head .chev{width:14px;color:var(--grey);font-size:11px}
+.sec-head .name{font-size:18px;font-weight:700;color:var(--navy)}
+.sec-head .cnt{font-size:11px;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:10px;padding:1px 8px;color:var(--grey)}
+.tblwrap{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;margin:4px 0 6px}
+.tbl{width:100%;border-collapse:collapse;background:#fff;table-layout:fixed}
+.tbl td.wrap{white-space:normal;overflow-wrap:anywhere}
+.tbl th{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);text-align:left;padding:14px 12px;border-bottom:2px solid var(--navy);background:#fff;cursor:pointer;white-space:nowrap}
+.tbl th .arr{color:var(--lgrey);font-size:10px;margin-left:3px}
+.tbl th.sorted{color:var(--navy)}.tbl th.sorted .arr{color:var(--navy)}
+.tbl td{padding:12px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:none}
+.pill{display:inline-block;font-size:11px;font-weight:600;border-radius:12px;padding:4px 10px}
+.dtp{display:inline-block;font-size:13px;font-weight:600;border-radius:5px;padding:3px 8px}
+.dtp.plain{font-weight:400;color:var(--grey);padding-left:0}
+.dtp.red{background:#f8d7d7;color:#a61b1b}.dtp.yellow{background:#fdf0c4;color:#7a5800}
+.img-pend{color:#e0702a;font-size:15px}.img-ok{color:#2E7D32;font-weight:600}
+.pipe{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin:8px 0 4px}
+@media(max-width:900px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pipe .box{margin:0;text-align:center;padding:14px 8px;border-top-width:4px}
+.pipe .num{font-size:24px;font-weight:700;color:var(--navy)}
+.pipe .lbl{font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-top:4px}
+.back{background:none;border:none;color:var(--navy);font:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;padding:0}
+.demo{font-size:12px;background:#fff4d6;border:1px solid #f0d58a;color:#7a5800;border-radius:6px;padding:8px 12px;margin-bottom:14px}
+.fsec{display:inline-block;font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic",sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy);background:#F0F1F3;border-left:5px solid var(--navy);border-radius:3px;padding:8px 14px;margin:20px 0 10px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.fcard{border:1.5px solid var(--line);border-radius:8px;padding:12px 14px;background:#fff}
+.fcard b{display:block;margin-bottom:4px}
+.fcard span{font-size:12px;color:var(--grey)}
+.usewhen{background:#eaf4f8;border:1px solid #b8dae4;color:#1c5a6a;font-weight:700;font-size:12px;border-radius:6px;padding:8px 10px}
+.rednote{background:#fdecec;border:1px solid #f3c4c4;color:#8a1c1c;font-weight:600;font-size:13px;border-radius:6px;padding:9px 12px}
+.bluenote{background:#eaf4f8;border:1px solid #b8dae4;color:#1c3a48;font-size:12px;border-radius:6px;padding:9px 12px}
+.greennote{background:#eaf6ec;border:1px solid #c5e5cb;color:#256b31;font-weight:700;font-size:12px;border-radius:6px;padding:9px 12px}
+.yellownote{background:#fdf6e3;border:1px solid #f0dfaa;color:#7a5a12;font-weight:700;font-size:12px;border-radius:6px;padding:9px 12px}
+.fin{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#fff}
+.flbl{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px}
+.row{cursor:pointer}.row:hover td{background:#fafbfd}
+.row.open td{background:#f3f5fa}
+.row .chev{color:var(--grey);font-size:11px;width:12px;display:inline-block}
+.logo{font-weight:600;color:var(--navy-d)}
+.sdot{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;margin-right:7px;vertical-align:1px;flex:none}
+.logo-cell{display:flex;align-items:center}
+.stepper{display:flex;align-items:center;gap:8px}
+.sbtn{font:inherit;font-size:14px;min-width:38px;height:34px;padding:0 12px;border:1px solid #e3e6ee;border-radius:7px;background:#fff;color:var(--navy-d);cursor:pointer}
+.sbtn.txt{font-size:13px;font-weight:700}
+.sbtn:hover{border-color:#c4cbe0}
+.sval{font-size:18px;font-weight:700;min-width:34px;text-align:center;color:var(--navy-d)}
+.rev-num{font-size:20px;font-weight:700;color:var(--red);min-width:22px}.ver{font-size:11px;color:var(--lgrey);margin-left:5px}
+.acct{color:#4b5563}
+.tag{font-size:11px;font-weight:600;border-radius:10px;padding:2px 8px;background:#eef0f6;color:#49516C}
+.tag.dig{background:#e8f0fb;color:#1f5a80}
+.dt{font-weight:600;border-radius:5px;padding:2px 7px}
+.dt.red{background:#f8d7d7;color:#a61b1b}.dt.yellow{background:#fdf0c4;color:#7a5800}
+.muted{color:var(--lgrey)}
+.st option{background:#fff;color:#1c2340;font-weight:400}
+.st{width:100%;font:inherit;font-size:12px;padding:4px 6px;border:1px solid #d6dbe4;border-radius:6px;background:#fff;color:var(--text);cursor:pointer}
+.photo-ok{color:#1a6e2e;font-weight:600}.photo-wait{color:#b45309;font-weight:600}
+.card-cell{padding:0!important;background:#f3f5fa}
+.card{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;padding:16px 18px 18px 34px;white-space:normal}
+@media(max-width:900px){.card{grid-template-columns:1fr;padding-left:18px}}
+.box{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:12px}
+.box h3{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.box h3 .num{font-family:'Aptos','Segoe UI',sans-serif;background:var(--navy);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.f label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:3px}
+.f input,.f select,.f textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;background:#fff}
+.f textarea{min-height:44px;resize:vertical}
+.f.full{grid-column:1/-1}
+.file{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.file:last-of-type{border-bottom:none}
+.ftype{font-size:10px;font-weight:700;background:var(--navy);color:#fff;border-radius:4px;padding:2px 6px;min-width:34px;text-align:center}
+.fname{flex:1;overflow:hidden;text-overflow:ellipsis}
+.btn{font:inherit;font-size:13px;font-weight:600;letter-spacing:.5px;padding:8px 14px;border-radius:6px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;transition:background .2s}
+.btn:hover{background:var(--navy-h);border-color:var(--navy-h)}
+.btn.light{background:#fff;color:var(--navy);border-color:var(--line)}
+.btn.light:hover{background:#fff;border-color:var(--navy)}
+.btn.small{padding:3px 9px;font-size:11px}
+.btn.danger{background:#fff;color:var(--red);border-color:#e8c2c7}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.note{font-size:12px;color:var(--grey);margin-top:6px;line-height:1.45}
+.hist{font-size:12px}
+.hist div{padding:4px 0;border-bottom:1px dashed var(--line)}
+.hist div:last-child{border-bottom:none}
+.hist b{color:var(--navy)}
+.foot{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.empty{background:#fff;border:1px dashed #d6dbe4;border-radius:8px;padding:18px;text-align:center;color:var(--grey);font-size:13px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+.mailhead{font-size:12px;line-height:1.7;background:#f6f7fa;border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:8px 0}
+.mailhead b{display:inline-block;width:56px;color:var(--grey);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.mailbody{width:100%;height:230px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.chk{display:flex;align-items:center;gap:6px;font-size:13px;padding:3px 0}
+.ok{color:#1a6e2e;font-weight:600}
+.legend{margin-top:18px;font-size:12px;color:var(--grey);background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;line-height:1.6}
+
+/* ===== v13: match the live portal (script 3566, read 10/21) ===== */
+:root{--navy:#29304E;--navy-d:#29304E;--navy-h:#49516C;--red:#BF2033;--line:#E8ECF0;--bg:#FFFFFF;--text:#29304E;--grey:#6B7B8D;--lgrey:#6B7B8D;--light:#FAFAFA;--pick:#E6EAF6;--warn:#E65100}
+body{font-family:"Aptos","Segoe UI","Futura PT",futura-pt,sans-serif;background:#FFFFFF;color:#29304E;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.h2,.sec-head .name,.brand-sub,.box h3,.card-title,.top-bar,.pipe .stage{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic","Futura",sans-serif}
+.tab,.brand{font-family:inherit}
+.top-bar{background:#29304E;color:#fff;font-size:12px;font-weight:500;letter-spacing:3px;text-transform:uppercase;padding:10px 24px;text-align:center}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);gap:12px;background:#fff;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:16px}
+.brand{font-size:20px;font-weight:700;letter-spacing:3px;color:var(--navy)}
+.ridge{height:auto}.ridge span{width:4px;height:36px}
+.brand-sub{font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--navy)}
+.header-right{display:flex;align-items:center;gap:16px}
+.header-user{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:var(--navy)}
+.avatar{width:34px;height:34px;font-size:13px;font-weight:600}
+.draft-tag{margin-left:0}
+.tabs{padding:0 24px;gap:0;border-bottom:1px solid var(--line);background:#fff}
+.tab{padding:14px 24px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border-bottom:3px solid transparent}
+.tab:hover{color:var(--navy)}
+.tab.on{color:var(--navy);border-bottom-color:var(--red)}
+.page{max-width:1400px;padding:24px}
+h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
+.sub{font-size:13px;color:var(--grey)}
+.bar{gap:12px;margin-bottom:20px}
+.bar input,.bar select{padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;color:var(--navy)}
+.bar select{min-width:170px}
+.sec{margin-bottom:20px}
+.sec-head{padding:0;margin-bottom:10px}
+.sec-head .chev{font-size:12px;color:var(--navy)}
+.sec-head .name{font-size:16px;font-weight:700}
+.sec-head .cnt{font-size:11px;font-weight:600;padding:4px 10px;border-radius:12px;background:var(--light);color:var(--grey);border:none}
+.tblwrap{border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tbl th{padding:14px 12px;font-size:12px;font-weight:600;color:var(--grey);letter-spacing:1px;border-bottom:2px solid var(--navy)}
+.tbl td{padding:12px;font-size:14px}
+.row:hover td{background:#FAFAFA}
+.row.open td{background:#FAFAFA}
+.logo{font-weight:600;color:var(--navy)}
+.acct{color:var(--navy)}
+.dtp{font-size:12px;padding:2px 6px;border-radius:4px;font-weight:600}
+.dtp.plain{font-size:12px;font-weight:400;color:var(--grey);padding-left:0}
+.img-pend{color:#E65100;font-size:14px}.img-ok{color:#2E7D32}
+.btn{padding:10px 20px;font-size:13px;font-weight:600;letter-spacing:0;border-radius:6px}
+.btn.small{padding:6px 14px;font-size:12px}
+.btn.light{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.btn.light:hover{background:#FAFAFA;border-color:var(--line)}
+.f label{font-size:11px;font-weight:600;color:var(--grey);letter-spacing:.5px}
+.f input,.f select,.f textarea{padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;color:var(--navy)}
+.box{border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card-cell{background:#FAFAFA}
+.lcard{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:24px;margin-bottom:20px}
+.lcard-head{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.lcard-head .ridge span{height:22px}
+.card-title{font-size:18px;font-weight:700;color:var(--navy)}
+.pipe{display:flex;gap:0;overflow-x:auto;padding:4px 0;margin:0}
+.pipe .stage{flex:1;min-width:130px;text-align:center;padding:10px 8px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);background:#FAFAFA;border:1px solid var(--line)}
+.pipe .stage:first-child{border-radius:6px 0 0 6px}.pipe .stage:last-child{border-radius:0 6px 6px 0}
+.pipe .stage .count{display:block;font-size:18px;font-weight:700;margin-bottom:2px}
+.toast{background:#29304E;font-size:14px;font-weight:600;padding:14px 24px}
+.fsec{font-size:13px}
+.flbl{font-size:13px;font-weight:600;letter-spacing:.5px;color:var(--navy)}
+.fin{padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;color:var(--navy)}
+
+/* Submit Request form: live look + Parts 6-7 */
+.sf .req{color:var(--red)}
+.sf-red{background:#fdecec;border:1px solid #f3c4c4;color:#8a1c1c;font-size:14px;border-radius:6px;padding:12px 16px;line-height:1.5}
+.sf-sec-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 10px}
+.sf-sec{display:inline-block;font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic",sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy);background:#F0F1F3;border-left:6px solid var(--navy);border-radius:3px;padding:8px 14px}
+.sf-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.sf-lbl{display:block;font-size:13px;font-weight:600;letter-spacing:.5px;color:var(--navy);margin-bottom:6px}
+.sf-in{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:15px;color:var(--navy);background:#fff}
+.sf-in:disabled{background:#FAFAFA;color:var(--grey)}
+.sf-use{background:#eaf4f8;border:1px solid #b8dae4;color:#1c5a6a;font-weight:700;font-size:13px;border-radius:6px;padding:8px 12px}
+.sf-card{padding:12px 16px;background:#fff;color:var(--navy);border:1px solid var(--line);border-radius:6px;cursor:pointer;transition:all .2s}
+.sf-card:hover{border-color:var(--navy)}
+.sf-on{background:#E6EAF6 !important;border-color:var(--navy) !important;color:var(--navy) !important}
+.sf-title{font-size:15px;font-weight:600}
+.sf-to{font-size:13px;font-weight:400;color:#49516C}
+.sf-desc{font-size:13px;color:#49516C;margin-top:4px;line-height:1.45}
+.sf-size{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);cursor:default}
+.sf-size-lbl{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px}.sf-size-lbl i{color:#b07d00;font-weight:600}
+.sf-hw{display:flex;align-items:flex-end;gap:8px}.sf-hw>div:not(.sf-x){flex:1}
+.sf-x{font-size:19px;color:#49516C;padding-bottom:10px}
+.sf-mini{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#49516C;margin-bottom:4px}
+.sf-unit{position:relative}.sf-unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;color:#49516C}
+.sf-dig{margin-top:12px;background:#fdf8ec;border:1px solid #f0e0b0;border-radius:8px;padding:14px 16px}
+.sf-dig-h{font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);margin-bottom:8px}
+.sf-depts{display:flex;flex-wrap:wrap;gap:8px}
+.sf-dept{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:14px;color:var(--navy);cursor:pointer}
+.sf-dept input{margin:0;cursor:pointer}
+.sf-check{display:flex;gap:10px;align-items:flex-start;font-size:14px;background:#fff;border:1px solid #f0e0b0;border-radius:6px;padding:10px 12px;cursor:pointer}
+.sf-tipnote{font-size:13px;background:#f3f0fb;border:1px solid #e0d8f5;color:#4b3a78;border-radius:6px;padding:9px 12px;line-height:1.45}
+.sf-italic{font-size:13px;color:#49516C;font-style:italic;margin-top:4px}
+.sf-tip{margin-top:12px;background:#eaf4f8;border:2px solid #509aaa;border-radius:12px;box-shadow:0 6px 18px rgba(40,96,112,.18);padding:14px 16px;font-size:13px;color:#1c3a48;line-height:1.5}
+.sf-tip-i{color:#509aaa;font-size:19px;font-weight:700;margin-bottom:4px}
+.sf-tag{display:inline-flex;font-size:13px;font-weight:700;color:#286070;background:#eaf4f8;border:2px solid #509aaa;border-radius:8px;padding:5px 12px}
+.sf-rednote{background:#fdecec;border:1px solid #f3c4c4;color:#8a1c1c;font-weight:600;font-size:13px;border-radius:6px;padding:9px 12px}
+.sf-blue{color:#1c3a48;font-size:13px;padding:2px 0;line-height:1.5}
+.sf-green{background:#eaf6ec;border:1px solid #c5e5cb;color:#256b31;font-weight:700;font-size:13px;border-radius:6px;padding:9px 12px}
+.sf-yellow{background:#fdf6e3;border:1px solid #f0dfaa;color:#7a5a12;font-weight:700;font-size:13px;border-radius:6px;padding:9px 12px}
+.sf-yn{font:inherit;font-size:17px;font-weight:700;color:var(--navy);background:#fff;border:2px solid var(--line);border-radius:6px;padding:10px;cursor:pointer}
+.sf-lav{margin-top:10px;background:#f3f0fb;border:1px solid #e0d8f5;border-radius:8px;padding:12px 14px}
+.sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
+.sf-upload{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;font-size:14px;color:#49516C}
+.sf .btn{font-size:14px}
+.sf-cardtip{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:#1c3a48;line-height:1.5}
+.msearch{position:relative}
+.msearch input{width:260px;padding:9px 30px 9px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;color:var(--navy);background:#fff}
+.msearch button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--grey);font-size:16px;cursor:pointer;padding:0 4px}
+
+/* ===== Embroidery Portal (EP) additions ===== */
+.vbadge{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--grey);border:1px solid var(--line);border-radius:10px;padding:3px 9px;background:#fff}
+.savepill{font:inherit;font-size:12px;font-weight:600;border-radius:14px;padding:6px 12px;border:1px solid var(--line);background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap}
+.savepill.ok{color:#2e7d32;border-color:#c5e5cb;background:#f1faf2}
+.savepill.warn{color:#7a5800;border-color:#f0d58a;background:#fff8e1}
+.savepill.err{color:#a61b1b;border-color:#f3c4c4;background:#fdecec}
+.banner{background:#fff8e1;border-bottom:1px solid #f0d58a;color:#5c4400;font-size:13px;padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.banner[hidden]{display:none}
+.mini-h{margin-top:8px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey)}
+.sf-upload{cursor:pointer}.sf-upload.drag{border-color:var(--navy);background:#f3f5fa}
+.sf-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sf-file{display:inline-flex;align-items:center;gap:4px;font-size:13px;background:#f3f5fa;border:1px solid var(--line);border-radius:6px;padding:4px 6px 4px 10px}
+.sf-file button{border:0;background:none;color:var(--grey);font-size:15px;cursor:pointer;padding:0 4px}
+.rv{width:100%;border-collapse:collapse;font-size:14px}
+.rv td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.rv-k{width:240px;font-weight:600;color:var(--grey);font-size:13px}
+.f input:disabled,.f textarea:disabled{background:#FAFAFA;color:var(--grey)}
+.dtag{display:block;font-size:11px;color:#49516C;margin-top:2px}
+.box h3 .reqno{margin-left:auto;font-family:'Aptos','Segoe UI',sans-serif;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:#49516C}
+.notif{position:relative}
+.notif-btn{position:relative;font-size:17px;line-height:1;background:#fff;border:1px solid var(--line);border-radius:50%;width:36px;height:36px;cursor:pointer}
+.notif-n{position:absolute;top:-5px;right:-5px;background:#a61b1b;color:#fff;font-size:10px;font-weight:700;border-radius:9px;padding:2px 6px;line-height:1.2}
+.notif-n[hidden],.notif-panel[hidden]{display:none}
+.notif-panel{position:absolute;right:0;top:44px;width:360px;max-width:calc(100vw - 32px);max-height:440px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:60}
+.notif-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:700;font-size:13px;color:var(--navy)}
+.notif-item{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:#49516C;cursor:pointer}
+.notif-item.unread{background:#f3f5fa;color:var(--navy);font-weight:600}
+.notif-item .nt{flex:1}.notif-item .nwhen{display:block;font-size:11px;font-weight:400;color:#49516C;margin-top:2px}
+.notif-empty{padding:16px 14px;font-size:13px;color:#49516C}
+.tab-right{margin-left:auto}
+.td-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.td-nav{display:flex;align-items:center;gap:6px}.td-nav b{font-size:15px;color:var(--navy);min-width:96px;text-align:center}
+.td-count{font-size:13px;color:#49516C}
+.td-subtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.td-subtab{padding:10px 18px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer}
+.td-subtab.on{color:var(--navy);border-bottom-color:var(--red)}
+.td-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.td-add{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px}
+.td-add select,.td-editbox select{padding:8px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff;max-width:200px}
+.td-add textarea,.td-editbox textarea{flex:1;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;color:var(--navy);resize:vertical}
+.td-sec{margin-top:16px}.td-sec h4{font-size:14px;font-weight:700;color:var(--navy);margin:0 0 6px}
+.td-item{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:6px;font-size:14px;color:var(--navy)}
+.td-item+.td-item{margin-top:2px}
+.td-item.done{background:#e2f5dc}.td-item.rolled{background:#ece6f8}
+.td-num{color:#49516C;min-width:22px}.td-text{flex:1;min-width:0;overflow-wrap:anywhere}
+.td-tag{font-size:12px;color:#49516C;margin-left:8px;white-space:nowrap}
+.td-sub{margin:2px 0 0 18px;padding:0}
+.td-btns{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.td-icon{border:none;background:none;color:#49516C;font-size:15px;cursor:pointer;padding:2px 4px}.td-icon:hover{color:var(--navy)}
+.td-pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px;color:#49516C}.td-pick select{padding:6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px}
+.td-editbox{display:flex;flex-direction:column;gap:6px;width:100%}
+.td-meta{font-size:11px;color:#49516C;margin-top:3px}
+.td-metrics{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.td-metric{display:flex;align-items:baseline;gap:8px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 16px}
+.td-mnum{font-size:22px;font-weight:700;color:var(--navy)}.td-mlbl{font-size:13px;color:#49516C}
+.td-res{cursor:pointer}.td-res:hover{background:#f3f5fa}.td-res.done{background:#e2f5dc}.td-res.rolled{background:#ece6f8}
+.td-day{font-size:12px;font-weight:600;color:#49516C;min-width:76px;padding-top:2px}
+.td-link{border:none;background:none;padding:0;font:inherit;font-size:11px;color:#1f5fbf;text-decoration:underline;cursor:pointer}
+.td-hist{margin-top:6px;padding:8px 10px;background:#fafbfd;border:1px solid var(--line);border-radius:6px;font-size:12px;color:#49516C;line-height:1.6}
+@media(max-width:700px){.msearch input{width:180px}.header-user{display:none}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="top-bar">Rhoback &mdash; Embroidery Portal</div>
+<div class="header">
+  <div class="header-left">
+    <div class="brand">RHOBACK</div>
+    <div class="ridge"><span class="r"></span><span class="n"></span></div>
+    <div class="brand-sub">Embroidery Portal</div>
+  </div>
+  <div class="header-right">
+    <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
+    <button class="savepill" id="savePill" type="button"></button>
+    <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
+    <span class="vbadge">EP v1.22</span>
+    <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
+  </div>
+</div>
+<div class="banner" id="banner" hidden></div>
+<div class="tabs" id="tabs"></div>
+<div class="page" id="page"></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileIn" multiple hidden>
+
+<script>
+// EP v1.22: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
+// Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
+const VERSION = 'EP v1.22';
+const ME = 'Noelle';
+const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
+const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
+const REQUEST_URL  = new URL('../request/', location.href).href;    // the Sew-Out Request page (same repo)
+const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSuite copy of the Sew-Out Approver (fills itself in from the link)
+const BARRETT_TO = ['Rhobackembroideryteam@barrettdistribution.com', 'carla.gotera@barrettdistribution.com'];
+const BARRETT_CC = ['rosemarie.lincoln@barrettdistribution.com', 'paulina.rivas@barrettdistribution.com'];
+const DEPTS = ['Wholesale','Special Projects','Collegiate','Mainline','Custom'];
+const reqNo = l => l.nsId ? '#' + l.nsId : String(l.id || '');   // request number (EP v1.12)
+const deptTag = l => { const bits = [esc(reqNo(l)), esc(l.dept || '')].filter(Boolean); return bits.length ? '<span class="dtag">' + bits.join(' &middot; ') + '</span>' : ''; };   // e.g. #78 · Wholesale
+const AUTO = 'System (auto)';   // who, for moves the portal makes on its own
+
+const STATUS_COLORS = {
+  'New Request':       {title:'#5b3a8e', bg:'#5b3a8e', fg:'#ffffff'},
+  'Digitizing':        {title:'#0f766e', bg:'#d2f0ec', fg:'#0f5f58'},
+  'Pending Sew Out':   {title:'#d9822b', bg:'#fdeee2', fg:'#a35a1f'},
+  'Review Sew Out':    {title:'#c25e00', bg:'#f6b26b', fg:'#4a2a00'},
+  'Sent for Approval': {title:'#3b8fd0', bg:'#e6f3fc', fg:'#1f6fa8'},
+  'Waiting on Reply':  {title:'#a88600', bg:'#fff6b3', fg:'#6b5600'},
+  'Need to Upload':    {title:'#1f5fbf', bg:'#c6e4f7', fg:'#0b4f80'},
+  'Completed':         {title:'#2e7d32', bg:'#e2f5dc', fg:'#2e7d32'},
+  'Archive':           {title:'#6b7280', bg:'#d1d1d1', fg:'#333333'}
+};
+const STATUSES = Object.keys(STATUS_COLORS);
+const OPEN_STATUSES = STATUSES.slice(0, 7);
+const TABS = [
+  {key:'dashboard', title:'Dashboard',     sub:'Open logos submitted 14+ days ago, or with an In Hand Date 1–14 days away or past.', focus:true},
+  {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
+  {key:'barrett',   title:'Barrett Queue',  sub:'Sorted by In Hand Date, soonest first.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
+  {key:'approvals', title:'Approvals / Need to Upload', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Need to Upload (approved, waiting to be uploaded to EpicStitch).', sections:['Sent for Approval','Need to Upload'],
+     extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Need to Upload':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
+  {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
+  {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
+  {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
+  {key:'todo',      title:'To Do', sub:'Your daily list. Click Done (and pick what you did) or Roll over. Anything not marked rolls over to the next day on its own, and what you submitted for digitization or sew-out comes back the next day as a check-on.', todo:true, right:true}
+];
+const KIND_COLOR = {Added:['#5b3a8e','#efe8f8'], Status:['#1f5fbf','#e8f0fb'], Email:['#7b2fb5','#f2e8fb'], Edit:['#49516C','#eef0f6'], File:['#a35a1f','#fdeee2'], Note:['#2e7d32','#e2f5dc'], Deleted:['#a61b1b','#f8d7d7']};
+
+// ---------------- Dates ----------------
+let today;
+function refreshToday(){ today = new Date(); today.setHours(0,0,0,0); }
+refreshToday();
+const pad = n => String(n).padStart(2, '0');
+const isoOf = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+const todayIso = () => isoOf(new Date());
+const nowStamp = () => { const d = new Date(); return isoOf(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+const parseIso = s => { const m = String(s || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); return m ? new Date(+m[1], m[2]-1, +m[3]) : null; };
+function normDate(v){ const t = String(v || '').trim(); if (!t) return ''; if (/^\d{4}-\d{1,2}-\d{1,2}/.test(t)){ const d = parseIso(t); return isoOf(d); }
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/); if (m){ const y = m[3].length === 2 ? 2000 + +m[3] : +m[3]; return isoOf(new Date(y, m[1]-1, +m[2])); } return t; }
+const off = s => { const d = parseIso(s); return d ? Math.round((d - today) / 86400000) : null; };   // days from today (negative = past)
+const fmt = s => { const d = parseIso(s); return d ? pad(d.getMonth()+1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2) : ''; };   // 10/20/26
+const time12 = ts => { const m = String(ts || '').match(/T(\d{2}):(\d{2})/); if (!m) return ''; const h = +m[1]; return ((h % 12) || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM'); };
+function bizDays(n){ if (n < 0) return -1; let c = 0; const d = new Date(today); for (let i = 0; i < n; i++){ d.setDate(d.getDate()+1); const w = d.getDay(); if (w && w !== 6) c++; } return c; }
+function urg(n){ if (n === null || n === undefined) return ''; if (n < 0 || bizDays(n) <= 4) return 'red'; if (n <= 14) return 'yellow'; return ''; }   // In Hand Date
+const DONE = ['Completed','Archive'], SUB_MET = ['Need to Upload','Completed','Archive'];
+function bizSince(s){ const d = parseIso(s); if (!d) return 0; let c = 0; while (d < today){ d.setDate(d.getDate() + 1); const w = d.getDay(); if (w && w !== 6) c++; } return c; }   // business days in the queue since s (weekends don't count)
+function subUrg(l){ if (SUB_MET.includes(l.status) || !l.submitted) return ''; const n = bizSince(l.submitted); return n >= 10 ? 'red' : n >= 7 ? 'yellow' : ''; }   // Submitted: yellow after 7-9 business days, red after 10+
+function needsAttention(l){ if (DONE.includes(l.status)) return false; const s = off(l.submitted), ih = off(l.inHand); return (s !== null && -s >= 14) || (ih !== null && ih <= 14); }
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ---------------- Data (mirrored in this browser; the Excel file is the record) ----------------
+let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''};
+try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''}, s); } catch(e){}
+const byId = id => DB.logos.find(l => String(l.id) === String(id));
+function newId(){ const n = DB.logos.concat(DB.history).reduce((m, x) => Math.max(m, parseInt(String(x.id || '').replace(/\D/g, ''), 10) || 0), 0); return 'EP-' + String(n + 1).padStart(4, '0'); }
+function blankLogo(){ return {id:'', nsId:'', logo:'', account:'', rep:'', type:'Sew-Out', dept:'', status:'New Request', submitted:todayIso(), inHand:'', size:'', sizeNotes:'', count:'', colorType:'', threadNotes:'', placement:'',
+  ver:1, rev:0, scratch:false, submitNotes:'', sewSentDate:'', sewSentTime:'', sentDate:'', approvedDate:'', completedDate:'', files:[], dir:'', sewReq:null, sheetFile:''}; }
+function log(l, kind, what, by){ DB.history.push({ts:nowStamp(), id:l.id, logo:l.logo, account:l.account, kind, what, by:by || ME}); }
+function setStatus(l, st, by){
+  if (l.status === st) return;
+  log(l, 'Status', 'Status: ' + l.status + ' > ' + st, by); l.status = st;
+  if (st === 'Sent for Approval' && !l.sentDate) l.sentDate = todayIso();
+  if (st === 'Need to Upload' && !l.approvedDate) l.approvedDate = todayIso();
+  if (st === 'Completed' && !l.completedDate) l.completedDate = todayIso();
+}
+function touch(){ DB.savedAt = new Date().toISOString(); dirty = true; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} scheduleSave(); }
+const photoIn = l => { const d = sentStamp(l).slice(0, 10); return !!d && (l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') >= d); };
+// Sew-out clock (EP v1.04): Follow Up when it's still Pending Sew Out with no sew-out photo 24 business hours after it was sent to Barrett (weekends don't count)
+const FOLLOW_UP = 'Follow Up';
+const sentTime = l => l.sewSentTime || (DB.history.filter(h => h.id === l.id && h.kind === 'Email' && /^Sew-out request sent to Barrett/.test(h.what) && h.ts.slice(0, 10) === l.sewSentDate).map(h => h.ts).sort().pop() || '').slice(11, 16);   // older ones: time from History
+function sentStamp(l){   // EP v1.14: no Sent to Barrett date → when it moved to Pending Sew Out (History)
+  if (l.sewSentDate) return l.sewSentDate + 'T' + (sentTime(l) || '00:00');   // no time known: counts from the start of that day
+  return (DB.history.filter(h => h.id === l.id && /> Pending Sew Out$/.test(h.what)).map(h => h.ts).sort().pop() || '').slice(0, 16);
+}
+function sewSentAt(l){ const s = sentStamp(l), d = parseIso(s); if (!d) return null; const t = s.slice(11).match(/^(\d{1,2}):(\d{2})/); if (t) d.setHours(+t[1], +t[2]); return d; }
+function bizHoursSince(d){ let ms = 0; const t = new Date(d), now = new Date(); while (t < now){ const end = new Date(t); end.setHours(24, 0, 0, 0); const stop = end < now ? end : now; const w = t.getDay(); if (w && w !== 6) ms += stop - t; t.setTime(stop); } return ms / 3600000; }
+const sewLate = l => l.status === 'Pending Sew Out' && !photoIn(l) && !!sewSentAt(l) && bizHoursSince(sewSentAt(l)) >= 24;
+const sentText = l => { const s = sentStamp(l); return !s ? '' : fmt(s) + (l.sewSentDate && !sentTime(l) ? '' : ' ' + time12(s)); };
+
+// ---------------- Excel (SheetJS) ----------------
+const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','rep'],['Type','type'],['Department','dept'],['Status','status'],['Submitted','submitted'],['In Hand Date','inHand'],
+  ['Size','size'],['Size Notes','sizeNotes'],['Number of Thread Colors','count'],['Color Type','colorType'],['Thread Color Notes','threadNotes'],['Placement','placement'],
+  ['File Version','ver'],['Revisions','rev'],['Creating from Scratch ($75)','scratch'],['Submit Notes','submitNotes'],['Sent to Barrett','sewSentDate'],['Sheet Sent','sentDate'],
+  ['Approved','approvedDate'],['Completed','completedDate'],['Files','filesText'],['NetSuite ID','nsId'],['Extra (please don’t edit)','extra']];
+function buildWorkbook(){
+  const wb = XLSX.utils.book_new();
+  const rows = DB.logos.map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || ''})
+    : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
+  const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
+  ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Logos');
+  const hist = DB.history.slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(h => [h.ts.slice(0, 10), h.ts.slice(11), h.id, h.logo, h.account, h.kind, h.what, h.by]);
+  const hs = XLSX.utils.aoa_to_sheet([['Date','Time','ID','Logo','Account','Type','What happened','By']].concat(hist));
+  hs['!cols'] = [12, 10, 10, 30, 26, 10, 60, 14].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, hs, 'History');
+  const notes = DB.notes.slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.id, (byId(n.id) || {}).logo || '', n.text, n.by]);
+  const ns = XLSX.utils.aoa_to_sheet([['Date','Time','ID','Logo','Note','By']].concat(notes));
+  ns['!cols'] = [12, 10, 10, 30, 70, 14].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ns, 'Notes');
+  const nf = XLSX.utils.aoa_to_sheet([['Date','Time','ID','Notification','Read']].concat((DB.notifs || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.id, n.text, n.read ? 'Yes' : 'No'])));
+  nf['!cols'] = [12, 10, 10, 70, 8].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, nf, 'Notifications');
+  const stat = t => t.state === 'done' ? 'Done' : t.state === 'rolled' ? (t.auto ? 'Rolled over (end of day)' : 'Rolled over') : 'Open';
+  const byDay = (a, b) => b.day.localeCompare(a.day) || a.ts.localeCompare(b.ts);
+  const td = XLSX.utils.aoa_to_sheet([['Day','Section','Task','Status','Done as','Added','ID','Chain']].concat((DB.tasks || []).slice().sort(byDay).map(t => [t.day, t.sec, t.text, stat(t), t.doneSec || '', t.ts || '', t.id, t.chain || t.id])));
+  td['!cols'] = [12, 26, 50, 22, 26, 20, 16, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, td, 'To Do');
+  const dd = XLSX.utils.aoa_to_sheet([['Day','Section','What I did','Added','ID','From task','Chain']].concat((DB.did || []).slice().sort(byDay).map(x => [x.day, x.sec, x.text, x.ts || '', x.id, x.taskId || '', x.chain || x.id])));
+  dd['!cols'] = [12, 26, 50, 20, 16, 16, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, dd, 'What I Did');
+  const th = XLSX.utils.aoa_to_sheet([['Date','Time','Task','What happened','Chain']].concat((DB.taskLog || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(e => [e.ts.slice(0, 10), e.ts.slice(11), e.task, e.what, e.chain])));
+  th['!cols'] = [12, 10, 40, 60, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, th, 'To Do History');
+  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')],
+    ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
+  info['!cols'] = [{wch:12}, {wch:110}];
+  XLSX.utils.book_append_sheet(wb, info, 'Info');
+  return XLSX.write(wb, {bookType:'xlsx', type:'array'});
+}
+function readWorkbook(buf){
+  const wb = XLSX.read(buf, {type:'array'});
+  const rows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:'', raw:false}) : [];
+  const db = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''};
+  const lr = rows('Logos'), head = (lr[0] || []).map(String);
+  lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
+    const l = blankLogo(), get = h => { const i = head.indexOf(h); return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+    COLS.forEach(([h, k]) => { if (k !== 'filesText' && k !== 'extra') l[k] = get(h); });
+    l.ver = parseInt(l.ver, 10) || 1; l.rev = parseInt(l.rev, 10) || 0; l.scratch = /^y/i.test(l.scratch);
+    const ss = String(l.sewSentDate || ''), tm = ss.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?/);
+    if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
+    ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
+    const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; } catch(e){}
+    if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
+    db.logos.push(l);
+  });
+  rows('History').slice(1).filter(r => r[0]).forEach(r => db.history.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), logo:String(r[3]), account:String(r[4]), kind:String(r[5]), what:String(r[6]), by:String(r[7])}));
+  rows('Notes').slice(1).filter(r => r[0]).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5])}));
+  rows('Notifications').slice(1).filter(r => r[0]).forEach(r => db.notifs.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[3]), read:/^y/i.test(String(r[4]))}));
+  rows('To Do').slice(1).filter(r => r[0]).forEach(r => db.tasks.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), state:/^done/i.test(r[3]) ? 'done' : /^rolled/i.test(r[3]) ? 'rolled' : '', doneSec:String(r[4] || ''), ts:String(r[5] || ''), id:String(r[6] || tdId())}, r[7] ? {chain:String(r[7])} : {}, /end of day/i.test(r[3]) ? {auto:true} : {})));
+  rows('What I Did').slice(1).filter(r => r[0]).forEach(r => db.did.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), ts:String(r[3] || ''), id:String(r[4] || tdId()), taskId:String(r[5] || '')}, r[6] ? {chain:String(r[6])} : {})));
+  rows('To Do History').slice(1).filter(r => r[0]).forEach(r => db.taskLog.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), what:String(r[3]), chain:String(r[4])}));
+  const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
+  const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
+  return db;
+}
+
+// ---------------- OneDrive folder (File System Access API) ----------------
+const FS_OK = 'showDirectoryPicker' in window;
+let dirHandle = null, saveTimer = null, retryTimer = null, saving = false, again = false, lastSaved = null, saveState = 'local', saveErr = '', dirty = false;
+const idb = (mode, fn) => new Promise((res, rej) => { const o = indexedDB.open('embroideryPortal', 1); o.onupgradeneeded = () => o.result.createObjectStore('kv');
+  o.onsuccess = () => { const t = o.result.transaction('kv', mode), r = fn(t.objectStore('kv')); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }; o.onerror = () => rej(o.error); });
+const idbGet = k => idb('readonly', s => s.get(k)).catch(() => null);
+const idbSet = (k, v) => idb('readwrite', s => s.put(v, k)).catch(() => null);
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 700); if (dirHandle) setSave('saving'); }
+async function saveNow(){
+  clearTimeout(retryTimer);
+  if (!dirHandle){ setSave('local'); return; }
+  if (saving){ again = true; return; }
+  if (!(await permOk(dirHandle, false))){ setSave('reconnect'); return; }
+  saving = true; setSave('saving');
+  try {
+    const fh = await dirHandle.getFileHandle(XLSX_NAME, {create:true});
+    const w = await fh.createWritable(); await w.write(new Blob([buildWorkbook()])); await w.close();
+    lastSaved = new Date(); dirty = false; setSave('saved');
+  } catch(e){
+    saveErr = e && e.name || 'Error'; setSave('error');
+    retryTimer = setTimeout(saveNow, 10000);   // usually the file is open in Excel; try again
+  }
+  saving = false;
+  if (again){ again = false; saveNow(); }
+}
+function setSave(s){
+  saveState = s; const p = document.getElementById('savePill');
+  const t = lastSaved ? lastSaved.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+  const map = {
+    unsupported: ['warn', '&#9888; Open in Edge or Chrome to save to Excel'],
+    local: ['warn', dirHandle ? 'Not saved yet' : '&#9729; Connect Excel'],
+    reconnect: ['warn', '&#9729; Reconnect Excel'],
+    saving: ['', 'Saving&hellip;'],
+    saved: ['ok', '&#10003; Saved to Excel ' + t],
+    error: ['err', /NoModificationAllowed|InvalidState/.test(saveErr) ? '&#9888; Can&rsquo;t save: close ' + esc(XLSX_NAME) + ' in Excel' : '&#9888; Can&rsquo;t save (' + esc(saveErr) + '). Click to try again']
+  };
+  const [cls, html] = map[s] || map.local;
+  p.className = 'savepill ' + cls; p.innerHTML = html;
+  p.title = s === 'saved' ? 'Saving to the "' + (dirHandle ? dirHandle.name : '') + '" folder. Click to pick a different folder.' : s === 'error' ? 'Retrying every 10 seconds. Click to try now.' : '';
+}
+async function permOk(h, ask){ const o = {mode:'readwrite'}; if ((await h.queryPermission(o)) === 'granted') return true; return ask ? (await h.requestPermission(o)) === 'granted' : false; }
+async function pickFolder(){
+  try {
+    const h = await window.showDirectoryPicker({id:'embroideryPortal', mode:'readwrite', startIn:'documents'});
+    dirHandle = h; await idbSet('dir', h); await afterConnect();
+  } catch(e){ if (e.name !== 'AbortError') toast('Couldn&rsquo;t open that folder (' + esc(e.name) + ').'); }
+}
+document.getElementById('savePill').onclick = async () => {
+  if (saveState === 'unsupported') return;
+  if (saveState === 'error'){ saveNow(); return; }
+  if (saveState === 'reconnect' && dirHandle){ if (await permOk(dirHandle, true)) await afterConnect(); return; }
+  if (saveState === 'saved' && !confirm('Saving to the "' + dirHandle.name + '" folder.\n\nPick a different folder?')) return;
+  pickFolder();
+};
+async function afterConnect(){
+  let file = null;
+  try { const fh = await dirHandle.getFileHandle(XLSX_NAME); file = readWorkbook(await (await fh.getFile()).arrayBuffer()); }
+  catch(e){ if (e.name !== 'NotFoundError'){ toast('Couldn&rsquo;t read ' + esc(XLSX_NAME) + ' (' + esc(e.name) + '). Is it open in Excel?'); setSave('error'); return; } }
+  if (file){
+    const browserNewer = DB.logos.length && DB.savedAt && file.savedAt && DB.savedAt > file.savedAt && JSON.stringify(DB.logos) !== JSON.stringify(file.logos);
+    if (browserNewer && confirm('This browser has changes from ' + new Date(DB.savedAt).toLocaleString() + ' that aren’t in the Excel file yet (saved ' + new Date(file.savedAt).toLocaleString() + ').\n\nOK = keep this browser’s version and save it to Excel\nCancel = use the Excel file')){
+      touch();
+    } else {
+      DB = file; dirty = false; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} lastSaved = file.savedAt ? new Date(file.savedAt) : null; setSave('saved');
+    }
+  } else { touch(); }
+  await checkSeed(); if (startTodo()) touch(); render();
+}
+async function boot(){
+  if (!FS_OK){ setSave('unsupported'); return; }
+  const h = await idbGet('dir');
+  if (!h){ setSave('local'); return; }
+  dirHandle = h;
+  if (await permOk(h, false)) await afterConnect(); else setSave('reconnect');
+}
+window.addEventListener('beforeunload', e => { if (dirHandle && dirty){ e.preventDefault(); e.returnValue = ''; } });   // changes not in Excel yet
+// EP v1.07: look for newly copied live-portal logos (portal-logos.json) every 5 minutes and when you come back to this tab (v1.08: they're added right away)
+async function recheckSeed(){ if (!dirHandle || saveState === 'reconnect' || saveState === 'unsupported' || !(await permOk(dirHandle, false))) return; await checkSeed(); }
+setInterval(recheckSeed, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') recheckSeed(); });
+
+// Logos copied from the live portal (portal-logos.json in the same folder)
+let seedNew = [], seedSkipped = new Set();   // seedSkipped: "Not now" hides these until the page is refreshed
+async function applySewSent(){   // EP v1.14: when it moved to Pending Sew Out in NetSuite; a date you entered or marked always wins
+  let arr; try { arr = JSON.parse(await (await (await dirHandle.getFileHandle(SEWSENT_NAME)).getFile()).text()); } catch(e){ return; }
+  if (!Array.isArray(arr) || !arr.length) return;
+  const keep = []; let n = 0;
+  arr.forEach(x => { const l = DB.logos.find(z => String(z.nsId) === String(x.nsId)); if (!l){ keep.push(x); return; } if (l.sewSentDate || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x.at || '')) return;
+    l.sewSentDate = x.at.slice(0, 10); l.sewSentTime = x.at.slice(11, 16); n++;
+    log(l, 'Edit', 'Sent to Barrett: ' + fmt(x.at) + ' ' + time12(x.at) + ' (when it moved to Pending Sew Out in NetSuite)', AUTO); });
+  try { const w = await (await dirHandle.getFileHandle(SEWSENT_NAME)).createWritable(); await w.write(JSON.stringify(keep)); await w.close(); } catch(e){}
+  if (n){ touch(); const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+}
+async function applySubmitted(){   // EP v1.16: "Submitted in the live portal by X" for logos copied before v1.15
+  let arr; try { arr = JSON.parse(await (await (await dirHandle.getFileHandle(SUBMITTED_NAME)).getFile()).text()); } catch(e){ return; }
+  if (!Array.isArray(arr) || !arr.length) return;
+  const keep = []; let n = 0;
+  arr.forEach(x => { const l = DB.logos.find(z => String(z.nsId) === String(x.nsId)); if (!l){ keep.push(x); return; } if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x.at || '')) return;
+    if (DB.history.some(h => h.id === l.id && /^Submitted in the live portal/.test(h.what))) return;
+    DB.history.push({ts:x.at.slice(0, 16) + ':00', id:l.id, logo:l.logo, account:l.account, kind:'Added', what:'Submitted in the live portal' + (x.by ? ' by ' + x.by : ''), by:x.by || 'Live portal'}); n++; });
+  try { const w = await (await dirHandle.getFileHandle(SUBMITTED_NAME)).createWritable(); await w.write(JSON.stringify(keep)); await w.close(); } catch(e){}
+  if (n){ touch(); const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+}
+async function clearSeedFile(){ try { const w = await (await dirHandle.getFileHandle(SEED_NAME)).createWritable(); await w.write('[]'); await w.close(); } catch(e){} }   // so a logo you delete later can't come back
+async function checkSeed(){
+  seedNew = []; let inFile = 0;
+  try {
+    const arr = JSON.parse(await (await (await dirHandle.getFileHandle(SEED_NAME)).getFile()).text()); inFile = (Array.isArray(arr) ? arr : arr.logos || []).length;
+    const have = new Set(DB.logos.map(l => String(l.nsId || '')).filter(Boolean));
+    seedNew = (Array.isArray(arr) ? arr : arr.logos || []).filter(x => x && x.nsId && !have.has(String(x.nsId)) && !seedSkipped.has(String(x.nsId)));
+  } catch(e){}
+  if (seedNew.length) addSeedAuto(); else { showBanner(); if (inFile) clearSeedFile(); }
+  await applySewSent(); await applySubmitted(); await applyTodoImport();
+}
+function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
+  const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
+  seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; delete l.submittedAt; delete l.submittedBy; DB.logos.push(l);
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x.submittedAt || '')) DB.history.push({ts:x.submittedAt.slice(0, 16) + ':00', id:l.id, logo:l.logo, account:l.account, kind:'Added', what:'Submitted in the live portal' + (x.submittedBy ? ' by ' + x.submittedBy : ''), by:x.submittedBy || 'Live portal'});   // EP v1.15
+    log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')', AUTO);
+    (DB.notifs = DB.notifs || []).push({ts:nowStamp(), id:l.id, text:'New from the live portal: #' + l.nsId + ' ' + l.logo + (l.account ? ' (' + l.account + ')' : ''), read:false}); });
+  seedNew = []; touch(); showBanner(); renderNotifs();
+  clearSeedFile();
+  const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render();   // don't redraw while you're typing
+  toast('Added ' + names.length + ' new logo' + (names.length === 1 ? '' : 's') + ' from the live portal: ' + esc(names.join(', ')));
+}
+function importSeed(){
+  seedNew.forEach(x => { const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; DB.logos.push(l); log(l, 'Added', 'Copied from the live portal (status ' + l.status + ')'); });
+  toast('Added ' + seedNew.length + ' logo' + (seedNew.length === 1 ? '' : 's') + ' from the live portal.'); seedNew = []; touch(); showBanner(); render();
+}
+function showBanner(){
+  const b = document.getElementById('banner');
+  if (seedNew.length){ b.hidden = false; b.innerHTML = '<b>' + seedNew.length + ' logo' + (seedNew.length === 1 ? '' : 's') + ' copied from the live portal</b> aren&rsquo;t in your Embroidery Portal yet. <button class="btn small" id="seedAdd">Add them</button> <button class="btn light small" id="seedSkip">Not now</button>';
+    document.getElementById('seedAdd').onclick = importSeed; document.getElementById('seedSkip').onclick = () => { seedNew.forEach(x => seedSkipped.add(String(x.nsId))); seedNew = []; showBanner(); }; return; }
+  if (!dirHandle && FS_OK && DB.logos.length){ b.hidden = false; b.innerHTML = '&#9888; Your logos are only saved in this browser right now. Click <b>Connect Excel</b> (top right) and pick your OneDrive folder so they save to Excel.'; return; }
+  b.hidden = true; b.innerHTML = '';
+}
+
+// ---------------- Files (in the "Files" folder beside the Excel) ----------------
+const safeName = s => String(s || '').replace(/[\\/:*?"<>|#]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 80);
+async function logoDir(l){ if (!l.dir) l.dir = safeName(l.id + ' ' + l.logo); const root = await dirHandle.getDirectoryHandle(FILES_DIR, {create:true}); return root.getDirectoryHandle(l.dir, {create:true}); }
+async function exists(d, name){ try { await d.getFileHandle(name); return true; } catch(e){ return false; } }
+async function saveFiles(l, files){
+  if (!dirHandle){ toast('Connect Excel first (top right) so files can be saved in your OneDrive folder.'); return []; }
+  if (!(await permOk(dirHandle, true))){ setSave('reconnect'); return []; }
+  const d = await logoDir(l), names = [];
+  for (const f of files){
+    let name = safeName(f.name) || 'file', n = 2; const dot = name.lastIndexOf('.'), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+    while (await exists(d, name)) name = base + ' (' + (n++) + ')' + ext;
+    const w = await (await d.getFileHandle(name, {create:true})).createWritable(); await w.write(f); await w.close();
+    l.files.push({name, added:todayIso()}); names.push(name);
+  }
+  if (names.length) log(l, 'File', 'Added ' + names.join(', '));
+  return names;
+}
+async function getFile(l, name){ const d = await logoDir(l); return (await d.getFileHandle(name)).getFile(); }
+async function openFile(l, name){
+  if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Reconnect Excel first (top right).'); return; }
+  try { const f = await getFile(l, name), url = URL.createObjectURL(f);
+    if (/\.(pdf|png|jpe?g|gif|webp|svg|txt)$/i.test(name)) window.open(url, '_blank'); else { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch(e){ toast('Couldn&rsquo;t find ' + esc(name) + ' in the Files folder.'); }
+}
+async function removeFile(l, name){
+  if (!confirm('Remove "' + name + '" from this logo?\n\nIt moves to the Files\\DELETE folder, so you can delete it yourself later.')) return;
+  try {
+    const d = await logoDir(l), f = await getFile(l, name);
+    const del = await (await (await dirHandle.getDirectoryHandle(FILES_DIR, {create:true})).getDirectoryHandle(DELETE_DIR, {create:true})).getDirectoryHandle(l.dir, {create:true});
+    const w = await (await del.getFileHandle(name, {create:true})).createWritable(); await w.write(f); await w.close();
+    await d.removeEntry(name);
+  } catch(e){}
+  l.files = l.files.filter(x => x.name !== name); if (l.sheetFile === name) l.sheetFile = '';
+  log(l, 'File', 'Removed ' + name + ' (moved to Files\\DELETE)'); touch(); render();
+}
+async function downloadAll(l){
+  if (!l.files.length){ toast('No files on this logo yet.'); return; }
+  if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Reconnect Excel first (top right).'); return; }
+  const zip = new JSZip();
+  for (const x of l.files){ try { zip.file(x.name, await getFile(l, x.name)); } catch(e){} }
+  const url = URL.createObjectURL(await zip.generateAsync({type:'blob'})), a = document.createElement('a');
+  a.href = url; a.download = safeName(l.logo || l.id) + '.zip'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// ---------------- UI state ----------------
+let state = {tab:'dashboard', open:{}, collapsed:{}, sort:{}, group:{}, search:{}, audit:{q:'', type:'', from:'', to:''}};
+try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
+state.open = {};
+state.tab = sessionStorage.getItem(SS_TAB) || 'dashboard';   // opening the portal starts on the Dashboard; a refresh keeps the tab
+if (!TABS.some(t => t.key === state.tab)) state.tab = 'dashboard';
+let msearch = '', auditOpen = {};
+const save = () => { try { sessionStorage.setItem(SS_TAB, state.tab); localStorage.setItem(LS_UI, JSON.stringify(Object.assign({}, state, {open:{}, tab:''}))); } catch(e){} };
+function toast(msg){ const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('on'); clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('on'), 3600); }
+function tabOfStatus(st){ const t = TABS.find(x => x.sections && x.sections.includes(st)); return t ? t.key : 'queue'; }
+function openLogo(l){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = tabOfStatus(l.status); state.open = {}; state.open[l.id] = true; save(); render();
+  setTimeout(() => { const r = document.querySelector('.row[data-id="' + l.id + '"]'); if (r) r.scrollIntoView({block:'center'}); }, 30); }
+
+// ---------------- Columns ----------------
+function columns(tab, section){
+  const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
+  const cols = [
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + '</span></div>'},
+    {k:'account', h:'Account', v:l => l.account.toLowerCase(), td:l => '<span class="acct">' + esc(l.account) + '</span>'},
+    {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
+    {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted, subUrg(l))},
+    {k:'ih', h:'In Hand Date', v:l => l.inHand || '9999', td:l => dateOnly(l.inHand, DONE.includes(l.status) ? '' : urg(off(l.inHand)))},
+    {k:'type', h:'Type', v:l => l.type, td:l => esc(l.type)}
+  ];
+  const extra = tab.extraBySection && tab.extraBySection[section] ? tab.extraBySection[section]
+    : (tab.extraMixed && section && !tab.sections.includes(section)) ? tab.extraMixed : tab.extra;
+  if (extra && extra.f === 'sentOrApproved'){
+    const pickD = l => l.status === 'Need to Upload' ? l.approvedDate : l.sentDate;
+    cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
+  } else if (extra && extra.f === 'photo'){
+    cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>'});
+    cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp red">Late</span>' : '<span class="img-pend">Pending</span>'});
+  } else if (extra){
+    cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
+  }
+  cols.push({k:'status', h:'Status', v:l => STATUSES.indexOf(l.status), td:l => { const c = STATUS_COLORS[l.status] || STATUS_COLORS['New Request'];
+    return '<select class="st" data-id="' + esc(l.id) + '" onclick="event.stopPropagation()" style="background:' + c.bg + ';color:' + c.fg + ';border-color:' + c.bg + ';font-weight:600">' +
+      STATUSES.map(s => '<option' + (s === l.status ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>'; }});
+  return cols;
+}
+
+// ---------------- Logo card (the same 6 boxes in the same places in every tab) ----------------
+const f = (label, input, full) => '<div class="f' + (full ? ' full' : '') + '"><label>' + label + '</label>' + input + '</div>';
+const sel = (field, l, opts) => '<select data-edit="' + field + '" data-id="' + esc(l.id) + '"><option value=""></option>' + opts.map(o => '<option' + (o === l[field] ? ' selected' : '') + '>' + esc(o) + '</option>').join('') +
+  (l[field] && !opts.includes(l[field]) ? '<option selected>' + esc(l[field]) + '</option>' : '') + '</select>';
+const inp = (field, l, extra) => '<input data-edit="' + field + '" data-id="' + esc(l.id) + '" value="' + esc(l[field]) + '"' + (extra || '') + '>';
+function requestLink(l){ const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id)}); if (l.inHand) p.set('inhand', l.inHand); return REQUEST_URL + '#' + p.toString().replace(/\+/g, '%20'); }
+function approverLink(l){
+  const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id), ver:String(l.ver)});
+  if (l.count) p.set('count', l.count); if (l.colorType) p.set('colortype', l.colorType); if (l.threadNotes) p.set('thread', l.threadNotes);
+  const m = (l.size || '').match(/([\d.]+)\s*x\s*([\d.]+)/i); if (m){ p.set('h', m[1]); p.set('w', m[2]); } else if (l.size && l.size !== 'DST provided') p.set('size', l.size);
+  return APPROVER_URL + '#' + p.toString().replace(/\+/g, '%20');
+}
+function sewBox(l){
+  let inner;
+  if (l.sewSentDate && !l.sewReq){
+    inner = '<div class="ok">&#10003; Sent to Barrett on ' + sentText(l) + '</div><div class="btns"><button class="btn light small" data-x="req-open" data-id="' + esc(l.id) + '">Start a new request</button></div>';
+  } else if (l.sewReq){
+    const r = l.sewReq;
+    inner = '<div class="mailhead"><div><b>To</b>' + esc(BARRETT_TO.join('; ')) + '</div><div><b>Cc</b>' + esc(BARRETT_CC.join('; ')) + '</div><div><b>Subject</b>' + esc(r.subject) + '</div></div>' +
+      '<iframe class="mailbody" sandbox="" srcdoc="' + esc(r.html) + '"></iframe>' +
+      (l.files.length ? '<div class="mini-h">Attach in Outlook</div>' + l.files.map(x => '<label class="chk"><input type="checkbox" class="att" data-id="' + esc(l.id) + '" value="' + esc(x.name) + '"' + (/\.(dst|pdf)$/i.test(x.name) ? ' checked' : '') + '> ' + esc(x.name) + '</label>').join('') : '') +
+      '<div class="btns"><button class="btn light small" data-x="req-copy" data-id="' + esc(l.id) + '">Copy email</button><button class="btn light small" data-x="req-outlook" data-id="' + esc(l.id) + '">Open in Outlook</button>' +
+      '<button class="btn small" data-x="req-sent" data-id="' + esc(l.id) + '">Mark sent to Barrett</button><button class="btn light small" data-x="req-open" data-id="' + esc(l.id) + '">Change answers</button></div>' +
+      '<div class="note">Copy the email, open Outlook (To, Cc, and Subject are filled in), paste it, attach the files, and send. Then click <b>Mark sent to Barrett</b>.</div>';
+  } else {
+    inner = '<div class="btns" style="margin-top:0"><button class="btn small" data-x="req-open" data-id="' + esc(l.id) + '">Submit Sew Out Request</button></div>' +
+      (l._waiting ? '<div class="note">Waiting for the Sew-Out Request page&hellip; pick the options there and click <b>Send to NetSuite</b>. It comes back here.</div>'
+                  : '<div class="note">Opens the Sew-Out Request page first, then sends to Barrett with the DST and color card.</div>');
+  }
+  inner += '<div class="f" style="margin-top:12px"><label>Sent to Barrett (date and time)</label><div style="display:flex;gap:6px">' +
+    '<input type="date" data-edit="sewSentDate" data-id="' + esc(l.id) + '" value="' + esc(l.sewSentDate) + '"><input type="time" data-edit="sewSentTime" data-id="' + esc(l.id) + '" value="' + esc(sentTime(l)) + '"></div>' +
+    (!l.sewSentDate && sentStamp(l) ? '<div class="note">The 24-hour clock counts from when it moved to Pending Sew Out: ' + sentText(l) + '.</div>' : '') + '</div>';
+  return '<div class="box"><h3><span class="num">4</span>Sew-out request to Barrett</h3>' + inner + '</div>';
+}
+function sheetBox(l){
+  return '<div class="box"><h3><span class="num">5</span>Approval sheet</h3><div class="btns" style="margin-top:0">' +
+    '<button class="btn light small" data-x="appr-open" data-id="' + esc(l.id) + '">Open Sew-Out Approver</button>' +
+    '<button class="btn light small" data-x="appr-upload" data-id="' + esc(l.id) + '">Upload PDF</button>' +
+    '<button class="btn small" data-x="appr-sent" data-id="' + esc(l.id) + '">Mark sent</button></div>' +
+    (l.sheetFile ? '<div class="note">Uploaded: <b>' + esc(l.sheetFile) + '</b></div>' : '') +
+    (l.sentDate ? '<div class="note ok">&#10003; Sent to ' + esc(l.rep || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>'
+                : '<div class="note">Make the sheet in the Sew-Out Approver, download the PDF, upload it here, email it to ' + esc(l.rep || 'the rep') + ' from Outlook, then click Mark sent.</div>') + '</div>';
+}
+function card(l, ncols){
+  const id = esc(l.id);
+  const fileRows = l.files.length ? l.files.map(x => '<div class="file"><span class="ftype">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="fname" title="' + esc(x.name) + '">' + esc(x.name) + '</span>' +
+    '<button class="btn light small" data-x="file-open" data-id="' + id + '" data-name="' + esc(x.name) + '">Open</button><button class="btn danger small" data-x="file-rm" data-id="' + id + '" data-name="' + esc(x.name) + '">Remove</button></div>').join('')
+    : '<div class="note" style="margin-top:0">No files yet.</div>';
+  const notes = DB.notes.filter(n => n.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
+  const hist = DB.history.filter(h => h.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
+  const histLine = h => { const i = h.what.indexOf(':'); const w = i > 0 && i < 40 ? '<b>' + esc(h.what.slice(0, i)) + '</b>' + esc(h.what.slice(i)) : esc(h.what); return '<div>' + fmt(h.ts) + ' ' + time12(h.ts) + ' &middot; ' + w + (h.by ? ' &middot; ' + esc(h.by) : '') + '</div>'; };
+  return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '"><div class="card">' +
+    '<div>' +
+      '<div class="box"><h3><span class="num">1</span>Logo details<span class="reqno">Request ' + esc(reqNo(l)) + '</span></h3><div class="grid">' +
+        f('Account', inp('account', l, ' list="acctList"')) +
+        f('Logo / Design Name', inp('logo', l)) +
+        f('Request Type', '<input value="' + esc(l.type) + '" disabled>') +
+        f('Department', sel('dept', l, DEPTS)) +
+        f('Size', inp('size', l)) +
+        f('Size notes', inp('sizeNotes', l)) +
+        f('Number of Thread Colors', sel('count', l, SF_COUNTS)) +
+        f('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
+        f('Thread Color Notes', '<textarea data-edit="threadNotes" data-id="' + id + '">' + esc(l.threadNotes) + '</textarea>', true) +
+        f('Placement', inp('placement', l)) +
+        f('In Hand Date', '<input type="date" data-edit="inHand" data-id="' + id + '" value="' + esc(l.inHand) + '">') +
+        f('File Version', '<div class="stepper"><button class="sbtn" data-act="ver-" data-id="' + id + '">&minus;</button><span class="sval">v' + l.ver + '</span><button class="sbtn" data-act="ver+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="ver-edit" data-id="' + id + '">Edit</button></div>') +
+        f('Revisions', '<div class="stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="sval rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
+        (l.submitNotes ? f('Notes from the request', '<textarea disabled>' + esc(l.submitNotes) + '</textarea>', true) : '') +
+      '</div></div>' +
+      '<div class="box"><h3><span class="num">2</span>Internal notes</h3><textarea class="note-in" data-id="' + id + '" style="width:100%;min-height:50px;border:1px solid #d6dbe4;border-radius:6px;padding:6px 8px;font:inherit;font-size:13px" placeholder="Add an internal note&hellip;"></textarea>' +
+        '<div class="btns"><button class="btn small" data-x="note-add" data-id="' + id + '">Add note</button></div>' +
+        (notes.length ? '<div class="hist" style="margin-top:8px">' + notes.map(n => '<div>' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.text) + ' &middot; ' + esc(n.by) + '</div>').join('') + '</div>' : '') + '</div>' +
+    '</div>' +
+    '<div>' +
+      '<div class="box"><h3><span class="num">3</span>Files <button class="btn light small" style="margin-left:auto" data-x="file-zip" data-id="' + id + '">Download all (.zip)</button></h3>' + fileRows +
+        '<div class="btns"><button class="btn light small" data-x="file-add" data-id="' + id + '">+ Add files</button></div></div>' +
+      sewBox(l) + sheetBox(l) +
+      '<div class="box"><h3 class="hist-toggle" style="cursor:pointer;margin-bottom:0"><span class="num">6</span>History <span class="muted" style="font-size:11px;text-transform:none;letter-spacing:0;font-family:Aptos,sans-serif">(newest first)</span><span class="hchev" style="margin-left:auto;color:var(--grey)">&#9656;</span></h3>' +
+        '<div class="hist" style="display:none;margin-top:10px">' + (hist.length ? hist.map(histLine).join('') : '<div>No history yet.</div>') + '</div></div>' +
+    '</div>' +
+    '<div class="foot"><button class="btn light small" data-x="archive" data-id="' + id + '">Archive</button><button class="btn danger small" data-x="delete" data-id="' + id + '">Delete</button></div>' +
+  '</div></td></tr>';
+}
+
+// Answers coming back from the Sew-Out Request page (same site)
+window.addEventListener('message', e => {
+  if (e.origin !== location.origin || !e.data || e.data.type !== 'rhoback-sewout-request') return;
+  const l = byId(e.data.id); if (!l) return;
+  const rn = 'Request ' + reqNo(l);
+  l.sewReq = {subject:(e.data.subject || '') + ' — ' + rn, html:'<p style="margin:0 0 10px"><b>' + esc(rn) + '</b></p>' + (e.data.html || ''), text:rn + '\n\n' + (e.data.text || ''), urgency:e.data.urgency, fabricColor:e.data.fabricColor, substitutions:e.data.substitutions, notes:e.data.notes};
+  delete l._waiting; log(l, 'Email', 'Sew-out request filled in (' + (e.data.urgency || '') + ')');
+  try { e.source.postMessage({type:'rhoback-sewout-received', id:e.data.id}, e.origin); } catch(err){}
+  touch(); state.open[l.id] = true; render(); toast('Sew-out request came back for ' + esc(l.logo) + '. Copy the email, send it, then click Mark sent to Barrett.');
+});
+async function copyHtml(html, text){ try { await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html], {type:'text/html'}), 'text/plain':new Blob([text || ''], {type:'text/plain'})})]); return true; } catch(e){ try { await navigator.clipboard.writeText(text || ''); return true; } catch(e2){ return false; } } }
+let fileTarget = null;
+document.getElementById('fileIn').addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = ''; if (!files.length || !fileTarget) return;
+  const {l, sheet} = fileTarget; fileTarget = null;
+  const names = await saveFiles(l, files); if (!names.length) return;
+  if (sheet){ l.sheetFile = names[0]; }
+  touch(); render(); toast('Saved ' + esc(names.join(', ')) + ' in the Files folder.');
+});
+document.addEventListener('click', async e => {
+  const x = e.target.closest('[data-x]'); if (!x) return;
+  const l = byId(x.dataset.id), act = x.dataset.x; if (!l) return;
+  if (act === 'req-open'){ l._waiting = true; l.sewReq = null; window.open(requestLink(l), 'sewOutRequest'); render(); }
+  if (act === 'req-copy'){ toast(await copyHtml(l.sewReq.html, l.sewReq.text) ? '&#10003; Email copied. Paste it into Outlook.' : 'Couldn&rsquo;t copy. Try again.'); }
+  if (act === 'req-outlook'){ location.href = 'mailto:' + BARRETT_TO.join(',') + '?cc=' + encodeURIComponent(BARRETT_CC.join(',')) + '&subject=' + encodeURIComponent(l.sewReq.subject); }
+  if (act === 'req-sent'){
+    const files = [...document.querySelectorAll('.att[data-id="' + l.id + '"]:checked')].map(c => c.value);
+    l.sewSentDate = todayIso(); l.sewSentTime = nowStamp().slice(11, 16); l.sewReq = null; log(l, 'Email', 'Sew-out request sent to Barrett' + (files.length ? ' (' + files.join(', ') + ')' : ''));
+    setStatus(l, 'Pending Sew Out', AUTO); touch(); openLogo(l); toast('Moved to Barrett Queue &rarr; Pending Sew Out.');
+  }
+  if (act === 'appr-open'){ window.open(approverLink(l), 'sewOutApprover'); }
+  if (act === 'appr-upload'){ const fi = document.getElementById('fileIn'); fi.accept = 'application/pdf,.pdf'; fileTarget = {l, sheet:true}; fi.click(); }
+  if (act === 'appr-sent'){
+    if (!l.sheetFile){ toast('Upload the approval sheet PDF first.'); return; }
+    l.sentDate = todayIso(); log(l, 'Email', 'Approval sheet sent to ' + (l.rep || 'the rep') + ' (' + l.sheetFile + ')');
+    setStatus(l, 'Sent for Approval', AUTO); touch(); openLogo(l); toast('Moved to Approvals &rarr; Sent for Approval.');
+  }
+  if (act === 'file-add'){ const fi = document.getElementById('fileIn'); fi.accept = ''; fileTarget = {l, sheet:false}; fi.click(); }
+  if (act === 'file-open') openFile(l, x.dataset.name);
+  if (act === 'file-rm') removeFile(l, x.dataset.name);
+  if (act === 'file-zip') downloadAll(l);
+  if (act === 'note-add'){
+    const t = document.querySelector('.note-in[data-id="' + l.id + '"]'), text = t ? t.value.trim() : ''; if (!text) return;
+    DB.notes.push({ts:nowStamp(), id:l.id, text, by:ME}); log(l, 'Note', 'Internal note: ' + text); touch(); render();
+  }
+  if (act === 'archive'){ setStatus(l, 'Archive'); touch(); render(); toast(esc(l.logo) + ' moved to Archive (Completed tab).'); }
+  if (act === 'delete'){
+    if (!confirm('Delete "' + l.logo + '" for good?\n\nArchive keeps it instead. Its history stays in the Audit tab, and its files stay in the Files folder.')) return;
+    log(l, 'Deleted', 'Deleted ' + l.logo); DB.logos = DB.logos.filter(z => z !== l); touch(); render();
+  }
+}, true);
+const LABELS = {dept:'Department', account:'Account', logo:'Logo / Design Name', size:'Size', sizeNotes:'Size notes', count:'Number of Thread Colors', colorType:'Color Type', threadNotes:'Thread Color Notes', placement:'Placement', inHand:'In Hand Date', sewSentDate:'Sent to Barrett date', sewSentTime:'Sent to Barrett time'};
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-edit]');
+  if (el){ const l = byId(el.dataset.id), k = el.dataset.edit; if (!l) return; const old = l[k] || '', v = el.value.trim(); if (old === v) return;
+    const show = x => !x ? '(blank)' : (k === 'inHand' || k === 'sewSentDate') ? fmt(x) : k === 'sewSentTime' ? time12('T' + x) : x;
+    l[k] = v; log(l, 'Edit', LABELS[k] + ': ' + show(old) + ' > ' + show(v)); touch(); render(); return; }
+  const s = e.target.closest('select.st'); if (!s) return;
+  const l = byId(s.dataset.id); if (!l) return; setStatus(l, s.value); touch(); render();
+});
+
+// ---------------- Audit tab ----------------
+function renderAudit(tab){
+  const af = state.audit, q = af.q.toLowerCase();
+  let rows = DB.history.filter(e => (!af.type || e.kind === af.type) && (!q || (e.logo + ' ' + e.account + ' ' + e.what + ' ' + e.by).toLowerCase().includes(q)) &&
+    (!af.from || e.ts.slice(0, 10) >= af.from) && (!af.to || e.ts.slice(0, 10) <= af.to));
+  const days = [...new Set(rows.map(e => e.ts.slice(0, 10)))].sort().reverse();   // newest first: Today on top
+  const label = d => { const n = off(d); return n === 0 ? 'Today' : n === -1 ? 'Yesterday' : parseIso(d).toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'}); };
+  let html = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open that logo.</div>' +
+    '<div class="bar"><input id="aSearch" placeholder="Search logo, account, change, or person&hellip;" value="' + esc(af.q) + '">' +
+    '<select id="aType"><option value="">All activity</option>' + Object.keys(KIND_COLOR).map(k => '<option' + (af.type === k ? ' selected' : '') + '>' + k + '</option>').join('') + '</select>' +
+    '<label class="muted" style="font-size:12px">From <input type="date" id="aFrom" value="' + esc(af.from) + '" style="flex:none;min-width:0"></label>' +
+    '<label class="muted" style="font-size:12px">To <input type="date" id="aTo" value="' + esc(af.to) + '" style="flex:none;min-width:0"></label>' +
+    '<button class="btn light" id="aClear">Clear</button></div>';
+  html += days.length ? days.map(d => {
+    const open = d in auditOpen ? auditOpen[d] : off(d) === 0, items = rows.filter(e => e.ts.slice(0, 10) === d).sort((a, b) => b.ts.localeCompare(a.ts));
+    return '<div class="sec"><div class="sec-head aud-day" data-day="' + d + '"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span><span class="name">' + label(d) + '</span><span class="cnt">' + items.length + '</span></div>' +
+      (open ? '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:9%"><col style="width:22%"><col style="width:17%"><col style="width:9%"><col style="width:33%"><col style="width:10%"></colgroup>' +
+        '<thead><tr><th>Time</th><th>Logo</th><th>Account</th><th>Type</th><th>What happened</th><th>By</th></tr></thead><tbody>' +
+        items.map(e => { const kc = KIND_COLOR[e.kind] || KIND_COLOR.Edit; return '<tr class="row aud-row" data-id="' + esc(e.id) + '"><td>' + time12(e.ts) + '</td><td class="wrap"><span class="logo">' + esc(e.logo) + '</span></td><td class="wrap acct">' + esc(e.account) +
+          '</td><td><span class="pill" style="color:' + kc[0] + ';background:' + kc[1] + '">' + esc(e.kind) + '</span></td><td class="wrap">' + esc(e.what) + '</td><td>' + esc(e.by) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>' : '') + '</div>';
+  }).join('') : '<div class="empty">No activity yet.</div>';
+  document.getElementById('page').innerHTML = html;
+  const upd = () => { af.q = document.getElementById('aSearch').value; af.type = document.getElementById('aType').value; af.from = document.getElementById('aFrom').value; af.to = document.getElementById('aTo').value; save(); };
+  const sEl = document.getElementById('aSearch');
+  sEl.oninput = () => { upd(); const pos = sEl.selectionStart; render(); const n = document.getElementById('aSearch'); n.focus(); n.setSelectionRange(pos, pos); };
+  ['aType','aFrom','aTo'].forEach(id => document.getElementById(id).onchange = () => { upd(); render(); });
+  document.getElementById('aClear').onclick = () => { state.audit = {q:'', type:'', from:'', to:''}; save(); render(); };
+}
+
+// ---------------- Dashboard: Pipeline Overview ----------------
+function cardHead(title){ return '<div class="lcard-head"><div class="ridge"><span class="r"></span><span class="n"></span></div><div class="card-title">' + title + '</div></div>'; }
+function pipelineHtml(){ return '<div class="lcard">' + cardHead('Pipeline Overview') + '<div class="pipe">' + OPEN_STATUSES.map(st => '<div class="stage"><span class="count">' + DB.logos.filter(l => l.status === st).length + '</span>' + st + '</div>').join('') + '</div></div>'; }
+
+// ---------------- Submit Request (Parts 6-7 form) ----------------
+const SF_TIPS = {   // the live portal's hints and example text
+  'Club Colors':      {tip:"List all club colors using PMS colors or thread color names/numbers (e.g. Navy PMS 289, White). All converted to closest Madeira Polyneon 40 weight equivalent. Can provide PNG and we'll match colors.", ex:'e.g. Navy PMS 289, White, Gold PMS 124'},
+  'Color Coordinate': {tip:"Describe color sequence — which part gets which color (e.g. 'Border is white, fill is pink', 'Match the dog logo', 'Match the ridge'). Include special placement instructions.", ex:'e.g. Border white, fill pink, text black. Match collar on back.'},
+  'Tonal':            {tip:"Describe approach (e.g. 'Match shirt color', 'Tone-on-tone with collar').", ex:'e.g. Match shirt color, tone-on-tone navy'},
+  'Other / Special':  {tip:'Describe color requirements in detail. Include special instructions or combinations.', ex:'Describe color requirements...'}
+};
+const SF_DESC = {'Club Colors':'Specific club colors — matched to Madeira Polyneon 40 weight. Can eyedrop PNG/image if needed.', 'Color Coordinate':'Coordinate with elements — e.g. match the dog logo, match the ridge, match the collar.',
+  'Tonal':'Blends with garment — e.g. match shirt color, tone-on-tone with collar or ridge.', 'Other / Special':'Multiple types, varies by order, or none of the above. Add details below.'};
+const SF_COUNTS = ['1 color','2 colors','3 colors','4 colors','5 colors','6+ colors','Varies','N/A - Club Colors'];
+const SF_WORD = {'1 color':'One','2 colors':'Two','3 colors':'Three','4 colors':'Four','5 colors':'Five','6+ colors':'Six+','Varies':'Varies'};
+const REPS = ['Mason','Steve','Ryan','Will','Rob','Knox'];
+const sfBlank = () => ({rep:'', account:'', logo:'', placement:'', dept:'Wholesale', altName:'', type:'', h:'', w:'', sizeNotes:'', scratch:false, count:'', color:'', thread:'', start:'', date:'', notes:'', files:[], review:false, errs:[]});
+let sf = sfBlank();
+function bizDaysTo(iso){ const n = off(iso); return n === null ? null : n < 0 ? -1 : bizDays(n); }
+function sfSize(){ if (sf.type !== 'digitize') return 'DST provided'; return sf.h && sf.w ? sf.h + ' x ' + sf.w + ' in' : sf.h ? sf.h + ' in high' : sf.w ? sf.w + ' in wide' : ''; }
+function sfMissing(){
+  const m = [], club = sf.color === 'Club Colors';
+  if (!sf.dept) m.push('Department');
+  if (sf.dept === 'Wholesale'){ if (!sf.rep.trim()) m.push('Submitting on behalf of'); if (!sf.account.trim()) m.push('Account'); }
+  else if (!sf.altName.trim()) m.push('Name (school, program, or project)');
+  if (!sf.logo.trim()) m.push('Logo / Design Name');
+  if (!sf.type) m.push('Request Type'); if (sf.type === 'digitize' && !sf.h && !sf.w && !sf.sizeNotes.trim()) m.push('Size (a height, a width, or size notes)');
+  if (!club && !sf.count) m.push('Number of Thread Colors'); if (!sf.color) m.push('Color Type');
+  if (!sf.thread.trim() && !(sf.count === '1 color' && sf.color === 'Color Coordinate')) m.push('Thread Color Notes');
+  if (!sf.start) m.push('Does this logo have a start date?'); if (sf.start === 'yes' && !sf.date) m.push('Order Start Date');
+  return m;
+}
+function renderSubmit(tab){
+  const pick = on => on ? ' sf-on' : '';
+  const sec = (t, req, extra) => '<div class="sf-sec-row"><div class="sf-sec">' + t + (req ? ' <span class="req">*</span>' : '') + '</div>' + (extra || '') + '</div>';
+  const v = k => esc(sf[k]);
+  const accounts = [...new Set(DB.logos.map(l => l.account).filter(Boolean))].sort();
+  const reps = [...new Set(REPS.concat(DB.logos.map(l => l.rep).filter(Boolean)))].sort();
+  if (sf.review){
+    const row = (k, val) => '<tr><td class="rv-k">' + k + '</td><td>' + (val ? esc(val) : '<span class="muted">&mdash;</span>') + '</td></tr>';
+    document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">Check it, then click Submit.</div><div class="lcard sf"><table class="rv">' +
+      row('Department', sf.dept) + row('Submitting on behalf of', sf.dept === 'Wholesale' ? sf.rep : 'Noelle Thompson') +
+      (sf.dept === 'Wholesale' ? row('Account', sf.account) : row('Name (school, program, or project)', sf.altName)) + row('Logo / Design Name', sf.logo) + row('Placement', sf.placement) +
+      row('Request Type', sf.type === 'digitize' ? 'Digitize' : 'Sew-Out') + row('Size', sfSize()) + (sf.sizeNotes ? row('Size notes', sf.sizeNotes) : '') +
+      (sf.type === 'digitize' ? row('Creating from scratch ($75)', sf.scratch ? 'Yes' : 'No') : '') +
+      row('Number of Thread Colors', sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count) + row('Color Type', sf.color) + row('Thread Color Notes', sf.thread) +
+      row('Start date', sf.start === 'yes' ? fmt(sf.date) : 'No order yet') + row('Files', sf.files.map(x => x.name).join(', ')) + row('Notes', sf.notes) + '</table>' +
+      '<div class="btns" style="justify-content:flex-end;margin-top:20px"><button class="btn light" data-sf="back">&larr; Back</button><button class="btn" data-sf="submit">Submit</button></div></div>';
+    return;
+  }
+  const typeCard = (k, title, to, desc) => '<div class="sf-card' + pick(sf.type === k) + '" data-sf="type" data-v="' + k + '"><div class="sf-title">' + title + ' <span class="sf-to">&rarr; ' + to + '</span></div><div class="sf-desc">' + desc + '</div>' +
+    (k === 'digitize' && sf.type === 'digitize' ? '<div class="sf-size" data-stop="1"><div class="sf-size-lbl">Size <span class="req">*</span> <i>&mdash; enter a height, a width, or size notes</i></div>' +
+      '<div class="sf-hw"><div><div class="sf-mini">Height</div><div class="sf-unit"><input class="sf-in" placeholder="0.00" inputmode="decimal" data-num="1" data-sfv="h" value="' + v('h') + '"><span>in</span></div></div><div class="sf-x">&times;</div>' +
+      '<div><div class="sf-mini">Width</div><div class="sf-unit"><input class="sf-in" placeholder="0.00" inputmode="decimal" data-num="1" data-sfv="w" value="' + v('w') + '"><span>in</span></div></div></div>' +
+      '<div class="sf-mini" style="margin-top:8px">Size notes</div><input class="sf-in" data-sfv="sizeNotes" value="' + v('sizeNotes') + '" placeholder="please use best judgement for size (artist discretion)"></div>' : '') + '</div>';
+  const club = sf.color === 'Club Colors';
+  const notesOptional = sf.count === '1 color' && sf.color === 'Color Coordinate';
+  const tag = sf.color && (club || sf.count) ? '<span class="sf-tag">' + (club ? 'Club Colors' : ((SF_WORD[sf.count] ? SF_WORD[sf.count] + ' ' : '') + (sf.color === 'Color Coordinate' ? 'Color Coordinate' : 'Color ' + sf.color))) + '</span>' : '';
+  const bd = bizDaysTo(sf.date);
+  const W = sf.dept === 'Wholesale';   // other departments: Noelle is the rep, and a name replaces the account (EP v1.13)
+  document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + '</div>' +
+  '<datalist id="repList">' + reps.map(r => '<option value="' + esc(r) + '">').join('') + '</datalist>' +
+  '<div class="lcard sf">' +
+    '<div class="sf-red">&#9888; <b>One form per logo, please.</b> Submit a separate request for each individual logo. Each one is tracked as its own task. Do not combine multiple logos in a single submission.</div>' +
+    sec('Department', true) + '<div class="sf-depts">' + DEPTS.map(d => '<label class="sf-dept' + pick(sf.dept === d) + '"><input type="checkbox" data-sf="dept" data-v="' + esc(d) + '"' + (sf.dept === d ? ' checked' : '') + '> ' + esc(d) + '</label>').join('') + '</div>' +
+      (W ? '' : '<div class="sf-lav"><div class="sf-mini">Name (school, program, or project) <span class="req">*</span></div><input class="sf-in" list="acctList" data-sfv="altName" value="' + v('altName') + '" placeholder="e.g. QT Collegiate" style="max-width:420px">' +
+        '<div class="sf-italic">Used in place of the account name. You&rsquo;re the sales rep for ' + esc(sf.dept) + ' requests.</div></div>') +
+    sec('Who Is Submitting') + '<div class="sf-grid"><div><label class="sf-lbl">Submitted by</label><input class="sf-in" value="Noelle Thompson" disabled></div>' +
+      (W ? '<div><label class="sf-lbl">Submitting on behalf of <span class="req">*</span></label><input class="sf-in" list="repList" data-sfv="rep" value="' + v('rep') + '" placeholder="Select or type a rep..."></div></div>'
+         : '<div><label class="sf-lbl">Submitting on behalf of</label><input class="sf-in" value="Noelle Thompson" disabled></div></div>') +
+    sec('Logo Info') + '<div class="sf-grid">' + (W ? '<div><label class="sf-lbl">Account <span class="req">*</span></label><input class="sf-in" list="acctList" data-sfv="account" value="' + v('account') + '" placeholder="Select or type an account..."></div>'
+         : '<div><label class="sf-lbl">Account</label><input class="sf-in" value="" placeholder="Not needed for ' + esc(sf.dept) + '" disabled></div>') +
+      '<div><label class="sf-lbl">Logo / Design Name <span class="req">*</span></label><input class="sf-in" data-sfv="logo" value="' + v('logo') + '"></div>' +
+      '<div><label class="sf-lbl">Placement</label><input class="sf-in" data-sfv="placement" value="' + v('placement') + '" placeholder="e.g. Left chest, center back"></div></div>' +
+    sec('Request Type', true) + '<div class="sf-grid"><div class="sf-use">Use when: customer provides DST</div><div class="sf-use">Use when: artwork needs to be converted to DST</div>' +
+      typeCard('sewout', 'Sew-Out', 'Barrett', 'Customer provided DST &mdash; ready to sew-out. No digitizing or only <em>minor</em> edits needed.') +
+      typeCard('digitize', 'Digitize', 'QDigitizing', 'No DST file exists, DST needs edits, resize, or new creation from artwork (AI, PNG, PDF, etc.).') + '</div>' +
+    (sf.type === 'digitize' ? '<div class="sf-dig"><div class="sf-dig-h">Digitize details</div>' +
+      '<label class="sf-check"><input type="checkbox" data-sf="scratch"' + (sf.scratch ? ' checked' : '') + '> <span><b>Creating from scratch ($75 digitizing fee)</b><br><span class="sf-desc">Your wholesale ops contact is notified once the logo is approved, so they can add the fee to the customer invoice.</span></span></label>' +
+      '<div class="sf-tipnote" style="margin-top:8px">&#128161; <b>For best results:</b> Include high-resolution PNGs and/or vector files (AI, EPS, SVG) of the logo. The highest resolution image or vector produces the cleanest digitizing.</div></div>' : '') +
+    sec('Color Type', true) + '<div class="sf-grid"><div><label class="sf-lbl">Number of Thread Colors' + (club ? '' : ' <span class="req">*</span>') + '</label>' +
+      '<select class="sf-in" data-sf="count"' + (club ? ' disabled' : '') + '><option value="">Select...</option>' + SF_COUNTS.map(c => '<option' + ((club ? c === 'N/A - Club Colors' : c === sf.count) ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>' +
+      (club ? '<div class="sf-italic">Auto-set to N/A - Club Colors since Club Colors is selected.</div>' : '') + '</div><div></div>' +
+      Object.keys(SF_DESC).map(c => '<div class="sf-card' + pick(sf.color === c) + '" data-sf="color" data-v="' + c + '"><div class="sf-title">' + c + '</div><div class="sf-desc">' + SF_DESC[c] + '</div></div>').join('') + '</div>' +
+    sec('Thread Color Notes', !notesOptional, tag) + '<div class="sf-rednote">&#9888; ' + esc(sf.color ? SF_TIPS[sf.color].tip : 'Select a color type above to see guidance...') + '</div>' +
+      '<textarea class="sf-in" style="margin-top:8px;min-height:80px" data-sfv="thread" placeholder="' + esc(sf.color ? SF_TIPS[sf.color].ex : 'Select a color type above...') + '">' + v('thread') + '</textarea>' +
+    sec('Does This Logo Have a Start Date?', true) + '<div class="sf-blue"><b>Workflow priority:</b> Sew-outs with orders on-hand are completed first, then new account sew-outs. If no order exists, do not include an in-hand date &mdash; we&rsquo;ll still complete it ASAP, but this lets logos with orders waiting go first.</div>' +
+      '<div class="sf-grid" style="margin-top:8px"><div class="sf-green">ONLY if there is an order, ATS, or prebook in the system.</div><div class="sf-yellow">No order placed yet &mdash; customer will place an order ASAP once sew-out is received.</div>' +
+      '<button class="sf-yn' + pick(sf.start === 'yes') + '" data-sf="start" data-v="yes">Yes</button><button class="sf-yn' + pick(sf.start === 'no') + '" data-sf="start" data-v="no">No</button></div>' +
+      (sf.start === 'yes' ? '<div class="sf-lav"><div class="sf-mini">Order Start Date <span class="req">*</span></div><input type="date" class="sf-in" data-sf="date" value="' + v('date') + '" style="max-width:220px">' +
+        (bd !== null && bd <= 4 ? '<div class="sf-warn">&#9888; Heads up &mdash; this start date is within 4 business days. Please coordinate with the embroidery specialist to ensure on-time completion.</div>' : '') + '</div>' : '') +
+    sec('Logo Files &amp; Attachments') + '<div class="sf-upload" data-sf="pick">Click to browse or drag files here &middot; Max 10 MB per file</div>' +
+      (sf.files.length ? '<div class="sf-files">' + sf.files.map((x, i) => '<span class="sf-file">' + esc(x.name) + ' <button data-sf="unfile" data-v="' + i + '" title="Remove">&times;</button></span>').join('') + '</div>' : '') +
+      '<input type="file" id="sfFiles" multiple hidden>' +
+    sec('Notes') + '<div class="sf-desc" style="margin-bottom:6px">Placement details, special instructions, garment style info, or any other context for the embroidery team.</div><textarea class="sf-in" style="min-height:80px" data-sfv="notes">' + v('notes') + '</textarea>' +
+    (sf.errs.length ? '<div class="sf-warn" style="margin-top:16px">Please fill in: ' + esc(sf.errs.join(', ')) + '.</div>' : '') +
+    '<div class="btns" style="justify-content:flex-end;margin-top:20px"><button class="btn light" data-sf="clear">Clear</button><button class="btn" data-sf="review">Review &amp; Submit &rarr;</button></div>' +
+  '</div>';
+  const fi = document.getElementById('sfFiles');
+  fi.onchange = () => { sf.files = sf.files.concat([...fi.files].filter(x => x.size <= 10 * 1024 * 1024)); if ([...fi.files].some(x => x.size > 10 * 1024 * 1024)) toast('Files over 10 MB were skipped.'); sf.errs = []; renderSubmit(tab); };
+  const dz = document.querySelector('.sf-upload');
+  dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag'); }; dz.ondragleave = () => dz.classList.remove('drag');
+  dz.ondrop = e => { e.preventDefault(); sf.files = sf.files.concat([...e.dataTransfer.files].filter(x => x.size <= 10 * 1024 * 1024)); sf.errs = []; renderSubmit(tab); };
+}
+async function submitLogo(){
+  if (!dirHandle){ toast('Connect Excel first (top right), so the logo and its files save to your OneDrive folder.'); return; }
+  const l = blankLogo(), W = sf.dept === 'Wholesale';
+  Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:(W ? sf.account : sf.altName).trim(), rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
+    size:sfSize(), sizeNotes:sf.type === 'digitize' ? sf.sizeNotes.trim() : '', scratch:sf.type === 'digitize' && sf.scratch, count:sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count,
+    colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
+  DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
+  if (sf.files.length) await saveFiles(l, sf.files);
+  sf = sfBlank(); touch(); openLogo(l); toast('Added to the Queue &rarr; New Request.');
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-stop]')) return;
+  const el = e.target.closest('[data-sf]'); if (!el || state.tab !== 'submit') return;
+  const k = el.dataset.sf, tab = TABS.find(t => t.key === 'submit');
+  if (k === 'dept'){ sf.dept = el.dataset.v; renderSubmit(tab); }
+  if (k === 'type'){ sf.type = el.dataset.v; if (sf.type !== 'digitize'){ sf.scratch = false; sf.h = sf.w = sf.sizeNotes = ''; } renderSubmit(tab); }
+  if (k === 'color'){ const was = sf.color; sf.color = el.dataset.v; if (sf.color === 'Club Colors') sf.count = 'N/A - Club Colors'; else if (was === 'Club Colors') sf.count = ''; renderSubmit(tab); }
+  if (k === 'start'){ sf.start = el.dataset.v; if (sf.start === 'no') sf.date = ''; renderSubmit(tab); }
+  if (k === 'pick'){ document.getElementById('sfFiles').click(); }
+  if (k === 'unfile'){ sf.files.splice(+el.dataset.v, 1); renderSubmit(tab); }
+  if (k === 'clear'){ if (confirm('Clear the form?')){ sf = sfBlank(); renderSubmit(tab); } }
+  if (k === 'review'){ sf.errs = sfMissing(); if (!sf.errs.length) sf.review = true; renderSubmit(tab); }
+  if (k === 'back'){ sf.review = false; renderSubmit(tab); }
+  if (k === 'submit') submitLogo();
+});
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-sf]'); if (!el || state.tab !== 'submit') return;
+  if (el.dataset.sf === 'count'){ sf.count = el.value; renderSubmit(TABS.find(t => t.key === 'submit')); }
+  if (el.dataset.sf === 'date'){ sf.date = el.value; renderSubmit(TABS.find(t => t.key === 'submit')); }
+  if (el.dataset.sf === 'scratch'){ sf.scratch = el.checked; }
+});
+document.addEventListener('change', e => { if (e.target.dataset && e.target.dataset.sfv) sf[e.target.dataset.sfv] = e.target.value; });
+document.addEventListener('input', e => {
+  if (e.target.dataset && e.target.dataset.num) e.target.value = e.target.value.replace(/[^\d.]/g, '');
+  if (e.target.dataset && e.target.dataset.sfv) sf[e.target.dataset.sfv] = e.target.value;
+});
+
+// ---------------- Render ----------------
+const matchQ = (l, q) => { if (!q) return true; const n = q.trim().replace(/^#/, '');
+  if (/^\d+$/.test(n) && (l.nsId ? String(l.nsId) === n : parseInt(String(l.id).replace(/\D/g, ''), 10) === +n)) return true;   // request number
+  return (l.logo + ' ' + l.account + ' ' + l.rep + ' ' + (l.nsId ? '' : l.id)).toLowerCase().includes(q); };
+function rowsHtml(list, tab, cols){
+  const sk = state.sort[tab.key] || {k: tab.defaultSort || 'sub', dir: 1};
+  const col = cols.find(c => c.k === sk.k) || cols[0];
+  list = list.slice().sort((a, b) => { const x = col.v(a), y = col.v(b); return (x > y ? 1 : x < y ? -1 : 0) * sk.dir; });
+  const W = tab.key === 'barrett' ? {logo:18, account:13, rep:9, sub:8, ih:10, type:7, sewSent:10, photo:11, status:14} : tab.extra ? {logo:23, account:16, rep:9, sub:9, ih:10, type:8, photo:11, sentDate:11, approvedDate:11, completedDate:11, sentOrApproved:11, status:14} : {logo:26, account:18, rep:10, sub:10, ih:11, type:9, status:16};
+  const colgroup = '<colgroup>' + cols.map(c => '<col style="width:' + (W[c.k] || 10) + '%">').join('') + '</colgroup>';
+  const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (c.k === sk.k ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (c.k === sk.k ? (sk.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
+  const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
+  return '<div class="tblwrap"><table class="tbl">' + colgroup + '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+}
+// ---------------- To Do (EP v1.17): Noelle's daily list (this portal only) ----------------
+const TODO_SECS = ['Request sew out','Review Barrett Sew Out','Add to ES/FTP','Other','Check on digitization','Check on Sew out requests','Waiting on thread colors'];
+const DID_SECS = ['Submitted for digitization','Sent for approval','Requested Sew Out','Added to ES/FTP','Other','Followed up on','Completed'];
+const DONE_DEFAULT = {'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
+  'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on thread colors':'Submitted for digitization'};
+const NEXT_CHECK = {'Submitted for digitization':'Check on digitization', 'Requested Sew Out':'Check on Sew out requests'};   // what you did → the next day's list
+let todoDay = null, todoPick = null, todoEdit = null, todoHist = null, todoQ = '';   // todoQ: search across every day (EP v1.21)   // day shown, task picking its Done section, item being edited, history open
+const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const tdTasks = d => (DB.tasks || []).filter(t => t.day === d);
+const tdDid = d => (DB.did || []).filter(x => x.day === d);
+const dayName = d => { const x = parseIso(d); return x ? x.toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'}) : d; };   // Wed, 10/28
+const longDay = d => { const x = parseIso(d); return x ? x.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : d; };   // Oct 28, 2026
+const tdLines = text => { const [first, ...rest] = String(text || '').split('\n'); return {first, subs:rest.map(s => s.trim()).filter(Boolean)}; };
+const tdHtml = text => { const t = tdLines(text); return esc(t.first) + (t.subs.length ? '<ol type="a" class="td-sub">' + t.subs.map(s => '<li>' + esc(s) + '</li>').join('') + '</ol>' : ''); };
+const tdReady = () => dirHandle && saveState !== 'reconnect' && saveState !== 'local';
+// Task history (EP v1.20): every task keeps one chain id as it rolls over or comes back as a check-on
+const tdChainOf = o => o.chain || (o.chain = o.id);
+function tlog(o, what){ (DB.taskLog = DB.taskLog || []).push({ts:nowStamp(), chain:tdChainOf(o), task:tdLines(o.text).first, what}); }
+const tdEvents = o => { const c = tdChainOf(o); return (DB.taskLog || []).map((e, i) => [e, i]).filter(x => x[0].chain === c).sort((x, y) => y[0].ts.localeCompare(x[0].ts) || y[1] - x[1]).map(x => x[0]); };   // newest first
+const tdRolls = o => tdEvents(o).filter(e => /^Rolled over/.test(e.what)).length;
+function tdMeta(o, added){
+  const ev = tdEvents(o), since = ev.length ? ev[ev.length - 1].ts : (o.ts || ''), n = tdRolls(o), open = todoHist === o.id;
+  return '<div class="td-meta">' + (added && since ? 'Added ' + fmt(since) + ' &middot; ' : '') + (n ? 'Rolled over ' + n + (n === 1 ? ' time' : ' times') + ' &middot; ' : '') +
+    '<button class="td-link" data-td="hist" data-id="' + o.id + '">' + (open ? 'Hide history' : 'History') + '</button></div>' +
+    (open ? '<div class="td-hist">' + (ev.map(e => '<div>' + fmt(e.ts) + ' ' + time12(e.ts) + ' &middot; ' + esc(e.what) + '</div>').join('') || '<div>No history yet.</div>') + '</div>' : '');
+}
+
+// A new day: anything not marked rolls over, and what you submitted yesterday becomes a check-on
+function startTodo(){
+  DB.tasks = DB.tasks || []; DB.did = DB.did || []; DB.todoDays = DB.todoDays || [];
+  const today = todayIso(); if (DB.todoDays.includes(today)) return false;
+  const prev = [...new Set(DB.tasks.map(t => t.day).concat(DB.did.map(x => x.day)))].filter(d => d < today).sort().pop();
+  DB.todoDays.push(today);
+  if (prev){
+    const have = new Set(), add = (sec, text, chain, note) => { const k = sec + '|' + String(text).trim().toLowerCase(); if (have.has(k)) return; have.add(k);
+      const t = {id:tdId(), day:today, sec, text, state:'', doneSec:'', ts:nowStamp(), chain}; DB.tasks.push(t); if (note) tlog(t, note); };
+    tdTasks(prev).forEach(t => { if (!t.state){ t.state = 'rolled'; t.auto = true; tlog(t, 'Rolled over (end of day)'); } if (t.state === 'rolled') add(t.sec, t.text, tdChainOf(t)); });
+    tdDid(prev).forEach(x => { if (!NEXT_CHECK[x.sec]) return; const src = x.taskId && DB.tasks.find(t => t.id === x.taskId);   // a done task carries its original name
+      add(NEXT_CHECK[x.sec], src ? src.text : x.text, src ? tdChainOf(src) : tdChainOf(x), 'Added as a check-on (' + NEXT_CHECK[x.sec] + ') after ' + x.sec + ' on ' + dayName(prev)); });
+  }
+  return true;
+}
+
+// todo-import.json (from Claude): fills a day that has no tasks yet, then empties the file
+async function applyTodoImport(){
+  let o; try { o = JSON.parse(await (await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).getFile()).text()); } catch(e){ return; }
+  if (!o || !o.day || !Array.isArray(o.tasks)) return;
+  DB.tasks = DB.tasks || []; DB.did = DB.did || []; DB.todoDays = DB.todoDays || [];
+  if (o.replace){   // EP v1.22: start the day over
+    tdTasks(o.day).forEach(t => tlog(t, 'Removed (list started over)')); tdDid(o.day).forEach(x => { if (!x.taskId) tlog(x, 'Removed (list started over)'); });
+    DB.tasks = DB.tasks.filter(t => t.day !== o.day); DB.did = DB.did.filter(x => x.day !== o.day);
+  }
+  if (!tdTasks(o.day).length){
+    o.tasks.forEach(x => { const t = {id:tdId(), day:o.day, sec:x.sec, text:x.text, state:x.doneAs ? 'done' : '', doneSec:x.doneAs || '', ts:nowStamp()}; DB.tasks.push(t); tlog(t, 'Added to To Do (' + x.sec + ', from your Google Doc list)');
+      if (x.doneAs){ DB.did.push({id:tdId(), day:o.day, sec:x.doneAs, text:x.didText || x.text, ts:nowStamp(), taskId:t.id, chain:tdChainOf(t)}); tlog(t, 'Done \u2192 ' + x.doneAs); } });
+    (o.did || []).forEach(x => { const y = {id:tdId(), day:o.day, sec:x.sec, text:x.text, ts:nowStamp(), taskId:''}; DB.did.push(y); tlog(y, 'Written in on What I did (' + x.sec + ')'); });
+    if (!DB.todoDays.includes(o.day)) DB.todoDays.push(o.day);
+    touch(); if (state.tab === 'todo'){ const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+    if (o.replace) toast('Today&rsquo;s To Do list was started over.');
+  }
+  try { const w = await (await dirHandle.getFileHandle(TODO_IMPORT_NAME)).createWritable(); await w.write('{}'); await w.close(); } catch(e){}
+}
+
+function renderTodo(tab){
+  const today = todayIso(); todoDay = todoDay || today;
+  if (todoDay === today && tdReady() && startTodo()) touch();
+  const d = todoDay, tasks = tdTasks(d), did = tdDid(d), view = state.todoView === 'did' ? 'did' : 'todo';   // EP v1.18: one list at a time
+  const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))].sort(), i = days.indexOf(d);
+  const opts = (list, sel) => list.map(s => '<option' + (s === sel ? ' selected' : '') + '>' + esc(s) + '</option>').join('');
+  const editBox = (o, list) => '<div class="td-editbox"><select id="ed-sec-' + o.id + '">' + opts(list, o.sec) + '</select><textarea id="ed-text-' + o.id + '" rows="2">' + esc(o.text) + '</textarea>' +
+    '<div class="td-btns"><button class="btn small" data-td="editSave" data-id="' + o.id + '">Save</button><button class="btn light small" data-td="cancel">Cancel</button></div></div>';
+  const taskRow = (t, n) => {
+    if (todoEdit === t.id) return '<div class="td-item">' + editBox(t, TODO_SECS) + '</div>';
+    const pick = todoPick === t.id ? '<div class="td-pick">Done as: <select id="pick-' + t.id + '">' + opts(DID_SECS, DONE_DEFAULT[t.sec] || 'Other') + '</select>' +
+      '<button class="btn small" data-td="doneSave" data-id="' + t.id + '">Save</button><button class="btn light small" data-td="cancel">Cancel</button></div>' : '';
+    const btns = t.state ? '<button class="btn light small" data-td="undo" data-id="' + t.id + '">Undo</button>'
+      : '<button class="btn small td-done" data-td="done" data-id="' + t.id + '">Done</button><button class="btn light small td-roll" data-td="roll" data-id="' + t.id + '">Roll over</button>';
+    const tag = t.state === 'done' ? '<span class="td-tag">&rarr; ' + esc(t.doneSec) + '</span>' : t.state === 'rolled' ? '<span class="td-tag">Rolled over' + (t.auto ? ' (end of day)' : '') + '</span>' : '';
+    return '<div class="td-item' + (t.state ? ' ' + t.state : '') + '"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(t.text) + tag + pick + tdMeta(t, true) + '</div>' +
+      '<div class="td-btns">' + (pick ? '' : btns) + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + t.id + '">&#9998;</button><button class="td-icon" title="Remove" data-td="del" data-id="' + t.id + '">&times;</button></div></div>';
+  };
+  const didRow = (x, n) => todoEdit === x.id ? '<div class="td-item">' + editBox(x, DID_SECS) + '</div>'
+    : '<div class="td-item"><span class="td-num">' + n + '.</span><div class="td-text">' + tdHtml(x.text) + (x.taskId ? '' : '<span class="td-tag">write-in</span>') + tdMeta(x, false) + '</div>' +
+      '<div class="td-btns">' + (x.taskId ? '<button class="btn light small" data-td="undoDid" data-id="' + x.id + '">Undo</button>' : '') + '<button class="td-icon" title="Edit" data-td="edit" data-id="' + x.id + '">&#9998;</button>' +
+        (x.taskId ? '' : '<button class="td-icon" title="Remove" data-td="del" data-id="' + x.id + '">&times;</button>') + '</div></div>';
+  const sections = (secs, items, row) => { const html = secs.map(s => { const list = items.filter(t => t.sec === s); return list.length ? '<div class="td-sec"><h4>' + esc(s) + ':</h4>' + list.map((t, k) => row(t, k + 1)).join('') + '</div>' : ''; }).join('');
+    return html || '<div class="empty" style="margin-top:12px">Nothing here yet.</div>'; };
+  const left = tasks.filter(t => !t.state).length;
+  document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + '</div>' +
+    '<div class="td-top"><div class="td-nav"><button class="btn light small" data-td="day" data-v="' + (days[i - 1] || '') + '"' + (i > 0 ? '' : ' disabled') + '>&#9664;</button><b>' + dayName(d) + '</b>' +
+      '<button class="btn light small" data-td="day" data-v="' + (days[i + 1] || '') + '"' + (i < days.length - 1 ? '' : ' disabled') + '>&#9654;</button>' + (d !== today ? '<button class="btn light small" data-td="day" data-v="' + today + '">Today</button>' : '') + '</div>' +
+      '<span class="td-count">' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' &middot; ' + left + ' left</span></div>' +
+    '<div class="td-metrics">' + [['Check on digitization', 'Pending digitization'], ['Check on Sew out requests', 'Pending sew out']].map(([sec, label]) => {
+        const n = tasks.filter(t => t.sec === sec && t.state !== 'done').reduce((a, t) => a + (tdLines(t.text).subs.length || 1), 0);   // logos: sub-items count separately (UAF 3 LOGOS a, b = 2)
+        return '<div class="td-metric"><span class="td-mnum">' + n + '</span><span class="td-mlbl">' + label + '</span></div>'; }).join('') + '</div>' +
+    '<div class="bar"><input id="tdSearch" placeholder="Search every day&rsquo;s To Do and What I did&hellip;" value="' + esc(todoQ) + '" autocomplete="off"></div>' +
+    (todoQ.trim() ? tdResults(todoQ.trim().toLowerCase()) :
+    '<div class="td-subtabs"><button class="td-subtab' + (view === 'todo' ? ' on' : '') + '" data-td="view" data-v="todo">To Do</button>' +
+      '<button class="td-subtab' + (view === 'did' ? ' on' : '') + '" data-td="view" data-v="did">What I did</button></div>' +
+    (view === 'todo' ?
+      '<div class="lcard"><div class="td-head"><div class="card-title">To Do &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyTodo">Copy list</button></div>' +
+        '<div class="td-add"><select id="tdSec">' + opts(TODO_SECS, 'Other') + '</select><textarea id="tdText" rows="1" placeholder="Add a task (Shift+Enter for a, b sub-items)"></textarea><button class="btn small" data-td="add">Add</button></div>' +
+        sections(TODO_SECS, tasks.filter(t => t.state !== 'done'), taskRow) + '</div>' :   // EP v1.19: done ones move to What I did
+      '<div class="lcard"><div class="td-head"><div class="card-title">What I did &mdash; ' + longDay(d) + '</div><button class="btn light small" data-td="copyDid">Copy list</button></div>' +
+        '<div class="td-add"><select id="didSec">' + opts(DID_SECS, 'Other') + '</select><textarea id="didText" rows="1" placeholder="Write in something you did"></textarea><button class="btn small" data-td="addDid">Add</button></div>' +
+        sections(DID_SECS, did, didRow) + '</div>'));
+}
+function tdResults(q){   // every day, newest first; click one to go to it
+  const hit = o => String(o.text || '').toLowerCase().includes(q);
+  const doneAs = t => t.state === 'done' && (DB.did || []).find(x => x.taskId === t.id);   // done tasks live under What I did
+  const rows = (DB.tasks || []).filter(t => hit(t) && !doneAs(t)).map(t => ({o:t, day:t.day, view:'todo', go:doneAs(t), where:'To Do &middot; ' + esc(t.sec) + ' &middot; ' + (t.state === 'done' ? 'Done &rarr; ' + esc(t.doneSec) : t.state === 'rolled' ? 'Rolled over' : 'Open')}))
+    .concat((DB.did || []).filter(hit).map(x => ({o:x, day:x.day, view:'did', where:'What I did &middot; ' + esc(x.sec)})))
+    .sort((a, b) => b.day.localeCompare(a.day) || (a.view === b.view ? 0 : a.view === 'todo' ? -1 : 1));
+  return '<div class="lcard"><div class="card-title" style="margin-bottom:10px">' + rows.length + ' match' + (rows.length === 1 ? '' : 'es') + ' for &ldquo;' + esc(q) + '&rdquo;</div>' +
+    (rows.length ? rows.slice(0, 200).map(r => '<div class="td-item td-res' + (r.view === 'todo' && r.o.state ? ' ' + r.o.state : '') + '" data-td="goto" data-id="' + (r.go ? r.go.id : r.o.id) + '" data-day="' + r.day + '" data-v="' + (r.go ? 'did' : r.view) + '">' +
+      '<span class="td-day">' + dayName(r.day) + '</span><div class="td-text">' + tdHtml(r.o.text) + '<div class="td-meta">' + r.where + '</div></div></div>').join('')
+      : '<div class="empty">Nothing matches.</div>') + '</div>';
+}
+document.addEventListener('input', e => {
+  if (!e.target || e.target.id !== 'tdSearch') return;
+  todoQ = e.target.value; const pos = e.target.selectionStart; renderTodo(TABS.find(x => x.key === 'todo'));
+  const n = document.getElementById('tdSearch'); if (n){ n.focus(); n.setSelectionRange(pos, pos); }
+});
+function tdCopy(secs, items, title){
+  let html = title ? '<p><b>' + esc(title) + '</b></p>' : '', text = title ? title + '\n\n' : '';
+  secs.forEach(s => { const list = items.filter(t => t.sec === s); if (!list.length) return;
+    html += '<p><b>' + esc(s) + ':</b></p><ol>' + list.map(t => '<li>' + tdHtml(t.text) + '</li>').join('') + '</ol>';
+    text += s + ':\n' + list.map((t, k) => { const l = tdLines(t.text); return (k + 1) + '. ' + l.first + l.subs.map((x, j) => '\n    ' + String.fromCharCode(97 + j) + '. ' + x).join(''); }).join('\n') + '\n\n'; });
+  return {html, text:text.trim()};
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target && (e.target.id === 'tdText' || e.target.id === 'didText')){ e.preventDefault(); const b = document.querySelector('[data-td="' + (e.target.id === 'tdText' ? 'add' : 'addDid') + '"]'); if (b) b.click(); }
+});
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-td]'); if (!el || state.tab !== 'todo') return;
+  const k = el.dataset.td, id = el.dataset.id, tab = TABS.find(x => x.key === 'todo');
+  const t = id ? (DB.tasks || []).find(x => x.id === id) : null, w = id ? (DB.did || []).find(x => x.id === id) : null;
+  const redraw = () => renderTodo(tab);
+  if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoPick = todoEdit = null; redraw(); } return; }
+  if (k === 'view'){ state.todoView = el.dataset.v; todoPick = todoEdit = null; save(); redraw(); return; }
+  if (k === 'cancel'){ todoPick = todoEdit = null; redraw(); return; }
+  if (k === 'hist'){ todoHist = todoHist === id ? null : id; redraw(); return; }
+  if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoHist = id; todoPick = todoEdit = null; save(); redraw();
+    const h = document.querySelector('.td-hist'); if (h) h.closest('.td-item').scrollIntoView({block:'center'}); return; }
+  if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay), longDay(todoDay));
+    toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
+  if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); return; }
+  if (k === 'add' || k === 'addDid'){ const isDid = k === 'addDid', ta = document.getElementById(isDid ? 'didText' : 'tdText'), text = ta.value.replace(/\s+$/, ''); if (!text.trim()) return;
+    const sec = document.getElementById(isDid ? 'didSec' : 'tdSec').value;
+    if (isDid){ const y = {id:tdId(), day:todoDay, sec, text, ts:nowStamp(), taskId:''}; (DB.did = DB.did || []).push(y); tlog(y, 'Written in on What I did (' + sec + ')'); }
+    else { const y = {id:tdId(), day:todoDay, sec, text, state:'', doneSec:'', ts:nowStamp()}; (DB.tasks = DB.tasks || []).push(y); tlog(y, 'Added to To Do (' + sec + ')'); }
+    touch(); redraw(); const n = document.getElementById(isDid ? 'didSec' : 'tdSec'); n.value = sec; document.getElementById(isDid ? 'didText' : 'tdText').focus(); return; }
+  if (k === 'done' && t){ todoPick = t.id; todoEdit = null; redraw(); return; }
+  if (k === 'doneSave' && t){ const sec = document.getElementById('pick-' + t.id).value; t.state = 'done'; t.doneSec = sec; delete t.auto;
+    (DB.did = DB.did || []).push({id:tdId(), day:t.day, sec, text:t.text, ts:nowStamp(), taskId:t.id, chain:tdChainOf(t)}); tlog(t, 'Done \u2192 ' + sec); todoPick = null; touch(); redraw(); toast('Moved to What I did &rarr; ' + esc(sec) + '.'); return; }
+  if (k === 'undoDid' && w){ const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } tlog(src || w, 'Moved back to To Do (undo done)'); DB.did = DB.did.filter(x => x !== w); touch(); redraw(); toast('Moved back to To Do.'); return; }
+  if (k === 'roll' && t){ t.state = 'rolled'; delete t.auto; tlog(t, 'Rolled over'); touch(); redraw(); return; }
+  if (k === 'undo' && t){ tlog(t, t.state === 'done' ? 'Moved back to To Do (undo done)' : 'Undo roll over'); if (t.state === 'done') DB.did = (DB.did || []).filter(x => x.taskId !== t.id); t.state = ''; t.doneSec = ''; delete t.auto; touch(); redraw(); return; }
+  if (k === 'edit'){ todoEdit = id; todoPick = null; redraw(); return; }
+  if (k === 'editSave' && (t || w)){ const o = t || w, text = document.getElementById('ed-text-' + id).value.replace(/\s+$/, ''); if (!text.trim()) return;
+    const sec2 = document.getElementById('ed-sec-' + id).value, ch = [];
+    if (text !== o.text) ch.push('Renamed: "' + tdLines(o.text).first + '" > "' + tdLines(text).first + '"'); if (sec2 !== o.sec) ch.push((w && w.taskId ? 'Done as changed to ' : 'Moved to ') + sec2);
+    if (ch.length) tlog(o, ch.join('; ')); o.text = text; o.sec = sec2;
+    if (w && w.taskId){ const src = (DB.tasks || []).find(x => x.id === w.taskId); if (src) src.doneSec = w.sec; }
+    todoEdit = null; touch(); redraw(); return; }
+  if (k === 'del' && (t || w)){ if (!confirm('Remove this from the list?')) return; tlog(t || w, 'Removed');
+    if (t){ DB.tasks = DB.tasks.filter(x => x !== t); DB.did = (DB.did || []).filter(x => x.taskId !== t.id); }
+    if (w){ DB.did = DB.did.filter(x => x !== w); const src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId); if (src){ src.state = ''; src.doneSec = ''; } }
+    touch(); redraw(); return; }
+});
+
+function renderMasterSearch(){
+  const q = msearch.trim().toLowerCase(), hits = DB.logos.filter(l => matchQ(l, q));
+  const tab = {key:'search', sections:STATUSES, extra:null};
+  let html = '<h1>Search results</h1><div class="sub">' + hits.length + ' logo' + (hits.length === 1 ? '' : 's') + ' matching &ldquo;' + esc(msearch.trim()) + '&rdquo; in every tab, including Completed and Archive. Click a row to open it. Clear the search or click a tab to go back.</div>';
+  const groups = TABS.filter(t => t.sections).map(t => [t.label || t.title, hits.filter(l => t.sections.includes(l.status))]).filter(g => g[1].length);
+  html += groups.length ? groups.map(([name, items]) => { const ck = 'search|' + name, closed = !!state.collapsed[ck];
+    return '<div class="sec"><div class="sec-head" data-sec="' + esc(ck) + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name">' + name + '</span><span class="cnt">' + items.length + '</span></div>' + (closed ? '' : rowsHtml(items, tab, columns(tab, null))) + '</div>'; }).join('')
+    : '<div class="empty">No logos match.</div>';
+  document.getElementById('page').innerHTML = html;
+}
+// Notifications (EP v1.10): stay until marked read
+let notifOpen = false;
+function renderNotifs(){
+  const list = (DB.notifs || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)), unread = list.filter(n => !n.read).length;
+  const badge = document.getElementById('notifN'); badge.hidden = !unread; badge.textContent = unread > 99 ? '99+' : unread;
+  const panel = document.getElementById('notifPanel'); panel.hidden = !notifOpen; if (!notifOpen) return;
+  panel.innerHTML = '<div class="notif-head"><span>Notifications</span>' + (unread ? '<button class="btn light small" data-nf="all">Mark all read</button>' : '') + '</div>' +
+    (list.length ? list.slice(0, 50).map(n => '<div class="notif-item' + (n.read ? '' : ' unread') + '" data-nf="open" data-ts="' + esc(n.ts) + '" data-id="' + esc(n.id) + '"><span class="nt">' + esc(n.text) +
+      '<span class="nwhen">' + fmt(n.ts) + ' ' + time12(n.ts) + '</span></span>' + (n.read ? '' : '<button class="btn light small" data-nf="read" data-ts="' + esc(n.ts) + '" data-id="' + esc(n.id) + '">Mark read</button>') + '</div>').join('')
+      : '<div class="notif-empty">No notifications yet.</div>');
+}
+const findNotif = el => (DB.notifs || []).find(n => n.ts === el.dataset.ts && n.id === el.dataset.id);
+document.addEventListener('click', e => {
+  if (e.target.closest('#notifBtn')){ notifOpen = !notifOpen; renderNotifs(); return; }
+  const el = e.target.closest('[data-nf]');
+  if (el){ const k = el.dataset.nf;
+    if (k === 'all'){ (DB.notifs || []).forEach(n => { n.read = true; }); touch(); renderNotifs(); return; }
+    const n = findNotif(el); if (!n) return;
+    if (k === 'read'){ n.read = true; touch(); renderNotifs(); return; }
+    if (k === 'open'){ n.read = true; touch(); notifOpen = false; renderNotifs(); const l = byId(n.id); if (l) openLogo(l); else toast('That logo isn&rsquo;t in your portal anymore.'); return; }
+  }
+  if (notifOpen && !e.target.closest('#notifPanel')){ notifOpen = false; renderNotifs(); }
+}, true);
+function render(){
+  refreshToday(); renderNotifs();
+  document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
+  let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
+  dl.innerHTML = [...new Set(DB.logos.map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
+  showBanner();
+  if (msearch.trim()){ renderMasterSearch(); return; }
+  const tab = TABS.find(t => t.key === state.tab);
+  if (tab.audit){ renderAudit(tab); return; }
+  if (tab.todo){ renderTodo(tab); return; }
+  if (tab.submit){ renderSubmit(tab); return; }
+  const group = state.group[tab.key] || 'status';
+  let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div>'
+                        : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Click a column name to sort.</div>') +
+    (tab.focus ? '' : '<div class="bar"><input id="search" placeholder="Search account, logo, sales rep, or request #&hellip;" value="' + esc(state.search[tab.key] || '') + '">' +
+    '<select id="group"><option value="status"' + (group === 'status' ? ' selected' : '') + '>Group by: Status</option><option value="account"' + (group === 'account' ? ' selected' : '') + '>Group by: Account</option><option value="rep"' + (group === 'rep' ? ' selected' : '') + '>Group by: Sales Rep</option><option value="none"' + (group === 'none' ? ' selected' : '') + '>No grouping</option></select>' +
+    '<button class="btn light" id="reset">Reset filters</button></div>');
+  let list = tab.sections ? DB.logos.filter(l => tab.sections.includes(l.status)) : DB.logos.filter(needsAttention);
+  if (!tab.focus){ const q = (state.search[tab.key] || '').toLowerCase(); list = list.filter(l => matchQ(l, q)); }
+  let groups;
+  if (!tab.sections || group === 'none') groups = [[tab.sections ? 'All' : null, list]];
+  else if (group === 'status'){ groups = tab.sections.map(s => [s, list.filter(l => l.status === s && !(tab.key === 'barrett' && sewLate(l)))]); if (tab.key === 'barrett') groups.unshift([FOLLOW_UP, list.filter(sewLate)]); }
+  else { const keyOf = l => (group === 'account' ? l.account : l.rep) || '(blank)'; const keys = [...new Set(list.map(keyOf))].sort(); groups = keys.map(k => [k, list.filter(l => keyOf(l) === k)]); }
+  html += groups.map(([name, items]) => {
+    if (name === null) return items.length ? rowsHtml(items, tab, columns(tab, null)) : '<div class="empty">' + (DB.logos.length ? 'Nothing needs attention right now.' : 'No logos yet. Add one in the Submit Request tab.') + '</div>';
+    const ck = tab.key + '|' + group + '|' + name, closed = !!state.collapsed[ck];
+    return '<div class="sec"><div class="sec-head" data-sec="' + esc(ck) + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name" style="color:' + (name === FOLLOW_UP && group === 'status' ? '#a61b1b' : (group === 'status' && STATUS_COLORS[name]) ? STATUS_COLORS[name].title : 'var(--navy)') + '">' + esc(name) + '</span><span class="cnt">' + items.length + '</span>' +
+      (name === FOLLOW_UP && group === 'status' ? '<span style="font-size:12px;color:#49516C">Sew-out not back 24 business hours after it was sent to Barrett (weekends don&rsquo;t count)</span>' : '') + '</div>' +
+      (closed ? '' : (items.length ? rowsHtml(items, tab, columns(tab, name)) : '<div class="empty">No logos here.</div>')) + '</div>';
+  }).join('');
+  if (tab.focus) html += '</div>';
+  document.getElementById('page').innerHTML = html;
+  const s = document.getElementById('search'); if (s) s.oninput = () => { state.search[tab.key] = s.value; save(); const pos = s.selectionStart; render(); const n = document.getElementById('search'); n.focus(); n.setSelectionRange(pos, pos); };
+  const g = document.getElementById('group'); if (g) g.onchange = () => { state.group[tab.key] = g.value; save(); render(); };
+  const rs = document.getElementById('reset'); if (rs) rs.onclick = () => { delete state.sort[tab.key]; delete state.group[tab.key]; delete state.search[tab.key]; save(); render(); };
+}
+document.addEventListener('click', e => {
+  const ht = e.target.closest('.hist-toggle');
+  if (ht){ const body = ht.nextElementSibling, open = body.style.display !== 'none'; body.style.display = open ? 'none' : ''; ht.querySelector('.hchev').innerHTML = open ? '&#9656;' : '&#9662;'; return; }   // History starts closed every time a logo opens
+  const sb = e.target.closest('.sbtn');
+  if (sb){ const l = byId(sb.dataset.id), a = sb.dataset.act; if (!l) return; const ov = l.ver, orv = l.rev || 0;
+    if (a === 'ver-') l.ver = Math.max(1, l.ver - 1);
+    if (a === 'ver+') l.ver += 1;
+    if (a === 'rev+') l.rev = orv + 1;
+    if (a === 'rev-') l.rev = Math.max(0, orv - 1);
+    if (a === 'ver-edit'){ const v = parseInt(prompt('File version', l.ver), 10); if (v > 0) l.ver = v; }
+    if (a === 'rev-edit'){ const v = parseInt(prompt('Revisions', orv), 10); if (v >= 0) l.rev = v; }
+    if (l.ver !== ov) log(l, 'Edit', 'File Version: v' + ov + ' > v' + l.ver);
+    if ((l.rev || 0) !== orv) log(l, 'Edit', 'Revisions: ' + orv + ' > ' + l.rev);
+    touch(); render(); return; }
+  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoPick = todoEdit = null; todoQ = ''; } state.open = {}; save(); render(); return; }
+  const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
+  const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
+  const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk]; state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
+  const sh = e.target.closest('.sec-head'); if (sh){ const k = sh.dataset.sec; state.collapsed[k] = !state.collapsed[k]; save(); render(); return; }
+  if (e.target.id === 'msclear'){ msearch = ''; document.getElementById('msearch').value = ''; render(); return; }
+  const r = e.target.closest('.row'); if (r && !e.target.closest('select')){ const id = r.dataset.id; state.open[id] = !state.open[id]; render(); }
+});
+document.getElementById('msearch').addEventListener('input', e => { msearch = e.target.value; state.open = {}; render(); });
+render();
+boot();
+</script>
+</body>
+</html>
