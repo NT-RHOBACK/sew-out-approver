@@ -265,6 +265,9 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .tab-right{margin-left:auto}
 .td-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .td-nav{display:flex;align-items:center;gap:6px}.td-nav b{font-size:15px;color:var(--navy);min-width:96px;text-align:center}
+.td-pickw{position:relative}.td-dayb{font:inherit;font-size:15px;font-weight:700;color:var(--navy);background:none;border:none;border-radius:6px;padding:4px 8px;min-width:110px;cursor:pointer}
+.td-dayb:hover{background:#f3f5fa}#tdDate{position:absolute;left:0;bottom:0;width:100%;height:1px;opacity:0;border:0;padding:0;pointer-events:none}
+.td-future{margin:8px 0 0;color:#49516C;font-size:14px}
 .td-count{font-size:13px;color:#49516C}
 .td-subtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
 .td-subtab{padding:10px 18px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer}
@@ -333,7 +336,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.26</span>
+    <span class="vbadge">EP v1.27</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -344,10 +347,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.26: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.27: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.26';
+const VERSION = 'EP v1.27';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1090,6 +1093,7 @@ const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).sl
 const tdTasks = d => (DB.tasks || []).filter(t => t.day === d);
 const tdDid = d => (DB.did || []).filter(x => x.day === d);
 const dayName = d => { const x = parseIso(d); return x ? x.toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'}) : d; };   // Wed, 10/28
+function tdStep(d, dir, days){ const x = parseIso(d); do { x.setDate(x.getDate() + dir); } while ((x.getDay() === 0 || x.getDay() === 6) && !days.includes(isoOf(x))); return isoOf(x); }
 const longDay = d => { const x = parseIso(d); return x ? x.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : d; };   // Oct 28, 2026
 const tdLines = text => { const [first, ...rest] = String(text || '').split('\n'); return {first, subs:rest.map(s => s.trim()).filter(Boolean)}; };
 const tdHtml = text => { const t = tdLines(text); return esc(t.first) + (t.subs.length ? '<ol type="a" class="td-sub">' + t.subs.map(s => '<li>' + esc(s) + '</li>').join('') + '</ol>' : ''); };
@@ -1241,21 +1245,23 @@ function renderTodo(tab){
   const today = todayIso(); todoDay = todoDay || today;
   if (todoDay === today && tdReady() && startTodo()) touch();
   const d = todoDay, tasks = tdTasks(d), did = tdDid(d).sort((a, b) => a.ts.localeCompare(b.ts)), view = state.todoView === 'did' ? 'did' : 'todo';
-  const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))].sort(), i = days.indexOf(d);
+  const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))], future = d > today;
   const sections = (secs, items, row) => { const html = secs.map(s => { const list = items.filter(t => t.sec === s); return list.length ? '<div class="td-sec"><h4>' + esc(s) + ':</h4><div class="td-list">' + list.map(row).join('') + '</div></div>' : ''; }).join('');
     return html || '<div class="empty" style="margin-top:12px">Nothing here yet.</div>'; };
   const left = tasks.filter(t => !t.state).length;
   if (tdReady() && tdMigrate()) touch();
   document.getElementById('page').innerHTML = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + '</div>' +
     '<datalist id="tdLogoList">' + DB.logos.map(l => '<option value="' + esc(reqNo(l) + ' ' + l.logo) + '">').join('') + '</datalist>' +
-    '<div class="td-top"><div class="td-nav"><button class="btn light small" data-td="day" data-v="' + (days[i - 1] || '') + '"' + (i > 0 ? '' : ' disabled') + '>&#9664;</button><b>' + dayName(d) + '</b>' +
-      '<button class="btn light small" data-td="day" data-v="' + (days[i + 1] || '') + '"' + (i < days.length - 1 ? '' : ' disabled') + '>&#9654;</button>' + (d !== today ? '<button class="btn light small" data-td="day" data-v="' + today + '">Today</button>' : '') + '</div>' +
-      '<span class="td-count">' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' &middot; ' + left + ' left</span></div>' +
-    '<div class="td-metrics">' + [[['Check on digitization'], 'Pending digitization'], [['Check on Sew out requests', 'Waiting on Barrett'], 'Pending sew out']].map(([secs, label]) => {
+    '<div class="td-top"><div class="td-nav"><button class="btn light small" data-td="day" data-v="' + tdStep(d, -1, days) + '" title="Previous day">&#9664;</button>' +
+      '<span class="td-pickw"><button class="td-dayb" data-td="pick" title="Pick a date">' + dayName(d) + ' &#9662;</button><input type="date" id="tdDate" value="' + d + '" tabindex="-1" aria-label="Pick a date"></span>' +
+      '<button class="btn light small" data-td="day" data-v="' + tdStep(d, 1, days) + '" title="Next day">&#9654;</button>' + (d !== today ? '<button class="btn light small" data-td="day" data-v="' + today + '">Today</button>' : '') + '</div>' +
+      (future ? '' : '<span class="td-count">' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' &middot; ' + left + ' left</span>') + '</div>' +
+    (future ? '' : '<div class="td-metrics">' + [[['Check on digitization'], 'Pending digitization'], [['Check on Sew out requests', 'Waiting on Barrett'], 'Pending sew out']].map(([secs, label]) => {
         const n = tasks.filter(t => secs.includes(t.sec) && t.state !== 'done').reduce((a, t) => a + (tdLines(t.text).subs.length || 1), 0);   // logos: sub-items count separately (UAF 3 LOGOS a, b = 2)
-        return '<div class="td-metric"><span class="td-mnum">' + n + '</span><span class="td-mlbl">' + label + '</span></div>'; }).join('') + '</div>' +
+        return '<div class="td-metric"><span class="td-mnum">' + n + '</span><span class="td-mlbl">' + label + '</span></div>'; }).join('') + '</div>') +
     '<div class="bar"><input id="tdSearch" placeholder="Search every day&rsquo;s To Do and What I did&hellip;" value="' + esc(todoQ) + '" autocomplete="off"></div>' +
     (todoQ.trim() ? tdResults(todoQ.trim().toLowerCase()) :
+    future ? '<div class="lcard"><div class="card-title">' + longDay(d) + '</div><p class="td-future">This day hasn&rsquo;t started yet. Its list starts on its own that morning: anything still open rolls over, plus check-ons from the day before.</p></div>' :
     '<div class="td-subtabs"><button class="td-subtab' + (view === 'todo' ? ' on' : '') + '" data-td="view" data-v="todo">To Do</button>' +
       '<button class="td-subtab' + (view === 'did' ? ' on' : '') + '" data-td="view" data-v="did">What I did</button></div>' +
     (view === 'todo' ?
@@ -1291,6 +1297,10 @@ function tdCopy(secs, items, title){   // every section it went through, nothing
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && e.target && (e.target.id === 'tdText' || e.target.id === 'didText')){ e.preventDefault(); const b = document.querySelector('[data-td="' + (e.target.id === 'tdText' ? 'add' : 'addDid') + '"]'); if (b) b.click(); }
 });
+document.addEventListener('change', e => {   // date picker
+  if (!e.target || e.target.id !== 'tdDate' || !e.target.value || state.tab !== 'todo') return;
+  todoDay = e.target.value; todoOpen = null; renderTodo(TABS.find(x => x.key === 'todo'));
+});
 // Status dropdown on a banner
 document.addEventListener('change', e => {
   const s = e.target.closest && e.target.closest('select[data-tdst]'); if (!s || state.tab !== 'todo') return;
@@ -1311,6 +1321,7 @@ document.addEventListener('click', async e => {
   const redraw = () => renderTodo(tab);
   if (k === 'open'){ todoOpen = todoOpen === id ? null : id; redraw(); return; }
   if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoOpen = null; redraw(); } return; }
+  if (k === 'pick'){ const p = document.getElementById('tdDate'); try { p.showPicker(); } catch(err){ p.focus(); } return; }
   if (k === 'view'){ state.todoView = el.dataset.v; todoOpen = null; save(); redraw(); return; }
   if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoOpen = id; save(); redraw();
     const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
