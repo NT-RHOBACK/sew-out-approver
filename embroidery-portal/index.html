@@ -118,7 +118,7 @@ h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .foot{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
 .empty{background:#fff;border:1px dashed #d6dbe4;border-radius:8px;padding:18px;text-align:center;color:var(--grey);font-size:13px}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
-.toast.on{opacity:1}
+.toast.on{opacity:1}.toast.on.act{pointer-events:auto}.toast .btn{margin-left:14px;vertical-align:middle}
 .mailhead{font-size:12px;line-height:1.7;background:#f6f7fa;border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:8px 0}
 .mailhead b{display:inline-block;width:56px;color:var(--grey);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
 .mailbody{width:100%;height:230px;border:1px solid var(--line);border-radius:6px;background:#fff}
@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.39</span>
+    <span class="vbadge">EP v1.40</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.39: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.40: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.39';
+const VERSION = 'EP v1.40';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -746,7 +746,7 @@ state.tab = sessionStorage.getItem(SS_TAB) || 'dashboard';   // opening the port
 if (!TABS.some(t => t.key === state.tab)) state.tab = 'dashboard';
 let msearch = '', auditOpen = {};
 const save = () => { try { sessionStorage.setItem(SS_TAB, state.tab); localStorage.setItem(LS_UI, JSON.stringify(Object.assign({}, state, {open:{}, tab:''}))); } catch(e){} };
-function toast(msg){ const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('on'); clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('on'), 3600); }
+function toast(msg, ms){ const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('on'); t.classList.toggle('act', !!t.querySelector('button')); clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('on', 'act'), ms || 3600); }
 function tabOfStatus(st){ const t = TABS.find(x => x.sections && x.sections.includes(st)); return t ? t.key : 'queue'; }
 function openLogo(l){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = tabOfStatus(l.status); state.open = {}; state.open[l.id] = true; stripOpen = {}; save(); render();
   setTimeout(() => { const r = document.querySelector('.row[data-id="' + l.id + '"]'); if (r) r.scrollIntoView({block:'center'}); }, 30); }
@@ -1146,6 +1146,7 @@ const CHECK_OF = {'Digitizing':'Check on digitization', 'Pending Sew Out':'Check
 // Status colors for the task banners (EP v1.23): [background, text, border]
 const TD_COLORS = {'To do':['#ffffff','#29304E','#d6dbe4'], 'Rolled over':['#ece6f8','#5b3a8e'], 'Submitted for digitization':['#d2f0ec','#0f5f58'], 'Sent for approval':['#e6f3fc','#1f6fa8'],
   'Reviewed new requests':['#e8eaf6','#3949ab'], 'Requested Sew Out':['#fdeee2','#a35a1f'], 'Added to ES/FTP':['#c6e4f7','#0b4f80'], 'Followed up on':['#fff6b3','#6b5600'], 'Completed':['#e2f5dc','#2e7d32'], 'Other':['#eef0f6','#49516C'], 'Archive':['#eceff1','#546e7a']};
+let tdRemoved = null;   // EP v1.40: the last thing removed from To Do / What I did, for Undo
 let todoDay = null, todoOpen = null, todoQ = '';   // day shown, task opened (single click), search across every day
 const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const tdTasks = d => (DB.tasks || []).filter(t => t.day === d);
@@ -1545,9 +1546,12 @@ document.addEventListener('click', async e => {
     const left = steps.slice(0, -1); todoOpen = left.length ? left[left.length - 1].id : null;
     touch(); redraw(); toast(left.length ? 'Undone. It&rsquo;s back in ' + esc(left[left.length - 1].sec) + '.' : src ? 'Undone. It&rsquo;s back on your To Do list.' : 'Undone.'); return; }
   if (k === 'del' && (t || (w && !w.taskId))){ if (!confirm('Remove this from the list?')) return;
-    if (t){ tlog(t, 'Removed'); DB.tasks = DB.tasks.filter(x => x !== t); DB.did = (DB.did || []).filter(x => x.taskId !== t.id); }
-    else { const steps = tdSteps(w); tlog(w, 'Removed'); DB.did = DB.did.filter(x => !steps.includes(x)); }
-    todoOpen = null; touch(); redraw(); return; }
+    if (t){ tlog(t, 'Removed'); tdRemoved = {tasks:[t], did:(DB.did || []).filter(x => x.taskId === t.id)}; DB.tasks = DB.tasks.filter(x => x !== t); DB.did = (DB.did || []).filter(x => x.taskId !== t.id); }
+    else { const steps = tdSteps(w); tlog(w, 'Removed'); tdRemoved = {tasks:[], did:steps}; DB.did = DB.did.filter(x => !steps.includes(x)); }
+    todoOpen = null; touch(); redraw(); toast('Removed.<button class="btn light small" data-td="undoRemove">Undo</button>', 10000); return; }
+  if (k === 'undoRemove'){ const r = tdRemoved; if (!r) return; tdRemoved = null;
+    DB.tasks = (DB.tasks || []).concat(r.tasks.filter(x => !DB.tasks.includes(x))); DB.did = (DB.did || []).concat(r.did.filter(x => !DB.did.includes(x)));
+    tlog(r.tasks[0] || r.did[0], 'Restored (Undo)'); touch(); redraw(); toast('Back on the list.'); return; }
 });
 
 function renderMasterSearch(){
