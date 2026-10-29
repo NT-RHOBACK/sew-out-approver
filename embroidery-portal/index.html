@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.43</span>
+    <span class="vbadge">EP v1.44</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.43: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.44: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.43';
+const VERSION = 'EP v1.44';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -491,7 +491,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || []})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || ''})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -540,7 +540,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -1139,12 +1139,13 @@ function rowsHtml(list, tab, cols, limit){
   return '<div class="tblwrap"><table class="tbl">' + colgroup + '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
 }
 // ---------------- To Do (EP v1.17+): Noelle's daily list (this portal only) ----------------
-const TODO_SECS = ['Request sew out','Review Barrett Sew Out','Add to ES/FTP','Other','Check on digitization','Check on Sew out requests','Waiting on Barrett'];   // EP v1.24: Waiting on Barrett replaces Waiting on thread colors
+const APPR_FU = 'Follow up on approval';   // EP v1.44
+const TODO_SECS = ['Request sew out','Review Barrett Sew Out','Add to ES/FTP','Other','Check on digitization','Check on Sew out requests','Waiting on Barrett',APPR_FU];   // EP v1.24: Waiting on Barrett replaces Waiting on thread colors
 const DID_SECS = ['Reviewed new requests','Submitted for digitization','Requested Sew Out','Followed up on','Sent for approval','Added to ES/FTP','Other','Completed','Archive'];   // EP v1.37: workflow order, plus Archive
 const DONE_DEFAULT = {'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
-  'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on Barrett':'Sent for approval'};
+  'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on Barrett':'Sent for approval', [APPR_FU]:'Followed up on'};
 const NEXT_CHECK = {'Submitted for digitization':'Check on digitization', 'Requested Sew Out':'Check on Sew out requests'};   // what you did → the next day's list
-const CHECK_FOR = {'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out'};   // EP v1.28: a check-on only stays while its logo is still in this status
+const CHECK_FOR = {'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', [APPR_FU]:'Sent for Approval'};   // EP v1.28: a check-on only stays while its logo is still in this status
 const CHECK_OF = {'Digitizing':'Check on digitization', 'Pending Sew Out':'Check on Sew out requests'};   // after "Followed up on": back the next day while the logo is still here
 // Status colors for the task banners (EP v1.23): [background, text, border]
 const TD_COLORS = {'To do':['#ffffff','#29304E','#d6dbe4'], 'Rolled over':['#ece6f8','#5b3a8e'], 'Submitted for digitization':['#d2f0ec','#0f5f58'], 'Sent for approval':['#e6f3fc','#1f6fa8'],
@@ -1278,6 +1279,18 @@ function todoStrip(l){   // EP v1.26: on a logo card, this logo on today's To Do
     (l.emailLink ? ' <button class="btn light small" data-x="emailOpen" data-id="' + id + '">&#9993; Open email</button>' : '') + '</div>' +
     (open ? '<div class="todo-strip-row">' + body + '</div>' + emailBox(l.emailLink || '', 'lemail-' + id, 'data-x="ACT" data-id="' + id + '"') : '') + '</div>';
 }
+function tdApprovalCheck(){   // EP v1.44: once per logo, the first day it's Sent for Approval with a red In Hand Date (and wasn't sent today)
+  const today = todayIso(); if (!tdReady() || !(DB.todoDays || []).includes(today)) return 0; let n = 0;
+  DB.logos.forEach(l => { if (l.status !== 'Sent for Approval' || l.apprFu || !l.inHand || urg(off(l.inHand)) !== 'red') return;
+    const sent = (DB.history.filter(h => h.id === l.id && /> Sent for Approval$/.test(h.what)).map(h => h.ts).sort().pop() || '').slice(0, 10) || l.sentDate || '';
+    if (sent >= today) return;
+    l.apprFu = today; n++;
+    if (tdTasks(today).some(t => t.state !== 'done' && t.sec === APPR_FU && tdLogo(t) === l)) return;
+    if (tdDid(today).some(x => x.sec === 'Followed up on' && tdLogo(tdSrc(x) || x) === l)) return;   // already followed up today
+    const t = {id:tdId(), day:today, sec:APPR_FU, text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id}; DB.tasks.push(t);
+    tlog(t, 'Added: In Hand Date ' + fmt(l.inHand) + ' turned red, 30 days or less (' + APPR_FU + ')'); });
+  return n;
+}
 function tdMigrate(){ let n = 0; (DB.tasks || []).forEach(t => { if (t.sec === 'Waiting on thread colors'){ t.sec = 'Waiting on Barrett'; tlog(t, 'Moved to Waiting on Barrett'); n++; } });
   const wt = (DB.tasks || []).find(t => t.id === 'Tmvsaj2tmicsg' && t.day === '2026-10-29'), ws = wt ? (DB.did || []).filter(x => x.taskId === wt.id && x.day === '2026-10-29') : [];   // EP v1.43 one-time repair
   const sa = ws.find(x => x.sec === 'Sent for approval' && x.ts === '2026-10-29T16:44:54'), fu = ws.find(x => x.sec === 'Followed up on');
@@ -1379,7 +1392,7 @@ function tdLinkBox(o){
 }
 
 // Tables (EP v1.30): To Do and What I did look like the queues: sections that open and close, columns you can sort, a Department filter and Group by
-const TODO_SEC_COLOR = {'Request sew out':'Pending Sew Out', 'Review Barrett Sew Out':'Review Sew Out', 'Add to ES/FTP':'Need to Upload', 'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', 'Waiting on Barrett':'Waiting on Reply'};
+const TODO_SEC_COLOR = {'Request sew out':'Pending Sew Out', 'Review Barrett Sew Out':'Review Sew Out', 'Add to ES/FTP':'Need to Upload', 'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', 'Waiting on Barrett':'Waiting on Reply', [APPR_FU]:'Sent for Approval'};
 const tdSecColor = s => (STATUS_COLORS[TODO_SEC_COLOR[s]] || {}).title || (TD_COLORS[s] && s !== 'Other' ? TD_COLORS[s][1] : 'var(--navy)');
 const PRI_RANK = {Rush:0, Important:1};   // EP v1.35: To Do priority
 const tdPri = o => !o ? '' : o.pri === 'Rush' ? '<span class="rush-r" title="Rush">R</span>' : o.pri === 'Important' ? '<span class="rush-r imp" title="Important">I</span>' : '';
@@ -1430,6 +1443,7 @@ function tdGroups(list, kind){   // Group by: section (default), department, or 
 function renderTodo(tab){
   const today = todayIso(); todoDay = todoDay || today;
   if (todoDay === today && tdReady() && startTodo()) touch();
+  if (tdApprovalCheck()) touch();
   const d = todoDay, tasks = tdTasks(d), did = tdDid(d).sort((a, b) => a.ts.localeCompare(b.ts)), view = state.todoView === 'did' ? 'did' : 'todo';
   const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))], future = d > today;
   const left = tasks.filter(t => !t.state).length, isDid = view === 'did' && !future;
@@ -1627,7 +1641,7 @@ function collapseState(){ const heads = [...document.querySelectorAll('#page .se
   return {heads, days, any:heads.length + days.length > 0, open:heads.some(h => !state.collapsed[h.dataset.sec]) || days.some(x => dayOpen(x.dataset.day))}; }
 function syncCollapse(){ const b = document.querySelector('#page [data-collapse]'); if (!b) return; const c = collapseState(); b.style.display = c.any ? '' : 'none'; b.textContent = c.open ? 'Collapse all' : 'Expand all'; }
 function render(){
-  refreshToday(); renderNotifs();
+  refreshToday(); renderNotifs(); if (tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
