@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.44</span>
+    <span class="vbadge">EP v1.45</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.44: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.45: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.44';
+const VERSION = 'EP v1.45';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -898,8 +898,8 @@ document.addEventListener('click', async e => {
   // EP v1.26: To Do + email chain from the logo card
   if (act === 'emailOpen'){ if (okLink(l.emailLink)) window.open(l.emailLink, '_blank', 'noopener'); return; }
   if (act === 'stripToggle'){ stripOpen[l.id] = !stripOpen[l.id]; render(); return; }
-  if (act === 'todoGo'){ const today = todayIso(), t = tdTasks(today).find(z => tdLogo(z) === l), w = tdDid(today).filter(z => tdLogo(z) === l).map(tdCurrent).pop();
-    state.tab = 'todo'; msearch = ''; document.getElementById('msearch').value = ''; todoDay = today; todoQ = '';
+  if (act === 'todoGo'){ const day = x.dataset.day || todayIso(), t = tdTasks(day).find(z => tdLogo(z) === l), w = tdDid(day).filter(z => tdLogo(z) === l).map(tdCurrent).pop();
+    state.tab = 'todo'; msearch = ''; document.getElementById('msearch').value = ''; todoDay = day; todoQ = '';
     if (t && t.state !== 'done'){ state.todoView = 'todo'; todoOpen = t.id; } else { state.todoView = 'did'; todoOpen = t ? (tdTaskSteps(t).pop() || {}).id : w && w.id; }
     save(); render(); const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
   if (['todoAdd','todoLink','emailSave','emailClear','followUp','followUndo'].includes(act) && !tdReady()){ toast('Reconnect Excel first (top right).'); return; }
@@ -1266,16 +1266,19 @@ let stripOpen = {};   // EP v1.30: the To Do part of a logo card starts closed e
 function todoStrip(l){   // EP v1.26: on a logo card, this logo on today's To Do (or add / link it) + its email chain
   const today = todayIso(), t = tdTasks(today).find(x => tdLogo(x) === l), w = !t && tdDid(today).filter(x => !x.taskId && tdLogo(x) === l).map(tdCurrent).pop(), id = esc(l.id), open = stripOpen[l.id];
   const go = '<button class="btn light small" data-x="todoGo" data-id="' + id + '">Open in To Do</button>';
+  const past = !t && !w && (DB.tasks || []).filter(x => tdLogo(x) === l).concat((DB.did || []).filter(x => !x.taskId && tdLogo(x) === l).map(tdCurrent))
+    .sort((a, b) => a.day.localeCompare(b.day) || String(a.ts).localeCompare(String(b.ts))).pop();   // its latest task or What I did line on another day
   let head, body;
   if (t){ const st = t.state === 'done' ? (tdTaskSteps(t).pop() || {}).sec : t.state === 'rolled' ? 'Rolled over' : 'To do';
     head = 'On today&rsquo;s To Do: <b>' + esc(t.sec) + '</b> &middot; ' + esc(st); body = go; }
   else if (w){ head = 'In today&rsquo;s What I did: <b>' + esc(w.sec) + '</b>'; body = go; }
   else { const free = tdTasks(today).filter(x => x.state !== 'done' && !tdLogo(x));
-    head = 'Not on today&rsquo;s To Do';
-    body = '<select id="tdAddSec-' + id + '">' + tdOpts(TODO_SECS, STATUS_TO_TODO[l.status] || 'Other') + '</select><button class="btn light small" data-x="todoAdd" data-id="' + id + '">Add to To Do</button>' +
+    const isTask = past && (DB.tasks || []).includes(past), pst = !isTask ? '' : past.plan || past.day > today ? 'Planned' : past.state === 'done' ? (tdTaskSteps(past).pop() || {}).sec || 'Done' : past.state === 'rolled' ? 'Rolled over' : 'To do';
+    head = past ? 'Linked to ' + (isTask ? 'To Do' : 'What I did') + ' on ' + esc(dayName(past.day)) + ': <b>' + esc(past.sec) + '</b>' + (pst ? ' &middot; ' + esc(pst) : '') + ' <span class="td-when">(not on today&rsquo;s list)</span>' : 'Not on today&rsquo;s To Do';
+    body = (past ? go.replace('data-x="todoGo"', 'data-x="todoGo" data-day="' + past.day + '"') + ' <span class="td-when">or add it to today:</span> ' : '') + '<select id="tdAddSec-' + id + '">' + tdOpts(TODO_SECS, STATUS_TO_TODO[l.status] || 'Other') + '</select><button class="btn light small" data-x="todoAdd" data-id="' + id + '">Add to To Do</button>' +
       (free.length ? ' <span class="td-when">or</span> <select id="tdLinkTask-' + id + '"><option value="">Link to a task on today&rsquo;s list&hellip;</option>' + free.map(x => '<option value="' + x.id + '">' + esc(tdLines(x.text).first) + '</option>').join('') + '</select>' +
         '<button class="btn light small" data-x="todoLink" data-id="' + id + '">Link</button>' : ''); }
-  return '<div class="todo-strip"><div class="todo-strip-head" data-x="stripToggle" data-id="' + id + '"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span><span class="tchk">' + (t || w ? '&#9745;' : '&#9744;') + '</span> ' + head +
+  return '<div class="todo-strip"><div class="todo-strip-head" data-x="stripToggle" data-id="' + id + '"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span><span class="tchk">' + (t || w || past ? '&#9745;' : '&#9744;') + '</span> ' + head +
     (l.emailLink ? ' <button class="btn light small" data-x="emailOpen" data-id="' + id + '">&#9993; Open email</button>' : '') + '</div>' +
     (open ? '<div class="todo-strip-row">' + body + '</div>' + emailBox(l.emailLink || '', 'lemail-' + id, 'data-x="ACT" data-id="' + id + '"') : '') + '</div>';
 }
