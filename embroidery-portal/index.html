@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.42</span>
+    <span class="vbadge">EP v1.43</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.42: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.43: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.42';
+const VERSION = 'EP v1.43';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1149,6 +1149,7 @@ const CHECK_OF = {'Digitizing':'Check on digitization', 'Pending Sew Out':'Check
 // Status colors for the task banners (EP v1.23): [background, text, border]
 const TD_COLORS = {'To do':['#ffffff','#29304E','#d6dbe4'], 'Rolled over':['#ece6f8','#5b3a8e'], 'Submitted for digitization':['#d2f0ec','#0f5f58'], 'Sent for approval':['#e6f3fc','#1f6fa8'],
   'Reviewed new requests':['#e8eaf6','#3949ab'], 'Requested Sew Out':['#fdeee2','#a35a1f'], 'Added to ES/FTP':['#c6e4f7','#0b4f80'], 'Followed up on':['#fff6b3','#6b5600'], 'Completed':['#e2f5dc','#2e7d32'], 'Other':['#eef0f6','#49516C'], 'Archive':['#eceff1','#546e7a']};
+let tdPastStep = null;   // EP v1.43: the last next step put on today from an earlier day's line, for "Put it on <day> instead"
 let tdRemoved = null;   // EP v1.40: the last thing removed from To Do / What I did, for Undo
 let todoDay = null, todoOpen = null, todoQ = '';   // day shown, task opened (single click), search across every day
 const tdId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1233,13 +1234,21 @@ function tdMoveDay(w, nd){   // EP v1.35: a What I did item (with its steps that
     const old = copies.find(t => t.day === nd);   // done the day it rolled over from: that one is marked done, and the later rolled-over copies go away
     if (old){ task = old; copies.concat([src]).filter(t => t !== old).forEach(t => tlog(t, 'Removed from ' + dayName(t.day) + ': done on ' + dayName(nd))); DB.tasks = DB.tasks.filter(t => t === old || !copies.concat([src]).includes(t)); }
     else src.day = nd; }
-  steps.forEach(x => { x.day = nd; x.ts = nd + String(x.ts || '').slice(10); if (task) x.taskId = task.id; });
+  steps.forEach(x => { x.day = nd; if (task) x.taskId = task.id; });
   if (task) tdSync(task);
   tlog(task || w, 'Date done changed: ' + dayName(from) + ' > ' + dayName(nd));
   const cur = steps[steps.length - 1], c = nd < today && (DB.todoDays || []).includes(today) ? tdNextCheck(cur, task) : {}, text = task ? task.text : cur.text;   // its check-on shows up today, like it would have the next morning
   if (c.sec && !c.gone && !tdTasks(today).some(t => t.sec === c.sec && tdNorm(t.text) === tdNorm(text))){ const from2 = task || cur;
     const t = {id:tdId(), day:today, sec:c.sec, text, state:'', doneSec:'', ts:nowStamp(), chain:tdChainOf(from2)}; ['logoId', 'noLink', 'emailLink', 'dept', 'pri'].forEach(k => { if (from2[k]) t[k] = from2[k]; });
     DB.tasks.push(t); tlog(t, 'Added as a check-on (' + c.sec + ') after ' + cur.sec + ' on ' + dayName(nd)); }
+}
+function tdStepToday(x, sec){   // EP v1.43: today's task or What I did line for the same item gets the step, or a new line today
+  const today = todayIso(), base = tdSrc(x) || x, chain = tdChainOf(base);
+  const t = tdTasks(today).find(z => tdChainOf(z) === chain), w = !t && tdDid(today).filter(z => !z.taskId && tdChainOf(z) === chain).map(tdCurrent).pop();
+  if (t || w) return tdAddStep(t || w, sec);
+  const y = {id:tdId(), day:today, sec, text:base.text, ts:nowStamp(), taskId:'', chain}, l = tdLogo(base);
+  if (l) y.logoId = l.id; else { if (base.noLink) y.noLink = true; if (tdDept(base)) y.dept = tdDept(base); }
+  (DB.did = DB.did || []).push(y); tlog(base, 'Next step → ' + sec + ' (' + dayName(today) + ')'); return y;
 }
 function tdFollowed(o){ const src = o.taskId && (DB.tasks || []).find(t => t.id === o.taskId), l = tdLogo(src || o); if (l) fuMark(l, ' (from To Do)'); }   // Followed up on → the logo's Follow Up snoozes too
 // Email chains (EP v1.26): an Outlook link saved on the logo (or on the task when it isn't linked); Open email opens it to reply
@@ -1269,7 +1278,11 @@ function todoStrip(l){   // EP v1.26: on a logo card, this logo on today's To Do
     (l.emailLink ? ' <button class="btn light small" data-x="emailOpen" data-id="' + id + '">&#9993; Open email</button>' : '') + '</div>' +
     (open ? '<div class="todo-strip-row">' + body + '</div>' + emailBox(l.emailLink || '', 'lemail-' + id, 'data-x="ACT" data-id="' + id + '"') : '') + '</div>';
 }
-function tdMigrate(){ let n = 0; (DB.tasks || []).forEach(t => { if (t.sec === 'Waiting on thread colors'){ t.sec = 'Waiting on Barrett'; tlog(t, 'Moved to Waiting on Barrett'); n++; } }); return n; }
+function tdMigrate(){ let n = 0; (DB.tasks || []).forEach(t => { if (t.sec === 'Waiting on thread colors'){ t.sec = 'Waiting on Barrett'; tlog(t, 'Moved to Waiting on Barrett'); n++; } });
+  const wt = (DB.tasks || []).find(t => t.id === 'Tmvsaj2tmicsg' && t.day === '2026-10-29'), ws = wt ? (DB.did || []).filter(x => x.taskId === wt.id && x.day === '2026-10-29') : [];   // EP v1.43 one-time repair
+  const sa = ws.find(x => x.sec === 'Sent for approval' && x.ts === '2026-10-29T16:44:54'), fu = ws.find(x => x.sec === 'Followed up on');
+  if (sa && fu){ wt.day = '2026-10-28'; sa.day = '2026-10-28'; sa.ts = '2026-10-28T16:44:54'; fu.taskId = ''; tdSync(wt); tlog(wt, 'Fixed: sent for approval Wed, 10/28; followed up Thu, 10/29'); n++; }
+  return n; }
 
 // A new day: anything not marked rolls over, and where each task ended up yesterday can come back as a check-on
 function startTodo(){
@@ -1503,7 +1516,10 @@ document.addEventListener('change', e => {
     if (v === 'To do'){ if (t.state === 'rolled'){ t.state = ''; delete t.auto; tlog(t, 'Undo roll over'); } }
     else if (v === 'Rolled over'){ t.state = 'rolled'; delete t.auto; tlog(t, 'Rolled over'); }
     else { tdAddStep(t, v); if (v === 'Followed up on') tdFollowed(t); const ms = tdToPortal(t, v); if (todoOpen === t.id) todoOpen = null; toast('Moved to What I did &rarr; ' + esc(v) + '.' + (ms ? ' The logo moved to ' + esc(ms) + '.' : '')); }
-  } else { const x = (DB.did || []).find(y => y.id === id); if (!x || v === x.sec) return; const y = tdAddStep(x, v); if (v === 'Followed up on') tdFollowed(x); const ms = tdToPortal(x, v); if (ms) toast('The logo moved to ' + esc(ms) + '.'); if (todoOpen === x.id) todoOpen = y.id; }
+  } else { const x = (DB.did || []).find(y => y.id === id); if (!x || v === x.sec) return; const past = x.day < todayIso(), y = past ? tdStepToday(x, v) : tdAddStep(x, v);
+    if (v === 'Followed up on') tdFollowed(x); const ms = tdToPortal(x, v);
+    if (past){ tdPastStep = {y, x, v}; toast('Added to today&rsquo;s What I did &rarr; ' + esc(v) + '.' + (ms ? ' The logo moved to ' + esc(ms) + '.' : '') + '<button class="btn light small" data-td="stepPast">Put it on ' + esc(dayName(x.day)) + ' instead</button>', 10000); }
+    else { if (ms) toast('The logo moved to ' + esc(ms) + '.'); if (todoOpen === x.id) todoOpen = y.id; } }
   touch(); renderTodo(tab);
 });
 document.addEventListener('click', async e => {
@@ -1567,6 +1583,9 @@ document.addEventListener('click', async e => {
   if (k === 'undoRemove'){ const r = tdRemoved; if (!r) return; tdRemoved = null;
     DB.tasks = (DB.tasks || []).concat(r.tasks.filter(x => !DB.tasks.includes(x))); DB.did = (DB.did || []).concat(r.did.filter(x => !DB.did.includes(x)));
     tlog(r.tasks[0] || r.did[0], 'Restored (Undo)'); touch(); redraw(); toast('Back on the list.'); return; }
+  if (k === 'stepPast'){ const r = tdPastStep; if (!r) return; tdPastStep = null;
+    DB.did = DB.did.filter(z => z !== r.y); const src = tdSrc(r.y); if (src) tdSync(src); tdAddStep(r.x, r.v); tlog(tdSrc(r.x) || r.x, 'Step moved to ' + dayName(r.x.day));
+    touch(); redraw(); toast('Put on ' + esc(dayName(r.x.day)) + ' instead.'); return; }
 });
 
 function renderMasterSearch(){
