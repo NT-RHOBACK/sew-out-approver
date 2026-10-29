@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.37</span>
+    <span class="vbadge">EP v1.38</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.37: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.38: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.37';
+const VERSION = 'EP v1.38';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1178,7 +1178,7 @@ function tdAddStep(o, sec){   // o: a To Do task, or a What I did item
 
 // Logo links (EP v1.24): a task or What I did item can point at a logo in the portal (by name, or picked by hand)
 const PORTAL_TO_DID = {'New Request':'Reviewed new requests', 'Digitizing':'Submitted for digitization', 'Pending Sew Out':'Requested Sew Out', 'Sent for Approval':'Sent for approval',
-  'Waiting on Reply':'Followed up on', 'Completed':'Added to ES/FTP'};   // portal status change → What I did section
+  'Waiting on Reply':'Followed up on', 'Completed':'Added to ES/FTP', 'Archive':'Archive'};   // portal status change → What I did section
 const tdNorm = x => String(x || '').trim().toLowerCase();
 const tdSrc = o => o.taskId ? (DB.tasks || []).find(t => t.id === o.taskId) : null;   // a What I did step's To Do task
 function tdDept(o){   // EP v1.30: a linked logo's department, else the one picked on the task (or write-in)
@@ -1504,7 +1504,7 @@ document.addEventListener('click', async e => {
   if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoOpen = id; save(); redraw();
     const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
   if (k === 'emailOpen' && (t || w)){ const link = tdEmail((w && w.taskId && (DB.tasks || []).find(x => x.id === w.taskId)) || t || w); if (okLink(link)) window.open(link, '_blank', 'noopener'); return; }
-  if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS, tdDid(todoDay).sort((a, b) => a.ts.localeCompare(b.ts)), longDay(todoDay));
+  if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS.filter(x => x !== 'Archive'), tdDid(todoDay).sort((a, b) => a.ts.localeCompare(b.ts)), longDay(todoDay));   // EP v1.38: Archive isn't shared
     toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
   if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); return; }
   if (k === 'add' || k === 'addDid'){ const isDid = k === 'addDid', ta = document.getElementById(isDid ? 'didText' : 'tdText'), text = ta.value.replace(/\s+$/, ''); if (!text.trim()) return;
