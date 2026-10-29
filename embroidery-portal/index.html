@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.41</span>
+    <span class="vbadge">EP v1.42</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.41: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.42: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.41';
+const VERSION = 'EP v1.42';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -776,6 +776,9 @@ function columns(tab, section){
   } else if (extra){
     cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
   }
+  if (tab.focus) cols.push({k:'today', h:'To Do today', v:l => { const x = tdToday(l); return x ? x.rank + x.sec : '9'; }, td:l => { const x = tdToday(l); if (!x) return '<span class="muted">&mdash;</span>';
+    const c = TD_COLORS[x.done ? x.sec : x.rolled ? 'Rolled over' : 'To do'] || TD_COLORS.Other;
+    return '<span class="td-logo" style="background:' + c[0] + ';color:' + c[1] + (c[2] ? ';border:1px solid ' + c[2] : '') + '">' + (x.done ? '&#10003; ' : '') + esc(x.sec) + '</span>' + (x.time ? '<div class="td-when">' + time12(x.time) + '</div>' : ''); }});
   cols.push({k:'status', h:'Status', v:l => STATUSES.indexOf(l.status), td:stSelect});
   return cols;
 }
@@ -1129,10 +1132,10 @@ function rowsHtml(list, tab, cols, limit){
   list = list.slice().sort((a, b) => { const x = col.v(a), y = col.v(b); return (x > y ? 1 : x < y ? -1 : 0) * sk.dir; });
   if (!state.sort[tab.key]){ const r = new Map(list.map(l => [l, (turnaround(l) || {tier:{}}).tier.name === 'RUSH' ? 0 : 1])); list.sort((a, b) => r.get(a) - r.get(b)); }   // EP v1.30: RUSH on top until you sort by a column
   if (limit) list = list.slice(0, limit);
-  const W = tab.key === 'barrett' ? {logo:22, account:12, rep:8, sub:8, ih:10, type:7, sewSent:10, photo:11, status:12} : tab.extra ? {logo:29, account:14, rep:8, sub:8, ih:10, type:7, photo:12, sentDate:12, approvedDate:12, completedDate:12, sentOrApproved:12, status:12} : {logo:35, account:17, rep:9, sub:9, ih:10, type:8, status:12};   // EP v1.39: wider Logo
+  const W = tab.focus ? {logo:27, account:14, rep:9, sub:8, ih:10, type:7, today:13, status:12} : tab.key === 'barrett' ? {logo:22, account:12, rep:8, sub:8, ih:10, type:7, sewSent:10, photo:11, status:12} : tab.extra ? {logo:29, account:14, rep:8, sub:8, ih:10, type:7, photo:12, sentDate:12, approvedDate:12, completedDate:12, sentOrApproved:12, status:12} : {logo:35, account:17, rep:9, sub:9, ih:10, type:8, status:12};   // EP v1.39: wider Logo
   const colgroup = '<colgroup>' + cols.map(c => '<col style="width:' + (W[c.k] || 10) + '%">').join('') + '</colgroup>';
   const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (c.k === sk.k ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (c.k === sk.k ? (sk.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
-  const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
+  const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' || c.k === 'today' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
   return '<div class="tblwrap"><table class="tbl">' + colgroup + '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
 }
 // ---------------- To Do (EP v1.17+): Noelle's daily list (this portal only) ----------------
@@ -1346,6 +1349,14 @@ function tdNotesBox(o, base){   // EP v1.36: internal notes on a To Do task
   const list = tdNoteList(base);
   return '<div class="box"><h3><span class="num">2</span>Internal notes</h3><textarea id="tdnote-' + o.id + '" style="width:100%;min-height:50px;border:1px solid #d6dbe4;border-radius:6px;padding:6px 8px;font:inherit;font-size:13px" placeholder="Add an internal note&hellip;"></textarea>' +
     '<div class="btns"><button class="btn small" data-td="noteAdd" data-id="' + o.id + '">Add note</button></div>' + (list.length ? tdNoteLines(list) : '') + '</div>';
+}
+function tdToday(l){   // EP v1.42: this logo on today's list: what you did with it (latest step), or still to do
+  const today = todayIso(), t = tdTasks(today).find(x => tdLogo(x) === l);
+  if (t && t.state === 'done'){ const st = tdTaskSteps(t).pop() || {}; return {done:true, sec:st.sec || t.doneSec, time:st.ts, rank:1}; }
+  const w = tdDid(today).filter(x => !x.taskId && tdLogo(x) === l).map(tdCurrent).pop();
+  if (w) return {done:true, sec:w.sec, time:w.ts, rank:1};
+  if (t) return t.state === 'rolled' ? {rolled:true, sec:'Rolled over', rank:3} : {sec:'To do: ' + t.sec, rank:2};
+  return null;
 }
 function tdLinkBox(o){
   const l = tdLogo(o);
