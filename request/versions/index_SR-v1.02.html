@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Rhoback Sew-Out Request</title>
+<style>
+:root{--navy:#0D1E50;--ntint:#edf0f9;--nmid:#c4cde8;--gray:#7a7a8a;--lgray:#f4f5fa;--red:#b02020;--green:#1a6e2e;--pick:#dce3f3;--r:9px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Aptos','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#e8ecf5;min-height:100vh;padding:0 0 48px;color:#1c2340}
+.top-bar{background:var(--navy);color:rgba(255,255,255,.9);text-align:center;padding:8px 24px;font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase}
+.wrap{max-width:1180px;margin:18px auto 0;padding:0 16px}
+.card{background:#fff;border-radius:var(--r);box-shadow:0 2px 18px rgba(13,30,80,.12);overflow:hidden}
+.card-hdr{padding:16px 22px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--lgray)}
+.card-hdr h1{font-size:17px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy)}
+.card-hdr p{font-size:11px;color:var(--gray);margin-top:2px}
+.hdr-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.badge{background:var(--ntint);color:var(--navy);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;white-space:nowrap}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:#faeeee;color:var(--red);border:1px solid #e2c4c4;border-radius:7px;cursor:pointer;font-size:18px;font-weight:700}
+.icon-btn:hover{background:#f2dada}
+.body{padding:20px 24px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:0 28px;align-items:start}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.banner{display:none;background:#eaf4f8;border:1px solid #b8dae4;border-left:4px solid #509aaa;border-radius:8px;padding:10px 14px;margin:0 0 16px;font-size:12px;color:#1c3a48;line-height:1.5}
+.sec{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.sec:first-child{margin-top:0}
+.sec::after{content:'';flex:1;height:1px;background:#e8eaf2}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.field{margin-bottom:12px}
+label.lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);margin-bottom:5px}
+.req{color:var(--red)}
+input[type=text],input[type=date],textarea{width:100%;padding:9px 11px;border:1px solid #d6dbe8;border-radius:7px;font:inherit;font-size:13px;color:#1c2340;background:#fff}
+textarea{min-height:76px;resize:vertical}
+input:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 2px rgba(13,30,80,.08)}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 12px;border:1.5px solid #d6dbe8;border-radius:8px;background:#fff;cursor:pointer;font:inherit;font-size:13px;color:#1c2340}
+.opt:hover{border-color:var(--nmid)}
+.opt.sel{background:var(--pick);border-color:var(--navy)}
+.opt .dot{width:14px;height:14px;border-radius:50%;border:2px solid #b5bdd3;flex:none}
+.opt.sel .dot{border-color:var(--navy);background:radial-gradient(var(--navy) 0 45%,transparent 50%)}
+.opt .sample{padding:1px 3px}
+.hint{font-size:11px;color:var(--gray);margin-top:6px;line-height:1.4}
+.fixed{padding:9px 12px;border:1.5px dashed #d6dbe8;border-radius:8px;font-size:13px}
+.preview{border:1px solid #d6dbe8;border-radius:8px;overflow:hidden}
+.pv-head{background:var(--lgray);padding:10px 14px;font-size:12px;line-height:1.7;border-bottom:1px solid #e2e6ef}
+.pv-head b{display:inline-block;width:62px;color:var(--gray);font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+.pv-body{padding:16px 14px;overflow-x:auto}
+.pv-sig{margin-top:14px;padding-top:10px;border-top:1px dashed #d6dbe8;font-size:11px;color:var(--gray);font-style:italic}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{padding:11px 18px;border-radius:8px;border:1px solid var(--navy);background:var(--navy);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.btn:hover{opacity:.92}
+.btn.light{background:#fff;color:var(--navy);border-color:var(--nmid)}
+.btn.light:hover{border-color:var(--navy)}
+.msg{font-size:12px;margin-top:10px;line-height:1.5;min-height:18px}
+.msg.ok{color:var(--green)}.msg.err{color:var(--red)}.msg.info{color:#1c3a48}
+</style>
+</head>
+<body>
+<div class="top-bar">Rhoback &mdash; Sew-Out Request</div>
+<div class="wrap">
+<div class="card">
+  <div class="card-hdr">
+    <div><h1>Sew-Out Request</h1><p>Rhoback Embroidery &middot; to Barrett</p></div>
+    <div class="hdr-actions">
+      <button class="icon-btn" onclick="clearForm()" title="Clear form">&times;</button>
+      <span class="badge">SR v1.02</span>
+    </div>
+  </div>
+  <div class="body">
+    <div class="banner" id="nsBanner"></div>
+    <div class="cols">
+      <div>
+        <div class="sec">1 &nbsp; Logo</div>
+        <div class="two">
+          <div class="field"><label class="lbl">Account <span class="req">*</span></label><input type="text" id="account" placeholder="e.g. Seven Oaks Country Club"></div>
+          <div class="field"><label class="lbl">Logo name <span class="req">*</span></label><input type="text" id="logo" placeholder="e.g. SevenOaksCC_ScriptOnly_2.50w"></div>
+        </div>
+        <div class="field"><label class="lbl">In Hand Date</label><input type="date" id="inHand"></div>
+
+        <div class="sec">2 &nbsp; Urgency</div>
+        <div class="opts" id="opts-urgency"></div>
+        <div class="hint" id="urgencyHint"></div>
+
+        <div class="sec">3 &nbsp; Fabric Color <span class="req">*</span></div>
+        <div class="opts" id="opts-fabric"></div>
+
+        <div class="sec">4 &nbsp; Thread Color Substitutions Allowed? <span class="req">*</span></div>
+        <div class="opts" id="opts-subs"></div>
+
+        <div class="sec">5 &nbsp; Order Thread Colors?</div>
+        <div class="fixed"><span id="orderSample"></span> <span class="hint">(always yes)</span></div>
+
+        <div class="sec">6 &nbsp; Notes for Barrett <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <div class="field"><textarea id="notes" placeholder="Anything else Barrett should know&hellip;"></textarea></div>
+      </div>
+
+      <div>
+        <div class="sec">Email preview</div>
+        <div class="preview">
+          <div class="pv-head">
+            <div><b>To</b><span id="pvTo"></span></div>
+            <div><b>Cc</b><span id="pvCc"></span></div>
+            <div><b>Subject</b><span id="pvSubject"></span></div>
+          </div>
+          <div class="pv-body">
+            <div id="pvBody"></div>
+            <div class="pv-sig">Your email signature is added by NetSuite when it sends.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" onclick="sendToNetSuite()">Send to NetSuite &rarr;</button>
+          <button class="btn light" onclick="copyEmail()">Copy email</button>
+          <button class="btn light" onclick="copySubject()">Copy subject</button>
+        </div>
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// SR v1.02: Sew-Out Request for Barrett. (v1.01: can also send back to Noelle's Embroidery Portal on this same site; NetSuite works as before.
+//   v1.02: urgency follows the turnaround rules: 30 days or less = RUSH, 31-45 = IMPORTANT, 46+ or no date = STANDARD.)
+// NetSuite opens this page with the logo info in the link:
+//   .../sew-out-approver/request/#customer=..&logo=..&inhand=YYYY-MM-DD&id=..   (values URL-encoded; ?query also works)
+// "Send to NetSuite" posts the answers + finished email back to the NetSuite tab that opened it (window.opener).
+const VERSION = 'SR v1.02';
+const NS_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com'];
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) NS_ORIGINS.push(location.origin);   // local testing only
+const PORTAL_ORIGINS = ['https://nt-rhoback.github.io'];   // Noelle's Embroidery Portal (/sew-out-approver/embroidery-portal/)
+const TARGETS = NS_ORIGINS.concat(PORTAL_ORIGINS);
+const TO = ['Rhobackembroideryteam@barrettdistribution.com', 'Carla Gotera <carla.gotera@barrettdistribution.com>'];
+const CC = ['Rosemarie Lincoln <rosemarie.lincoln@barrettdistribution.com>', 'Paulina Rivas <paulina.rivas@barrettdistribution.com>'];
+
+// Noelle's Quick Parts, with the same look they have in her emails
+const OPTS = {
+  urgency: [
+    {key:'urgent',    text:'URGENT, Please prioritize',    style:'font-weight:bold;background-color:#FF7C80;'},
+    {key:'important', text:'Important, in hand date soon', style:'font-weight:bold;background-color:#FFC77D;'},
+    {key:'none',      text:'None, just asap',              style:''}
+  ],
+  fabric: [
+    {key:'light', text:'White or light fabric',                 style:'font-weight:bold;background-color:#FFFF66;'},
+    {key:'dark',  text:'Navy or dark fabric',                   style:'font-weight:bold;background-color:#F8CBAD;'},
+    {key:'any',   text:'Any, ensure thread colors are visible', style:''}
+  ],
+  subs: [
+    {key:'yes', text:'Yes, can substitute thread colors if unavailable',       style:'font-weight:bold;color:#1E8C3A;'},
+    {key:'no',  text:'No, do NOT substitute thread colors, please order ASAP', style:'font-weight:bold;color:#D0312D;'}
+  ]
+};
+const ORDER = {text:'Yes', style:'font-weight:bold;color:#1E8C3A;'};
+const st = {urgency:'none', urgencyManual:false, fabric:null, subs:null, id:''};
+let ackTimer = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const find = (group, key) => OPTS[group].find(o => o.key === key) || null;
+const styled = o => o ? (o.style ? '<span style="' + o.style + '">' + esc(o.text) + '</span>' : esc(o.text)) : '';
+
+// ---- Urgency from the In Hand Date: past due or 0-30 days = URGENT (RUSH), 31-45 = Important, 46+ or none = None (STANDARD) ----
+function daysUntil(iso){
+  if (!iso) return null;
+  const p = iso.split('-').map(Number); if (p.length !== 3 || p.some(isNaN)) return null;
+  const d = new Date(p[0], p[1]-1, p[2]); const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((d - t) / 86400000);
+}
+function autoUrgency(days){ return days === null ? 'none' : days <= 30 ? 'urgent' : days <= 45 ? 'important' : 'none'; }
+function daysText(days){
+  if (days === null) return 'no In Hand Date';
+  if (days < 0) return 'past due by ' + (-days) + ' day' + (days === -1 ? '' : 's');
+  if (days === 0) return 'In Hand Date is today';
+  return days + ' day' + (days === 1 ? '' : 's') + ' away';
+}
+function setAutoUrgency(){ if (!st.urgencyManual) st.urgency = autoUrgency(daysUntil($('inHand').value)); }
+
+// ---- Option buttons ----
+function renderOpts(group){
+  const box = $('opts-' + group);
+  box.innerHTML = OPTS[group].map(o =>
+    '<button type="button" class="opt' + (st[group] === o.key ? ' sel' : '') + '" data-group="' + group + '" data-key="' + o.key + '">' +
+    '<span class="dot"></span><span class="sample" style="' + o.style + '">' + esc(o.text) + '</span></button>').join('');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.opt'); if (!b) return;
+  const g = b.dataset.group; st[g] = b.dataset.key;
+  if (g === 'urgency') st.urgencyManual = true;
+  render();
+});
+
+// ---- Email ----
+function subject(){ return 'Sew-Out Request for ' + ($('account').value.trim() || '[Account]') + ' | ' + ($('logo').value.trim() || '[Logo name]'); }
+function emailHtml(){
+  const td1 = 'border:1px solid #000;padding:5px 10px;font-weight:bold;color:#404040;vertical-align:middle;';
+  const td2 = 'border:1px solid #000;padding:5px 10px;vertical-align:middle;';
+  const row = (label, o) => '<tr><td style="' + td1 + '">' + label + '</td><td style="' + td2 + '">' + styled(o) + '</td></tr>';
+  const notes = $('notes').value.trim();
+  return '<div style="font-family:Aptos,Calibri,Arial,sans-serif;font-size:11pt;color:#000;">' +
+    '<p style="margin:0 0 12px 0;">Hi Barrett team,</p>' +
+    '<table style="border-collapse:collapse;border:1px solid #000;font-family:Aptos,Calibri,Arial,sans-serif;font-size:11pt;">' +
+      row('Urgency', find('urgency', st.urgency)) +
+      row('Fabric Color', find('fabric', st.fabric)) +
+      row('Thread Color substitutions Allowed?', find('subs', st.subs)) +
+      row('Order Thread Colors?', ORDER) +
+    '</table>' +
+    (notes ? '<p style="margin:14px 0 0 0;"><b>Notes:</b><br>' + esc(notes).replace(/\n/g, '<br>') + '</p>' : '') +
+    '<p style="margin:16px 0 0 0;">Thank you!</p>' +
+    '</div>';
+}
+function emailText(){
+  const t = (g, k) => (find(g, k) || {text:''}).text;
+  const notes = $('notes').value.trim();
+  return 'Hi Barrett team,\n\n' +
+    'Urgency: ' + t('urgency', st.urgency) + '\n' +
+    'Fabric Color: ' + t('fabric', st.fabric) + '\n' +
+    'Thread Color substitutions Allowed?: ' + t('subs', st.subs) + '\n' +
+    'Order Thread Colors?: Yes\n' +
+    (notes ? '\nNotes:\n' + notes + '\n' : '') + '\nThank you!';
+}
+
+function render(){
+  setAutoUrgency();
+  ['urgency','fabric','subs'].forEach(renderOpts);
+  const days = daysUntil($('inHand').value), auto = autoUrgency(days);
+  $('urgencyHint').textContent = st.urgencyManual && st.urgency !== auto
+    ? 'Changed by you. The In Hand Date (' + daysText(days) + ') would make it "' + find('urgency', auto).text + '".'
+    : 'Set from the In Hand Date: ' + daysText(days) + '.';
+  $('orderSample').innerHTML = styled(ORDER);
+  $('pvTo').textContent = TO.join('; ');
+  $('pvCc').textContent = CC.join('; ');
+  $('pvSubject').textContent = subject();
+  $('pvBody').innerHTML = emailHtml();
+}
+['account','logo','notes'].forEach(id => $(id).addEventListener('input', render));
+$('inHand').addEventListener('change', () => { st.urgencyManual = false; render(); });
+
+function say(text, kind){ const m = $('msg'); m.textContent = text; m.className = 'msg ' + (kind || 'info'); }
+function missing(){
+  const m = [];
+  if (!$('account').value.trim()) m.push('Account');
+  if (!$('logo').value.trim()) m.push('Logo name');
+  if (!st.fabric) m.push('Fabric Color');
+  if (!st.subs) m.push('Thread Color Substitutions');
+  return m;
+}
+
+// ---- Send to NetSuite (back to the logo card that opened this page) ----
+function payload(){
+  const t = (g, k) => (find(g, k) || {text:''}).text;
+  return {
+    type: 'rhoback-sewout-request', version: VERSION, id: st.id,
+    account: $('account').value.trim(), logo: $('logo').value.trim(), inHandDate: $('inHand').value,
+    urgency: t('urgency', st.urgency), fabricColor: t('fabric', st.fabric), substitutions: t('subs', st.subs),
+    orderThreadColors: 'Yes', notes: $('notes').value.trim(),
+    subject: subject(), html: emailHtml(), text: emailText()
+  };
+}
+function sendToNetSuite(){
+  const m = missing();
+  if (m.length) { say('Please fill in: ' + m.join(', ') + '.', 'err'); return; }
+  if (!window.opener || window.opener.closed) {
+    say('This page wasn’t opened from NetSuite, so there’s nothing to send it back to. Open it with the "Open Sew-Out Request" button in the logo card, or use Copy email.', 'err');
+    return;
+  }
+  const data = payload();
+  TARGETS.forEach(o => { try { window.opener.postMessage(data, o); } catch(e) {} });   // only the tab that opened this page gets it
+  say('Sending to NetSuite…', 'info');
+  clearTimeout(ackTimer);
+  ackTimer = setTimeout(() => say('No reply from NetSuite yet. If the Send Sew-Out Request box didn’t fill in, use Copy email instead.', 'err'), 5000);
+}
+window.addEventListener('message', e => {
+  if (!TARGETS.includes(e.origin) || !e.data || e.data.type !== 'rhoback-sewout-received') return;
+  clearTimeout(ackTimer);
+  if (PORTAL_ORIGINS.includes(e.origin)) say('✓ Your Embroidery Portal got it. Switch back to that tab, copy the email, and send it from Outlook.', 'ok');
+  else say('✓ NetSuite got it. Switch back to the NetSuite tab, attach the DST and color card, and click Send.', 'ok');
+});
+
+// ---- Copy (fallback) ----
+async function copyEmail(){
+  const m = missing();
+  if (m.length) { say('Please fill in: ' + m.join(', ') + '.', 'err'); return; }
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([emailHtml()], {type:'text/html'}),
+      'text/plain': new Blob([emailText()], {type:'text/plain'})
+    })]);
+    say('✓ Email copied. Paste it into your email to Barrett.', 'ok');
+  } catch(e) {
+    const r = document.createRange(); r.selectNodeContents($('pvBody'));
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    const ok = document.execCommand('copy'); s.removeAllRanges();
+    say(ok ? '✓ Email copied. Paste it into your email to Barrett.' : 'Couldn’t copy automatically. Select the preview and copy it.', ok ? 'ok' : 'err');
+  }
+}
+async function copySubject(){
+  try { await navigator.clipboard.writeText(subject()); say('✓ Subject copied.', 'ok'); }
+  catch(e) { say('Couldn’t copy the subject automatically.', 'err'); }
+}
+
+function clearForm(){
+  ['account','logo','inHand','notes'].forEach(id => $(id).value = '');
+  Object.assign(st, {urgency:'none', urgencyManual:false, fabric:null, subs:null, id:''});
+  $('nsBanner').style.display = 'none';
+  say('', 'info'); render();
+}
+
+// ---- Fill in from the NetSuite link ----
+function toIsoDate(v){
+  v = (v || '').trim(); if (!v) return '';
+  let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
+  m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if (m) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return y + '-' + m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0'); }
+  return '';
+}
+function fillFromLink(){
+  try {
+    const raw = (location.hash || '').replace(/^#/, '') || (location.search || '').replace(/^\?/, '');
+    if (!raw) return;
+    const p = new URLSearchParams(raw), get = k => (p.get(k) || '').trim();
+    if (!['customer','logo','inhand','id','notes'].some(k => get(k))) return;
+    if (get('customer')) $('account').value = get('customer');
+    if (get('logo')) $('logo').value = get('logo');
+    if (get('inhand')) $('inHand').value = toIsoDate(get('inhand'));
+    if (get('notes')) $('notes').value = get('notes');
+    st.id = get('id'); st.urgencyManual = false; st.fabric = null; st.subs = null;   // new logo = fresh choices
+    const b = $('nsBanner'); b.textContent = '';
+    const strong = document.createElement('strong');
+    strong.textContent = 'Filled in from NetSuite' + (st.id ? ' (record ' + st.id + ')' : '') + ': ';
+    b.appendChild(strong);
+    b.appendChild(document.createTextNode((get('logo') || 'logo') + '. Pick the options, then click Send to NetSuite.'));
+    b.style.display = '';
+    history.replaceState(null, '', location.pathname);   // a refresh won't overwrite your edits
+  } catch(e) { console.error('NetSuite link fill-in error:', e); }
+}
+window.addEventListener('hashchange', () => { fillFromLink(); render(); });
+fillFromLink();
+render();
+</script>
+</body>
+</html>

@@ -63,7 +63,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 
     <div><h1>Sew-Out Request</h1><p>Rhoback Embroidery &middot; to Barrett</p></div>
     <div class="hdr-actions">
       <button class="icon-btn" onclick="clearForm()" title="Clear form">&times;</button>
-      <span class="badge">SR v1.01</span>
+      <span class="badge">SR v1.02</span>
     </div>
   </div>
   <div class="body">
@@ -120,11 +120,12 @@ input:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 
 </div>
 
 <script>
-// SR v1.01: Sew-Out Request for Barrett. (v1.01: can also send back to Noelle's Embroidery Portal on this same site; NetSuite works as before.)
+// SR v1.02: Sew-Out Request for Barrett. (v1.01: can also send back to Noelle's Embroidery Portal on this same site; NetSuite works as before.
+//   v1.02: urgency follows the turnaround rules: 30 days or less = RUSH, 31-45 = IMPORTANT, 46+ or no date = STANDARD.)
 // NetSuite opens this page with the logo info in the link:
 //   .../sew-out-approver/request/#customer=..&logo=..&inhand=YYYY-MM-DD&id=..   (values URL-encoded; ?query also works)
 // "Send to NetSuite" posts the answers + finished email back to the NetSuite tab that opened it (window.opener).
-const VERSION = 'SR v1.01';
+const VERSION = 'SR v1.02';
 const NS_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com'];
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) NS_ORIGINS.push(location.origin);   // local testing only
 const PORTAL_ORIGINS = ['https://nt-rhoback.github.io'];   // Noelle's Embroidery Portal (/sew-out-approver/embroidery-portal/)
@@ -158,14 +159,14 @@ const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'
 const find = (group, key) => OPTS[group].find(o => o.key === key) || null;
 const styled = o => o ? (o.style ? '<span style="' + o.style + '">' + esc(o.text) + '</span>' : esc(o.text)) : '';
 
-// ---- Urgency from the In Hand Date: past due or 0-8 days = URGENT, 9-14 = Important, 15+ or none = None ----
+// ---- Urgency from the In Hand Date: past due or 0-30 days = URGENT (RUSH), 31-45 = Important, 46+ or none = None (STANDARD) ----
 function daysUntil(iso){
   if (!iso) return null;
   const p = iso.split('-').map(Number); if (p.length !== 3 || p.some(isNaN)) return null;
   const d = new Date(p[0], p[1]-1, p[2]); const t = new Date(); t.setHours(0,0,0,0);
   return Math.round((d - t) / 86400000);
 }
-function autoUrgency(days){ return days === null ? 'none' : days <= 8 ? 'urgent' : days <= 14 ? 'important' : 'none'; }
+function autoUrgency(days){ return days === null ? 'none' : days <= 30 ? 'urgent' : days <= 45 ? 'important' : 'none'; }
 function daysText(days){
   if (days === null) return 'no In Hand Date';
   if (days < 0) return 'past due by ' + (-days) + ' day' + (days === -1 ? '' : 's');
