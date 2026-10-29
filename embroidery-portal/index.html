@@ -72,6 +72,7 @@ h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .logo{font-weight:600;color:var(--navy-d)}
 .sdot{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;margin-right:7px;vertical-align:1px;flex:none}
 .logo-cell{display:flex;align-items:center}
+.rush-r{flex:none;display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;background:#f8d7d7;color:#a61b1b;font-size:11px;font-weight:800;margin-right:6px}
 .stepper{display:flex;align-items:center;gap:8px}
 .sbtn{font:inherit;font-size:14px;min-width:38px;height:34px;padding:0 12px;border:1px solid #e3e6ee;border-radius:7px;background:#fff;color:var(--navy-d);cursor:pointer}
 .sbtn.txt{font-size:13px;font-weight:700}
@@ -346,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.33</span>
+    <span class="vbadge">EP v1.34</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -357,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.33: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.34: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.33';
+const VERSION = 'EP v1.34';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -435,6 +436,7 @@ function turnaround(l){   // {tier, due, late} while the clock runs, else null
 function subUrg(l){ const t = turnaround(l); return t && t.late ? 'red' : ''; }   // Submitted: red once it's past due
 function noDate(l){ const t = turnaround(l), c = !t ? 'plain' : t.late ? 'red' : isoOf(t.due) === todayIso() ? 'yellow' : 'plain';   // EP v1.30: no In Hand Date: yellow on the day its 5 days are up, red once past
   return '<span class="dtp ' + c + '">No date</span>'; }
+const rushR = l => { const t = turnaround(l); return t && t.tier.name === 'RUSH' ? '<span class="rush-r" title="RUSH">R</span>' : ''; };
 function priTag(l){ const t = turnaround(l); if (!t) return '';
   const when = (t.due.getMonth() + 1) + '/' + t.due.getDate() + ' ' + time12('T' + pad(t.due.getHours()) + ':' + pad(t.due.getMinutes()));
   return '<div class="pri ' + t.tier.cls + '">' + t.tier.name + '</div><div class="pri-due' + (t.late ? ' late' : '') + '">' + (t.late ? 'Late &middot; due ' : 'Due ') + when + '</div>'; }
@@ -479,11 +481,6 @@ function fuDue(l){ const s = fuAt(l), t = s ? new Date(s) : sewSentAt(l); return
 function fuMark(l, from){ (l.followUps = l.followUps || []).push(nowStamp()); log(l, 'Edit', 'Followed up' + (from || '') + (l.status === 'Pending Sew Out' ? ': Follow Up snoozed 24 business hours' : '')); }
 function fuUndo(l, from){ if ((l.followUps || []).length){ l.followUps.pop(); log(l, 'Edit', 'Follow-up undone' + (from || '')); } }
 const sewLate = l => l.status === 'Pending Sew Out' && !photoIn(l) && !!sewSentAt(l) && bizHoursSince(fuAt(l) ? new Date(fuAt(l)) : sewSentAt(l)) >= 24;
-function fuCell(l){   // Barrett Queue: Mark followed up on late ones, and when you last followed up
-  const s = fuAt(l), last = s ? '<div class="fu-note">Followed up ' + fmt(s) + ' ' + time12(s) + '</div>' : '';
-  return sewLate(l) ? '<span class="dtp red">Late</span><button class="btn light small fu-btn" data-x="followUp" data-id="' + esc(l.id) + '" onclick="event.stopPropagation()">Mark followed up</button>' + last
-    : '<span class="img-pend">Pending</span>' + last;
-}
 const sentText = l => { const s = sentStamp(l); return !s ? '' : fmt(s) + (l.sewSentDate && !sentTime(l) ? '' : ' ' + time12(s)); };
 
 // ---------------- Excel (SheetJS) ----------------
@@ -757,11 +754,11 @@ function stSelect(l){ const c = STATUS_COLORS[l.status] || STATUS_COLORS['New Re
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
-    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + '</span></div>'},
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + '</span></div>'},
     {k:'account', h:'Account', v:l => l.account.toLowerCase(), td:l => '<span class="acct">' + esc(l.account) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
     {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted, subUrg(l))},
-    {k:'ih', h:'In Hand Date', v:l => l.inHand || '9999', td:l => (l.inHand ? dateOnly(l.inHand, DONE.includes(l.status) ? '' : urg(off(l.inHand))) : noDate(l)) + priTag(l)},
+    {k:'ih', h:'In Hand Date', v:l => l.inHand || '9999', td:l => l.inHand ? dateOnly(l.inHand, DONE.includes(l.status) ? '' : urg(off(l.inHand))) : noDate(l)},
     {k:'type', h:'Type', v:l => l.type, td:l => esc(l.type)}
   ];
   const extra = tab.extraBySection && tab.extraBySection[section] ? tab.extraBySection[section]
@@ -771,7 +768,7 @@ function columns(tab, section){
     cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
   } else if (extra && extra.f === 'photo'){
     cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>'});
-    cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : fuCell(l)});
+    cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp red">Late</span>' : '<span class="img-pend">Pending</span>'});
   } else if (extra){
     cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
   }
