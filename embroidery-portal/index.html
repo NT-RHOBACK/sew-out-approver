@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.40</span>
+    <span class="vbadge">EP v1.41</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.40: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.41: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.40';
+const VERSION = 'EP v1.41';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1192,8 +1192,12 @@ function tdLogo(o){   // the linked logo, linking by exact name the first time i
   const name = tdNorm(tdLines(o.text).first), l = name && DB.logos.find(z => tdNorm(z.logo) === name);
   if (l){ o.logoId = l.id; return l; } return null;
 }
+const DID_TO_PORTAL = {'Submitted for digitization':'Digitizing', 'Requested Sew Out':'Pending Sew Out', 'Sent for approval':'Sent for Approval', 'Added to ES/FTP':'Completed', 'Archive':'Archive'};   // EP v1.41: To Do → the logo's status
+let tdFromTodo = false;   // the change came from the To Do list, so it already has its step
+function tdToPortal(o, sec){ const st = DID_TO_PORTAL[sec], l = st && tdLogo(tdSrc(o) || o); if (!l || l.status === st) return '';
+  tdFromTodo = true; try { setStatus(l, st, ME); } finally { tdFromTodo = false; } return st; }
 function tdFromPortal(l, st){   // a logo's status changed in the portal → today's To Do / What I did
-  if (PORTAL_TO_DID[st]) tdLogoStep(l, PORTAL_TO_DID[st], l.logo + ' moved to ' + st);
+  if (PORTAL_TO_DID[st] && !tdFromTodo) tdLogoStep(l, PORTAL_TO_DID[st], l.logo + ' moved to ' + st);
   tdDropOff(l, st);
 }
 function tdLogoStep(l, sec, why){   // this logo's task (or What I did line) today gets a step, or a new What I did line
@@ -1487,8 +1491,8 @@ document.addEventListener('change', e => {
   if (s.dataset.tdst === 'task'){ const t = (DB.tasks || []).find(x => x.id === id); if (!t) return;
     if (v === 'To do'){ if (t.state === 'rolled'){ t.state = ''; delete t.auto; tlog(t, 'Undo roll over'); } }
     else if (v === 'Rolled over'){ t.state = 'rolled'; delete t.auto; tlog(t, 'Rolled over'); }
-    else { tdAddStep(t, v); if (v === 'Followed up on') tdFollowed(t); if (todoOpen === t.id) todoOpen = null; toast('Moved to What I did &rarr; ' + esc(v) + '.'); }
-  } else { const x = (DB.did || []).find(y => y.id === id); if (!x || v === x.sec) return; const y = tdAddStep(x, v); if (v === 'Followed up on') tdFollowed(x); if (todoOpen === x.id) todoOpen = y.id; }
+    else { tdAddStep(t, v); if (v === 'Followed up on') tdFollowed(t); const ms = tdToPortal(t, v); if (todoOpen === t.id) todoOpen = null; toast('Moved to What I did &rarr; ' + esc(v) + '.' + (ms ? ' The logo moved to ' + esc(ms) + '.' : '')); }
+  } else { const x = (DB.did || []).find(y => y.id === id); if (!x || v === x.sec) return; const y = tdAddStep(x, v); if (v === 'Followed up on') tdFollowed(x); const ms = tdToPortal(x, v); if (ms) toast('The logo moved to ' + esc(ms) + '.'); if (todoOpen === x.id) todoOpen = y.id; }
   touch(); renderTodo(tab);
 });
 document.addEventListener('click', async e => {
