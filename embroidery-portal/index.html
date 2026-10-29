@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.38</span>
+    <span class="vbadge">EP v1.39</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.38: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.39: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.38';
+const VERSION = 'EP v1.39';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1129,7 +1129,7 @@ function rowsHtml(list, tab, cols, limit){
   list = list.slice().sort((a, b) => { const x = col.v(a), y = col.v(b); return (x > y ? 1 : x < y ? -1 : 0) * sk.dir; });
   if (!state.sort[tab.key]){ const r = new Map(list.map(l => [l, (turnaround(l) || {tier:{}}).tier.name === 'RUSH' ? 0 : 1])); list.sort((a, b) => r.get(a) - r.get(b)); }   // EP v1.30: RUSH on top until you sort by a column
   if (limit) list = list.slice(0, limit);
-  const W = tab.key === 'barrett' ? {logo:18, account:13, rep:9, sub:8, ih:10, type:7, sewSent:10, photo:11, status:14} : tab.extra ? {logo:23, account:16, rep:9, sub:9, ih:10, type:8, photo:11, sentDate:11, approvedDate:11, completedDate:11, sentOrApproved:11, status:14} : {logo:26, account:18, rep:10, sub:10, ih:11, type:9, status:16};
+  const W = tab.key === 'barrett' ? {logo:22, account:12, rep:8, sub:8, ih:10, type:7, sewSent:10, photo:11, status:12} : tab.extra ? {logo:29, account:14, rep:8, sub:8, ih:10, type:7, photo:12, sentDate:12, approvedDate:12, completedDate:12, sentOrApproved:12, status:12} : {logo:35, account:17, rep:9, sub:9, ih:10, type:8, status:12};   // EP v1.39: wider Logo
   const colgroup = '<colgroup>' + cols.map(c => '<col style="width:' + (W[c.k] || 10) + '%">').join('') + '</colgroup>';
   const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (c.k === sk.k ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (c.k === sk.k ? (sk.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
   const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
