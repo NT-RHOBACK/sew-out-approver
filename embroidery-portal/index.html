@@ -347,7 +347,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.35</span>
+    <span class="vbadge">EP v1.36</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +358,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.35: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.36: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.35';
+const VERSION = 'EP v1.36';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -444,8 +444,8 @@ function needsAttention(l){ if (DONE.includes(l.status)) return false; const s =
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 // ---------------- Data (mirrored in this browser; the Excel file is the record) ----------------
-let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''};
-try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''}, s); } catch(e){}
+let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], tdNotes:[], savedAt:''};
+try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], tdNotes:[], savedAt:''}, s); } catch(e){}
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
 function newId(){ const n = DB.logos.concat(DB.history).reduce((m, x) => Math.max(m, parseInt(String(x.id || '').replace(/\D/g, ''), 10) || 0), 0); return 'EP-' + String(n + 1).padStart(4, '0'); }
 function blankLogo(){ return {id:'', nsId:'', logo:'', account:'', rep:'', type:'Sew-Out', dept:'', status:'New Request', submitted:todayIso(), inHand:'', size:'', sizeNotes:'', count:'', colorType:'', threadNotes:'', placement:'',
@@ -518,6 +518,9 @@ function buildWorkbook(){
   const th = XLSX.utils.aoa_to_sheet([['Date','Time','Task','What happened','Chain']].concat((DB.taskLog || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(e => [e.ts.slice(0, 10), e.ts.slice(11), e.task, e.what, e.chain])));
   th['!cols'] = [12, 10, 40, 60, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, th, 'To Do History');
+  const tn = XLSX.utils.aoa_to_sheet([['Date','Time','Task','Note','By','Chain']].concat((DB.tdNotes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.task, n.text, n.by, n.chain])));
+  tn['!cols'] = [12, 10, 40, 70, 14, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, tn, 'To Do Notes');
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
   info['!cols'] = [{wch:12}, {wch:110}];
@@ -527,7 +530,7 @@ function buildWorkbook(){
 function readWorkbook(buf){
   const wb = XLSX.read(buf, {type:'array'});
   const rows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:'', raw:false}) : [];
-  const db = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], savedAt:''};
+  const db = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], tdNotes:[], savedAt:''};
   const lr = rows('Logos'), head = (lr[0] || []).map(String);
   lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
     const l = blankLogo(), get = h => { const i = head.indexOf(h); return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
@@ -546,6 +549,7 @@ function readWorkbook(buf){
   rows('Notifications').slice(1).filter(r => r[0]).forEach(r => db.notifs.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[3]), read:/^y/i.test(String(r[4]))}));
   rows('To Do').slice(1).filter(r => r[0]).forEach(r => db.tasks.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), state:/^done/i.test(r[3]) ? 'done' : /^rolled/i.test(r[3]) ? 'rolled' : '', doneSec:String(r[4] || ''), ts:String(r[5] || ''), id:String(r[6] || tdId())}, r[7] ? {chain:String(r[7])} : {}, r[8] === 'none' ? {noLink:true} : r[8] ? {logoId:String(r[8])} : {}, r[9] ? {emailLink:String(r[9])} : {}, /end of day/i.test(r[3]) ? {auto:true} : {}, /^planned/i.test(r[3]) ? {plan:true} : {}, r[10] ? {dept:String(r[10])} : {}, r[11] ? {pri:String(r[11])} : {})));
   rows('What I Did').slice(1).filter(r => r[0]).forEach(r => db.did.push(Object.assign({day:normDate(r[0]), sec:String(r[1]), text:String(r[2]), ts:String(r[3] || ''), id:String(r[4] || tdId()), taskId:String(r[5] || '')}, r[6] ? {chain:String(r[6])} : {}, r[7] === 'none' ? {noLink:true} : r[7] ? {logoId:String(r[7])} : {}, r[8] ? {dept:String(r[8])} : {})));
+  rows('To Do Notes').slice(1).filter(r => r[0]).forEach(r => db.tdNotes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), text:String(r[3]), by:String(r[4]), chain:String(r[5])}));
   rows('To Do History').slice(1).filter(r => r[0]).forEach(r => db.taskLog.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), what:String(r[3]), chain:String(r[4])}));
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
   const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
@@ -1326,9 +1330,17 @@ function tdCard(o, kind){   // kind: 'task' (To Do) or 'did' (What I did). EP v1
     '<div class="hist" style="display:none;margin-top:10px">' + (ev.map(e => '<div>' + fmt(e.ts) + ' ' + time12(e.ts) + ' &middot; ' + esc(e.what) + '</div>').join('') || '<div>No history yet.</div>') + '</div>';
   const mail = emailBox(tdEmail(t || o), 'email-' + o.id, 'data-td="ACT" data-id="' + o.id + '"');
   if (l) return '<div class="td-card">' + cardBody(l, '<div class="box td-taskbox"><h3><span class="num">&#10003;</span>' + title +
-    '<span class="reqno">Linked to ' + esc(reqNo(l)) + ' <button class="btn light small" data-td="unlink" data-id="' + o.id + '">Unlink</button></span></h3>' + edit + mail + hist + '</div>') + '</div>';
-  return '<div class="td-card"><div class="card"><div><div class="box"><h3><span class="num">1</span>' + title + '</h3>' + edit + '</div></div>' +
-    '<div><div class="box"><h3><span class="num">2</span>Links</h3>' + tdLinkBox(t || o) + mail + '</div><div class="box">' + hist.replace('margin:12px 0 0', 'margin:0') + '</div></div></div></div>';
+    '<span class="reqno">Linked to ' + esc(reqNo(l)) + ' <button class="btn light small" data-td="unlink" data-id="' + o.id + '">Unlink</button></span></h3>' + edit +
+    (tdNoteList(t || o).length ? '<div class="td-linkbox"><div class="sf-mini">Task notes</div>' + tdNoteLines(tdNoteList(t || o)) + '</div>' : '') + mail + hist + '</div>') + '</div>';
+  return '<div class="td-card"><div class="card"><div><div class="box"><h3><span class="num">1</span>' + title + '</h3>' + edit + '</div>' + tdNotesBox(o, t || o) + '</div>' +
+    '<div><div class="box"><h3><span class="num">3</span>Links</h3>' + tdLinkBox(t || o) + mail + '</div><div class="box">' + hist.replace('margin:12px 0 0', 'margin:0') + '</div></div></div></div>';
+}
+const tdNoteList = o => (DB.tdNotes || []).filter(n => n.chain === tdChainOf(o)).sort((a, b) => b.ts.localeCompare(a.ts));   // newest first
+const tdNoteLines = list => '<div class="hist" style="margin-top:8px">' + list.map(n => '<div>' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.text) + ' &middot; ' + esc(n.by) + '</div>').join('') + '</div>';
+function tdNotesBox(o, base){   // EP v1.36: internal notes on a To Do task
+  const list = tdNoteList(base);
+  return '<div class="box"><h3><span class="num">2</span>Internal notes</h3><textarea id="tdnote-' + o.id + '" style="width:100%;min-height:50px;border:1px solid #d6dbe4;border-radius:6px;padding:6px 8px;font:inherit;font-size:13px" placeholder="Add an internal note&hellip;"></textarea>' +
+    '<div class="btns"><button class="btn small" data-td="noteAdd" data-id="' + o.id + '">Add note</button></div>' + (list.length ? tdNoteLines(list) : '') + '</div>';
 }
 function tdLinkBox(o){
   const l = tdLogo(o);
@@ -1524,6 +1536,8 @@ document.addEventListener('click', async e => {
       if (l){ l.emailLink = v; log(l, 'Edit', 'Email chain linked'); } else base.emailLink = v; tlog(base, 'Email chain linked'); }
     else { if (l && l.emailLink){ delete l.emailLink; log(l, 'Edit', 'Email chain link removed'); } delete base.emailLink; tlog(base, 'Email chain link removed'); }
     touch(); redraw(); return; }
+  if (k === 'noteAdd' && (t || w)){ const base = (w && tdSrc(w)) || t || w, ta = document.getElementById('tdnote-' + id), text = ta ? ta.value.trim() : ''; if (!text) return;
+    (DB.tdNotes = DB.tdNotes || []).push({ts:nowStamp(), chain:tdChainOf(base), task:tdLines(base.text).first, text, by:ME}); tlog(base, 'Internal note: ' + text); touch(); redraw(); return; }
   if (k === 'undoRoll' && t){ t.state = ''; delete t.auto; tlog(t, 'Undo roll over'); touch(); redraw(); return; }
   if (k === 'undoStep' && w){ const steps = tdSteps(w), last = steps[steps.length - 1], src = w.taskId && (DB.tasks || []).find(x => x.id === w.taskId);
     DB.did = DB.did.filter(x => x !== last); tlog(src || last, 'Undo step (' + last.sec + ')'); if (src) tdSync(src);
