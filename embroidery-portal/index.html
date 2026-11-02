@@ -29,6 +29,12 @@ h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
 .bar input,.bar select{padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#fff;color:var(--text)}
 .bar input{flex:1;min-width:220px}
+.srt-w{position:relative;display:inline-flex;align-items:center}.srt-x{border:none;background:none;color:var(--grey);font-size:17px;cursor:pointer;padding:0 6px;margin-left:-2px}
+.srt-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:14px 16px;min-width:440px}
+.srt-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:15px;color:var(--navy)}.srt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.bar .srt-row select{padding:7px 8px;min-width:0;font-size:13px}.srt-row select:first-of-type{flex:1}.srt-grip{cursor:grab;color:var(--lgrey);letter-spacing:-3px;padding-right:2px}
+.srt-rm{border:none;background:none;font-size:18px;color:var(--grey);cursor:pointer;padding:0 4px}.srt-link{border:none;background:none;color:var(--navy);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:2px 0}
+.srt-add{margin-top:4px}.srt-none{font-size:12px;color:var(--grey);margin:2px 0 8px}
 .sec{margin-bottom:14px}
 .sec-head{display:flex;align-items:center;gap:8px;padding:8px 4px;cursor:pointer;user-select:none}
 .sec-head .chev{width:14px;color:var(--grey);font-size:11px}
@@ -347,7 +353,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.45</span>
+    <span class="vbadge">EP v1.46</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -358,10 +364,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.45: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.45';
+const VERSION = 'EP v1.46';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -390,7 +396,7 @@ const OPEN_STATUSES = STATUSES.slice(0, 7);
 const TABS = [
   {key:'dashboard', title:'Dashboard',     sub:'Every open logo with an In Hand Date 30 days away or less (or past), or past its due time (red Submitted date).', focus:true},
   {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
-  {key:'barrett',   title:'Barrett Queue',  sub:'Sorted by In Hand Date, soonest first.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
+  {key:'barrett',   title:'Barrett Queue',  sub:'Logos at Barrett for sew-outs.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
   {key:'approvals', title:'Approvals / Need to Upload', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Need to Upload (approved, waiting to be uploaded to EpicStitch).', sections:['Sent for Approval','Need to Upload'],
      extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Need to Upload':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
@@ -739,7 +745,7 @@ async function downloadAll(l){
 }
 
 // ---------------- UI state ----------------
-let state = {tab:'dashboard', open:{}, collapsed:{}, sort:{}, group:{}, search:{}, dept:{}, audit:{q:'', type:'', from:'', to:''}};
+let state = {tab:'dashboard', open:{}, collapsed:{}, sort:{}, sorts:{}, group:{}, search:{}, dept:{}, audit:{q:'', type:'', from:'', to:''}};
 try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
 state.open = {};
 state.tab = sessionStorage.getItem(SS_TAB) || 'dashboard';   // opening the portal starts on the Dashboard; a refresh keeps the tab
@@ -1126,15 +1132,41 @@ document.addEventListener('input', e => {
 const matchQ = (l, q) => { if (!q) return true; const n = q.trim().replace(/^#/, '');
   if (/^\d+$/.test(n) && (l.nsId ? String(l.nsId) === n : parseInt(String(l.id).replace(/\D/g, ''), 10) === +n)) return true;   // request number
   return (l.logo + ' ' + l.account + ' ' + l.rep + ' ' + (l.nsId ? '' : l.id)).toLowerCase().includes(q); };
+// Sorts (EP v1.46): sort by several things, like Asana. A column header click sorts by just that column; Reset filters brings back the defaults.
+let sortsOpen = false, srtDrag = null;   // which tab's Sorts box is open; the row being dragged
+const sortKeyNow = () => msearch.trim() ? 'search' : state.tab;
+const ihRank = l => { if (!l || !l.inHand || DONE.includes(l.status)) return 2; const u = urg(off(l.inHand)); return u === 'red' ? 0 : u === 'yellow' ? 1 : 2; };   // In Hand Date color: red, yellow, none
+const reqNum = l => parseInt(String(l.nsId || l.id || '').replace(/\D/g, ''), 10) || 0;
+function defaultSorts(key, kind){ if (key !== 'todo') return [{k:'ihc', dir:1}, {k:'sub', dir:1}];   // red In Hand Dates first, then first come, first served
+  return (kind || (state.todoView === 'did' ? 'did' : 'task')) === 'did' ? [] : [{k:'pri', dir:1}]; }   // To Do: Rush, then Important, on top
+function activeSorts(key, kind){ return state.sort[key] ? [state.sort[key]] : (state.sorts[key] || defaultSorts(key, kind)); }
+function sortFields(key){
+  let cols;
+  if (key === 'todo') cols = tdCols(state.todoView === 'did' ? 'did' : 'task').concat([{k:'pri', h:'Priority'}]);
+  else { const tab = key === 'search' ? {key:'search', sections:STATUSES, extra:null} : TABS.find(t => t.key === key) || {};
+    cols = [null].concat(tab.sections || []).reduce((a, sec) => a.concat(columns(tab, sec)), []).concat([{k:'req', h:'Request #'}]); }
+  const seen = new Set(['ihc']), out = [{k:'ihc', h:'In Hand Date color'}];
+  cols.forEach(c => { if (!seen.has(c.k)){ seen.add(c.k); out.push({k:c.k, h:c.h}); } });
+  return out;
+}
+function multiSort(list, sorts, valOf){ const fs = sorts.map(x => [valOf(x.k), x.dir]).filter(f => f[0]);
+  return list.map((x, i) => [x, i]).sort((a, b) => { for (const [f, d] of fs){ const x = f(a[0]), y = f(b[0]); if (x < y) return -d; if (x > y) return d; } return a[1] - b[1]; }).map(z => z[0]); }
+function sortsCtl(key){ const act = activeSorts(key), fields = sortFields(key), opt = sel => fields.map(f => '<option value="' + f.k + '"' + (f.k === sel ? ' selected' : '') + '>' + esc(f.h) + '</option>').join('');
+  return '<span class="srt-w"><button class="btn light" data-srt="toggle">&#8645; Sorts' + (act.length ? ': ' + act.length : '') + '</button>' +
+    (act.length ? '<button class="srt-x" data-srt="clear" title="Clear sorts">&times;</button>' : '') +
+    (sortsOpen !== key ? '' : '<div class="srt-pop"><div class="srt-h"><b>Sorts</b><button class="srt-link" data-srt="clear">Clear</button></div>' +
+      act.map((x, i) => '<div class="srt-row" draggable="true" data-i="' + i + '"><span class="srt-grip" title="Drag to change the order">&#8942;&#8942;</span>' +
+        '<select data-srt-f="' + i + '">' + opt(x.k) + '</select><select data-srt-d="' + i + '"><option value="1"' + (x.dir > 0 ? ' selected' : '') + '>Ascending</option><option value="-1"' + (x.dir < 0 ? ' selected' : '') + '>Descending</option></select>' +
+        '<button class="srt-rm" data-srt="rm" data-i="' + i + '" title="Remove">&times;</button></div>').join('') +
+      (act.length ? '' : '<div class="srt-none">No sorts. The list keeps its own order.</div>') + '<button class="srt-link srt-add" data-srt="add">+ Add sort</button></div>') + '</span>'; }
+function setSorts(key, arr){ state.sorts[key] = arr; delete state.sort[key]; save(); render(); }
 function rowsHtml(list, tab, cols, limit){
-  const sk = state.sort[tab.key] || {k: tab.defaultSort || 'sub', dir: 1};
-  const col = cols.find(c => c.k === sk.k) || cols[0];
-  list = list.slice().sort((a, b) => { const x = col.v(a), y = col.v(b); return (x > y ? 1 : x < y ? -1 : 0) * sk.dir; });
-  if (!state.sort[tab.key]){ const r = new Map(list.map(l => [l, (turnaround(l) || {tier:{}}).tier.name === 'RUSH' ? 0 : 1])); list.sort((a, b) => r.get(a) - r.get(b)); }   // EP v1.30: RUSH on top until you sort by a column
+  const act = activeSorts(tab.key), prim = act.find(x => cols.some(c => c.k === x.k));   // EP v1.46: Sorts (replaces RUSH first)
+  list = multiSort(list, act, k => k === 'ihc' ? ihRank : k === 'req' ? reqNum : (cols.find(c => c.k === k) || {}).v);
   if (limit) list = list.slice(0, limit);
   const W = tab.focus ? {logo:27, account:14, rep:9, sub:8, ih:10, type:7, today:13, status:12} : tab.key === 'barrett' ? {logo:22, account:12, rep:8, sub:8, ih:10, type:7, sewSent:10, photo:11, status:12} : tab.extra ? {logo:29, account:14, rep:8, sub:8, ih:10, type:7, photo:12, sentDate:12, approvedDate:12, completedDate:12, sentOrApproved:12, status:12} : {logo:35, account:17, rep:9, sub:9, ih:10, type:8, status:12};   // EP v1.39: wider Logo
   const colgroup = '<colgroup>' + cols.map(c => '<col style="width:' + (W[c.k] || 10) + '%">').join('') + '</colgroup>';
-  const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (c.k === sk.k ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (c.k === sk.k ? (sk.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
+  const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (prim && c.k === prim.k ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (prim && c.k === prim.k ? (prim.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
   const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' || c.k === 'today' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
   return '<div class="tblwrap"><table class="tbl">' + colgroup + '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
 }
@@ -1422,10 +1454,9 @@ function tdCols(kind){   // kind: 'task' or 'did'; check-on previews (o.pre) use
   ];
 }
 function tdTable(list, kind){
-  const cols = tdCols(kind), sk = state.sort.todo, col = sk && cols.find(c => c.k === sk.k);
-  if (col) list = list.slice().sort((a, b) => { const x = col.v(a), y = col.v(b); return (x > y ? 1 : x < y ? -1 : 0) * sk.dir; });
-  else if (kind === 'task') list = list.slice().sort((a, b) => tdPriRank(a) - tdPriRank(b));   // Rush, then Important, on top until you sort by a column
-  const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (c === col ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (c === col ? (sk.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
+  const cols = tdCols(kind), act = activeSorts('todo', kind), prim = act.find(x => cols.some(c => c.k === x.k));   // EP v1.46: Sorts (tasks start with Priority)
+  list = multiSort(list, act, k => k === 'pri' ? tdPriRank : k === 'ihc' ? (o => ihRank(o.pre ? tdLogo(o.src) : tdLogo(tdSrc(o) || o))) : (cols.find(c => c.k === k) || {}).v);
+  const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (prim && c.k === prim.k ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (prim && c.k === prim.k ? (prim.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
   const body = list.map(o => { const open = !o.pre && todoOpen === o.id, past = kind === 'did' && tdCurrent(o).id !== o.id;
     return '<tr class="td-tr' + (open ? ' open' : '') + (past ? ' past' : '') + (o.pre ? ' td-pre' : '') + '"' + (o.pre ? '' : ' data-td="open" data-id="' + o.id + '"') + '>' +
       cols.map(c => '<td' + (c.k === 'task' || c.k === 'account' ? ' class="wrap"' : '') + '>' + c.td(o) + '</td>').join('') + '</tr>' +
@@ -1466,7 +1497,7 @@ function renderTodo(tab){
     '<div class="bar"><input id="tdSearch" placeholder="Search every day&rsquo;s To Do and What I did&hellip;" value="' + esc(todoQ) + '" autocomplete="off">' +
       '<select id="tdDeptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.todoDept === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '<option value="none"' + (state.todoDept === 'none' ? ' selected' : '') + '>No department</option></select>' +
       '<select id="tdGroup">' + [['section', 'Group by: Section'], ['dept', 'Group by: Department'], ['none', 'No grouping']].map(([v, t]) => '<option value="' + v + '"' + ((state.todoGroup || 'section') === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>' +
-      '<button class="btn light" data-collapse="all">Collapse all</button><button class="btn light" data-td="reset">Reset filters</button></div>' +
+      sortsCtl('todo') + '<button class="btn light" data-collapse="all">Collapse all</button><button class="btn light" data-td="reset">Reset filters</button></div>' +
     (todoQ.trim() ? tdResults(todoQ.trim().toLowerCase()) :
     future ? tdFuture(d, today) :
     '<div class="td-subtabs"><button class="td-subtab' + (view === 'todo' ? ' on' : '') + '" data-td="view" data-v="todo">To Do</button>' +
@@ -1549,7 +1580,7 @@ document.addEventListener('click', async e => {
   if (k === 'day'){ if (el.dataset.v){ todoDay = el.dataset.v; todoOpen = null; redraw(); } return; }
   if (k === 'pick'){ const p = document.getElementById('tdDate'); try { p.showPicker(); } catch(err){ p.focus(); } return; }
   if (k === 'view'){ state.todoView = el.dataset.v; todoOpen = null; save(); redraw(); return; }
-  if (k === 'reset'){ delete state.sort.todo; delete state.todoDept; delete state.todoGroup; save(); redraw(); return; }
+  if (k === 'reset'){ delete state.sort.todo; delete state.sorts.todo; delete state.todoDept; delete state.todoGroup; save(); redraw(); return; }
   if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoOpen = id; save(); redraw();
     const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
   if (k === 'emailOpen' && (t || w)){ const link = tdEmail((w && w.taskId && (DB.tasks || []).find(x => x.id === w.taskId)) || t || w); if (okLink(link)) window.open(link, '_blank', 'noopener'); return; }
@@ -1608,7 +1639,7 @@ document.addEventListener('click', async e => {
 function renderMasterSearch(){
   const q = msearch.trim().toLowerCase(), hits = DB.logos.filter(l => matchQ(l, q));
   const tab = {key:'search', sections:STATUSES, extra:null};
-  let html = '<h1>Search results</h1><div class="sub">' + hits.length + ' logo' + (hits.length === 1 ? '' : 's') + ' matching &ldquo;' + esc(msearch.trim()) + '&rdquo; in every tab, including Completed and Archive. Click a row to open it. Clear the search or click a tab to go back.</div><div class="bar"><button class="btn light" data-collapse="all">Collapse all</button></div>';
+  let html = '<h1>Search results</h1><div class="sub">' + hits.length + ' logo' + (hits.length === 1 ? '' : 's') + ' matching &ldquo;' + esc(msearch.trim()) + '&rdquo; in every tab, including Completed and Archive. Click a row to open it. Clear the search or click a tab to go back.</div><div class="bar">' + sortsCtl('search') + '<button class="btn light" data-collapse="all">Collapse all</button></div>';
   const groups = TABS.filter(t => t.sections).map(t => [t.label || t.title, hits.filter(l => t.sections.includes(l.status))]).filter(g => g[1].length);
   html += groups.length ? groups.map(([name, items]) => { const ck = 'search|' + name, closed = !!state.collapsed[ck];
     return '<div class="sec"><div class="sec-head" data-sec="' + esc(ck) + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name">' + name + '</span><span class="cnt">' + items.length + '</span></div>' + (closed ? '' : rowsHtml(items, tab, columns(tab, null))) + '</div>'; }).join('')
@@ -1642,7 +1673,8 @@ document.addEventListener('click', e => {
 function collapseState(){ const heads = [...document.querySelectorAll('#page .sec-head[data-sec]')], days = [...document.querySelectorAll('#page .aud-day[data-day]')];
   const dayOpen = d => d in auditOpen ? auditOpen[d] : off(d) === 0;
   return {heads, days, any:heads.length + days.length > 0, open:heads.some(h => !state.collapsed[h.dataset.sec]) || days.some(x => dayOpen(x.dataset.day))}; }
-function syncCollapse(){ const b = document.querySelector('#page [data-collapse]'); if (!b) return; const c = collapseState(); b.style.display = c.any ? '' : 'none'; b.textContent = c.open ? 'Collapse all' : 'Expand all'; }
+function placeSorts(){ const p = document.querySelector('.srt-pop'); if (p && p.getBoundingClientRect().right > document.documentElement.clientWidth - 8){ p.style.left = 'auto'; p.style.right = '0'; } }   // EP v1.46
+function syncCollapse(){ placeSorts(); const b = document.querySelector('#page [data-collapse]'); if (!b) return; const c = collapseState(); b.style.display = c.any ? '' : 'none'; b.textContent = c.open ? 'Collapse all' : 'Expand all'; }
 function render(){
   refreshToday(); renderNotifs(); if (tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
@@ -1655,12 +1687,12 @@ function render(){
   if (tab.todo){ renderTodo(tab); return; }
   if (tab.submit){ renderSubmit(tab); return; }
   const group = state.group[tab.key] || 'status';
-  let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div>'
-                        : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. RUSH logos show first; click a column name to sort another way.</div>') +
+  let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div><div class="bar" style="margin:-6px 0 12px">' + sortsCtl(tab.key) + '</div>'
+                        : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Red In Hand Dates show first, then the oldest. Change it with Sorts, or click a column name.</div>') +
     (tab.focus ? '' : '<div class="bar"><input id="search" placeholder="Search account, logo, sales rep, or request #&hellip;" value="' + esc(state.search[tab.key] || '') + '">' +
     '<select id="group"><option value="status"' + (group === 'status' ? ' selected' : '') + '>Group by: Status</option><option value="account"' + (group === 'account' ? ' selected' : '') + '>Group by: Account</option><option value="rep"' + (group === 'rep' ? ' selected' : '') + '>Group by: Sales Rep</option><option value="none"' + (group === 'none' ? ' selected' : '') + '>No grouping</option></select>' +
     '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '<option value="none"' + (state.dept[tab.key] === 'none' ? ' selected' : '') + '>No department</option></select>' +
-    '<button class="btn light" data-collapse="all">Collapse all</button><button class="btn light" id="reset">Reset filters</button></div>');
+    sortsCtl(tab.key) + '<button class="btn light" data-collapse="all">Collapse all</button><button class="btn light" id="reset">Reset filters</button></div>');
   let list = tab.sections ? DB.logos.filter(l => tab.sections.includes(l.status)) : DB.logos.filter(l => !DONE.includes(l.status) && (subUrg(l) || urg(off(l.inHand)) === 'red'));   // EP v1.30: In Hand 30 days or less (or past), or past its due time
   if (!tab.focus){ const q = (state.search[tab.key] || '').toLowerCase(), dp = state.dept[tab.key]; list = list.filter(l => matchQ(l, q) && (!dp || (dp === 'none' ? !l.dept : l.dept === dp))); }
   let groups;
@@ -1682,9 +1714,16 @@ function render(){
   const fm = document.getElementById('focusMore'); if (fm) fm.onclick = () => { state.focusAll = !state.focusAll; save(); render(); };
   const g = document.getElementById('group'); if (g) g.onchange = () => { state.group[tab.key] = g.value; save(); render(); };
   const df = document.getElementById('deptF'); if (df) df.onchange = () => { if (df.value) state.dept[tab.key] = df.value; else delete state.dept[tab.key]; save(); render(); };
-  const rs = document.getElementById('reset'); if (rs) rs.onclick = () => { delete state.sort[tab.key]; delete state.group[tab.key]; delete state.search[tab.key]; delete state.dept[tab.key]; save(); render(); };
+  const rs = document.getElementById('reset'); if (rs) rs.onclick = () => { delete state.sort[tab.key]; delete state.sorts[tab.key]; delete state.group[tab.key]; delete state.search[tab.key]; delete state.dept[tab.key]; save(); render(); };
 }
 document.addEventListener('click', e => {
+  const so = e.target.closest('[data-srt]'); if (so){ const key = sortKeyNow(), a = so.dataset.srt, act = activeSorts(key).map(x => ({k:x.k, dir:x.dir}));   // EP v1.46
+    if (a === 'toggle'){ sortsOpen = sortsOpen === key ? false : key; render(); return; }
+    if (a === 'clear'){ setSorts(key, []); return; }
+    if (a === 'rm'){ act.splice(+so.dataset.i, 1); setSorts(key, act); return; }
+    if (a === 'add'){ const used = new Set(act.map(x => x.k)), f = sortFields(key).find(x => !used.has(x.k)); if (f){ act.push({k:f.k, dir:1}); setSorts(key, act); } return; }
+    return; }
+  if (sortsOpen && !e.target.closest('.srt-w')){ sortsOpen = false; render(); }
   const ht = e.target.closest('.hist-toggle');
   if (ht){ const body = ht.nextElementSibling, open = body.style.display !== 'none'; body.style.display = open ? 'none' : ''; ht.querySelector('.hchev').innerHTML = open ? '&#9656;' : '&#9662;'; return; }   // History starts closed every time a logo opens
   const sb = e.target.closest('.sbtn');
@@ -1701,12 +1740,21 @@ document.addEventListener('click', e => {
   const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoOpen = null; todoQ = ''; } state.open = {}; save(); render(); return; }
   const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
   const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
-  const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk]; state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
+  const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk] || (th.classList.contains('sorted') ? {k, dir: th.querySelector('.arr').textContent === '\u25b2' ? 1 : -1} : null); state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
   const ca = e.target.closest('[data-collapse]'); if (ca){ const c = collapseState(); c.heads.forEach(h => { state.collapsed[h.dataset.sec] = c.open; }); c.days.forEach(x => { auditOpen[x.dataset.day] = !c.open; }); save(); render(); return; }
   const sh = e.target.closest('.sec-head'); if (sh){ const k = sh.dataset.sec; state.collapsed[k] = !state.collapsed[k]; save(); render(); return; }
   if (e.target.id === 'msclear'){ msearch = ''; document.getElementById('msearch').value = ''; render(); return; }
   const r = e.target.closest('.row'); if (r && !e.target.closest('select')){ const id = r.dataset.id; state.open[id] = !state.open[id]; delete stripOpen[id]; render(); }
 });
+document.addEventListener('change', e => { const d = e.target.dataset || {}, isF = 'srtF' in d; if (!isF && !('srtD' in d)) return;   // EP v1.46: a Sorts row's field or direction
+  const key = sortKeyNow(), act = activeSorts(key).map(x => ({k:x.k, dir:x.dir})), i = +(isF ? d.srtF : d.srtD); if (!act[i]) return;
+  if (isF) act[i].k = e.target.value; else act[i].dir = +e.target.value; setSorts(key, act); });
+document.addEventListener('dragstart', e => { const r = e.target.closest && e.target.closest('.srt-row'); if (r) srtDrag = +r.dataset.i; });   // drag the ⋮⋮ rows to change the order
+document.addEventListener('dragover', e => { if (srtDrag !== null && e.target.closest && e.target.closest('.srt-row')) e.preventDefault(); });
+document.addEventListener('drop', e => { const r = e.target.closest && e.target.closest('.srt-row'); if (srtDrag === null || !r) return; e.preventDefault();
+  const key = sortKeyNow(), act = activeSorts(key).map(x => ({k:x.k, dir:x.dir})), to = +r.dataset.i, from = srtDrag; srtDrag = null; if (from === to) return;
+  const [m] = act.splice(from, 1); act.splice(to, 0, m); setSorts(key, act); });
+document.addEventListener('dragend', () => { srtDrag = null; });
 document.getElementById('msearch').addEventListener('input', e => { msearch = e.target.value; state.open = {}; render(); });
 render();
 boot();
