@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Embroidery Portal</title>
+<title>To Do</title>
 <style>
 /* Rhoback brand kit (same as the live portal): Admiral Navy, Old Glory Red, Steel text, #E8ECF0 borders.
    Fonts: Futura PT for headings + tab names, Aptos for body text, tables, and forms (Segoe UI backup). */
@@ -29,6 +29,11 @@ h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
 .bar input,.bar select{padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:#fff;color:var(--text)}
 .bar input{flex:1;min-width:220px}
+#tabs,.msearch,.notif{display:none!important}   /* EP v2.00: To Do only */
+.live-box{background:#fff8dc;border:1px solid #f1d98a;border-radius:10px;padding:12px 14px;margin:0 0 16px}.live-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;color:var(--navy)}
+.live-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid #f3e3a6;font-size:13px;color:var(--navy)}.live-t{flex:1}
+.live-tag{flex:none;font-size:11px;font-weight:700;border:1px solid;border-radius:5px;padding:1px 6px;background:#fff;min-width:72px;text-align:center}
+.live-info{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin:10px 0 12px;font-size:13px;color:var(--navy)}.live-info .sf-mini{display:block;margin-bottom:2px}
 .srt-w{position:relative;display:inline-flex;align-items:center}.srt-x{border:none;background:none;color:var(--grey);font-size:17px;cursor:pointer;padding:0 6px;margin-left:-2px}
 .srt-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:14px 16px;min-width:440px}
 .srt-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:15px;color:var(--navy)}.srt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
@@ -342,18 +347,18 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
-<div class="top-bar">Rhoback &mdash; Embroidery Portal</div>
+<div class="top-bar">Rhoback &mdash; To Do</div>
 <div class="header">
   <div class="header-left">
     <div class="brand">RHOBACK</div>
     <div class="ridge"><span class="r"></span><span class="n"></span></div>
-    <div class="brand-sub">Embroidery Portal</div>
+    <div class="brand-sub">To Do</div>
   </div>
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v1.46</span>
+    <span class="vbadge">EP v2.00</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -364,11 +369,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v2.00: Noelle's To Do (the full portal is saved at /embroidery-portal/full/). Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v1.46';
+const VERSION = 'EP v2.00';
 const ME = 'Noelle';
+const TODO_ONLY = true, LIVE_NAME = 'live-logos.json', LIVE_URL = 'https://5263233.app.netsuite.com/app/site/hosting/scriptlet.nl?script=3566&deploy=1&compid=5263233#dashboard';   // EP v2.00
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
 const REQUEST_URL  = new URL('../request/', location.href).href;    // the Sew-Out Request page (same repo)
@@ -527,7 +533,7 @@ function buildWorkbook(){
   const tn = XLSX.utils.aoa_to_sheet([['Date','Time','Task','Note','By','Chain']].concat((DB.tdNotes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.task, n.text, n.by, n.chain])));
   tn['!cols'] = [12, 10, 40, 70, 14, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, tn, 'To Do Notes');
-  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')],
+  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')], ['Live portal', JSON.stringify(DB.live || {})],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
   info['!cols'] = [{wch:12}, {wch:110}];
   XLSX.utils.book_append_sheet(wb, info, 'Info');
@@ -558,6 +564,7 @@ function readWorkbook(buf){
   rows('To Do Notes').slice(1).filter(r => r[0]).forEach(r => db.tdNotes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), text:String(r[3]), by:String(r[4]), chain:String(r[5])}));
   rows('To Do History').slice(1).filter(r => r[0]).forEach(r => db.taskLog.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), what:String(r[3]), chain:String(r[4])}));
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
+  const lv = inf.find(r => r[0] === 'Live portal'); if (lv && lv[1]){ try { db.live = JSON.parse(String(lv[1])); } catch(e){} }   // EP v2.00
   const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
   return db;
 }
@@ -674,7 +681,7 @@ async function checkSeed(){
     seedNew = (Array.isArray(arr) ? arr : arr.logos || []).filter(x => x && x.nsId && !have.has(String(x.nsId)) && !seedSkipped.has(String(x.nsId)));
   } catch(e){}
   if (seedNew.length) addSeedAuto(); else { showBanner(); if (inFile) clearSeedFile(); }
-  await applySewSent(); await applySubmitted(); await applyTodoImport();
+  await applySewSent(); await applySubmitted(); await applyTodoImport(); await applyLive();
 }
 function addSeedAuto(){   // EP v1.08: added on their own, logged as System (auto)
   const names = seedNew.map(x => '#' + x.nsId + ' ' + x.logo);
@@ -1172,9 +1179,9 @@ function rowsHtml(list, tab, cols, limit){
 }
 // ---------------- To Do (EP v1.17+): Noelle's daily list (this portal only) ----------------
 const APPR_FU = 'Follow up on approval';   // EP v1.44
-const TODO_SECS = ['Request sew out','Review Barrett Sew Out','Add to ES/FTP','Other','Check on digitization','Check on Sew out requests','Waiting on Barrett',APPR_FU];   // EP v1.24: Waiting on Barrett replaces Waiting on thread colors
+const TODO_SECS = ['Review new requests','Request sew out','Review Barrett Sew Out','Add to ES/FTP','Other','Check on digitization','Check on Sew out requests','Waiting on Barrett',APPR_FU];   // EP v1.24: Waiting on Barrett replaces Waiting on thread colors
 const DID_SECS = ['Reviewed new requests','Submitted for digitization','Requested Sew Out','Followed up on','Sent for approval','Added to ES/FTP','Other','Completed','Archive'];   // EP v1.37: workflow order, plus Archive
-const DONE_DEFAULT = {'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
+const DONE_DEFAULT = {'Review new requests':'Reviewed new requests', 'Request sew out':'Requested Sew Out', 'Review Barrett Sew Out':'Sent for approval', 'Add to ES/FTP':'Added to ES/FTP', 'Other':'Other',
   'Check on digitization':'Requested Sew Out', 'Check on Sew out requests':'Sent for approval', 'Waiting on Barrett':'Sent for approval', [APPR_FU]:'Followed up on'};
 const NEXT_CHECK = {'Submitted for digitization':'Check on digitization', 'Requested Sew Out':'Check on Sew out requests'};   // what you did → the next day's list
 const CHECK_FOR = {'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', [APPR_FU]:'Sent for Approval'};   // EP v1.28: a check-on only stays while its logo is still in this status
@@ -1231,7 +1238,7 @@ function tdLogo(o){   // the linked logo, linking by exact name the first time i
 }
 const DID_TO_PORTAL = {'Submitted for digitization':'Digitizing', 'Requested Sew Out':'Pending Sew Out', 'Sent for approval':'Sent for Approval', 'Added to ES/FTP':'Completed', 'Archive':'Archive'};   // EP v1.41: To Do → the logo's status
 let tdFromTodo = false;   // the change came from the To Do list, so it already has its step
-function tdToPortal(o, sec){ const st = DID_TO_PORTAL[sec], l = st && tdLogo(tdSrc(o) || o); if (!l || l.status === st) return '';
+function tdToPortal(o, sec){ if (TODO_ONLY) return ''; const st = DID_TO_PORTAL[sec], l = st && tdLogo(tdSrc(o) || o); if (!l || l.status === st) return '';
   tdFromTodo = true; try { setStatus(l, st, ME); } finally { tdFromTodo = false; } return st; }
 function tdFromPortal(l, st){   // a logo's status changed in the portal → today's To Do / What I did
   if (PORTAL_TO_DID[st] && !tdFromTodo) tdLogoStep(l, PORTAL_TO_DID[st], l.logo + ' moved to ' + st);
@@ -1251,7 +1258,7 @@ function tdUndoLogoStep(l, sec){   // undo the step a logo button added today, i
   if (!cur || cur.sec !== sec) return; DB.did = DB.did.filter(x => x !== cur); tlog(task || cur, 'Undo step (' + sec + ')'); if (task) tdSync(task);
 }
 // Drop-offs (EP v1.28): a check-on goes away once its logo is completed or moved
-const tdGone = t => { const l = CHECK_FOR[t.sec] && tdLogo(t); return l && l.status !== CHECK_FOR[t.sec] ? l : null; };
+const tdGone = t => { if (TODO_ONLY) return null; const l = CHECK_FOR[t.sec] && tdLogo(t); return l && l.status !== CHECK_FOR[t.sec] ? l : null; };
 function tdDropOff(l, st){   // open check-ons for this logo, today or planned
   if (!tdReady()) return; const today = todayIso();
   const gone = (DB.tasks || []).filter(t => t.day >= today && t.state !== 'done' && CHECK_FOR[t.sec] && CHECK_FOR[t.sec] !== st && tdLogo(t) === l);
@@ -1259,7 +1266,7 @@ function tdDropOff(l, st){   // open check-ons for this logo, today or planned
 }
 function tdNextCheck(x, src){   // the check-on a What I did step brings back the next day; gone = its logo already moved on
   const l = tdLogo(src || x), sec = x.sec === 'Followed up on' ? (l && CHECK_OF[l.status]) || '' : NEXT_CHECK[x.sec] || '';
-  return {sec, gone: sec && l && l.status !== CHECK_FOR[sec] ? l : null};
+  return {sec, gone: !TODO_ONLY && sec && l && l.status !== CHECK_FOR[sec] ? l : null};
 }
 function tdMoveDay(w, nd){   // EP v1.35: a What I did item (with its steps that day) moves to the day it was really done
   const steps = tdSteps(w), src = tdSrc(w), from = w.day, today = todayIso(); let task = src;
@@ -1315,6 +1322,7 @@ function todoStrip(l){   // EP v1.26: on a logo card, this logo on today's To Do
     (open ? '<div class="todo-strip-row">' + body + '</div>' + emailBox(l.emailLink || '', 'lemail-' + id, 'data-x="ACT" data-id="' + id + '"') : '') + '</div>';
 }
 function tdApprovalCheck(){   // EP v1.44: once per logo, the first day it's Sent for Approval with a red In Hand Date (and wasn't sent today)
+  if (TODO_ONLY) return 0;   // EP v2.00: the live portal box suggests it instead
   const today = todayIso(); if (!tdReady() || !(DB.todoDays || []).includes(today)) return 0; let n = 0;
   DB.logos.forEach(l => { if (l.status !== 'Sent for Approval' || l.apprFu || !l.inHand || urg(off(l.inHand)) !== 'red') return;
     const sent = (DB.history.filter(h => h.id === l.id && /> Sent for Approval$/.test(h.what)).map(h => h.ts).sort().pop() || '').slice(0, 10) || l.sentDate || '';
@@ -1326,6 +1334,61 @@ function tdApprovalCheck(){   // EP v1.44: once per logo, the first day it's Sen
     tlog(t, 'Added: In Hand Date ' + fmt(l.inHand) + ' turned red, 30 days or less (' + APPR_FU + ')'); });
   return n;
 }
+// ---------------- Live portal (EP v2.00) ----------------
+// Claude reads the live NetSuite portal every hour (view only) and saves live-logos.json beside the Excel. Logo info here follows it;
+// anything that would change To Do / What I did waits in the "From the live portal" box until you click Add (or Dismiss).
+const liveState = () => (DB.live = DB.live || {keys:[], sug:[], scannedAt:''});
+const liveName = l => reqNo(l) + ' ' + l.logo + (l.account ? ' (' + l.account + ')' : '');
+const openTask = (l, sec) => tdTasks(todayIso()).some(t => t.state !== 'done' && t.sec === sec && tdLogo(t) === l);
+function liveSug(key, kind, l, act, text){ const L = liveState(); if (L.keys.includes(key)) return 0; L.keys.push(key); if (L.keys.length > 400) L.keys = L.keys.slice(-400);
+  L.sug.push({id:tdId(), key, kind, logoId:l.id, act, text, ts:nowStamp()}); return 1; }
+function liveChecks(){   // things that depend on where each logo is right now
+  if (!tdReady()) return 0; const today = todayIso(); let n = 0;
+  (DB.tasks || []).filter(t => t.day >= today && t.state !== 'done' && CHECK_FOR[t.sec]).forEach(t => { const l = tdLogo(t); if (!l || l.status === CHECK_FOR[t.sec]) return;
+    n += liveSug('drop|' + t.id + '|' + l.status, 'drop', l, {taskId:t.id}, liveName(l) + ' is now ' + l.status + '. Remove "' + t.sec + '" from ' + (t.day === today ? 'today' : dayName(t.day)) + '?'); });
+  DB.logos.forEach(l => {
+    if (l.status === 'Sent for Approval' && l.inHand && urg(off(l.inHand)) === 'red' && !l.apprFu && l.sentDate !== today && !openTask(l, APPR_FU)){
+      l.apprFu = today; n += liveSug('appr|' + l.id, 'appr', l, {sec:APPR_FU}, liveName(l) + ' is waiting on approval, and its In Hand Date (' + fmt(l.inHand) + ') is 30 days away or less. Add "' + APPR_FU + '" to today?'); }
+    if (sewLate(l) && !openTask(l, 'Check on Sew out requests')) n += liveSug('sew|' + l.id + '|' + (fuAt(l) || sentStamp(l)), 'sew', l, {sec:'Check on Sew out requests'},
+      liveName(l) + ': the sew-out isn\u2019t back 24 business hours after it was sent to Barrett' + (fuAt(l) ? ' (or after your last follow-up)' : '') + '. Add "Check on Sew out requests" to today?');
+  });
+  return n;
+}
+async function applyLive(){
+  let o; try { o = JSON.parse(await (await (await dirHandle.getFileHandle(LIVE_NAME)).getFile()).text()); } catch(e){ return; }
+  if (!o || !o.scannedAt) return;
+  const L = liveState(), first = !L.scannedAt, ok = s => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s || ''); let n = 0;   // first run: just catch the logo info up
+  (o.fresh || []).forEach(x => { if (!x.nsId || DB.logos.some(l => String(l.nsId) === String(x.nsId))) return;
+    const l = Object.assign(blankLogo(), x); l.id = newId(); l.nsId = String(x.nsId); l.files = []; delete l.submittedAt; delete l.submittedBy; DB.logos.push(l);
+    if (ok(x.submittedAt)) DB.history.push({ts:x.submittedAt.slice(0, 16) + ':00', id:l.id, logo:l.logo, account:l.account, kind:'Added', what:'Submitted in the live portal' + (x.submittedBy ? ' by ' + x.submittedBy : ''), by:x.submittedBy || 'Live portal'});
+    if (!first && l.status === 'New Request') n += liveSug('new|' + l.nsId, 'new', l, {sec:'Review new requests'}, liveName(l) + ' is a new request in the live portal. Add "Review new requests" to today?'); });
+  (o.moves || []).forEach(x => { const l = DB.logos.find(z => String(z.nsId) === String(x.nsId)); if (!l) return; const was = l.status;
+    [['status', 'Status'], ['inHand', 'In Hand Date'], ['logo', 'Logo'], ['account', 'Account']].forEach(([k, label]) => { if (x[k] == null || String(x[k]) === String(l[k] || '')) return;
+      log(l, 'Edit', label + ': ' + (l[k] || '\u2014') + ' > ' + (x[k] || '\u2014') + ' (live portal)', 'Live portal'); l[k] = x[k]; });
+    if (first || !x.status || x.status === was) return;
+    if (x.status === 'New Request') n += liveSug('back|' + l.id + '|' + o.scannedAt, 'new', l, {sec:'Review new requests'}, liveName(l) + ' is back in New Request in the live portal (for example, the rep replied). Add "Review new requests" to today?');
+    else if (PORTAL_TO_DID[x.status]) n += liveSug('step|' + l.id + '|' + x.status + '|' + o.scannedAt.slice(0, 10), 'step', l, {sec:PORTAL_TO_DID[x.status]}, liveName(l) + ' moved to ' + x.status + ' in the live portal. Add "' + PORTAL_TO_DID[x.status] + '" to What I did today?'); });
+  (o.sew || []).forEach(x => { const l = DB.logos.find(z => String(z.nsId) === String(x.nsId)); if (!l || !ok(x.at) || sentStamp(l) >= x.at.slice(0, 16)) return;
+    l.sewSentDate = x.at.slice(0, 10); l.sewSentTime = x.at.slice(11, 16); });
+  L.scannedAt = o.scannedAt; n += liveChecks();
+  try { const w = await (await dirHandle.getFileHandle(LIVE_NAME)).createWritable(); await w.write('{}'); await w.close(); } catch(e){}
+  touch(); const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render();
+  if (n) toast(n + ' update' + (n === 1 ? '' : 's') + ' from the live portal to look at.');
+}
+function liveDo(id, yes){   // Add (or Remove) one suggestion, or Dismiss it
+  const L = liveState(), s = L.sug.find(x => x.id === id); if (!s) return ''; L.sug = L.sug.filter(x => x !== s); if (!yes) return 'Dismissed.';
+  const l = byId(s.logoId); if (!l) return '';
+  if (s.kind === 'drop'){ const t = (DB.tasks || []).find(x => x.id === s.act.taskId); if (!t) return ''; tlog(t, 'Removed: ' + l.logo + ' is now ' + l.status + ' (from the live portal)'); DB.tasks = DB.tasks.filter(x => x !== t); return 'Removed "' + esc(t.sec) + '".'; }
+  if (s.kind === 'step'){ tdLogoStep(l, s.act.sec, l.logo + ' moved to ' + l.status + ' in the live portal'); return 'Added to What I did &rarr; ' + esc(s.act.sec) + '.'; }
+  const t = {id:tdId(), day:todayIso(), sec:s.act.sec, text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id}; (DB.tasks = DB.tasks || []).push(t);
+  tlog(t, 'Added to To Do (' + s.act.sec + ', from the live portal)'); return 'Added to To Do &rarr; ' + esc(s.act.sec) + '.';
+}
+const LIVE_TAG = {new:['New request', '#5b3a8e'], step:['Moved', '#1f6fa8'], drop:['Remove?', '#a61b1b'], appr:['Approval', '#3b8fd0'], sew:['Sew-out', '#c25e00']};
+function liveBox(){ const L = liveState(); if (!L.sug.length) return '';
+  return '<div class="live-box"><div class="live-h"><b>From the live portal</b><span class="cnt">' + L.sug.length + '</span><span class="td-when">Nothing changes in your lists until you click Add.' + (L.scannedAt ? ' Last checked ' + fmt(L.scannedAt) + ' ' + time12(L.scannedAt) + '.' : '') + '</span>' +
+    '<span style="margin-left:auto;display:flex;gap:6px"><button class="btn small" data-td="liveAll">Accept all</button><button class="btn light small" data-td="liveNone">Dismiss all</button></span></div>' +
+    L.sug.map(x => { const g = LIVE_TAG[x.kind] || ['Update', 'var(--navy)']; return '<div class="live-row"><span class="live-tag" style="color:' + g[1] + ';border-color:' + g[1] + '">' + g[0] + '</span><span class="live-t">' + esc(x.text) + '</span>' +
+      '<button class="btn small" data-td="liveAdd" data-v="' + x.id + '">' + (x.kind === 'drop' ? 'Remove' : 'Add') + '</button><button class="btn light small" data-td="liveSkip" data-v="' + x.id + '">Dismiss</button></div>'; }).join('') + '</div>'; }
 function tdMigrate(){ let n = 0; (DB.tasks || []).forEach(t => { if (t.sec === 'Waiting on thread colors'){ t.sec = 'Waiting on Barrett'; tlog(t, 'Moved to Waiting on Barrett'); n++; } });
   const wt = (DB.tasks || []).find(t => t.id === 'Tmvsaj2tmicsg' && t.day === '2026-10-29'), ws = wt ? (DB.did || []).filter(x => x.taskId === wt.id && x.day === '2026-10-29') : [];   // EP v1.43 one-time repair
   const sa = ws.find(x => x.sec === 'Sent for approval' && x.ts === '2026-10-29T16:44:54'), fu = ws.find(x => x.sec === 'Followed up on');
@@ -1390,7 +1453,7 @@ function tdCard(o, kind){   // kind: 'task' (To Do) or 'did' (What I did). EP v1
       (kind === 'task' ? f('To Do section', '<select id="ed-sec-' + o.id + '">' + tdOpts(TODO_SECS, o.sec) + '</select>') : '') +
       (kind === 'task' ? f('Priority', '<select id="ed-pri-' + o.id + '">' + [['', 'Standard'], ['Important', 'Important'], ['Rush', 'Rush']].map(([v, n]) => '<option value="' + v + '"' + ((o.pri || '') === v ? ' selected' : '') + '>' + n + '</option>').join('') + '</select>') : '') +
       (kind === 'did' ? f('Date done', '<input type="date" id="ed-day-' + o.id + '" value="' + o.day + '" max="' + todayIso() + '">') : '') +
-      (l ? f('Logo status', stSelect(l)) : f('Department', '<select id="ed-dept-' + o.id + '"><option value=""></option>' + tdOpts(DEPTS, tdDept(o)) + '</select>')) + '</div>' +
+      (l ? f('Logo status', (c => '<span class="td-logo" style="background:' + c.bg + ';color:' + c.fg + '">' + esc(l.status) + '</span>')(STATUS_COLORS[l.status] || STATUS_COLORS['New Request'])) : f('Department', '<select id="ed-dept-' + o.id + '"><option value=""></option>' + tdOpts(DEPTS, tdDept(o)) + '</select>')) + '</div>' +
     '<div class="btns"><button class="btn small" data-td="save" data-id="' + o.id + '" data-k="' + kind + '">Save</button>' +
       (undo ? '<button class="btn light small" data-td="' + undo[0] + '" data-id="' + o.id + '">' + esc(undo[1]) + '</button>' : '') +
       (kind === 'task' || !o.taskId ? '<button class="btn danger small" data-td="del" data-id="' + o.id + '" data-k="' + kind + '">Remove</button>' : '') + '</div>' +
@@ -1398,9 +1461,6 @@ function tdCard(o, kind){   // kind: 'task' (To Do) or 'did' (What I did). EP v1
   const hist = '<h3 class="hist-toggle" style="cursor:pointer;margin:12px 0 0">Task history<span class="hchev" style="margin-left:auto;color:var(--grey)">&#9656;</span></h3>' +
     '<div class="hist" style="display:none;margin-top:10px">' + (ev.map(e => '<div>' + fmt(e.ts) + ' ' + time12(e.ts) + ' &middot; ' + esc(e.what) + '</div>').join('') || '<div>No history yet.</div>') + '</div>';
   const mail = emailBox(tdEmail(t || o), 'email-' + o.id, 'data-td="ACT" data-id="' + o.id + '"');
-  if (l) return '<div class="td-card">' + cardBody(l, '<div class="box td-taskbox"><h3><span class="num">&#10003;</span>' + title +
-    '<span class="reqno">Linked to ' + esc(reqNo(l)) + ' <button class="btn light small" data-td="unlink" data-id="' + o.id + '">Unlink</button></span></h3>' + edit +
-    (tdNoteList(t || o).length ? '<div class="td-linkbox"><div class="sf-mini">Task notes</div>' + tdNoteLines(tdNoteList(t || o)) + '</div>' : '') + mail + hist + '</div>') + '</div>';
   return '<div class="td-card"><div class="card"><div><div class="box"><h3><span class="num">1</span>' + title + '</h3>' + edit + '</div>' + tdNotesBox(o, t || o) + '</div>' +
     '<div><div class="box"><h3><span class="num">3</span>Links</h3>' + tdLinkBox(t || o) + mail + '</div><div class="box">' + hist.replace('margin:12px 0 0', 'margin:0') + '</div></div></div></div>';
 }
@@ -1419,15 +1479,22 @@ function tdToday(l){   // EP v1.42: this logo on today's list: what you did with
   if (t) return t.state === 'rolled' ? {rolled:true, sec:'Rolled over', rank:3} : {sec:'To do: ' + t.sec, rank:2};
   return null;
 }
+function liveInfo(l){   // EP v2.00: read only, from the live portal
+  const row = (k, v) => '<div><span class="sf-mini">' + k + '</span>' + v + '</div>', c = STATUS_COLORS[l.status] || STATUS_COLORS['New Request'];
+  return '<div class="live-info">' + row('Account', esc(l.account || '\u2014')) + row('Sales Rep', esc(l.rep || '\u2014')) + row('Type', esc(l.type || '\u2014')) +
+    row('Status', '<span class="td-logo" style="background:' + c.bg + ';color:' + c.fg + '">' + esc(l.status) + '</span>') +
+    row('In Hand Date', l.inHand ? '<span class="dtp ' + (DONE.includes(l.status) ? 'plain' : urg(off(l.inHand)) || 'plain') + '">' + fmt(l.inHand) + '</span>' : noDate(l)) +
+    row('Submitted', l.submitted ? fmt(l.submitted) : '\u2014') + (sentStamp(l) ? row('Sent to Barrett', sentText(l)) : '') + '</div>';
+}
 function tdLinkBox(o){
   const l = tdLogo(o);
-  return '<div class="td-linkbox"><div class="sf-mini">Logo in the portal</div>' + (l ? '<b>' + esc(l.logo) + '</b> <span class="td-when">' + esc(reqNo(l)) + ' &middot; ' + esc(l.account) + ' &middot; ' + esc(l.status) + '</span> ' +
-      '<button class="btn light small" data-td="openLogo" data-id="' + o.id + '">Open logo</button><button class="btn light small" data-td="unlink" data-id="' + o.id + '">Unlink</button>'
+  return '<div class="td-linkbox"><div class="sf-mini">Logo in the live portal (read only)</div>' + (l ? '<b>' + esc(l.logo) + '</b> <span class="td-when">' + esc(reqNo(l)) + '</span>' + liveInfo(l) +
+      '<button class="btn light small" data-td="openLive">&#8599; Open live portal</button><button class="btn light small" data-td="unlink" data-id="' + o.id + '">Unlink</button>'
     : '<span class="td-when">Not linked.</span> <input id="link-' + o.id + '" list="tdLogoList" placeholder="Type a logo name or request #&hellip;"><button class="btn light small" data-td="link" data-id="' + o.id + '">Link</button>') + '</div>';
 }
 
 // Tables (EP v1.30): To Do and What I did look like the queues: sections that open and close, columns you can sort, a Department filter and Group by
-const TODO_SEC_COLOR = {'Request sew out':'Pending Sew Out', 'Review Barrett Sew Out':'Review Sew Out', 'Add to ES/FTP':'Need to Upload', 'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', 'Waiting on Barrett':'Waiting on Reply', [APPR_FU]:'Sent for Approval'};
+const TODO_SEC_COLOR = {'Review new requests':'New Request', 'Request sew out':'Pending Sew Out', 'Review Barrett Sew Out':'Review Sew Out', 'Add to ES/FTP':'Need to Upload', 'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', 'Waiting on Barrett':'Waiting on Reply', [APPR_FU]:'Sent for Approval'};
 const tdSecColor = s => (STATUS_COLORS[TODO_SEC_COLOR[s]] || {}).title || (TD_COLORS[s] && s !== 'Other' ? TD_COLORS[s][1] : 'var(--navy)');
 const PRI_RANK = {Rush:0, Important:1};   // EP v1.35: To Do priority
 const tdPri = o => !o ? '' : o.pri === 'Rush' ? '<span class="rush-r" title="Rush">R</span>' : o.pri === 'Important' ? '<span class="rush-r imp" title="Important">I</span>' : '';
@@ -1477,7 +1544,7 @@ function tdGroups(list, kind){   // Group by: section (default), department, or 
 function renderTodo(tab){
   const today = todayIso(); todoDay = todoDay || today;
   if (todoDay === today && tdReady() && startTodo()) touch();
-  if (tdApprovalCheck()) touch();
+  if (tdReady() && liveChecks()) touch();   // EP v2.00
   const d = todoDay, tasks = tdTasks(d), did = tdDid(d).sort((a, b) => a.ts.localeCompare(b.ts)), view = state.todoView === 'did' ? 'did' : 'todo';
   const days = [...new Set((DB.tasks || []).map(t => t.day).concat((DB.did || []).map(x => x.day), [today]))], future = d > today;
   const left = tasks.filter(t => !t.state).length, isDid = view === 'did' && !future;
@@ -1494,6 +1561,7 @@ function renderTodo(tab){
         const n = tasks.filter(t => secs.includes(t.sec) && t.state !== 'done').reduce((a, t) => a + (tdLines(t.text).subs.length || 1), 0);   // logos: sub-items count separately (UAF 3 LOGOS a, b = 2)
         return '<div class="td-metric"><span class="td-mnum">' + n + '</span><span class="td-mlbl">' + label + '</span></div>'; }).join('') +
       '<span class="td-count">' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' &middot; ' + left + ' left</span></div>') +
+    (d === today ? liveBox() : '') +
     '<div class="bar"><input id="tdSearch" placeholder="Search every day&rsquo;s To Do and What I did&hellip;" value="' + esc(todoQ) + '" autocomplete="off">' +
       '<select id="tdDeptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.todoDept === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '<option value="none"' + (state.todoDept === 'none' ? ' selected' : '') + '>No department</option></select>' +
       '<select id="tdGroup">' + [['section', 'Group by: Section'], ['dept', 'Group by: Department'], ['none', 'No grouping']].map(([v, t]) => '<option value="' + v + '"' + ((state.todoGroup || 'section') === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>' +
@@ -1584,9 +1652,12 @@ document.addEventListener('click', async e => {
   if (k === 'goto'){ todoDay = el.dataset.day; state.todoView = el.dataset.v; todoQ = ''; todoOpen = id; save(); redraw();
     const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
   if (k === 'emailOpen' && (t || w)){ const link = tdEmail((w && w.taskId && (DB.tasks || []).find(x => x.id === w.taskId)) || t || w); if (okLink(link)) window.open(link, '_blank', 'noopener'); return; }
+  if (k === 'openLive'){ window.open(LIVE_URL, 'livePortal'); return; }   // EP v2.00
   if (k === 'copyTodo' || k === 'copyDid'){ const c = k === 'copyTodo' ? tdCopy(TODO_SECS, tdTasks(todoDay), '') : tdCopy(DID_SECS.filter(x => x !== 'Archive'), tdDid(todoDay).sort((a, b) => a.ts.localeCompare(b.ts)), longDay(todoDay));   // EP v1.38: Archive isn't shared
     toast(await copyHtml(c.html, c.text) ? '&#10003; Copied. Paste it into your email or Teams.' : 'Couldn&rsquo;t copy. Try again.'); return; }
   if (!tdReady()){ toast('Reconnect Excel first (top right), so your list saves.'); return; }
+  if (k === 'liveAdd' || k === 'liveSkip'){ const r = liveDo(el.dataset.v, k === 'liveAdd'); touch(); redraw(); if (r) toast(r); return; }   // EP v2.00
+  if (k === 'liveAll' || k === 'liveNone'){ const ids = liveState().sug.map(x => x.id); ids.forEach(i => liveDo(i, k === 'liveAll')); touch(); redraw(); toast(k === 'liveAll' ? 'Done: all ' + ids.length + '.' : 'Dismissed all.'); return; }
   if (k === 'add' || k === 'addDid'){ const isDid = k === 'addDid', ta = document.getElementById(isDid ? 'didText' : 'tdText'), text = ta.value.replace(/\s+$/, ''); if (!text.trim()) return;
     const sec = document.getElementById(isDid ? 'didSec' : 'tdSec').value;
     if (isDid){ const y = {id:tdId(), day:todoDay, sec, text, ts:nowStamp(), taskId:''}; (DB.did = DB.did || []).push(y); tlog(y, 'Written in on What I did (' + sec + ')'); }
@@ -1676,7 +1747,8 @@ function collapseState(){ const heads = [...document.querySelectorAll('#page .se
 function placeSorts(){ const p = document.querySelector('.srt-pop'); if (p && p.getBoundingClientRect().right > document.documentElement.clientWidth - 8){ p.style.left = 'auto'; p.style.right = '0'; } }   // EP v1.46
 function syncCollapse(){ placeSorts(); const b = document.querySelector('#page [data-collapse]'); if (!b) return; const c = collapseState(); b.style.display = c.any ? '' : 'none'; b.textContent = c.open ? 'Collapse all' : 'Expand all'; }
 function render(){
-  refreshToday(); renderNotifs(); if (tdApprovalCheck()) touch();
+  state.tab = 'todo'; msearch = '';   // EP v2.00: To Do only
+  refreshToday(); renderNotifs();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
