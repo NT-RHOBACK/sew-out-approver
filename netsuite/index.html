@@ -212,7 +212,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">NS v1.05</span>
+      <span class="badge">NS v1.06</span>
     </div>
   </div>
   <div class="body">
@@ -354,7 +354,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.05</span>
+      <span class="badge">NS v1.06</span>
     </div>
   </div>
   <div class="body">
@@ -408,7 +408,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.05</span>
+      <span class="badge">NS v1.06</span>
     </div>
   </div>
   <div class="body">
@@ -657,7 +657,15 @@ async function handleExistingPdf(file){
     alert('Could not read this PDF: ' + (e.message || e));
   }
 }
-document.getElementById('dstFilename').addEventListener('input',e=>{const raw=e.target.value.trim();if(!raw)return;fill(parseFilename(raw.replace(/\.dst$/i,'').trim()));});
+document.getElementById('dstFilename').addEventListener('input',e=>{const raw=e.target.value.trim();if(!raw)return;
+  const name=raw.replace(/\.dst$/i,'').trim(), info=parseFilename(name);
+  // NS v1.06: same as dropping a DST. Filled in from NetSuite: keep NetSuite's customer + file name, ask before using the typed name.
+  if(nsFromNetSuite && (document.getElementById('customer').value.trim() || document.getElementById('logoName').value.trim())){
+    if(info.heightIn)sv('logoH',info.heightIn+'"');
+    nsOfferDstName(name !== document.getElementById('logoName').value.trim() ? name : '', true);
+    return;
+  }
+  fill(info);});
 
 async function handleDST(file){
   const info=await parseDSTBin(file);
@@ -675,12 +683,12 @@ async function handleDST(file){
 }
 // NS v1.05: "Use the DST's name as the file name?" (only shown when NetSuite's name was kept)
 let nsFromNetSuite = false;
-function nsOfferDstName(name){
+function nsOfferDstName(name, typed){
   const box = document.getElementById('nsDstOffer'); if (!box) return;
   box.textContent = '';
   if (!name) { box.style.display = 'none'; return; }
   const t = document.createElement('div');
-  t.textContent = 'Kept the customer and file name from NetSuite (height and width came from the DST). Use the DST’s name “' + name + '” as the file name?';
+  t.textContent = 'Kept the customer and file name from NetSuite' + (typed ? '' : ' (height and width came from the DST)') + '. Use the DST’s name “' + name + '” as the file name?';
   const use = document.createElement('button'); use.type = 'button'; use.className = 'btn btn-sm'; use.textContent = 'Use DST name';
   use.style.cssText = 'margin:6px 6px 0 0;padding:4px 10px;font-size:11px;cursor:pointer';
   use.onclick = () => { setF('logoName', name); updateFnPreview(); box.style.display = 'none'; };
