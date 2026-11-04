@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+<script>window.__nsPhotoQ=[];window.addEventListener('message',function(e){var d=e.data;if(window.__nsPhotoQ&&d&&d.type==='rhoback-sewout-photo')window.__nsPhotoQ.push({origin:e.origin,data:d});});</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Rhoback SOA (NetSuite)</title>
@@ -211,7 +212,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">NS v1.03</span>
+      <span class="badge">NS v1.04</span>
     </div>
   </div>
   <div class="body">
@@ -351,7 +352,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.03</span>
+      <span class="badge">NS v1.04</span>
     </div>
   </div>
   <div class="body">
@@ -405,7 +406,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.03</span>
+      <span class="badge">NS v1.04</span>
     </div>
   </div>
   <div class="body">
@@ -682,9 +683,8 @@ document.getElementById('swatchFile').addEventListener('change',e=>{
 // manual upload (preview, rotate, crop). Only accepted from Rhoback's NetSuite, and only image data.
 const NS_PHOTO_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com'];
 let nsPhotoSeen = '';
-window.addEventListener('message', e => {
-  const d = e.data;
-  if (!NS_PHOTO_ORIGINS.includes(e.origin) || !d || d.type !== 'rhoback-sewout-photo') return;
+function nsTakePhoto(origin, d){
+  if (!NS_PHOTO_ORIGINS.includes(origin) || !d || d.type !== 'rhoback-sewout-photo') return;
   const m = /^data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+\/=]+)$/i.exec(String(d.dataUrl || ''));
   if (!m) return;
   const key = (d.requestId || '') + '|' + (d.name || '') + '|' + m[2].length;
@@ -696,7 +696,9 @@ window.addEventListener('message', e => {
   document.getElementById('swImg').src = 'data:' + type + ';base64,' + b;
   document.getElementById('swPrev').style.display = 'block'; document.getElementById('keepSwatchWrap').style.display = '';
   const rb = document.getElementById('swRevBtn'); if (rb) rb.style.display = 'none';
-});
+}
+window.addEventListener('message', e => nsTakePhoto(e.origin, e.data));
+(window.__nsPhotoQ || []).forEach(x => nsTakePhoto(x.origin, x.data)); window.__nsPhotoQ = null;   // NS v1.04: ones that came in while the page was loading
 
 // Refresh the swatch preview image + revert-button visibility from swB64/swOrig.
 function _swRefreshPreview(){
