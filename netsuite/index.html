@@ -211,7 +211,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">NS v1.02</span>
+      <span class="badge">NS v1.03</span>
     </div>
   </div>
   <div class="body">
@@ -351,7 +351,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.02</span>
+      <span class="badge">NS v1.03</span>
     </div>
   </div>
   <div class="body">
@@ -405,7 +405,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.02</span>
+      <span class="badge">NS v1.03</span>
     </div>
   </div>
   <div class="body">
@@ -675,6 +675,27 @@ document.getElementById('swatchFile').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   document.getElementById('swatchName').textContent=f.name;
   toB64(f,b=>{swB64=b;swType=f.type;swOrigB64=b;swOrigType=f.type;const img=document.getElementById('swImg');img.src='data:'+f.type+';base64,'+b;document.getElementById('swPrev').style.display='block';document.getElementById('keepSwatchWrap').style.display='';const rb=document.getElementById('swRevBtn');if(rb)rb.style.display='none';});
+});
+
+// NS v1.03: the sew-out photo from the live NetSuite portal. Its "Open Sew-Out Approver with photo" button opens this page and
+// posts {type:'rhoback-sewout-photo', name, dataUrl, requestId} a few times; the first one lands in 4 · Sew-Out Photo, the same as a
+// manual upload (preview, rotate, crop). Only accepted from Rhoback's NetSuite, and only image data.
+const NS_PHOTO_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com'];
+let nsPhotoSeen = '';
+window.addEventListener('message', e => {
+  const d = e.data;
+  if (!NS_PHOTO_ORIGINS.includes(e.origin) || !d || d.type !== 'rhoback-sewout-photo') return;
+  const m = /^data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+\/=]+)$/i.exec(String(d.dataUrl || ''));
+  if (!m) return;
+  const key = (d.requestId || '') + '|' + (d.name || '') + '|' + m[2].length;
+  if (key === nsPhotoSeen) return;   // NetSuite sends it a few times
+  nsPhotoSeen = key;
+  const type = m[1].toLowerCase(), b = m[2];
+  swB64 = b; swType = type; swOrigB64 = b; swOrigType = type;
+  document.getElementById('swatchName').textContent = (d.name ? String(d.name) : 'Sew-out photo') + ' (from NetSuite)';
+  document.getElementById('swImg').src = 'data:' + type + ';base64,' + b;
+  document.getElementById('swPrev').style.display = 'block'; document.getElementById('keepSwatchWrap').style.display = '';
+  const rb = document.getElementById('swRevBtn'); if (rb) rb.style.display = 'none';
 });
 
 // Refresh the swatch preview image + revert-button visibility from swB64/swOrig.
