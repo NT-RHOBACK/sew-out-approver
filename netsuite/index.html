@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-<script>window.__nsPhotoQ=[];window.addEventListener('message',function(e){var d=e.data;if(window.__nsPhotoQ&&d&&d.type==='rhoback-sewout-photo')window.__nsPhotoQ.push({origin:e.origin,data:d});});</script>
+<script>window.__nsPhotoQ=[];window.addEventListener('message',function(e){var d=e.data;if(window.__nsPhotoQ&&d&&(d.type==='rhoback-sewout-photo'||d.type==='rhoback-sewout-dst'))window.__nsPhotoQ.push({origin:e.origin,data:d});});</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Rhoback SOA (NetSuite)</title>
@@ -212,7 +212,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">NS v1.04</span>
+      <span class="badge">NS v1.05</span>
     </div>
   </div>
   <div class="body">
@@ -226,7 +226,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       <div class="dt">Drag &amp; Drop DST or PDF file here</div>
       <div class="ds">DST &rarr; new sheet &middot; PDF &rarr; update existing (auto-bumps version)</div>
     </div>
+    <div id="nsDstPick" style="display:none;background:#eaf4f8;border:1px solid #b8dae4;border-radius:8px;padding:8px 12px;margin:0 0 10px;font-size:12px;color:#1c3a48"></div>
     <div class="parsed" id="parsedBadge"><span>&#10003;</span><span id="parsedTxt"></span></div>
+    <div id="nsDstOffer" style="display:none;background:#fff8e6;border:1px solid #f0d58a;border-radius:8px;padding:8px 12px;margin:0 0 10px;font-size:12px;color:#5a4300;line-height:1.5"></div>
     <div onclick="toggleManualDST()" style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;user-select:none;padding:6px 0;display:flex;align-items:center;gap:6px">
       <span id="dstTogArrow" style="font-size:10px;display:inline-block;width:10px">&#9656;</span>
       <span>Or type / paste DST filename</span>
@@ -352,7 +354,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.04</span>
+      <span class="badge">NS v1.05</span>
     </div>
   </div>
   <div class="body">
@@ -406,7 +408,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.04</span>
+      <span class="badge">NS v1.05</span>
     </div>
   </div>
   <div class="body">
@@ -660,13 +662,62 @@ document.getElementById('dstFilename').addEventListener('input',e=>{const raw=e.
 async function handleDST(file){
   const info=await parseDSTBin(file);
   const name=file.name.replace(/\.dst$/i,'').trim();
-  setF('logoName',name);setF('customer',dePascal(name.split('_')[0]));
+  // NS v1.05: when the page was filled in from NetSuite, keep NetSuite's customer + logo/file name; the DST only sets H and W.
+  const keepNs = nsFromNetSuite && !!(document.getElementById('customer').value.trim() || document.getElementById('logoName').value.trim());
+  if(!keepNs){setF('logoName',name);setF('customer',dePascal(name.split('_')[0]));}
   if(info.heightIn)setF('logoH',info.heightIn+'"');
   if(info.widthIn){setF('logoW',info.widthIn+'"');}
   let s=name;if(info.heightIn&&info.widthIn)s+=' \xb7 '+info.heightIn+'"H \xd7 '+info.widthIn+'"W';
   document.getElementById('parsedTxt').textContent=s;
   document.getElementById('parsedBadge').classList.add('on');
+  nsOfferDstName(keepNs && name !== document.getElementById('logoName').value.trim() ? name : '');
   updateFnPreview();
+}
+// NS v1.05: "Use the DST's name as the file name?" (only shown when NetSuite's name was kept)
+let nsFromNetSuite = false;
+function nsOfferDstName(name){
+  const box = document.getElementById('nsDstOffer'); if (!box) return;
+  box.textContent = '';
+  if (!name) { box.style.display = 'none'; return; }
+  const t = document.createElement('div');
+  t.textContent = 'Kept the customer and file name from NetSuite (height and width came from the DST). Use the DST’s name “' + name + '” as the file name?';
+  const use = document.createElement('button'); use.type = 'button'; use.className = 'btn btn-sm'; use.textContent = 'Use DST name';
+  use.style.cssText = 'margin:6px 6px 0 0;padding:4px 10px;font-size:11px;cursor:pointer';
+  use.onclick = () => { setF('logoName', name); updateFnPreview(); box.style.display = 'none'; };
+  const keep = document.createElement('button'); keep.type = 'button'; keep.className = 'btn btn-sm'; keep.textContent = 'Keep NetSuite name';
+  keep.style.cssText = 'margin:6px 0 0;padding:4px 10px;font-size:11px;cursor:pointer';
+  keep.onclick = () => { box.style.display = 'none'; };
+  box.append(t, use, keep); box.style.display = '';
+}
+// NS v1.05: DST files sent from the logo card in NetSuite: {type:'rhoback-sewout-dst', requestId, files:[{name, dataUrl}]}.
+// They show as a "Pick a DST from NetSuite" list; picking one works like dropping that DST in.
+let nsDstSeen = '';
+function nsTakeDsts(origin, d){
+  if (!NS_PHOTO_ORIGINS.includes(origin) || !d || d.type !== 'rhoback-sewout-dst' || !Array.isArray(d.files)) return;
+  const files = d.files.slice(0, 20).map(f => {
+    const name = String((f && f.name) || '').trim();
+    const m = /^data:[^;,]*;base64,([A-Za-z0-9+\/=]+)$/i.exec(String((f && f.dataUrl) || ''));
+    return (/\.dst$/i.test(name) && m && m[1].length < 14000000) ? { name, b64: m[1] } : null;
+  }).filter(Boolean);
+  if (!files.length) return;
+  const key = (d.requestId || '') + '|' + files.map(f => f.name + ':' + f.b64.length).join(',');
+  if (key === nsDstSeen) return;   // NetSuite sends it a few times
+  nsDstSeen = key;
+  const box = document.getElementById('nsDstPick'); box.textContent = '';
+  const h = document.createElement('div'); h.style.fontWeight = '700'; h.style.marginBottom = '4px';
+  h.textContent = 'Pick a DST from NetSuite (fills in height and width):';
+  box.appendChild(h);
+  files.forEach(f => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = '\u{1F4C4} ' + f.name;
+    b.style.cssText = 'display:block;margin:3px 0;padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #b8dae4;border-radius:6px;background:#fff;color:#0D1E50;text-align:left';
+    b.onclick = () => {
+      const bin = atob(f.b64), u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      handleDST(new File([u], f.name));
+    };
+    box.appendChild(b);
+  });
+  box.style.display = '';
 }
 function fill(info){if(info.customer)sv('customer',info.customer);if(info.logoName)sv('logoName',info.logoName);if(info.heightIn)sv('logoH',info.heightIn+'"');if(info.widthIn)sv('logoW',info.widthIn+'"');}
 function sv(id,v){const el=document.getElementById(id);if(!el.value||el===document.activeElement)return;el.value=v;}
@@ -697,8 +748,8 @@ function nsTakePhoto(origin, d){
   document.getElementById('swPrev').style.display = 'block'; document.getElementById('keepSwatchWrap').style.display = '';
   const rb = document.getElementById('swRevBtn'); if (rb) rb.style.display = 'none';
 }
-window.addEventListener('message', e => nsTakePhoto(e.origin, e.data));
-(window.__nsPhotoQ || []).forEach(x => nsTakePhoto(x.origin, x.data)); window.__nsPhotoQ = null;   // NS v1.04: ones that came in while the page was loading
+window.addEventListener('message', e => { nsTakePhoto(e.origin, e.data); nsTakeDsts(e.origin, e.data); });
+(window.__nsPhotoQ || []).forEach(x => { nsTakePhoto(x.origin, x.data); nsTakeDsts(x.origin, x.data); }); window.__nsPhotoQ = null;   // NS v1.04: ones that came in while the page was loading
 
 // Refresh the swatch preview image + revert-button visibility from swB64/swOrig.
 function _swRefreshPreview(){
@@ -1659,8 +1710,10 @@ function nsFillFromLink(){
     const ct = get('colortype').toLowerCase();
     set('threadColors', /club/.test(ct) ? 'Club Colors' : /coord/.test(ct) ? 'Color Coordinate' : /tonal/.test(ct) ? 'Tonal'
       : /other|special/.test(ct) ? 'Other / Special' : '');
-    set('threadExtra', get('thread'));
-    set('notes', get('notes'));
+    // NS v1.05: NetSuite's thread color notes go in 6 · Notes; Thread Color Notes stays empty
+    setF('threadExtra', '');
+    set('notes', [get('thread'), get('notes')].filter(Boolean).join('\n'));
+    nsFromNetSuite = true;
     const ver = get('ver').replace(/^v/i, '');
     if (ver) { set('fnVer', ver); const inc = document.getElementById('fnIncludeVer'); if (inc) inc.checked = true; }
     if (get('id')) _prefillItemId = get('id');
