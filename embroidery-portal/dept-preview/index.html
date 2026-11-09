@@ -258,7 +258,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .rv-k{width:240px;font-weight:600;color:var(--grey);font-size:13px}
 .f input:disabled,.f textarea:disabled{background:#FAFAFA;color:var(--grey)}
 .dtag{display:block;font-size:11px;color:#49516C;margin-top:2px}
-.dabbr{font-weight:700;font-size:12px;color:#29304E;cursor:default}
+.dabbr{cursor:default}
 #banner{display:none !important}   /* DEPT PREVIEW: hide the Connect Excel notice */
 .box h3 .reqno{margin-left:auto;font-family:'Aptos','Segoe UI',sans-serif;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:#49516C}
 .notif{position:relative}
@@ -772,7 +772,7 @@ function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
     {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + '</span></div>'},
-    {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="dabbr" title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
+    {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="acct dabbr" title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
     {k:'account', h:'Account', v:l => l.account.toLowerCase(), td:l => '<span class="acct">' + esc(l.account) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
     {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted, subUrg(l))},
