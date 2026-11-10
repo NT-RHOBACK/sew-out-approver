@@ -374,6 +374,53 @@ h1{font-size:20px;margin-bottom:14px}
 .pipe .stage .count{display:block;font-size:18px;font-weight:700;margin-bottom:2px;color:var(--navy)}
 /* Accounts tab */
 .acct-tbl td{padding:12px 8px}
+
+/* ===== EP v2.05: the live portal's logo card ===== */
+.emb-card{padding:14px 6px 6px;--font:'Aptos','Segoe UI',sans-serif}
+.emb-card-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:900px){.emb-card-cols{grid-template-columns:1fr}}
+.emb-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.emb-box{background:#fff;border:1px solid var(--line);border-radius:8px}
+.emb-box-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.emb-box-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+.emb-box-title{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy)}
+.emb-box-right{margin-left:auto;font-size:12px;color:var(--grey);font-weight:600}
+.emb-box-bd{padding:12px}
+.emb-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px}
+.emb-fld{min-width:0}.emb-fld.full{grid-column:1 / -1}
+.emb-fld>label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:3px}
+.emb-card input:not([type=checkbox]),.emb-card select,.emb-card textarea,.emb-in{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);color:var(--navy);background:#fff;resize:vertical}
+.emb-card textarea{min-height:52px}
+.emb-card select.st{font-weight:700}
+.emb-val{font-size:13px;color:var(--navy);padding:6px 0}
+.emb-dim{color:#6B7385;font-size:12px}
+.emb-stepper{display:flex;align-items:center;gap:6px}
+.emb-stepper .sbtn{padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--navy);font-size:12px;cursor:pointer}
+.emb-step-val{min-width:36px;text-align:center;font-size:17px;font-weight:800;color:var(--navy)}.emb-step-val.rev-num{color:#BF2033}
+.emb-tierline{margin-top:5px;font-size:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.emb-file{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--line);border-radius:6px;margin-bottom:6px}
+.emb-file-ext{background:var(--navy);color:#fff;padding:2px 7px;border-radius:4px;font-size:10.5px;font-weight:700}
+.emb-file-name{flex:1 1 0%;min-width:0;font-size:13px;overflow-wrap:anywhere}
+.emb-btn-del{background:none;border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+.emb-drop{margin-top:6px;border:2px dashed var(--line);border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:13px;color:var(--grey)}
+.emb-drop:hover,.emb-drop.over{border-color:var(--red);background:var(--bg)}
+.emb-hist summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);user-select:none}
+.emb-hist-row{display:grid;grid-template-columns:120px minmax(0,1fr) 110px;gap:8px;padding:6px 0;border-bottom:1px solid #EEF0F4;font-size:12.5px}
+.emb-hist-date{color:var(--grey)}.emb-hist-by{color:#49516C;text-align:right}
+.emb-card-foot{display:flex;gap:10px;justify-content:flex-end}
+.emb-sew-toggle{cursor:pointer;user-select:none;font-size:13px;font-weight:700;color:var(--navy);padding:8px 10px;background:#F3F5FA;border:1px solid var(--line);border-radius:6px}
+.emb-sew-toggle:hover{border-color:#C4CDE8}
+.emb-fee-chk{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer}
+.emb-fee-chk input{width:16px;height:16px;accent-color:var(--navy)}
+.emb-ok{color:#2E7D32;font-weight:600;font-size:13px;margin:6px 0}
+.emb-private{background:#F3E5F5;color:#6A1B9A;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600}
+.emb-note{padding:6px 0;border-bottom:1px solid #EEF0F4;font-size:13px}
+.emb-msg-new{margin-bottom:12px;padding:10px;background:#F3F5FA;border:1px solid var(--line);border-radius:8px}
+.emb-msg{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;background:#fff}
+.emb-msg.resolved{opacity:.75}
+.emb-msg-by{font-size:12.5px;margin-bottom:2px}.emb-msg-text{font-size:13px;line-height:1.45}
+.emb-msg-reply{margin:8px 0 0 14px;padding-left:10px;border-left:3px solid #E6EAF6}
+.emb-msg-acts{display:flex;gap:6px;justify-content:flex-end;align-items:center;margin-top:6px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -390,7 +437,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.04</span>
+    <span class="vbadge">EP v2.05</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -401,12 +448,13 @@ h1{font-size:20px;margin-bottom:14px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
+// EP v2.05: the logo card looks like the live portal's (7 numbered boxes + Communication, saved here only).
 // EP v2.04: looks like the live portal (header, joined sections, toolbar, Dept column, Accounts tab); the Excel save button is the difference.
 // EP v2.03: the whole portal again (like the live portal) for logos that didn't come from the live portal, plus To Do. Logos copied from the live portal (NetSuite ID) stay in the Excel but are set aside (DB.hidden).
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.04';
+const VERSION = 'EP v2.05';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -500,7 +548,7 @@ splitLive(DB);
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
 function newId(){ const n = DB.logos.concat(DB.hidden || [], DB.history).reduce((m, x) => Math.max(m, parseInt(String(x.id || '').replace(/\D/g, ''), 10) || 0), 0); return 'EP-' + String(n + 1).padStart(4, '0'); }
 function blankLogo(){ return {id:'', nsId:'', logo:'', account:'', rep:'', type:'Sew-Out', dept:'', status:'New Request', submitted:todayIso(), inHand:'', size:'', sizeNotes:'', count:'', colorType:'', threadNotes:'', placement:'',
-  ver:1, rev:0, scratch:false, submitNotes:'', sewSentDate:'', sewSentTime:'', sentDate:'', approvedDate:'', completedDate:'', files:[], dir:'', sewReq:null, sheetFile:'', school:'', project:''}; }
+  ver:1, rev:0, scratch:false, submitNotes:'', sewSentDate:'', sewSentTime:'', sentDate:'', approvedDate:'', completedDate:'', files:[], dir:'', sewReq:null, sheetFile:'', school:'', project:'', assigned:'', logoStatus:'', comms:[], digitized:null, rushFee:false, invoiceSent:''}; }
 function log(l, kind, what, by){ DB.history.push({ts:nowStamp(), id:l.id, logo:l.logo, account:l.account, kind, what, by:by || ME}); }
 function setStatus(l, st, by){
   if (l.status === st) return;
@@ -542,7 +590,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || ''})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || ''})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -591,7 +639,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -861,7 +909,7 @@ function sewBox(l){
       '<button class="btn small" data-x="req-sent" data-id="' + esc(l.id) + '">Mark sent to Barrett</button><button class="btn light small" data-x="req-open" data-id="' + esc(l.id) + '">Change answers</button></div>' +
       '<div class="note">Copy the email, open Outlook (To, Cc, and Subject are filled in), paste it, attach the files, and send. Then click <b>Mark sent to Barrett</b>.</div>';
   } else {
-    inner = '<div class="btns" style="margin-top:0"><button class="btn small" data-x="req-open" data-id="' + esc(l.id) + '">Submit Sew Out Request</button></div>' +
+    inner = '<div class="emb-sew-toggle" data-x="req-open" data-id="' + esc(l.id) + '">&#9656; Fill out sew-out request &amp; email preview</div>' +
       (l._waiting ? '<div class="note">Waiting for the Sew-Out Request page&hellip; pick the options there and click <b>Send to NetSuite</b>. It comes back here.</div>'
                   : '<div class="note">Opens the Sew-Out Request page first, then sends to Barrett with the DST and color card.</div>');
   }
@@ -873,58 +921,77 @@ function sewBox(l){
       (photoIn(l) ? '' : sewLate(l) ? ' &middot; <b style="color:#a61b1b">In Follow Up now</b>' : due ? ' &middot; back in Follow Up ' + dayName(isoOf(due)) + ' ' + time12('T' + pad(due.getHours()) + ':' + pad(due.getMinutes())) + ' if it isn&rsquo;t in' : '') + '</div>' +
       '<div class="btns"><button class="btn small" data-x="followUp" data-id="' + esc(l.id) + '">Mark followed up</button>' + (fs && fs.slice(0, 10) === todayIso() ? '<button class="btn light small" data-x="followUndo" data-id="' + esc(l.id) + '">Undo</button>' : '') + '</div>' +
       '<div class="note">Adds it to today&rsquo;s What I did and snoozes the Follow Up for another 24 business hours.</div></div>'; }
-  return '<div class="box"><h3><span class="num">4</span>Sew-out request to Barrett</h3>' + inner + '</div>';
+  inner += '<div class="emb-grid" style="margin-top:12px">' + ef('Sent to Barrett', '<div class="emb-val emb-dim">' + (sentStamp(l) ? sentText(l) : 'Not sent yet') + '</div>') +
+    ef('Sew-out image', '<div class="emb-val emb-dim">' + (photoIn(l) ? '&#10003; Uploaded' : 'Pending') + '</div>') + '</div>';
+  return ebox(4, 'Sew-out request to Barrett', '', inner);
 }
-function sheetBox(l){
-  return '<div class="box"><h3><span class="num">5</span>Approval sheet</h3><div class="btns" style="margin-top:0">' +
-    '<button class="btn light small" data-x="appr-open" data-id="' + esc(l.id) + '">Open Sew-Out Approver</button>' +
-    '<button class="btn light small" data-x="appr-upload" data-id="' + esc(l.id) + '">Upload PDF</button>' +
-    '<button class="btn small" data-x="appr-sent" data-id="' + esc(l.id) + '">Mark sent</button></div>' +
-    (l.sheetFile ? '<div class="note">Uploaded: <b>' + esc(l.sheetFile) + '</b></div>' : '') +
-    (l.sentDate ? '<div class="note ok">&#10003; Sent to ' + esc(l.rep || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>'
-                : '<div class="note">Make the sheet in the Sew-Out Approver, download the PDF, upload it here, email it to ' + esc(l.rep || 'the rep') + ' from Outlook, then click Mark sent.</div>') + '</div>';
+function sheetBox(l){   // EP v2.05: live layout
+  const id = esc(l.id);
+  return ebox(5, 'Approval Sheet', '', '<button class="btn small" data-x="appr-open" data-id="' + id + '">&#8599; Open Sew-Out Approver</button>' +
+    '<div class="emb-dim" style="margin:8px 0">Open the Sew-Out Approver to make the approval sheet, then upload the PDF here to email it to ' + esc(l.rep || 'the rep') + '.</div>' +
+    '<div style="display:flex;align-items:center;gap:8px"><button class="btn light small" data-x="appr-upload" data-id="' + id + '">Choose File</button><span class="emb-dim" style="flex:1">' + (l.sheetFile ? esc(l.sheetFile) : 'No file chosen') + '</span>' +
+    '<button class="btn small" data-x="appr-sent" data-id="' + id + '" title="Marks it sent. Email it to the rep from Outlook.">Mark sent</button></div>' +
+    (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(l.rep || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : ''));
+}
+// EP v2.05: the logo card, laid out like the live portal's
+const ebox = (num, title, right, body) => '<div class="emb-box"><div class="emb-box-hd">' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
+const ef = (label, input, full) => '<div class="emb-fld' + (full ? ' full' : '') + '"><label>' + label + '</label>' + input + '</div>';
+const digOf = l => l.digitized == null ? !!l.scratch : !!l.digitized;
+let msgOpen = {}, replyOpen = {};
+function commBox(l){
+  const id = esc(l.id), list = l.comms || [], open = list.filter(m => !m.resolved), done = list.filter(m => m.resolved);
+  const line = (m, cls) => '<div class="' + cls + '"><div class="emb-msg-by"><b>' + esc(m.by) + '</b> <span class="emb-dim">' + fmt(m.ts) + ' ' + time12(m.ts) + '</span></div><div class="emb-msg-text">' + esc(m.text).replace(/\n/g, '<br>') + '</div></div>';
+  const msg = m => '<div class="emb-msg' + (m.resolved ? ' resolved' : '') + '">' + line(m, 'emb-msg-main') + (m.replies || []).map(r => line(r, 'emb-msg-reply')).join('') +
+    (m.resolved ? '<div class="emb-msg-acts"><span class="emb-dim">Resolved ' + fmt(m.resolvedAt) + '</span><button class="btn light small" data-x="msg-reopen" data-id="' + id + '" data-m="' + esc(m.id) + '">Reopen</button></div>'
+      : (replyOpen[m.id] ? '<textarea class="emb-in msg-reply-in" data-id="' + id + '" data-m="' + esc(m.id) + '" placeholder="Write a reply&hellip;"></textarea><div class="emb-msg-acts"><button class="btn light small" data-x="msg-reply-x" data-id="' + id + '" data-m="' + esc(m.id) + '">Cancel</button><button class="btn small" data-x="msg-reply-send" data-id="' + id + '" data-m="' + esc(m.id) + '">Reply</button></div>'
+        : '<div class="emb-msg-acts"><button class="btn light small" data-x="msg-reply" data-id="' + id + '" data-m="' + esc(m.id) + '">Reply</button><button class="btn light small" data-x="msg-resolve" data-id="' + id + '" data-m="' + esc(m.id) + '">Resolve</button></div>')) + '</div>';
+  const composer = msgOpen[l.id] ? '<div class="emb-msg-new"><textarea class="emb-in msg-in" data-id="' + id + '" placeholder="Write a message or question&hellip;"></textarea>' +
+    '<div class="emb-msg-acts"><button class="btn light small" data-x="msg-cancel" data-id="' + id + '">Cancel</button><button class="btn small" data-x="msg-send" data-id="' + id + '">Send</button></div></div>' : '';
+  return ebox('', 'Communication', '<button class="btn light small" data-x="msg-new" data-id="' + id + '">+ New message</button>',
+    composer + (open.length ? open.map(msg).join('') : (msgOpen[l.id] ? '' : '<div class="emb-dim">No messages yet. Use &ldquo;+ New message&rdquo; to start a conversation.</div>')) +
+    (done.length ? '<details class="emb-hist" style="margin-top:8px"><summary>Show ' + done.length + ' resolved</summary>' + done.map(msg).join('') + '</details>' : '') +
+    '<div class="emb-dim" style="margin-top:8px;font-size:11px">Saved on this page only. No emails are sent.</div>');
 }
 function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (queues) or the task box (To Do)
   const id = esc(l.id);
-  const fileRows = l.files.length ? l.files.map(x => '<div class="file"><span class="ftype">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="fname" title="' + esc(x.name) + '">' + esc(x.name) + '</span>' +
-    '<button class="btn light small" data-x="file-open" data-id="' + id + '" data-name="' + esc(x.name) + '">Open</button><button class="btn danger small" data-x="file-rm" data-id="' + id + '" data-name="' + esc(x.name) + '">Remove</button></div>').join('')
-    : '<div class="note" style="margin-top:0">No files yet.</div>';
   const notes = DB.notes.filter(n => n.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
   const hist = DB.history.filter(h => h.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
-  const histLine = h => { const i = h.what.indexOf(':'); const w = i > 0 && i < 40 ? '<b>' + esc(h.what.slice(0, i)) + '</b>' + esc(h.what.slice(i)) : esc(h.what); return '<div>' + fmt(h.ts) + ' ' + time12(h.ts) + ' &middot; ' + w + (h.by ? ' &middot; ' + esc(h.by) : '') + '</div>'; };
-  return '<div class="card">' + top +
-    '<div>' +
-      '<div class="box"><h3><span class="num">1</span>Logo details<span class="reqno">Request ' + esc(reqNo(l)) + '</span></h3><div class="grid">' +
-        f('Account', inp('account', l, ' list="acctList"')) +
-        f('Logo / Design Name', inp('logo', l)) +
-        f('Request Type', '<input value="' + esc(l.type) + '" disabled>') +
-        f('Department', sel('dept', l, DEPTS)) +
-        (l.dept === 'Special Projects' || l.project ? f('Project name', inp('project', l)) : '') +
-        (l.dept === 'Collegiate' || l.dept === 'Mainline' || l.school ? f('School', inp('school', l)) : '') +
-        f('Size', inp('size', l)) +
-        f('Size notes', inp('sizeNotes', l)) +
-        f('Number of Thread Colors', sel('count', l, SF_COUNTS)) +
-        f('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
-        f('Thread Color Notes', '<textarea data-edit="threadNotes" data-id="' + id + '">' + esc(l.threadNotes) + '</textarea>', true) +
-        f('Placement', inp('placement', l)) +
-        f('In Hand Date', '<input type="date" data-edit="inHand" data-id="' + id + '" value="' + esc(l.inHand) + '">' + (priTag(l) ? '<div class="pri-line">' + priTag(l) + '</div>' : '')) +
-        f('File Version', '<div class="stepper"><button class="sbtn" data-act="ver-" data-id="' + id + '">&minus;</button><span class="sval">v' + l.ver + '</span><button class="sbtn" data-act="ver+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="ver-edit" data-id="' + id + '">Edit</button></div>') +
-        f('Revisions', '<div class="stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="sval rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
-        (l.submitNotes ? f('Notes from the request', '<textarea disabled>' + esc(l.submitNotes) + '</textarea>', true) : '') +
-      '</div></div>' +
-      '<div class="box"><h3><span class="num">2</span>Internal notes</h3><textarea class="note-in" data-id="' + id + '" style="width:100%;min-height:50px;border:1px solid #d6dbe4;border-radius:6px;padding:6px 8px;font:inherit;font-size:13px" placeholder="Add an internal note&hellip;"></textarea>' +
-        '<div class="btns"><button class="btn small" data-x="note-add" data-id="' + id + '">Add note</button></div>' +
-        (notes.length ? '<div class="hist" style="margin-top:8px">' + notes.map(n => '<div>' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.text) + ' &middot; ' + esc(n.by) + '</div>').join('') + '</div>' : '') + '</div>' +
-    '</div>' +
-    '<div>' +
-      '<div class="box"><h3><span class="num">3</span>Files <button class="btn light small" style="margin-left:auto" data-x="file-zip" data-id="' + id + '">Download all (.zip)</button></h3>' + fileRows +
-        '<div class="btns"><button class="btn light small" data-x="file-add" data-id="' + id + '">+ Add files</button></div></div>' +
-      sewBox(l) + sheetBox(l) +
-      '<div class="box"><h3 class="hist-toggle" style="cursor:pointer;margin-bottom:0"><span class="num">6</span>History <span class="muted" style="font-size:11px;text-transform:none;letter-spacing:0;font-family:Aptos,sans-serif">(newest first)</span><span class="hchev" style="margin-left:auto;color:var(--grey)">&#9656;</span></h3>' +
-        '<div class="hist" style="display:none;margin-top:10px">' + (hist.length ? hist.map(histLine).join('') : '<div>No history yet.</div>') + '</div></div>' +
-    '</div>' +
-    '<div class="foot"><button class="btn light small" data-x="archive" data-id="' + id + '">Archive</button><button class="btn danger small" data-x="delete" data-id="' + id + '">Delete</button></div>' +
-  '</div>';
+  const ta = (k, ph) => '<textarea data-edit="' + k + '" data-id="' + id + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '>' + esc(l[k] || '') + '</textarea>';
+  const assignOpts = ['Noelle Thompson', 'QDigitizing', 'Barrett'].concat(l.rep && !['Noelle Thompson'].includes(l.rep) ? [l.rep] : []);
+  const details = ebox(1, 'Logo details', 'Request ' + esc(reqNo(l)), '<div class="emb-grid">' +
+    ef('Account', inp('account', l, ' list="acctList"')) + ef('Logo / Design Name', inp('logo', l)) +
+    ef('Request Type', '<div class="emb-val">' + esc(l.type) + ' <span class="emb-dim">&rarr; ' + (l.type === 'Digitize' ? 'QDigitizing' : 'Barrett') + '</span></div>') + ef('Department', sel('dept', l, DEPTS)) +
+    (l.dept === 'Special Projects' || l.project ? ef('Project name', inp('project', l)) : '') + (l.dept === 'Collegiate' || l.dept === 'Mainline' || l.school ? ef('School', inp('school', l)) : '') +
+    ef('Size', inp('size', l)) + ef('Size notes', ta('sizeNotes'), true) +
+    ef('Number of Thread Colors', sel('count', l, SF_COUNTS)) + ef('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
+    ef('Thread Color Notes', ta('threadNotes'), true) +
+    ef('Placement', inp('placement', l)) + ef('In Hand Date', '<input type="date" data-edit="inHand" data-id="' + id + '" value="' + esc(l.inHand) + '">' + (priTag(l) ? '<div class="emb-tierline">' + priTag(l) + '</div>' : '')) +
+    ef('File Version', '<div class="emb-stepper"><button class="sbtn" data-act="ver-" data-id="' + id + '">&minus;</button><span class="emb-step-val">v' + l.ver + '</span><button class="sbtn" data-act="ver+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="ver-edit" data-id="' + id + '">Edit</button></div>') +
+    ef('Revisions', '<div class="emb-stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="emb-step-val rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
+    ef('Rep Notes', ta('submitNotes'), true) +
+    ef('Status', stSelect(l)) + ef('Sales Rep', inp('rep', l, ' list="repAll"')) +
+    ef('Assigned To', '<select data-edit="assigned" data-id="' + id + '"><option value="">Unassigned</option>' + assignOpts.map(o => '<option' + (o === l.assigned ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + (l.assigned && !assignOpts.includes(l.assigned) ? '<option selected>' + esc(l.assigned) + '</option>' : '') + '</select>') +
+    ef('Logo Status', '<select data-edit="logoStatus" data-id="' + id + '"><option value="">Not Started</option>' + ['In Progress', 'Active', 'Inactive'].map(o => '<option' + (o === l.logoStatus ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>') +
+    '</div>');
+  const notesBox = ebox(2, 'Internal notes', '<span class="emb-private">private</span>',
+    (notes.length ? notes.map(n => '<div class="emb-note"><span class="emb-dim">' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.by) + '</span><div>' + esc(n.text) + '</div></div>').join('') : '<div class="emb-dim">No notes yet.</div>') +
+    '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px"><textarea class="emb-in note-in" data-id="' + id + '" placeholder="Add an internal note&hellip;"></textarea><button class="btn small" data-x="note-add" data-id="' + id + '">Add</button></div><div class="emb-dim" style="font-size:11px;margin-top:4px">Cmd/Ctrl+Enter to save</div>');
+  const files = ebox(3, 'Files', '<button class="btn light small" data-x="file-zip" data-id="' + id + '">&#11015; Download all (' + l.files.length + ')</button>',
+    l.files.map(x => '<div class="emb-file"><span class="emb-file-ext">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="emb-file-name" title="' + esc(x.name) + '">' + esc(x.name) + '</span>' +
+      '<button class="btn light small" data-x="file-open" data-id="' + id + '" data-name="' + esc(x.name) + '">View</button><button class="btn small" data-x="file-dl" data-id="' + id + '" data-name="' + esc(x.name) + '">Download</button>' +
+      '<button class="emb-btn-del" data-x="file-rm" data-id="' + id + '" data-name="' + esc(x.name) + '">Delete</button></div>').join('') +
+    '<div class="emb-drop" data-x="file-add" data-id="' + id + '">&#128206; Click to add files or drag &amp; drop<div class="emb-dim" style="font-size:11px;margin-top:2px">DST, PNG, JPG, PDF, AI, EPS, SVG &mdash; Max 10 MB</div></div>');
+  const dig = digOf(l);
+  const fee = ebox(6, 'Digitizing fee', '',
+    '<label class="emb-fee-chk"><input type="checkbox" data-x="fee-dig" data-id="' + id + '"' + (dig ? ' checked' : '') + '> This logo was digitized <span class="emb-dim">($75)</span></label>' +
+    '<label class="emb-fee-chk"><input type="checkbox" data-x="fee-rush" data-id="' + id + '"' + (l.rushFee ? ' checked' : '') + (dig ? '' : ' disabled') + '> Add the $5 rush fee</label>' +
+    (l.invoiceSent ? '<div class="emb-ok">&#10003; Invoice sent &middot; ' + fmt(l.invoiceSent) + '</div><button class="btn light small" data-x="fee-undo" data-id="' + id + '">Undo</button>'
+      : dig ? '<button class="btn light small" style="margin-top:6px" data-x="fee-sent" data-id="' + id + '">Mark invoice sent</button>' : ''));
+  const histBox = ebox(7, 'History', '', '<details class="emb-hist"><summary>Show history (' + hist.length + ' entr' + (hist.length === 1 ? 'y' : 'ies') + ')</summary>' +
+    (hist.length ? hist.map(h => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmt(h.ts) + ' ' + time12(h.ts) + '</span><span>' + esc(h.what) + '</span><span class="emb-hist-by">' + esc(h.by || '') + '</span></div>').join('') : '<div class="emb-dim">No history yet.</div>') + '</details>');
+  return '<div class="emb-card">' + top + '<div class="emb-card-cols"><div class="emb-col">' + details + notesBox + commBox(l) + '</div>' +
+    '<div class="emb-col">' + files + sewBox(l) + sheetBox(l) + fee + histBox +
+    '<div class="emb-card-foot"><button class="btn light small" data-x="archive" data-id="' + id + '">Archive</button><button class="emb-btn-del" data-x="delete" data-id="' + id + '">Delete</button></div></div></div></div>';
 }
 function card(l, ncols){ return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '">' + cardBody(l, todoStrip(l)) + '</td></tr>'; }
 
@@ -986,6 +1053,22 @@ document.addEventListener('click', async e => {
   if (act === 'file-open') openFile(l, x.dataset.name);
   if (act === 'file-rm') removeFile(l, x.dataset.name);
   if (act === 'file-zip') downloadAll(l);
+  if (act === 'file-dl'){ if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Reconnect Excel first (top right).'); return; }   // EP v2.05
+    try { const fl = await getFile(l, x.dataset.name), u = URL.createObjectURL(fl), a = document.createElement('a'); a.href = u; a.download = x.dataset.name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 60000); } catch(err){ toast('Couldn&rsquo;t find ' + esc(x.dataset.name) + ' in the Files folder.'); } }
+  if (act === 'msg-new'){ msgOpen[l.id] = !msgOpen[l.id]; render(); const t = document.querySelector('.msg-in[data-id="' + l.id + '"]'); if (t) t.focus(); return; }
+  if (act === 'msg-cancel'){ delete msgOpen[l.id]; render(); return; }
+  if (act === 'msg-send'){ const t = document.querySelector('.msg-in[data-id="' + l.id + '"]'), text = t ? t.value.trim() : ''; if (!text) return;
+    (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:ME, text, replies:[], resolved:false}); delete msgOpen[l.id]; log(l, 'Note', 'Communication: ' + text); touch(); render(); return; }
+  if (['msg-reply','msg-reply-x','msg-reply-send','msg-resolve','msg-reopen'].includes(act)){ const m = (l.comms || []).find(z => z.id === x.dataset.m); if (!m) return;
+    if (act === 'msg-reply'){ replyOpen[m.id] = true; render(); const t = document.querySelector('.msg-reply-in[data-m="' + m.id + '"]'); if (t) t.focus(); return; }
+    if (act === 'msg-reply-x'){ delete replyOpen[m.id]; render(); return; }
+    if (act === 'msg-reply-send'){ const t = document.querySelector('.msg-reply-in[data-m="' + m.id + '"]'), text = t ? t.value.trim() : ''; if (!text) return; (m.replies = m.replies || []).push({ts:nowStamp(), by:ME, text}); delete replyOpen[m.id]; log(l, 'Note', 'Communication reply: ' + text); touch(); render(); return; }
+    if (act === 'msg-resolve'){ m.resolved = true; m.resolvedAt = nowStamp(); log(l, 'Note', 'Communication resolved'); touch(); render(); return; }
+    if (act === 'msg-reopen'){ m.resolved = false; delete m.resolvedAt; log(l, 'Note', 'Communication reopened'); touch(); render(); return; } }
+  if (act === 'fee-dig'){ l.digitized = x.checked; if (!x.checked) l.rushFee = false; log(l, 'Edit', x.checked ? 'Marked as digitized' : 'Digitized unchecked'); touch(); render(); return; }
+  if (act === 'fee-rush'){ l.rushFee = x.checked; log(l, 'Edit', x.checked ? 'Rush fee added' : 'Rush fee removed'); touch(); render(); return; }
+  if (act === 'fee-sent'){ l.invoiceSent = todayIso(); log(l, 'Email', 'Digitizing fee invoice sent ($' + (75 + (l.rushFee ? 5 : 0)) + ')'); touch(); render(); return; }
+  if (act === 'fee-undo'){ l.invoiceSent = ''; log(l, 'Edit', 'Invoice sent undone'); touch(); render(); return; }
   if (act === 'note-add'){
     const t = document.querySelector('.note-in[data-id="' + l.id + '"]'), text = t ? t.value.trim() : ''; if (!text) return;
     DB.notes.push({ts:nowStamp(), id:l.id, text, by:ME}); log(l, 'Note', 'Internal note: ' + text); touch(); render();
@@ -996,7 +1079,17 @@ document.addEventListener('click', async e => {
     log(l, 'Deleted', 'Deleted ' + l.logo); DB.logos = DB.logos.filter(z => z !== l); touch(); render();
   }
 }, true);
-const LABELS = {school:'School', project:'Project name', dept:'Department', account:'Account', logo:'Logo / Design Name', size:'Size', sizeNotes:'Size notes', count:'Number of Thread Colors', colorType:'Color Type', threadNotes:'Thread Color Notes', placement:'Placement', inHand:'In Hand Date', sewSentDate:'Sent to Barrett date', sewSentTime:'Sent to Barrett time'};
+const LABELS = {submitNotes:'Rep Notes', rep:'Sales Rep', assigned:'Assigned To', logoStatus:'Logo Status', school:'School', project:'Project name', dept:'Department', account:'Account', logo:'Logo / Design Name', size:'Size', sizeNotes:'Size notes', count:'Number of Thread Colors', colorType:'Color Type', threadNotes:'Thread Color Notes', placement:'Placement', inHand:'In Hand Date', sewSentDate:'Sent to Barrett date', sewSentTime:'Sent to Barrett time'};
+document.addEventListener('keydown', e => { if (!(e.key === 'Enter' && (e.ctrlKey || e.metaKey))) return;   // EP v2.05
+  const t = e.target; let b = null;
+  if (t.classList.contains('note-in')) b = document.querySelector('[data-x="note-add"][data-id="' + t.dataset.id + '"]');
+  if (t.classList.contains('msg-in')) b = document.querySelector('[data-x="msg-send"][data-id="' + t.dataset.id + '"]');
+  if (t.classList.contains('msg-reply-in')) b = document.querySelector('[data-x="msg-reply-send"][data-m="' + t.dataset.m + '"]');
+  if (b){ e.preventDefault(); b.click(); } });
+document.addEventListener('dragover', e => { const d = e.target.closest && e.target.closest('.emb-drop'); if (d){ e.preventDefault(); d.classList.add('over'); } });
+document.addEventListener('dragleave', e => { const d = e.target.closest && e.target.closest('.emb-drop'); if (d) d.classList.remove('over'); });
+document.addEventListener('drop', async e => { const d = e.target.closest && e.target.closest('.emb-drop'); if (!d) return; e.preventDefault(); const l = byId(d.dataset.id); if (!l) return;
+  const fl = [...e.dataTransfer.files].filter(z => z.size <= 10 * 1024 * 1024); if (!fl.length) return; const names = await saveFiles(l, fl); if (names.length){ touch(); render(); toast('Saved ' + esc(names.join(', ')) + ' in the Files folder.'); } });
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]');
   if (el){ const l = byId(el.dataset.id), k = el.dataset.edit; if (!l) return; const old = l[k] || '', v = el.value.trim(); if (old === v) return;
@@ -1757,6 +1850,8 @@ function render(){
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
+  let rl = document.getElementById('repAll'); if (!rl){ rl = document.createElement('datalist'); rl.id = 'repAll'; document.body.appendChild(rl); }   // EP v2.05
+  rl.innerHTML = [...new Set(REPS.concat(DB.logos.concat(DB.hidden || []).map(l => l.rep).filter(Boolean)))].sort().map(a => '<option value="' + esc(a) + '">').join('');
   showBanner();
   if (msearch.trim()){ renderMasterSearch(); return; }
   const tab = TABS.find(t => t.key === state.tab);
