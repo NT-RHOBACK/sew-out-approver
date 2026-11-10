@@ -358,7 +358,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
     <div class="msearch"><input id="msearch" placeholder="Search all logos or request #&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.01</span>
+    <span class="vbadge">EP v2.02</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -369,10 +369,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
-// EP v2.01: Noelle's To Do (the full portal is saved at /embroidery-portal/full/). Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
+// EP v2.02: the "From the live portal" box is off (no more live-portal scans). EP v2.01: Noelle's To Do (the full portal is saved at /embroidery-portal/full/). Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.01';
+const VERSION = 'EP v2.02';
 const ME = 'Noelle';
 const TODO_ONLY = true, LIVE_NAME = 'live-logos.json', LIVE_URL = 'https://5263233.app.netsuite.com/app/site/hosting/scriptlet.nl?script=3566&deploy=1&compid=5263233#dashboard';   // EP v2.00
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
@@ -1342,7 +1342,9 @@ const liveName = l => reqNo(l) + ' ' + l.logo + (l.account ? ' (' + l.account + 
 const openTask = (l, sec) => tdTasks(todayIso()).some(t => t.state !== 'done' && t.sec === sec && tdLogo(t) === l);
 function liveSug(key, kind, l, act, text){ const L = liveState(); if (L.keys.includes(key)) return 0; L.keys.push(key); if (L.keys.length > 400) L.keys = L.keys.slice(-400);
   L.sug.push({id:tdId(), key, kind, logoId:l.id, act, text, ts:nowStamp()}); return 1; }
+const LIVE_OFF = true;   // EP v2.02: no live-portal suggestions; To Do stays separate from the live portal
 function liveChecks(){   // things that depend on where each logo is right now
+  if (LIVE_OFF) return 0;
   if (!tdReady()) return 0; const today = todayIso(); let n = 0;
   (DB.tasks || []).filter(t => t.day >= today && t.state !== 'done' && CHECK_FOR[t.sec]).forEach(t => { const l = tdLogo(t); if (!l || l.status === CHECK_FOR[t.sec]) return;
     n += liveSug('drop|' + t.id + '|' + l.status, 'drop', l, {taskId:t.id}, liveName(l) + ' is now ' + l.status + '. Remove "' + t.sec + '" from ' + (t.day === today ? 'today' : dayName(t.day)) + '?'); });
@@ -1355,6 +1357,7 @@ function liveChecks(){   // things that depend on where each logo is right now
   return n;
 }
 async function applyLive(){
+  if (LIVE_OFF) return;
   let o; try { o = JSON.parse(await (await (await dirHandle.getFileHandle(LIVE_NAME)).getFile()).text()); } catch(e){ return; }
   if (!o || !o.scannedAt) return;
   const L = liveState(), first = !L.scannedAt, ok = s => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s || ''); let n = 0;   // first run: just catch the logo info up
@@ -1385,7 +1388,7 @@ function liveDo(id, yes){   // Add (or Remove) one suggestion, or Dismiss it
   tlog(t, 'Added to To Do (' + s.act.sec + ', from the live portal)'); return 'Added to To Do &rarr; ' + esc(s.act.sec) + '.';
 }
 const LIVE_TAG = {upload:['Approved', '#1f5fbf'], new:['New request', '#5b3a8e'], step:['Moved', '#1f6fa8'], drop:['Remove?', '#a61b1b'], appr:['Approval', '#3b8fd0'], sew:['Sew-out', '#c25e00']};
-function liveBox(){ const L = liveState(); if (!L.sug.length) return '';
+function liveBox(){ if (LIVE_OFF) return ''; const L = liveState(); if (!L.sug.length) return '';
   return '<div class="live-box"><div class="live-h"><b>From the live portal</b><span class="cnt">' + L.sug.length + '</span><span class="td-when">Nothing changes in your lists until you click Add.' + (L.scannedAt ? ' Last checked ' + fmt(L.scannedAt) + ' ' + time12(L.scannedAt) + '.' : '') + '</span>' +
     '<span style="margin-left:auto;display:flex;gap:6px"><button class="btn small" data-td="liveAll">Accept all</button><button class="btn light small" data-td="liveNone">Dismiss all</button></span></div>' +
     L.sug.map(x => { const g = LIVE_TAG[x.kind] || ['Update', 'var(--navy)']; return '<div class="live-row"><span class="live-tag" style="color:' + g[1] + ';border-color:' + g[1] + '">' + g[0] + '</span><span class="live-t">' + esc(x.text) + '</span>' +
