@@ -450,7 +450,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.08</span>
+    <span class="vbadge">EP v2.09</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -469,7 +469,7 @@ h1{font-size:20px;margin-bottom:14px}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.08';
+const VERSION = 'EP v2.09';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1179,10 +1179,12 @@ function sfMissing(){
   if (!sf.type) m.push('Request Type'); if (sf.type === 'digitize' && !sf.h && !sf.w && !sf.sizeNotes.trim()) m.push('Size (a height, a width, or size notes)');
   if (!club && !sf.count) m.push('Number of Thread Colors'); if (!sf.color) m.push('Color Type');
   if (!sf.thread.trim() && sf.dept === 'Wholesale' && !(sf.count === '1 color' && sf.color === 'Color Coordinate')) m.push('Thread Color Notes');   // EP v2.08: only required for Wholesale
-  if (!sf.start) m.push('Does this logo have a start date?'); if (sf.start === 'yes' && !sf.date) m.push('Order Start Date');
+  if (sfDue()){ if (!sf.date) m.push('Due Date'); }   // EP v2.09: non-Wholesale = Due Date (the In Hand Date)
+  else { if (!sf.start) m.push('Does this logo have a start date?'); if (sf.start === 'yes' && !sf.date) m.push('Order Start Date'); }
   return m;
 }
 const sfW = () => sf.dept === 'Wholesale' || sf.dept === 'Custom', sfSch = () => sf.dept === 'Collegiate' || sf.dept === 'Mainline';   // EP v2.03
+const sfDue = () => !!sf.dept && sf.dept !== 'Wholesale';   // EP v2.09: every department but Wholesale gets a required Due Date instead of the start-date Yes/No
 function renderSubmit(tab){
   const pick = on => on ? ' sf-on' : '';
   const sec = (t, req, extra) => '<div class="sf-sec-row"><div class="sf-sec">' + t + (req ? ' <span class="req">*</span>' : '') + '</div>' + (extra || '') + '</div>';
@@ -1197,7 +1199,7 @@ function renderSubmit(tab){
       row('Request Type', sf.type === 'digitize' ? 'Digitize' : 'Sew-Out') + row('Size', sfSize()) + (sf.sizeNotes ? row('Size notes', sf.sizeNotes) : '') +
       (sf.type === 'digitize' ? row('Creating from scratch ($75)', sf.scratch ? 'Yes' : 'No') : '') +
       row('Number of Thread Colors', sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count) + row('Color Type', sf.color) + row('Thread Color Notes', sf.thread) +
-      row('Start date', sf.start === 'yes' ? fmt(sf.date) : 'No order yet') + row('Files', sf.files.map(x => x.name).join(', ')) + row('Notes', sf.notes) + '</table>' +
+      (sfDue() ? row('Due Date', fmt(sf.date)) : row('Start date', sf.start === 'yes' ? fmt(sf.date) : 'No order yet')) + row('Files', sf.files.map(x => x.name).join(', ')) + row('Notes', sf.notes) + '</table>' +
       '<div class="btns" style="justify-content:flex-end;margin-top:20px"><button class="btn light" data-sf="back">&larr; Back</button><button class="btn" data-sf="submit">Submit</button></div></div>';
     return;
   }
@@ -1240,11 +1242,13 @@ function renderSubmit(tab){
       Object.keys(SF_DESC).map(c => '<div class="sf-card' + pick(sf.color === c) + '" data-sf="color" data-v="' + c + '"><div class="sf-title">' + c + '</div><div class="sf-desc">' + SF_DESC[c] + '</div></div>').join('') + '</div>' +
     sec('Thread Color Notes', !notesOptional, tag) + '<div class="sf-rednote">&#9888; ' + esc(sf.color ? SF_TIPS[sf.color].tip : 'Select a color type above to see guidance...') + '</div>' +
       '<textarea class="sf-in" style="margin-top:8px;min-height:80px" data-sfv="thread" placeholder="' + esc(sf.color ? SF_TIPS[sf.color].ex : 'Select a color type above...') + '">' + v('thread') + '</textarea>' +
+    (sfDue() ? sec('Due Date', true) + '<div class="sf-lav"><div class="sf-mini">Due Date <span class="req">*</span></div><input type="date" class="sf-in" data-sf="date" value="' + v('date') + '" style="max-width:220px">' +
+      '<div class="sf-italic">This is used as the logo&rsquo;s In Hand Date.</div></div>' :
     sec('Does This Logo Have a Start Date?', true) + '<div class="sf-blue"><b>Workflow priority:</b> Sew-outs with orders on-hand are completed first, then new account sew-outs. If no order exists, do not include an in-hand date &mdash; we&rsquo;ll still complete it ASAP, but this lets logos with orders waiting go first.</div>' +
       '<div class="sf-grid" style="margin-top:8px"><div class="sf-green">ONLY if there is an order, ATS, or prebook in the system.</div><div class="sf-yellow">No order placed yet &mdash; customer will place an order ASAP once sew-out is received.</div>' +
       '<button class="sf-yn' + pick(sf.start === 'yes') + '" data-sf="start" data-v="yes">Yes</button><button class="sf-yn' + pick(sf.start === 'no') + '" data-sf="start" data-v="no">No</button></div>' +
       (sf.start === 'yes' ? '<div class="sf-lav"><div class="sf-mini">Order Start Date <span class="req">*</span></div><input type="date" class="sf-in" data-sf="date" value="' + v('date') + '" style="max-width:220px">' +
-        (bd !== null && bd <= 4 ? '<div class="sf-warn">&#9888; Heads up &mdash; this start date is within 4 business days. Please coordinate with the embroidery specialist to ensure on-time completion.</div>' : '') + '</div>' : '') +
+        (bd !== null && bd <= 4 ? '<div class="sf-warn">&#9888; Heads up &mdash; this start date is within 4 business days. Please coordinate with the embroidery specialist to ensure on-time completion.</div>' : '') + '</div>' : '')) +
     sec('Logo Files &amp; Attachments') + '<div class="sf-upload" data-sf="pick">Click to browse or drag files here &middot; Max 10 MB per file</div>' +
       (sf.files.length ? '<div class="sf-files">' + sf.files.map((x, i) => '<span class="sf-file">' + esc(x.name) + ' <button data-sf="unfile" data-v="' + i + '" title="Remove">&times;</button></span>').join('') + '</div>' : '') +
       '<input type="file" id="sfFiles" multiple hidden>' +
@@ -1263,7 +1267,7 @@ async function submitLogo(){
   const l = blankLogo(), W = sfW(), SCH = sfSch();
   Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:SCH ? '' : sf.account.trim(), school:SCH ? schoolFix(sf.school) : '', project:sf.dept === 'Special Projects' ? sf.project.trim() : '', rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
     size:sfSize(), sizeNotes:sf.type === 'digitize' ? sf.sizeNotes.trim() : '', scratch:sf.type === 'digitize' && sf.scratch, count:sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count,
-    colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
+    colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sfDue() || sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
   DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
   if (sf.files.length) await saveFiles(l, sf.files);
   const t = {id:tdId(), day:todayIso(), sec:'Review new requests', text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id}; (DB.tasks = DB.tasks || []).push(t);   // EP v2.03
