@@ -450,7 +450,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.10</span>
+    <span class="vbadge">EP v2.11</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -469,7 +469,7 @@ h1{font-size:20px;margin-bottom:14px}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.10';
+const VERSION = 'EP v2.11';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1186,7 +1186,7 @@ function sfMissing(){
   return m;
 }
 const sfW = () => sf.dept === 'Wholesale' || sf.dept === 'Custom', sfSch = () => sf.dept === 'Collegiate' || sf.dept === 'Mainline';   // EP v2.03
-const sfDue = () => !!sf.dept && sf.dept !== 'Wholesale';   // EP v2.09: every department but Wholesale gets a required Due Date instead of the start-date Yes/No
+const sfDue = () => false;   // EP v2.11: back to the start-date Yes/No for every department (Noelle 11/11). EP v2.09 had a required Due Date for non-Wholesale.
 function renderSubmit(tab){
   const pick = on => on ? ' sf-on' : '';
   const sec = (t, req, extra) => '<div class="sf-sec-row"><div class="sf-sec">' + t + (req ? ' <span class="req">*</span>' : '') + '</div>' + (extra || '') + '</div>';
