@@ -492,7 +492,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.18</span>
+    <span class="vbadge">EP v2.19</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -511,7 +511,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.18';
+const VERSION = 'EP v2.19';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1385,7 +1385,11 @@ const sfBlank = () => ({rep:'', account:'', logo:'', placement:'', dept:'Wholesa
 let sf = sfBlank();
 // EP v2.13 (updates doc Part 6): Order Start Date colored like In Hand Dates, with a note (never says rush or 30 days)
 const sfDateCls = iso => { const u = iso ? urg(off(iso)) : ''; return u ? ' dt-' + u : ''; };
+// EP v2.19 (Renee doc Part 13 item 7): start dates 26 days or sooner go ON HOLD until Will or Renee approves (or the date changes)
+const HOLD_DAYS = 26, HOLD_MSG = 'Start dates 26 days or sooner need approval from Will Lawler or Ren&eacute;e Sund&eacute;n. If you submit with this date, the request will be ON HOLD until it&rsquo;s approved or the in hand date is changed.';
+const sfHold = () => sf.start === 'yes' && !!sf.date && off(sf.date) !== null && off(sf.date) <= HOLD_DAYS;
 function sfDateNote(iso, bd){ if (!iso) return '';
+  if (off(iso) !== null && off(iso) <= HOLD_DAYS) return '<div class="sf-warn">' + HOLD_MSG + '</div>';
   if (bd !== null && bd <= 4) return '<div class="sf-warn">&#9888; Heads up &mdash; this start date is within 4 business days. Please coordinate with the embroidery specialist to ensure on-time completion.</div>';
   const u = urg(off(iso));
   if (u === 'red') return '<div class="sf-warn">Heads up: this start date doesn&rsquo;t leave much time to complete the order. Can you push the date out? If not, please reach out to Noelle to make sure it&rsquo;s done on time.</div>';
@@ -1484,7 +1488,7 @@ function renderSubmit(tab){
   dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag'); }; dz.ondragleave = () => dz.classList.remove('drag');
   dz.ondrop = e => { e.preventDefault(); sf.files = sf.files.concat([...e.dataTransfer.files].filter(x => x.size <= 10 * 1024 * 1024)); sf.errs = []; renderSubmit(tab); };
 }
-async function submitLogo(){
+async function submitLogo(hold){
   if (!dirHandle){ toast('Connect Excel first (top right), so the logo and its files save to your OneDrive folder.'); return; }
   const l = blankLogo(), W = sfW(), SCH = sfSch();
   Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:SCH ? '' : sf.account.trim(), school:SCH ? schoolFix(sf.school) : '', project:sf.dept === 'Special Projects' ? sf.project.trim() : '', rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
@@ -1492,6 +1496,11 @@ async function submitLogo(){
     colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sfDue() || sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
   DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
   if (sf.files.length) await saveFiles(l, sf.files);
+  if (hold){ setStatus(l, 'Waiting on Reply', AUTO); log(l, 'Status', 'On hold: start date 26 days or sooner (' + fmt(l.inHand) + ')', AUTO);   // EP v2.19
+    const who = l.rep && l.rep !== 'Noelle Thompson' ? l.rep : 'the sales rep';
+    (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:AUTO, text:'ON HOLD email to ' + who + ' (cc Ren\u00e9e Sund\u00e9n, Will Lawler, Noelle Thompson): This request is ON HOLD. The in hand date (' + fmt(l.inHand) + ') is 26 days or sooner, so it needs approval from Will Lawler or Ren\u00e9e Sund\u00e9n, or a later in hand date, before we continue.', replies:[], resolved:false});
+    log(l, 'Email', 'ON HOLD email to ' + who + ', cc Ren\u00e9e Sund\u00e9n, Will Lawler, Noelle Thompson', AUTO); notify(l, 'ON HOLD (start date 26 days or sooner) \u00b7 ' + reqNo(l) + ' ' + l.logo);
+    sf = sfBlank(); touch(); openLogo(l); toast('Submitted and put ON HOLD &rarr; Waiting on Reply. (No email is sent from this page.)', 6000); return; }
   if (!TODO_OFF){ const t = {id:tdId(), day:todayIso(), sec:'Review new requests', text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id}; (DB.tasks = DB.tasks || []).push(t);   // EP v2.03
   tlog(t, 'Added to To Do (Review new requests, new request)'); }
   sf = sfBlank(); touch(); openLogo(l); toast(TODO_OFF ? 'Added to the Queue &rarr; New Request.' : 'Added to the Queue &rarr; New Request, and to today&rsquo;s To Do (Review new requests).');
@@ -1509,7 +1518,13 @@ document.addEventListener('click', e => {
   if (k === 'clear'){ if (confirm('Clear the form?')){ sf = sfBlank(); renderSubmit(tab); } }
   if (k === 'review'){ sf.errs = sfMissing(); if (!sf.errs.length) sf.review = true; renderSubmit(tab); }
   if (k === 'back'){ sf.review = false; renderSubmit(tab); }
-  if (k === 'submit') submitLogo();
+  if (k === 'submit'){ if (sfHold()){ const m = document.createElement('div'); m.className = 'rp-modal'; m.id = 'holdAsk';   // EP v2.19: a chance to change the date first
+      m.innerHTML = '<div class="rp-modal-in" style="max-width:520px"><div class="rp-h" style="color:#a61b1b">&#9888; This request will be ON HOLD</div><p>This in hand date is 26 days or sooner, so this request will be <b>ON HOLD</b> and needs approval from Will Lawler or Ren&eacute;e Sund&eacute;n before we continue.</p><p>Change the date, or submit anyway?</p>' +
+        '<div class="btns" style="justify-content:flex-end"><button class="btn light" data-sf="hold-change">Change the date</button><button class="btn" data-sf="hold-submit">Submit anyway</button></div></div>';
+      document.getElementById('page').appendChild(m); return; }
+    submitLogo(); }
+  if (k === 'hold-change'){ sf.review = false; renderSubmit(tab); const d = document.querySelector('input[data-sf="date"]'); if (d){ d.scrollIntoView({block:'center'}); d.focus(); } }
+  if (k === 'hold-submit'){ const m = document.getElementById('holdAsk'); if (m) m.remove(); submitLogo(true); }
 });
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-sf]'); if (!el || state.tab !== 'submit') return;
