@@ -492,7 +492,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.20</span>
+    <span class="vbadge">EP v2.21</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -511,7 +511,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.20';
+const VERSION = 'EP v2.21';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1387,9 +1387,9 @@ let sf = sfBlank();
 const sfDateCls = iso => { const u = iso ? urg(off(iso)) : ''; return u ? ' dt-' + u : ''; };
 // EP v2.19 (Renee doc Part 13 item 7): start dates 26 days or sooner go ON HOLD until Will or Renee approves (or the date changes)
 const HOLD_DAYS = 26, HOLD_MSG = 'Start date is 26 days or sooner and requires approval from Will Lawler or Ren&eacute;e Sund&eacute;n. If you submit with this date, the request will be ON HOLD until it&rsquo;s approved or the in hand date is changed.';
-const sfHold = () => sf.start === 'yes' && !!sf.date && off(sf.date) !== null && off(sf.date) <= HOLD_DAYS;
+const sfHold = () => sf.dept === 'Wholesale' && sf.start === 'yes' && !!sf.date && off(sf.date) !== null && off(sf.date) <= HOLD_DAYS;   // EP v2.21: Wholesale only
 function sfDateNote(iso, bd){ if (!iso) return '';
-  if (off(iso) !== null && off(iso) <= HOLD_DAYS) return '<div class="sf-warn">' + HOLD_MSG + '</div>';
+  if (sf.dept === 'Wholesale' && off(iso) !== null && off(iso) <= HOLD_DAYS) return '<div class="sf-warn">' + HOLD_MSG + '</div>';   // EP v2.21: Wholesale only
   if (bd !== null && bd <= 4) return '<div class="sf-warn">&#9888; Heads up &mdash; this start date is within 4 business days. Please coordinate with the embroidery specialist to ensure on-time completion.</div>';
   const u = urg(off(iso));
   if (u === 'red') return '<div class="sf-warn">Heads up: this start date doesn&rsquo;t leave much time to complete the order. Can you push the date out? If not, please reach out to Noelle to make sure it&rsquo;s done on time.</div>';
