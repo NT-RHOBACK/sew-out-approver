@@ -492,7 +492,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.21</span>
+    <span class="vbadge">EP v2.22</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -511,7 +511,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.21';
+const VERSION = 'EP v2.22';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -539,7 +539,7 @@ const STATUS_COLORS = {
   'Sent for Approval': {title:'#3b8fd0', bg:'#e6f3fc', fg:'#1f6fa8'},
   'Waiting on Reply':  {title:'#a88600', bg:'#fff6b3', fg:'#6b5600'},
   'Send Invoice':      {title:'#b4236e', bg:'#fbe3ef', fg:'#8a1c55'},   // EP v2.12 (updates doc Part 2)
-  'Need to Upload':    {title:'#1f5fbf', bg:'#c6e4f7', fg:'#0b4f80'},
+  'Upload / Send':    {title:'#1f5fbf', bg:'#c6e4f7', fg:'#0b4f80'},
   'Completed':         {title:'#2e7d32', bg:'#e2f5dc', fg:'#2e7d32'},
   'Archive':           {title:'#6b7280', bg:'#d1d1d1', fg:'#333333'}
 };
@@ -550,8 +550,8 @@ const TABS = [
   {key:'dashboard', title:'Dashboard',     sub:'Every open logo with an In Hand Date 30 days away or less (or past), or past its due time (red Submitted date).', focus:true},
   {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
   {key:'barrett',   title:'Barrett Queue',  sub:'Logos at Barrett for sew-outs.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
-  {key:'approvals', title:'Approvals / Need to Upload', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Need to Upload (approved, waiting to be uploaded to EpicStitch).', sections:['Sent for Approval','Send Invoice','Need to Upload'],
-     extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Send Invoice':{h:'Approved', f:'approvedDate'}, 'Need to Upload':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
+  {key:'approvals', title:'Approvals / Upload / Send', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Upload / Send (approved: upload to EpicStitch + FTP, or send the files, depending on the department).', sections:['Sent for Approval','Send Invoice','Upload / Send'],
+     extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Send Invoice':{h:'Approved', f:'approvedDate'}, 'Upload / Send':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
   {key:'accounts',  title:'Accounts', sub:'', accounts:true},   // EP v2.04
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
@@ -608,7 +608,8 @@ const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'
 let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], tdNotes:[], savedAt:''};
 try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], tdNotes:[], savedAt:''}, s); } catch(e){}
 // EP v2.03: logos copied from the live portal (they have a NetSuite ID) are set aside: saved to Excel, not shown anywhere
-function splitLive(db){ const keep = [], away = db.hidden || []; (db.logos || []).forEach(l => (l.nsId ? away : keep).push(l)); db.logos = keep; db.hidden = away; return db; }
+const stNorm = s => s === 'Need to Upload' ? 'Upload / Send' : s;   // EP v2.22: old name
+function splitLive(db){ (db.logos || []).forEach(l => { l.status = stNorm(l.status); }); const keep = [], away = db.hidden || []; (db.logos || []).forEach(l => (l.nsId ? away : keep).push(l)); db.logos = keep; db.hidden = away; return db; }
 const hiddenIds = () => new Set((DB.hidden || []).map(l => l.id));
 splitLive(DB);
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
@@ -619,8 +620,10 @@ function log(l, kind, what, by){ DB.history.push({ts:nowStamp(), id:l.id, logo:l
 // EP v2.12 (updates doc Parts 4-5): claiming; Assigned To and Logo Status follow the status
 const CLAIMER = 'Noelle Thompson';   // only me in this portal
 const PEOPLE = ['Noelle Thompson', 'Jette Wade', 'Bryana Kramer'];
-const WORKFLOW = ['Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Need to Upload'];
-function assignFor(l, st){ return st === 'Digitizing' ? 'QDigitizing' : st === 'Pending Sew Out' ? 'Barrett' : (st === 'Sent for Approval' || st === 'Waiting on Reply') ? (l.rep || '') : DONE.includes(st) ? 'No one' : (l.claimedBy || ''); }
+const WORKFLOW = ['Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Upload / Send'];
+// EP v2.22: who gets the approval sheet and approves it
+const apprContactOf = l => l.apprContact || (l.dept === 'Special Projects' ? 'Elizabeth' : l.rep) || '';
+function assignFor(l, st){ return st === 'Digitizing' ? 'QDigitizing' : st === 'Pending Sew Out' ? 'Barrett' : (st === 'Sent for Approval' || st === 'Waiting on Reply') ? apprContactOf(l) : DONE.includes(st) ? 'No one' : (l.claimedBy || ''); }
 function logoStatusFor(l, st, from){ if (st === 'Completed') return 'Active'; if (st === 'Archive') return 'Inactive'; if (WORKFLOW.includes(st)) return 'In Progress';
   return from === 'Archive' || !l.logoStatus ? '' : 'In Progress'; }   // New Request: Not Started, or stays In Progress when it moves back
 function autoFollow(l, st, from){ const a = assignFor(l, st), s = logoStatusFor(l, st, from);
@@ -636,7 +639,7 @@ function setStatus(l, st, by){
   if (!TODO_OFF) tdFromPortal(l, st);   // EP v1.24: also lands in today's To Do / What I did
   if (st === 'Pending Sew Out'){ const n = nowStamp(); l.sewSentDate = n.slice(0, 10); l.sewSentTime = n.slice(11, 16); }   // EP v1.32: Pending Sew Out = submitted for sew out
   if (st === 'Sent for Approval' && !l.sentDate) l.sentDate = todayIso();
-  if (st === 'Need to Upload' && !l.approvedDate) l.approvedDate = todayIso();
+  if (st === 'Upload / Send' && !l.approvedDate) l.approvedDate = todayIso();
   if (st === 'Completed' && !l.completedDate) l.completedDate = todayIso();
 }
 function touch(){ DB.savedAt = new Date().toISOString(); dirty = true; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} scheduleSave(); }
@@ -675,7 +678,7 @@ const apprRems = l => { const s = apprSentAt(l); return s ? (l.apprRem || []).fi
 function apprNextDue(l){ const s = apprSentAt(l); if (!s) return null; const last = apprRems(l).pop(), base = last ? new Date(last) : s; return new Date(base.getTime() + (urg(off(l.inHand)) === 'red' ? 3 : 5) * 86400000); }
 function apprAutoRemind(){ let n = 0; const now = new Date(); if (!tdReady()) return 0;
   DB.logos.forEach(l => { if (l.status !== 'Sent for Approval') return; const due = apprNextDue(l); if (!due || now < due) return;
-    (l.apprRem = l.apprRem || []).push(nowStamp()); log(l, 'Email', 'Approval reminder sent to ' + (l.rep || 'the rep') + (urg(off(l.inHand)) === 'red' ? ' (in hand date is close)' : ''), AUTO); n++; });
+    (l.apprRem = l.apprRem || []).push(nowStamp()); log(l, 'Email', 'Approval reminder sent to ' + (apprContactOf(l) || 'the rep') + (urg(off(l.inHand)) === 'red' ? ' (in hand date is close)' : ''), AUTO); n++; });
   return n; }
 // EP v2.15: a message from the rep (reply or requested changes) shows New reply until I reply or resolve it
 const commNew = l => (l.comms || []).some(m => !m.resolved && (m.newForMe || (m.replies || []).some(r => r.newForMe)));
@@ -722,7 +725,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || []})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || [], apprContact:l.apprContact || '', poDate:l.poDate || '', lineSheet:l.lineSheet || '', mailSel:l.mailSel || null})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -771,7 +774,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; l.apprContact = x.apprContact || ''; l.poDate = x.poDate || ''; l.lineSheet = x.lineSheet || ''; l.mailSel = x.mailSel || null; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -1012,7 +1015,7 @@ function columns(tab, section){
   const extra = tab.extraBySection && tab.extraBySection[section] ? tab.extraBySection[section]
     : (tab.extraMixed && section && !tab.sections.includes(section)) ? tab.extraMixed : tab.extra;
   if (extra && extra.f === 'sentOrApproved'){
-    const pickD = l => l.status === 'Need to Upload' || l.status === 'Send Invoice' ? l.approvedDate : l.sentDate;
+    const pickD = l => l.status === 'Upload / Send' || l.status === 'Send Invoice' ? l.approvedDate : l.sentDate;
     cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
   } else if (extra && extra.f === 'photo'){
     cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>' + (fuAt(l) ? '<div class="td-when">Last follow-up: ' + fmt(fuAt(l)) + '</div>' : '')});   // EP v2.14
@@ -1088,16 +1091,35 @@ function barConv(l){ const id = esc(l.id), key = l.id + '|bar', shut = !!boxShut
 function sheetBox(l){   // EP v2.05: live layout
   const id = esc(l.id);
   return ebox(5, 'Approval Sheet', '', '<button class="btn small" data-x="appr-open" data-id="' + id + '">&#8599; Open Sew-Out Approver</button>' +
-    '<div class="emb-dim" style="margin:8px 0">Open the Sew-Out Approver to make the approval sheet, then upload the PDF here to email it to ' + esc(l.rep || 'the rep') + '.</div>' +
+    '<div class="emb-dim" style="margin:8px 0">Open the Sew-Out Approver to make the approval sheet, then upload the PDF here to email it to ' + esc(apprContactOf(l) || 'the rep') + '.</div>' +
     '<div style="display:flex;align-items:center;gap:8px"><button class="btn light small" data-x="appr-upload" data-id="' + id + '">Choose File</button><span class="emb-dim" style="flex:1">' + (l.sheetFile ? esc(l.sheetFile) : 'No file chosen') + '</span>' +
     '<button class="btn small" data-x="appr-sent" data-id="' + id + '" title="Marks it sent. Email it to the rep from Outlook.">Mark sent</button></div>' +
-    (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(l.rep || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : '') +
+    (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(apprContactOf(l) || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : '') +
     (l.approvedBy ? '<div class="emb-ok">&#10003; Approved by ' + esc(l.approvedBy) + ' on ' + fmt(l.approvedAt) + ' ' + time12(l.approvedAt) + '</div><button class="btn light small" data-x="appr-undo" data-id="' + id + '">Undo approval</button>'   // EP v2.12
-     : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="repAll" value="' + esc(l.rep) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' : '') + apprExtra(l));
+     : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="peopleList" value="' + esc(apprContactOf(l)) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' : '') + apprExtra(l) + mailPicker(l, 'appr') + uploadSend(l));
 }
+// EP v2.22: Upload / Send is the same step for every department; the card says what it means for this one
+const FINAL_STEP = {'Wholesale':['Upload to EpicStitch + FTP (RepSpark).', 'Mark uploaded', 'Uploaded to EpicStitch + FTP'],
+  'Special Projects':['Send the DSTs, color cards, and spec sheets to Olivia (for Good Trust). No EpicStitch unless someone asks.', 'Mark sent to Olivia', 'Sent to Olivia (DSTs, color cards, spec sheets)']};
+const finalOf = l => FINAL_STEP[l.dept] || ['Upload or send the files. (This department&rsquo;s last step gets filled in when we do its workflow.)', 'Mark done', 'Upload / Send done'];
+// EP v2.22: To / Cc picker. Outlook matches the names to Rhoback's address book (no email addresses are kept in this page).
+const MAIL_PEOPLE = ['Noelle Thompson', 'Will Lawler', 'Ren\u00e9e Sund\u00e9n', 'Jette Wade', 'Bryana Kramer', 'Elizabeth', 'Olivia', 'Alec'];
+let mailOpen = {};
+function mailSel(l, kind){ const s = (l.mailSel && l.mailSel[kind]) || {}; return {to:s.to != null ? s.to : apprContactOf(l), cc:s.cc || ['Noelle Thompson'], other:s.other || ''}; }
+function mailPicker(l, kind){ const id = esc(l.id), k = l.id + '|' + kind, s = mailSel(l, kind);
+  if (kind === 'appr' && !['Review Sew Out','Sent for Approval','Waiting on Reply'].includes(l.status)) return '';
+  if (!mailOpen[k]) return '<div class="btns" style="margin-top:8px"><button class="btn light small" data-x="mail-tog" data-id="' + id + '" data-k="' + esc(kind) + '">&#9993; ' + (kind === 'appr' ? 'Email the approval sheet' : 'Email this message') + ' (To / Cc)</button></div>';
+  return '<div class="f fu-box" style="margin-top:8px"><label>' + (kind === 'appr' ? 'Approval sheet email' : 'Question email') + '</label>' +
+    '<div class="snz"><span class="emb-dim" style="width:24px">To</span><input class="emb-in ml-to" data-id="' + id + '" data-k="' + esc(kind) + '" list="peopleList" value="' + esc(s.to) + '" style="flex:1"></div>' +
+    '<div class="snz"><span class="emb-dim" style="width:24px">Cc</span>' + MAIL_PEOPLE.map(n => '<label class="chk" style="margin-right:8px"><input type="checkbox" class="ml-cc" data-id="' + id + '" data-k="' + esc(kind) + '" value="' + esc(n) + '"' + (s.cc.includes(n) ? ' checked' : '') + '> ' + esc(n) + '</label>').join('') + '</div>' +
+    '<div class="snz"><span class="emb-dim" style="width:24px"></span><input class="emb-in ml-other" data-id="' + id + '" data-k="' + esc(kind) + '" value="' + esc(s.other) + '" placeholder="Anyone else (names or emails, separate with ;)" style="flex:1"></div>' +
+    '<div class="btns"><button class="btn light small" data-x="mail-tog" data-id="' + id + '" data-k="' + esc(kind) + '">Close</button><button class="btn small" data-x="mail-open" data-id="' + id + '" data-k="' + esc(kind) + '">Open in Outlook</button></div>' +
+    '<div class="note">Subject: ' + esc(chainSubject(l)) + '. Outlook opens with To, Cc, and Subject filled in' + (kind === 'appr' ? '; attach the approval sheet PDF and send.' : '; paste the copied question email and send.') + '</div></div>'; }
+function uploadSend(l){ if (l.status !== 'Upload / Send') return ''; const f = finalOf(l);
+  return '<div class="f fu-box" style="margin-top:12px"><label>Upload / Send &middot; ' + esc(l.dept || 'No department') + '</label><div>' + f[0] + '</div><div class="btns"><button class="btn small" data-x="final-done" data-id="' + esc(l.id) + '">' + f[1] + '</button></div><div class="note">Moves it to Completed and logs it in History.</div></div>'; }
 function apprExtra(l){ const id = esc(l.id), rs = apprRems(l), due = l.status === 'Sent for Approval' ? apprNextDue(l) : null;   // EP v2.15
-  return (rs.length || due ? '<div class="appr-rem">' + rs.map(r => '<div>Approval reminder sent &middot; ' + fmt(r) + ' ' + time12(r) + '</div>').join('') + (due ? '<div class="emb-dim">Next reminder to ' + esc(l.rep || 'the rep') + ': ' + fmt(isoOf(due)) + ' (every ' + (urg(off(l.inHand)) === 'red' ? '3' : '5') + ' days)</div>' : '') + '</div>' : '') +
-    (['Sent for Approval','Waiting on Reply'].includes(l.status) ? '<div class="bar-test"><div class="emb-dim"><b>Test only:</b> what ' + esc(l.rep || 'the rep') + ' would do (email button, email reply, or their portal).</div><textarea class="emb-in rep-test-in" data-id="' + id + '" placeholder="What they want changed&hellip;" style="margin-top:4px"></textarea>' +
+  return (rs.length || due ? '<div class="appr-rem">' + rs.map(r => '<div>Approval reminder sent &middot; ' + fmt(r) + ' ' + time12(r) + '</div>').join('') + (due ? '<div class="emb-dim">Next reminder to ' + esc(apprContactOf(l) || 'the rep') + ': ' + fmt(isoOf(due)) + ' (every ' + (urg(off(l.inHand)) === 'red' ? '3' : '5') + ' days)</div>' : '') + '</div>' : '') +
+    (['Sent for Approval','Waiting on Reply'].includes(l.status) ? '<div class="bar-test"><div class="emb-dim"><b>Test only:</b> what ' + esc(apprContactOf(l) || 'the rep') + ' would do (email button, email reply, or their portal).</div><textarea class="emb-in rep-test-in" data-id="' + id + '" placeholder="What they want changed&hellip;" style="margin-top:4px"></textarea>' +
       '<div class="btns"><button class="btn light small" data-x="rt-approve" data-id="' + id + '">Rep approves</button><button class="btn light small" data-x="rt-changes" data-id="' + id + '">Rep requests changes</button></div></div>' : ''); }
 // EP v2.05: the logo card, laid out like the live portal's
 const ebox = (num, title, right, body) => '<div class="emb-box"><div class="emb-box-hd">' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
@@ -1137,7 +1159,7 @@ function commBox(l){
   return eboxT(l.id + '|comm', '', 'Communication', (commNew(l) ? '<span class="new-reply">New reply</span> ' : '') + '<button class="btn light small" data-x="msg-new" data-id="' + id + '">+ New message</button>',
     composer + (open.length ? open.map(msg).join('') : (msgOpen[l.id] ? '' : '<div class="emb-dim">No messages yet. Use &ldquo;+ New message&rdquo; to start a conversation.</div>')) +
     (done.length ? '<details class="emb-hist" style="margin-top:8px"><summary>Show ' + done.length + ' resolved</summary>' + done.map(msg).join('') + '</details>' : '') +
-    '<div class="emb-dim" style="margin-top:8px;font-size:11px">Saved on this page only. No emails are sent.</div>');
+    '<div class="emb-dim" style="margin-top:8px;font-size:11px">Saved on this page only. No emails are sent.</div>' + mailPicker(l, 'comm'));   // EP v2.22
 }
 function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (queues) or the task box (To Do)
   const id = esc(l.id); dstMeasure(l);   // EP v2.15
@@ -1148,7 +1170,8 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
   const details = ebox(1, 'Logo details', 'Request ' + esc(reqNo(l)), '<div class="emb-grid">' +
     ef('Account', inp('account', l, ' list="acctList"')) + ef('Logo / Design Name', inp('logo', l)) +
     ef('Request Type', '<div class="emb-val">' + esc(l.type) + ' <span class="emb-dim">&rarr; ' + (l.type === 'Digitize' ? 'QDigitizing' : 'Barrett') + '</span></div>') + ef('Department', sel('dept', l, DEPTS)) +
-    (l.dept === 'Special Projects' || l.project ? ef('Project name', inp('project', l)) : '') + (l.dept === 'Collegiate' || l.dept === 'Mainline' || l.school ? ef('School', inp('school', l, ' list="schoolList"')) : '') +
+    (l.dept === 'Special Projects' || l.project ? ef('Project name', inp('project', l)) : '') +
+    (l.dept === 'Special Projects' || l.poDate ? ef('PO date', '<input type="date" data-edit="poDate" data-id="' + id + '" value="' + esc(l.poDate || '') + '">' + (l.poDate ? '<div class="emb-dim" style="font-size:11px">Embroidery due date (PO date minus 6 weeks): ' + fmt(poDue(l.poDate)) + '</div>' : '')) : '') + (l.dept === 'Collegiate' || l.dept === 'Mainline' || l.school ? ef('School', inp('school', l, ' list="schoolList"')) : '') +
     ef('Size', inp('size', l)) + ef('Size notes', ta('sizeNotes'), true) +
     ef('Number of Thread Colors', sel('count', l, SF_COUNTS)) + ef('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
     ef('Thread Color Notes', ta('threadNotes'), true) +
@@ -1158,6 +1181,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     ef('Revisions', '<div class="emb-stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="emb-step-val rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
     ef('Rep Notes', ta('submitNotes'), true) +
     ef('Status', stSelect(l)) + ef('Sales Rep', inp('rep', l, ' list="repAll"')) +
+    ef('Approval contact', '<input data-edit="apprContact" data-id="' + id + '" list="peopleList" value="' + esc(apprContactOf(l)) + '">' + (l.apprContact ? '' : '<div class="emb-dim" style="font-size:11px">' + (l.dept === 'Special Projects' ? 'Elizabeth for Special Projects' : 'The sales rep') + ' unless you change it</div>')) +   // EP v2.22
     ef('Assigned To', '<select data-edit="assigned" data-id="' + id + '"><option value="">Unassigned</option>' + assignOpts.map(o => '<option' + (o === l.assigned ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + (l.assigned && !assignOpts.includes(l.assigned) ? '<option selected>' + esc(l.assigned) + '</option>' : '') + '</select>') +
     ef('Logo Status', '<select data-edit="logoStatus" data-id="' + id + '"><option value="">Not Started</option>' + ['In Progress', 'Active', 'Inactive'].map(o => '<option' + (o === l.logoStatus ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>') +
     '</div>');
@@ -1165,7 +1189,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     (notes.length ? notes.map(n => '<div class="emb-note"><span class="emb-dim">' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.by) + '</span><div>' + esc(n.text) + '</div></div>').join('') : '<div class="emb-dim">No notes yet.</div>') +
     '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px"><textarea class="emb-in note-in" data-id="' + id + '" placeholder="Add an internal note&hellip;"></textarea><button class="btn small" data-x="note-add" data-id="' + id + '">Add</button></div><div class="emb-dim" style="font-size:11px;margin-top:4px">Cmd/Ctrl+Enter to save</div>');
   const files = ebox(3, 'Files', '<button class="btn light small" data-x="file-zip" data-id="' + id + '">&#11015; Download all (' + l.files.length + ')</button>',
-    l.files.map(x => renameOpen[l.id + '|' + x.name] ? '<div class="emb-file"><div class="f-ren"><input class="emb-in ren-in" data-id="' + id + '" data-name="' + esc(x.name) + '" value="' + esc(x.name.replace(/\.[^.]*$/, '')) + '"><span class="emb-dim">' + esc((x.name.match(/\.[^.]*$/) || [''])[0]) + '</span></div><button class="btn light small" data-x="ren-x" data-id="' + id + '" data-name="' + esc(x.name) + '">Cancel</button><button class="btn small" data-x="ren-save" data-id="' + id + '" data-name="' + esc(x.name) + '">Save name</button></div>' : '<div class="emb-file"><span class="emb-file-ext">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="emb-file-name" title="' + esc(x.name) + '">' + esc(x.name) + (x.dstH ? '<span class="dst-size">' + x.dstH + ' x ' + x.dstW + ' in</span>' : '') + '</span>' +
+    l.files.map(x => renameOpen[l.id + '|' + x.name] ? '<div class="emb-file"><div class="f-ren"><input class="emb-in ren-in" data-id="' + id + '" data-name="' + esc(x.name) + '" value="' + esc(x.name.replace(/\.[^.]*$/, '')) + '"><span class="emb-dim">' + esc((x.name.match(/\.[^.]*$/) || [''])[0]) + '</span></div><button class="btn light small" data-x="ren-x" data-id="' + id + '" data-name="' + esc(x.name) + '">Cancel</button><button class="btn small" data-x="ren-save" data-id="' + id + '" data-name="' + esc(x.name) + '">Save name</button></div>' : '<div class="emb-file"><span class="emb-file-ext">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="emb-file-name" title="' + esc(x.name) + '">' + esc(x.name) + (l.lineSheet === x.name ? '<span class="dst-size" style="color:#5b3a8e;font-weight:700">Line sheet</span>' : '') + (x.dstH ? '<span class="dst-size">' + x.dstH + ' x ' + x.dstW + ' in</span>' : '') + '</span>' +
       '<button class="btn light small" data-x="ren-open" data-id="' + id + '" data-name="' + esc(x.name) + '">Rename</button><button class="btn light small" data-x="file-open" data-id="' + id + '" data-name="' + esc(x.name) + '">View</button><button class="btn small" data-x="file-dl" data-id="' + id + '" data-name="' + esc(x.name) + '">Download</button>' +
       '<button class="emb-btn-del" data-x="file-rm" data-id="' + id + '" data-name="' + esc(x.name) + '">Delete</button></div>').join('') +
     '<div class="emb-drop" data-x="file-add" data-id="' + id + '">&#128206; Click to add files or drag &amp; drop<div class="emb-dim" style="font-size:11px;margin-top:2px">DST, PNG, JPG, PDF, AI, EPS, SVG &mdash; Max 10 MB</div></div>');
@@ -1238,10 +1262,10 @@ document.addEventListener('click', async e => {
   if (act === 'ren-open'){ renameOpen = {}; renameOpen[l.id + '|' + x.dataset.name] = true; render(); const ip = document.querySelector('.ren-in[data-id="' + l.id + '"]'); if (ip){ ip.focus(); ip.select(); } return; }
   if (act === 'ren-x'){ renameOpen = {}; render(); return; }
   if (act === 'ren-save'){ const ip = document.querySelector('.ren-in[data-id="' + l.id + '"]'); try { if (await renameFile(l, x.dataset.name, ip ? ip.value.trim() : '')){ renameOpen = {}; touch(); render(); toast('Renamed.'); } else { renameOpen = {}; render(); } } catch(err){ toast('Couldn&rsquo;t rename it. Is the file open somewhere?'); } return; }
-  if (act === 'rt-approve'){ const who = l.rep || 'the rep', n = nowStamp(); l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (test: rep)', who);
-    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Need to Upload'; setStatus(l, next, who);
+  if (act === 'rt-approve'){ const who = apprContactOf(l) || 'the rep', n = nowStamp(); l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (test: rep)', who);
+    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Upload / Send'; setStatus(l, next, who);
     notify(l, reqNo(l) + ' ' + l.logo + ' was approved by ' + who + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); touch(); openLogo(l); toast('Approved by ' + esc(who) + '. Moved to ' + next + '.'); return; }
-  if (act === 'rt-changes'){ const ta = document.querySelector('.rep-test-in[data-id="' + l.id + '"]'), text = ta ? ta.value.trim() : ''; if (!text){ toast('Type what they want changed first.'); return; } const who = l.rep || 'Sales rep';
+  if (act === 'rt-changes'){ const ta = document.querySelector('.rep-test-in[data-id="' + l.id + '"]'), text = ta ? ta.value.trim() : ''; if (!text){ toast('Type what they want changed first.'); return; } const who = apprContactOf(l) || 'Sales rep';
     (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:who, text:'Requested changes: ' + text, replies:[], resolved:false, newForMe:true});
     const r0 = l.rev || 0; l.rev = r0 + 1; log(l, 'Edit', 'Revisions: ' + r0 + ' > ' + l.rev, who); log(l, 'Status', 'Changes requested by ' + who + ' (test: rep): ' + text, who);
     setStatus(l, 'New Request', who); notify(l, reqNo(l) + ' ' + l.logo + ': ' + who + ' requested changes'); touch(); openLogo(l); toast(esc(who) + ' requested changes. Back in New Request.'); return; }
@@ -1261,6 +1285,15 @@ document.addEventListener('click', async e => {
     if (act === 'bt-threads'){ l.waitThreads = true; barPush(l, {by:'Barrett', kind:'threads', text:'Waiting on thread colors' + (text ? ': ' + text : '')}); log(l, 'Email', 'Barrett: waiting on thread colors' + (text ? ' (' + text + ')' : ''), 'Barrett'); notify(l, 'Barrett is waiting on thread colors \u00b7 ' + reqNo(l) + ' ' + l.logo); }
     if (act === 'bt-photo'){ l.barPhoto = nowStamp(); l.waitThreads = false; barPush(l, {by:AUTO, kind:'photo', text:'Barrett uploaded the sew-out photo' + (text ? ': ' + text : '')}); setStatus(l, 'Review Sew Out', 'Barrett'); notify(l, 'Sew-out photo uploaded \u00b7 ' + reqNo(l) + ' ' + l.logo); }
     touch(); render(); return; }
+  // EP v2.22: Upload / Send, To / Cc picker
+  if (act === 'final-done'){ const f = finalOf(l); log(l, 'Status', f[2]); setStatus(l, 'Completed', ME); touch(); openLogo(l); toast(f[2] + '. Moved to Completed.'); return; }
+  if (act === 'mail-tog'){ const k = l.id + '|' + x.dataset.k; mailOpen[k] = !mailOpen[k]; render(); return; }
+  if (act === 'mail-open'){ const kind = x.dataset.k, q = s => document.querySelector(s + '[data-id="' + l.id + '"][data-k="' + kind + '"]');
+    const to = (q('.ml-to') || {}).value || '', other = (q('.ml-other') || {}).value || '', cc = [...document.querySelectorAll('.ml-cc[data-id="' + l.id + '"][data-k="' + kind + '"]:checked')].map(c => c.value);
+    l.mailSel = l.mailSel || {}; l.mailSel[kind] = {to, cc, other}; touch();
+    const ccAll = cc.concat(other.split(/[;,]/).map(s => s.trim()).filter(Boolean));
+    log(l, 'Email', (kind === 'appr' ? 'Approval sheet email' : 'Question email') + ' opened in Outlook: to ' + (to || '(blank)') + (ccAll.length ? ', cc ' + ccAll.join(', ') : ''));
+    location.href = 'mailto:' + encodeURIComponent(to) + '?cc=' + encodeURIComponent(ccAll.join(';')) + '&subject=' + encodeURIComponent(chainSubject(l)); return; }
   if (act === 'box-tog'){ if (e.target.closest('button, input, select, textarea, a')) return; boxShut[x.dataset.k] = !boxShut[x.dataset.k]; render(); return; }   // EP v2.13
   if (act === 'rush-tog'){ l.rush = x.checked; log(l, 'Edit', x.checked ? 'Marked as rush' : 'Rush removed'); touch(); render(); return; }   // EP v2.13 (Part 13)
   if (act === 'msg-email'){ const m = (l.comms || []).find(z => z.id === x.dataset.m); if (!m) return; const q = questionEmail(l, m);   // EP v2.13 (Parts 3 + 14)
@@ -1271,7 +1304,7 @@ document.addEventListener('click', async e => {
     autoFollow(l, l.status, l.status); touch(); render(); toast(act === 'claim' ? 'Claimed.' : 'Released. It&rsquo;s unclaimed now.'); return; }
   if (act === 'appr-mark'){ const inp = document.getElementById('apprBy-' + l.id), who = (inp && inp.value.trim()) || l.rep || 'the rep', n = nowStamp();   // EP v2.12 (Departments doc Part 6)
     l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (marked by ' + ME + ')');
-    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Need to Upload'; setStatus(l, next, ME); touch(); openLogo(l);
+    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Upload / Send'; setStatus(l, next, ME); touch(); openLogo(l);
     toast(esc(reqNo(l) + ' ' + l.logo) + ' was approved by ' + esc(who) + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); return; }
   if (act === 'appr-undo'){ if (!confirm('Undo the approval by ' + l.approvedBy + '?\n\nIt goes back to Sent for Approval.')) return;
     log(l, 'Status', 'Approval undone (was approved by ' + l.approvedBy + ')'); l.approvedBy = ''; l.approvedAt = ''; l.approvedDate = ''; setStatus(l, 'Sent for Approval', ME); touch(); openLogo(l); toast('Approval undone. It&rsquo;s back in Sent for Approval.'); return; }
@@ -1279,7 +1312,7 @@ document.addEventListener('click', async e => {
   if (act === 'appr-upload'){ const fi = document.getElementById('fileIn'); fi.accept = 'application/pdf,.pdf'; fileTarget = {l, sheet:true}; fi.click(); }
   if (act === 'appr-sent'){
     if (!l.sheetFile){ toast('Upload the approval sheet PDF first.'); return; }
-    l.sentDate = todayIso(); log(l, 'Email', 'Approval sheet sent to ' + (l.rep || 'the rep') + ' (' + l.sheetFile + ')');
+    l.sentDate = todayIso(); log(l, 'Email', 'Approval sheet sent to ' + (apprContactOf(l) || 'the rep') + ' (' + l.sheetFile + ')');
     setStatus(l, 'Sent for Approval', AUTO); touch(); openLogo(l); toast('Moved to Approvals &rarr; Sent for Approval.');
   }
   if (act === 'file-add'){ const fi = document.getElementById('fileIn'); fi.accept = ''; fileTarget = {l, sheet:false}; fi.click(); }
@@ -1301,7 +1334,7 @@ document.addEventListener('click', async e => {
   if (act === 'fee-dig'){ l.digitized = x.checked; if (!x.checked) l.rushFee = false; log(l, 'Edit', x.checked ? 'Marked as digitized' : 'Digitized unchecked'); touch(); render(); return; }
   if (act === 'fee-rush'){ l.rushFee = x.checked; log(l, 'Edit', x.checked ? 'Rush fee added' : 'Rush fee removed'); touch(); render(); return; }
   if (act === 'fee-sent'){ l.invoiceSent = todayIso(); log(l, 'Email', 'Digitizing fee email sent' + (opsFor(l) ? ' to ' + opsFor(l) : '') + ' ($' + (75 + (l.rushFee ? 5 : 0)) + ')');
-    if (l.status === 'Send Invoice'){ setStatus(l, 'Need to Upload', AUTO); touch(); openLogo(l); toast('Fee email marked sent. Moved to Need to Upload.'); return; }   // EP v2.12
+    if (l.status === 'Send Invoice'){ setStatus(l, 'Upload / Send', AUTO); touch(); openLogo(l); toast('Fee email marked sent. Moved to Upload / Send.'); return; }   // EP v2.12
     touch(); render(); return; }
   if (act === 'fee-undo'){ l.invoiceSent = ''; log(l, 'Edit', 'Invoice sent undone'); touch(); render(); return; }
   if (act === 'note-add'){
@@ -1314,7 +1347,7 @@ document.addEventListener('click', async e => {
     log(l, 'Deleted', 'Deleted ' + l.logo); DB.logos = DB.logos.filter(z => z !== l); touch(); render();
   }
 }, true);
-const LABELS = {submitNotes:'Rep Notes', rep:'Sales Rep', assigned:'Assigned To', logoStatus:'Logo Status', school:'School', project:'Project name', dept:'Department', account:'Account', logo:'Logo / Design Name', size:'Size', sizeNotes:'Size notes', count:'Number of Thread Colors', colorType:'Color Type', threadNotes:'Thread Color Notes', placement:'Placement', inHand:'In Hand Date', sewSentDate:'Sent to Barrett date', sewSentTime:'Sent to Barrett time'};
+const LABELS = {poDate:'PO date', apprContact:'Approval contact', submitNotes:'Rep Notes', rep:'Sales Rep', assigned:'Assigned To', logoStatus:'Logo Status', school:'School', project:'Project name', dept:'Department', account:'Account', logo:'Logo / Design Name', size:'Size', sizeNotes:'Size notes', count:'Number of Thread Colors', colorType:'Color Type', threadNotes:'Thread Color Notes', placement:'Placement', inHand:'In Hand Date', sewSentDate:'Sent to Barrett date', sewSentTime:'Sent to Barrett time'};
 document.addEventListener('keydown', e => { if (!(e.key === 'Enter' && (e.ctrlKey || e.metaKey))) return;   // EP v2.05
   const t = e.target; let b = null;
   if (t.classList.contains('note-in')) b = document.querySelector('[data-x="note-add"][data-id="' + t.dataset.id + '"]');
@@ -1328,9 +1361,11 @@ document.addEventListener('drop', async e => { const d = e.target.closest && e.t
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]');
   if (el){ const l = byId(el.dataset.id), k = el.dataset.edit; if (!l) return; const old = l[k] || '', v = el.value.trim(); if (old === v) return;
-    const show = x => !x ? '(blank)' : (k === 'inHand' || k === 'sewSentDate') ? fmt(x) : k === 'sewSentTime' ? time12('T' + x) : x;
+    const show = x => !x ? '(blank)' : (k === 'inHand' || k === 'sewSentDate' || k === 'poDate') ? fmt(x) : k === 'sewSentTime' ? time12('T' + x) : x;
     const nv = k === 'school' ? schoolFix(v) : v; if (old === nv) return;   // EP v2.06
-    l[k] = nv; log(l, 'Edit', LABELS[k] + ': ' + show(old) + ' > ' + show(nv)); touch(); render(); return; }
+    l[k] = nv; log(l, 'Edit', LABELS[k] + ': ' + show(old) + ' > ' + show(nv));
+    if (k === 'poDate' && nv){ const due = poDue(nv); if (due !== l.inHand){ log(l, 'Edit', 'In Hand Date: ' + (l.inHand ? fmt(l.inHand) : '(blank)') + ' > ' + fmt(due) + ' (PO date minus 6 weeks)', AUTO); l.inHand = due; } }   // EP v2.22
+    touch(); render(); return; }
   const s = e.target.closest('select.st'); if (!s) return;
   const l = byId(s.dataset.id); if (!l) return; setStatus(l, s.value); touch(); render();
 });
@@ -1381,7 +1416,7 @@ const SF_DESC = {'Club Colors':'Specific club colors — matched to Madeira Poly
 const SF_COUNTS = ['1 color','2 colors','3 colors','4 colors','5 colors','6+ colors','Varies','N/A - Club Colors'];
 const SF_WORD = {'1 color':'One','2 colors':'Two','3 colors':'Three','4 colors':'Four','5 colors':'Five','6+ colors':'Six+','Varies':'Varies'};
 const REPS = ['Mason','Steve','Ryan','Will','Rob','Knox'];
-const sfBlank = () => ({rep:'', account:'', logo:'', placement:'', dept:'Wholesale', altName:'', school:'', project:'', type:'', h:'', w:'', sizeNotes:'', scratch:false, count:'', color:'', thread:'', start:'', date:'', notes:'', files:[], review:false, errs:[]});
+const sfBlank = () => ({rep:'', account:'', logo:'', placement:'', dept:'Wholesale', po:'', lineFile:null, altName:'', school:'', project:'', type:'', h:'', w:'', sizeNotes:'', scratch:false, count:'', color:'', thread:'', start:'', date:'', notes:'', files:[], review:false, errs:[]});
 let sf = sfBlank();
 // EP v2.13 (updates doc Part 6): Order Start Date colored like In Hand Dates, with a note (never says rush or 30 days)
 const sfDateCls = iso => { const u = iso ? urg(off(iso)) : ''; return u ? ' dt-' + u : ''; };
@@ -1395,6 +1430,9 @@ function sfDateNote(iso, bd){ if (!iso) return '';
   if (u === 'red') return '<div class="sf-warn">Heads up: this start date doesn&rsquo;t leave much time to complete the order. Can you push the date out? If not, please reach out to Noelle to make sure it&rsquo;s done on time.</div>';
   if (u === 'yellow') return '<div class="sf-note-y">This is a tight timeline. Please reach out to Noelle if this date can&rsquo;t move.</div>';
   return ''; }
+// EP v2.22 (Special Projects): embroidery due date = PO date minus 6 weeks; becomes the In Hand Date
+const poDue = iso => { const d = parseIso(iso); if (!d) return ''; d.setDate(d.getDate() - 42); return isoOf(d); };
+const sfPO = () => sf.dept === 'Special Projects' && !!sf.po;
 function bizDaysTo(iso){ const n = off(iso); return n === null ? null : n < 0 ? -1 : bizDays(n); }
 function sfSize(){ if (sf.type !== 'digitize') return 'DST provided'; return sf.h && sf.w ? sf.h + ' x ' + sf.w + ' in' : sf.h ? sf.h + ' in high' : sf.w ? sf.w + ' in wide' : ''; }
 function sfMissing(){
@@ -1406,7 +1444,7 @@ function sfMissing(){
   if (!club && !sf.count) m.push('Number of Thread Colors'); if (!sf.color) m.push('Color Type');
   if (!sf.thread.trim() && sf.dept === 'Wholesale' && !(sf.count === '1 color' && sf.color === 'Color Coordinate')) m.push('Thread Color Notes');   // EP v2.08: only required for Wholesale
   if (sfDue()){ if (!sf.date) m.push('Due Date'); }   // EP v2.09: non-Wholesale = Due Date (the In Hand Date)
-  else { if (!sf.start) m.push('Does this logo have a start date?'); if (sf.start === 'yes' && !sf.date) m.push('Order Start Date'); }
+  else if (!sfPO()) { if (!sf.start) m.push('Does this logo have a start date?'); if (sf.start === 'yes' && !sf.date) m.push('Order Start Date'); }
   return m;
 }
 const sfW = () => sf.dept === 'Wholesale' || sf.dept === 'Custom', sfSch = () => sf.dept === 'Collegiate' || sf.dept === 'Mainline';   // EP v2.03
@@ -1425,7 +1463,7 @@ function renderSubmit(tab){
       row('Request Type', sf.type === 'digitize' ? 'Digitize' : 'Sew-Out') + row('Size', sfSize()) + (sf.sizeNotes ? row('Size notes', sf.sizeNotes) : '') +
       (sf.type === 'digitize' ? row('Creating from scratch ($75)', sf.scratch ? 'Yes' : 'No') : '') +
       row('Number of Thread Colors', sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count) + row('Color Type', sf.color) + row('Thread Color Notes', sf.thread) +
-      (sfDue() ? row('Due Date', fmt(sf.date)) : row('Start date', sf.start === 'yes' ? fmt(sf.date) : 'No order yet')) + row('Files', sf.files.map(x => x.name).join(', ')) + row('Notes', sf.notes) + '</table>' +
+      (sfPO() ? row('PO date', fmt(sf.po)) + row('Embroidery due date', fmt(poDue(sf.po))) : sfDue() ? row('Due Date', fmt(sf.date)) : row('Start date', sf.start === 'yes' ? fmt(sf.date) : 'No order yet')) + row('Files', sf.files.map(x => x.name).join(', ')) + (sf.dept === 'Special Projects' && sf.lineFile ? row('Line sheet', sf.lineFile.name) : '') + row('Notes', sf.notes) + '</table>' +
       '<div class="btns" style="justify-content:flex-end;margin-top:20px"><button class="btn light" data-sf="back">&larr; Back</button><button class="btn" data-sf="submit">Submit</button></div></div>';
     return;
   }
@@ -1445,7 +1483,11 @@ function renderSubmit(tab){
     '<div class="sf-red">&#9888; <b>One form per logo, please.</b> Submit a separate request for each individual logo. Each one is tracked as its own task. Do not combine multiple logos in a single submission.</div>' +
     sec('Department', true) + '<div class="sf-depts">' + DEPTS.map(d => '<label class="sf-dept' + pick(sf.dept === d) + '"><input type="checkbox" data-sf="dept" data-v="' + esc(d) + '"' + (sf.dept === d ? ' checked' : '') + '> ' + esc(d) + '</label>').join('') + '</div>' +
       (SPJ ? '<div class="sf-lav"><div class="sf-mini">Project name</div><input class="sf-in" data-sfv="project" value="' + v('project') + '" placeholder="Optional" style="max-width:420px">' +
-        '<div class="sf-italic">Optional. You&rsquo;re the sales rep for Special Projects requests.</div></div>'
+        '<div class="sf-italic">Optional. You&rsquo;re the sales rep for Special Projects requests.</div>' +
+        '<div class="sf-mini" style="margin-top:12px">PO date</div><input type="date" class="sf-in" data-sf="po" value="' + v('po') + '" style="max-width:220px">' +
+        '<div class="sf-italic">Optional. The embroidery due date is the PO date minus 6 weeks' + (sf.po ? ': <b>' + fmt(poDue(sf.po)) + '</b>' : '') + '. It becomes the In Hand Date (you can change it later).</div>' +
+        '<div class="sf-mini" style="margin-top:12px">Line sheet (PDF or AI)</div><div class="sf-upload sf-line" data-sf="pickLine">' + (sf.lineFile ? '&#128206; ' + esc(sf.lineFile.name) + ' &middot; click to change' : 'Click to add the line sheet') + '</div>' + (sf.lineFile ? '<button class="btn light small" data-sf="unline" style="margin-top:4px">Remove</button>' : '') +
+        '<input type="file" id="sfLine" accept=".pdf,.ai" hidden></div>'
        : SCH ? '<div class="sf-lav"><div class="sf-mini">School</div><input class="sf-in" data-sfv="school" list="schoolList" value="' + v('school') + '" placeholder="Optional: search a school or abbreviation (e.g. BAMA)" style="max-width:420px">' +
         '<div class="sf-italic">Optional, and you can change it later on the logo card. You&rsquo;re the sales rep for ' + esc(sf.dept) + ' requests.</div></div>' : '') +
     sec('Who Is Submitting') + '<div class="sf-grid"><div><label class="sf-lbl">Submitted by</label><input class="sf-in" value="Noelle Thompson" disabled></div>' +
@@ -1468,7 +1510,8 @@ function renderSubmit(tab){
       Object.keys(SF_DESC).map(c => '<div class="sf-card' + pick(sf.color === c) + '" data-sf="color" data-v="' + c + '"><div class="sf-title">' + c + '</div><div class="sf-desc">' + SF_DESC[c] + '</div></div>').join('') + '</div>' +
     sec('Thread Color Notes', !notesOptional, tag) + '<div class="sf-rednote">&#9888; ' + esc(sf.color ? SF_TIPS[sf.color].tip : 'Select a color type above to see guidance...') + '</div>' +
       '<textarea class="sf-in" style="margin-top:8px;min-height:80px" data-sfv="thread" placeholder="' + esc(sf.color ? SF_TIPS[sf.color].ex : 'Select a color type above...') + '">' + v('thread') + '</textarea>' +
-    (sfDue() ? sec('Due Date', true) + '<div class="sf-lav"><div class="sf-mini">Due Date <span class="req">*</span></div><input type="date" class="sf-in" data-sf="date" value="' + v('date') + '" style="max-width:220px">' +
+    (sfPO() ? sec('Embroidery Due Date') + '<div class="sf-lav"><div class="sf-mini">From the PO date (' + fmt(sf.po) + ' minus 6 weeks)</div><div style="font-size:16px;font-weight:700">' + fmt(poDue(sf.po)) + '</div><div class="sf-italic">This is used as the logo&rsquo;s In Hand Date.</div></div>' :
+    sfDue() ? sec('Due Date', true) + '<div class="sf-lav"><div class="sf-mini">Due Date <span class="req">*</span></div><input type="date" class="sf-in" data-sf="date" value="' + v('date') + '" style="max-width:220px">' +
       '<div class="sf-italic">This is used as the logo&rsquo;s In Hand Date.</div></div>' :
     sec('Does This Logo Have a Start Date?', true) + '<div class="sf-blue"><b>Workflow priority:</b> Sew-outs with orders on-hand are completed first, then new account sew-outs. If no order exists, do not include an in-hand date &mdash; we&rsquo;ll still complete it ASAP, but this lets logos with orders waiting go first.</div>' +
       '<div class="sf-grid" style="margin-top:8px"><div class="sf-green">ONLY if there is an order, ATS, or prebook in the system.</div><div class="sf-yellow">No order placed yet &mdash; customer will place an order ASAP once sew-out is received.</div>' +
@@ -1482,9 +1525,10 @@ function renderSubmit(tab){
     (sf.errs.length ? '<div class="sf-warn" style="margin-top:16px">Please fill in: ' + esc(sf.errs.join(', ')) + '.</div>' : '') +
     '<div class="btns" style="justify-content:flex-end;margin-top:20px"><button class="btn light" data-sf="clear">Clear</button><button class="btn" data-sf="review">Review &amp; Submit &rarr;</button></div>' +
   '</div>';
+  const li = document.getElementById('sfLine'); if (li) li.onchange = () => { if (li.files[0]) sf.lineFile = li.files[0]; renderSubmit(tab); };   // EP v2.22
   const fi = document.getElementById('sfFiles');
   fi.onchange = () => { sf.files = sf.files.concat([...fi.files].filter(x => x.size <= 10 * 1024 * 1024)); if ([...fi.files].some(x => x.size > 10 * 1024 * 1024)) toast('Files over 10 MB were skipped.'); sf.errs = []; renderSubmit(tab); };
-  const dz = document.querySelector('.sf-upload');
+  const dz = document.querySelector('.sf-upload[data-sf="pick"]');
   dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag'); }; dz.ondragleave = () => dz.classList.remove('drag');
   dz.ondrop = e => { e.preventDefault(); sf.files = sf.files.concat([...e.dataTransfer.files].filter(x => x.size <= 10 * 1024 * 1024)); sf.errs = []; renderSubmit(tab); };
 }
@@ -1493,9 +1537,10 @@ async function submitLogo(hold){
   const l = blankLogo(), W = sfW(), SCH = sfSch();
   Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:SCH ? '' : sf.account.trim(), school:SCH ? schoolFix(sf.school) : '', project:sf.dept === 'Special Projects' ? sf.project.trim() : '', rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
     size:sfSize(), sizeNotes:sf.type === 'digitize' ? sf.sizeNotes.trim() : '', scratch:sf.type === 'digitize' && sf.scratch, count:sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count,
-    colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sfDue() || sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
+    colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sfPO() ? poDue(sf.po) : sfDue() || sf.start === 'yes' ? sf.date : '', poDate:sf.dept === 'Special Projects' ? sf.po : '', submitNotes:sf.notes.trim()});
   DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
   if (sf.files.length) await saveFiles(l, sf.files);
+  if (sf.dept === 'Special Projects' && sf.lineFile){ const ln = await saveFiles(l, [sf.lineFile]); if (ln[0]){ l.lineSheet = ln[0]; log(l, 'File', 'Line sheet: ' + ln[0]); } }   // EP v2.22
   if (hold){ setStatus(l, 'Waiting on Reply', AUTO); log(l, 'Status', 'On hold: start date 26 days or sooner (' + fmt(l.inHand) + ')', AUTO);   // EP v2.19
     const who = l.rep && l.rep !== 'Noelle Thompson' ? l.rep : 'the sales rep';
     (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:AUTO, text:'ON HOLD email to ' + who + ' (cc Ren\u00e9e Sund\u00e9n, Will Lawler, Noelle Thompson): This request is ON HOLD. The in hand date (' + fmt(l.inHand) + ') is 26 days or sooner, so it needs approval from Will Lawler or Ren\u00e9e Sund\u00e9n, or a later in hand date, before we continue.', replies:[], resolved:false});
@@ -1514,6 +1559,8 @@ document.addEventListener('click', e => {
   if (k === 'color'){ const was = sf.color; sf.color = el.dataset.v; if (sf.color === 'Club Colors') sf.count = 'N/A - Club Colors'; else if (was === 'Club Colors') sf.count = ''; renderSubmit(tab); }
   if (k === 'start'){ sf.start = el.dataset.v; if (sf.start === 'no') sf.date = ''; renderSubmit(tab); }
   if (k === 'pick'){ document.getElementById('sfFiles').click(); }
+  if (k === 'pickLine'){ document.getElementById('sfLine').click(); }
+  if (k === 'unline'){ sf.lineFile = null; renderSubmit(tab); }
   if (k === 'unfile'){ sf.files.splice(+el.dataset.v, 1); renderSubmit(tab); }
   if (k === 'clear'){ if (confirm('Clear the form?')){ sf = sfBlank(); renderSubmit(tab); } }
   if (k === 'review'){ sf.errs = sfMissing(); if (!sf.errs.length) sf.review = true; renderSubmit(tab); }
@@ -1530,6 +1577,7 @@ document.addEventListener('change', e => {
   const el = e.target.closest('[data-sf]'); if (!el || state.tab !== 'submit') return;
   if (el.dataset.sf === 'count'){ sf.count = el.value; renderSubmit(TABS.find(t => t.key === 'submit')); }
   if (el.dataset.sf === 'date'){ sf.date = el.value; renderSubmit(TABS.find(t => t.key === 'submit')); }
+  if (el.dataset.sf === 'po'){ sf.po = el.value; sf.errs = []; renderSubmit(TABS.find(t => t.key === 'submit')); }   // EP v2.22
   if (el.dataset.sf === 'scratch'){ sf.scratch = el.checked; }
 });
 document.addEventListener('change', e => { if (e.target.dataset && e.target.dataset.sfv) sf[e.target.dataset.sfv] = e.target.value; });
@@ -1716,7 +1764,7 @@ function emailBox(link, inputId, attrs){   // attrs has ACT where the action goe
     : '<input id="' + inputId + '" placeholder="Paste the Outlook link to the email&hellip;"><button class="btn light small" ' + attrs.replace('ACT', 'emailSave') + '>Save</button>' +
       '<span class="td-when" style="width:100%">In Outlook on the web, open the email and copy the address from the browser bar (or &hellip; &gt; Copy link).</span>') + '</div>';
 }
-const STATUS_TO_TODO = {'Digitizing':'Check on digitization', 'Pending Sew Out':'Check on Sew out requests', 'Review Sew Out':'Review Barrett Sew Out', 'Need to Upload':'Add to ES/FTP'};   // default section when adding from the portal
+const STATUS_TO_TODO = {'Digitizing':'Check on digitization', 'Pending Sew Out':'Check on Sew out requests', 'Review Sew Out':'Review Barrett Sew Out', 'Upload / Send':'Add to ES/FTP'};   // default section when adding from the portal
 let stripOpen = {};   // EP v1.30: the To Do part of a logo card starts closed every time the card opens
 function todoStrip(l){   // EP v1.26: on a logo card, this logo on today's To Do (or add / link it) + its email chain
   const today = todayIso(), t = tdTasks(today).find(x => tdLogo(x) === l), w = !t && tdDid(today).filter(x => !x.taskId && tdLogo(x) === l).map(tdCurrent).pop(), id = esc(l.id), open = stripOpen[l.id];
@@ -1850,7 +1898,7 @@ function tdLinkBox(o){
 }
 
 // Tables (EP v1.30): To Do and What I did look like the queues: sections that open and close, columns you can sort, a Department filter and Group by
-const TODO_SEC_COLOR = {'Review new requests':'New Request', 'Request sew out':'Pending Sew Out', 'Review Barrett Sew Out':'Review Sew Out', 'Add to ES/FTP':'Need to Upload', 'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', 'Waiting on Barrett':'Waiting on Reply', [APPR_FU]:'Sent for Approval'};
+const TODO_SEC_COLOR = {'Review new requests':'New Request', 'Request sew out':'Pending Sew Out', 'Review Barrett Sew Out':'Review Sew Out', 'Add to ES/FTP':'Upload / Send', 'Check on digitization':'Digitizing', 'Check on Sew out requests':'Pending Sew Out', 'Waiting on Barrett':'Waiting on Reply', [APPR_FU]:'Sent for Approval'};
 const tdSecColor = s => (STATUS_COLORS[TODO_SEC_COLOR[s]] || {}).title || (TD_COLORS[s] && s !== 'Other' ? TD_COLORS[s][1] : 'var(--navy)');
 const PRI_RANK = {Rush:0, Important:1};   // EP v1.35: To Do priority
 const tdPri = o => !o ? '' : o.pri === 'Rush' ? '<span class="rush-r" title="Rush">R</span>' : o.pri === 'Important' ? '<span class="rush-r imp" title="Important">I</span>' : '';
@@ -2114,7 +2162,7 @@ function renderAccounts(tab){
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
 // ================= EP v2.17: Reports tab (updates doc Part 18). Only in Noelle's portal. Uses the status changes and dates already saved in History. =================
-const RP_STATUSES = ['New Request','Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Need to Upload'];
+const RP_STATUSES = ['New Request','Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Upload / Send'];
 const RP_TEAM = ['Noelle Thompson','Jette Wade','Bryana Kramer'];
 const RP_HOLDERS = [['all','Everyone together'], ['team','Embroidery team (me, Jette, Bryana)'], ['QDigitizing','QDigitizing'], ['Barrett','Barrett'], ['rep','Sales rep']];
 let rpt = {mode:'month', month:'', from:'', to:'', dept:'', person:'', holder:'all', preview:false, to_:''};
@@ -2129,7 +2177,7 @@ function rpSubmitAt(l){ const a = DB.history.filter(e => e.id === l.id && e.kind
 function rpSpans(l){   // time in each status, from History
   const h = DB.history.filter(e => e.id === l.id && e.kind === 'Status').sort((a, b) => a.ts.localeCompare(b.ts)), out = [];
   let cur = 'New Request', from = rpSubmitAt(l);
-  h.forEach(e => { const m = e.what.match(/^Status: (.+) > (.+)$/); if (!m) return; const at = new Date(e.ts); if (at < from) return; out.push({st:m[1], from, to:at, next:m[2], done:true}); cur = m[2]; from = at; });
+  h.forEach(e => { const m = e.what.match(/^Status: (.+) > (.+)$/); if (!m) return; const at = new Date(e.ts); if (at < from) return; out.push({st:stNorm(m[1]), from, to:at, next:stNorm(m[2]), done:true}); cur = stNorm(m[2]); from = at; });
   if (!DONE.includes(cur)) out.push({st:cur, from, to:new Date(), next:'', done:false});
   return out;
 }
@@ -2163,7 +2211,7 @@ function rpMetrics(r, dept){
   const barSp = spans.filter(s => s.done && s.st === 'Pending Sew Out' && s.next === 'Review Sew Out' && inR(s.to, r));
   const photoDays = {}; spans.filter(s => s.done && s.next === 'Review Sew Out' && inR(s.to, r)).forEach(s => { const k = isoOf(s.to); photoDays[k] = (photoDays[k] || 0) + 1; });
   const fuTs = L.flatMap(l => (l.followUps || []).map(t => ({l, t:new Date(t)}))).filter(x => inR(x.t, r)), sentToBarrett = new Set(spans.filter(s => s.st === 'Pending Sew Out' && inR(s.from, r)).map(s => s.l.id));
-  const approvedL = [...new Set(spans.filter(s => s.done && s.st === 'Sent for Approval' && ['Send Invoice','Need to Upload'].includes(s.next) && inR(s.to, r)).map(s => s.l))];   // approved = moved on from Sent for Approval
+  const approvedL = [...new Set(spans.filter(s => s.done && s.st === 'Sent for Approval' && ['Send Invoice','Upload / Send'].includes(s.next) && inR(s.to, r)).map(s => s.l))];   // approved = moved on from Sent for Approval
   const runs = L.flatMap(rpGoalRuns).filter(x => inR(x.end, r)), hold = x => rpt.holder === 'all' ? x.hours : x.by[rpt.holder] || 0;
   const met = runs.filter(x => hold(x) <= goalAt(x.end).hours);
   return {L, submitted, completed, whole:avg(whole), byStatus, barrett:avg(barSp.map(s => bizHoursBetween(s.from, s.to))), barrettN:barSp.length, photoDays,
@@ -2176,7 +2224,7 @@ function rpReps(r){   // sales reps: reply time, waiting on them, approval time,
   return reps.map(rep => { const L = rpLogos().filter(l => l.rep === rep), sp = L.flatMap(l => rpSpans(l).map(s => Object.assign({l}, s)));
     const replies = []; L.forEach(l => (l.comms || []).forEach(m => { if (m.by !== ME) return; const rr = (m.replies || []).find(x => x.by !== ME && x.ts > m.ts); if (rr && inR(new Date(rr.ts), r)) replies.push(bizHoursBetween(new Date(m.ts), new Date(rr.ts))); }));
     const wait = sp.filter(s => s.done && s.st === 'Waiting on Reply' && inR(s.from, r)).map(s => bizHoursBetween(s.from, s.to));
-    const appr = sp.filter(s => s.done && s.st === 'Sent for Approval' && ['Send Invoice','Need to Upload'].includes(s.next) && inR(s.to, r)).map(s => bizHoursBetween(s.from, s.to));
+    const appr = sp.filter(s => s.done && s.st === 'Sent for Approval' && ['Send Invoice','Upload / Send'].includes(s.next) && inR(s.to, r)).map(s => bizHoursBetween(s.from, s.to));
     const comp = sp.filter(s => s.done && s.next === 'Completed' && inR(s.to, r));
     const L2 = L.filter(l => inR(rpSubmitAt(l), r));
     return {rep, reply:avg(replies), wait:avg(wait), appr:avg(appr), reminders:L.flatMap(l => l.apprRem || []).filter(t => inR(new Date(t), r)).length, submitted:L2.length, completed:comp.length,
@@ -2281,6 +2329,8 @@ function render(){
   const acctNames = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).concat((LIVE_ACCTS.accounts || []).map(a => a.name)).filter(Boolean))].sort((a, b) => a.localeCompare(b));   // EP v2.18: + live-portal accounts
   if (dl.dataset.n !== String(acctNames.length)){ dl.innerHTML = acctNames.map(a => '<option value="' + esc(a) + '">').join(''); dl.dataset.n = acctNames.length; }
   if (!document.getElementById('schoolList')){ const sl = document.createElement('datalist'); sl.id = 'schoolList'; sl.innerHTML = SCHOOLS.map(([n, a]) => '<option value="' + esc(schoolLabel(n, a)) + '">').join(''); document.body.appendChild(sl); }   // EP v2.06
+  let pl = document.getElementById('peopleList'); if (!pl){ pl = document.createElement('datalist'); pl.id = 'peopleList'; document.body.appendChild(pl); }   // EP v2.22
+  pl.innerHTML = [...new Set(MAIL_PEOPLE.concat(REPS, DB.logos.map(l => l.rep).filter(Boolean)))].map(a => '<option value="' + esc(a) + '">').join('');
   let rl = document.getElementById('repAll'); if (!rl){ rl = document.createElement('datalist'); rl.id = 'repAll'; document.body.appendChild(rl); }   // EP v2.05
   rl.innerHTML = [...new Set(REPS.concat(DB.logos.concat(DB.hidden || []).map(l => l.rep).filter(Boolean)))].sort().map(a => '<option value="' + esc(a) + '">').join('');
   showBanner();
@@ -2296,7 +2346,7 @@ function render(){
                         : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Red In Hand Dates show first, then the oldest. Change it with Sorts, or click a column name.</div>') +
     (tab.focus ? '' : '<div class="bar"><input id="search" placeholder="Search account, logo, sales rep or #&hellip;" value="' + esc(state.search[tab.key] || '') + '">' +
     (tab.sections ? '<select id="statF"><option value="">All statuses</option>' + tab.sections.map(x => '<option' + (state.stat[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' : '') +
-    '<select id="group"><option value="status"' + (group === 'status' ? ' selected' : '') + '>Group: Status</option><option value="account"' + (group === 'account' ? ' selected' : '') + '>Group: Account</option><option value="rep"' + (group === 'rep' ? ' selected' : '') + '>Group: Sales Rep</option><option value="none"' + (group === 'none' ? ' selected' : '') + '>Group: No grouping</option></select>' +
+    '<select id="group"><option value="status"' + (group === 'status' ? ' selected' : '') + '>Group: Status</option><option value="account"' + (group === 'account' ? ' selected' : '') + '>Group: Account</option><option value="rep"' + (group === 'rep' ? ' selected' : '') + '>Group: Sales Rep</option><option value="project"' + (group === 'project' ? ' selected' : '') + '>Group: Project</option><option value="none"' + (group === 'none' ? ' selected' : '') + '>Group: No grouping</option></select>' +
     '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '<option value="none"' + (state.dept[tab.key] === 'none' ? ' selected' : '') + '>No department</option></select>' +
     sortsCtl(tab.key) + '<button class="btn light" id="reset">Reset filters</button><button class="btn light" data-collapse="all">Collapse all</button></div>');
   let list = tab.sections ? DB.logos.filter(l => tab.sections.includes(l.status)) : DB.logos.filter(l => !DONE.includes(l.status) && (subUrg(l) || urg(off(l.inHand)) === 'red'));   // EP v1.30: In Hand 30 days or less (or past), or past its due time
@@ -2306,7 +2356,7 @@ function render(){
   if (!tab.sections || group === 'none') groups = [[tab.sections ? 'All' : null, list]];
   else if (group === 'status'){ groups = tab.sections.map(s => [s, list.filter(l => l.status === s && !(tab.key === 'barrett' && (barNew(l) || (l.waitThreads && l.status === 'Pending Sew Out'))))]);
     if (tab.key === 'barrett'){ groups.unshift([BAR_REVIEW, list.filter(barNew)]); groups.push([BAR_WAIT, list.filter(l => !barNew(l) && l.waitThreads && l.status === 'Pending Sew Out')]); } }   // EP v2.14 (Parts 8-9)
-  else { const keyOf = l => (group === 'account' ? l.account : l.rep) || '(blank)'; const keys = [...new Set(list.map(keyOf))].sort(); groups = keys.map(k => [k, list.filter(l => keyOf(l) === k)]); }
+  else { const keyOf = l => (group === 'account' ? l.account : group === 'project' ? l.project : l.rep) || (group === 'project' ? '(no project)' : '(blank)');   /* EP v2.22: Group: Project */ const keys = [...new Set(list.map(keyOf))].sort(); groups = keys.map(k => [k, list.filter(l => keyOf(l) === k)]); }
   const joined = groups.length && groups[0][0] !== null;   // EP v2.07: each section is its own box, with its heading above it
   if (joined){
     html += groups.map(([name, items]) => {
