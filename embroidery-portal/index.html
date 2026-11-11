@@ -450,7 +450,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.09</span>
+    <span class="vbadge">EP v2.10</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -469,7 +469,7 @@ h1{font-size:20px;margin-bottom:14px}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.09';
+const VERSION = 'EP v2.10';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -502,6 +502,7 @@ const STATUS_COLORS = {
 };
 const STATUSES = Object.keys(STATUS_COLORS);
 const OPEN_STATUSES = STATUSES.slice(0, 7);
+const TODO_OFF = true;   // EP v2.10: no To Do tab, no To Do strip on logo cards, no automatic To Do tasks
 const TABS = [
   {key:'dashboard', title:'Dashboard',     sub:'Every open logo with an In Hand Date 30 days away or less (or past), or past its due time (red Submitted date).', focus:true},
   {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
@@ -512,7 +513,7 @@ const TABS = [
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
   {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
-  {key:'todo',      title:'To Do', sub:'Your daily list. Set a task&rsquo;s Status to what you did (it moves to What I did) or Roll over, and click a task for its details and history. Anything not marked rolls over to the next day on its own, and what you submitted for digitization or sew-out comes back the next day as a check-on.', todo:true, right:true}
+  // EP v2.10: To Do tab removed (Noelle 11/11). Its old data stays in the Excel, untouched.
 ];
 const KIND_COLOR = {Added:['#5b3a8e','#efe8f8'], Status:['#1f5fbf','#e8f0fb'], Email:['#7b2fb5','#f2e8fb'], Edit:['#49516C','#eef0f6'], File:['#a35a1f','#fdeee2'], Note:['#2e7d32','#e2f5dc'], Deleted:['#a61b1b','#f8d7d7']};
 
@@ -574,7 +575,7 @@ function log(l, kind, what, by){ DB.history.push({ts:nowStamp(), id:l.id, logo:l
 function setStatus(l, st, by){
   if (l.status === st) return;
   log(l, 'Status', 'Status: ' + l.status + ' > ' + st, by); l.status = st;
-  tdFromPortal(l, st);   // EP v1.24: also lands in today's To Do / What I did
+  if (!TODO_OFF) tdFromPortal(l, st);   // EP v1.24: also lands in today's To Do / What I did
   if (st === 'Pending Sew Out'){ const n = nowStamp(); l.sewSentDate = n.slice(0, 10); l.sewSentTime = n.slice(11, 16); }   // EP v1.32: Pending Sew Out = submitted for sew out
   if (st === 'Sent for Approval' && !l.sentDate) l.sentDate = todayIso();
   if (st === 'Need to Upload' && !l.approvedDate) l.approvedDate = todayIso();
@@ -898,7 +899,7 @@ function columns(tab, section){
   } else if (extra){
     cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
   }
-  if (tab.focus) cols.push({k:'today', h:'To Do today', v:l => { const x = tdToday(l); return x ? x.rank + x.sec : '9'; }, td:l => { const x = tdToday(l); if (!x) return '<span class="muted">&mdash;</span>';
+  if (tab.focus && !TODO_OFF) cols.push({k:'today', h:'To Do today', v:l => { const x = tdToday(l); return x ? x.rank + x.sec : '9'; }, td:l => { const x = tdToday(l); if (!x) return '<span class="muted">&mdash;</span>';
     const c = TD_COLORS[x.done ? x.sec : x.rolled ? 'Rolled over' : 'To do'] || TD_COLORS.Other;
     return '<span class="td-logo" style="background:' + c[0] + ';color:' + c[1] + (c[2] ? ';border:1px solid ' + c[2] : '') + '">' + (x.done ? '&#10003; ' : '') + esc(x.sec) + '</span>' + (x.time ? '<div class="td-when">' + time12(x.time) + '</div>' : ''); }});
   cols.push({k:'status', h:'Status', v:l => STATUSES.indexOf(l.status), td:stSelect});
@@ -1014,7 +1015,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     '<div class="emb-col">' + files + sewBox(l) + sheetBox(l) + fee + histBox +
     '<div class="emb-card-foot"><button class="btn light small" data-x="archive" data-id="' + id + '">Archive</button><button class="emb-btn-del" data-x="delete" data-id="' + id + '">Delete</button></div></div></div></div>';
 }
-function card(l, ncols){ return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '">' + cardBody(l, todoStrip(l)) + '</td></tr>'; }
+function card(l, ncols){ return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '">' + cardBody(l, TODO_OFF ? '' : todoStrip(l)) + '</td></tr>'; }
 
 // Answers coming back from the Sew-Out Request page (same site)
 window.addEventListener('message', e => {
@@ -1046,6 +1047,7 @@ document.addEventListener('click', async e => {
     if (t && t.state !== 'done'){ state.todoView = 'todo'; todoOpen = t.id; } else { state.todoView = 'did'; todoOpen = t ? (tdTaskSteps(t).pop() || {}).id : w && w.id; }
     save(); render(); const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
   if (['todoAdd','todoLink','emailSave','emailClear','followUp','followUndo'].includes(act) && !tdReady()){ toast('Reconnect Excel first (top right).'); return; }
+  if (act === 'followUp' && TODO_OFF){ fuMark(l); touch(); render(); toast('Marked followed up. Snoozed for 24 business hours.'); return; }   // EP v2.10: no What I did line
   if (act === 'followUp'){ fuMark(l); tdLogoStep(l, 'Followed up on', 'marked ' + l.logo + ' followed up'); touch(); render(); toast('Marked followed up. It&rsquo;s in today&rsquo;s What I did and snoozed for 24 business hours.'); return; }
   if (act === 'followUndo'){ fuUndo(l); tdUndoLogoStep(l, 'Followed up on'); touch(); render(); toast('Follow-up undone.'); return; }
   if (act === 'todoAdd'){ const sec = document.getElementById('tdAddSec-' + l.id).value, t = {id:tdId(), day:todayIso(), sec, text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id};
@@ -1270,9 +1272,9 @@ async function submitLogo(){
     colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sfDue() || sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
   DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
   if (sf.files.length) await saveFiles(l, sf.files);
-  const t = {id:tdId(), day:todayIso(), sec:'Review new requests', text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id}; (DB.tasks = DB.tasks || []).push(t);   // EP v2.03
-  tlog(t, 'Added to To Do (Review new requests, new request)');
-  sf = sfBlank(); touch(); openLogo(l); toast('Added to the Queue &rarr; New Request, and to today&rsquo;s To Do (Review new requests).');
+  if (!TODO_OFF){ const t = {id:tdId(), day:todayIso(), sec:'Review new requests', text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id}; (DB.tasks = DB.tasks || []).push(t);   // EP v2.03
+  tlog(t, 'Added to To Do (Review new requests, new request)'); }
+  sf = sfBlank(); touch(); openLogo(l); toast(TODO_OFF ? 'Added to the Queue &rarr; New Request.' : 'Added to the Queue &rarr; New Request, and to today&rsquo;s To Do (Review new requests).');
 }
 document.addEventListener('click', e => {
   if (e.target.closest('[data-stop]')) return;
@@ -1872,7 +1874,7 @@ function renderAccounts(tab){
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
 function render(){
-  refreshToday(); renderNotifs(); if (tdApprovalCheck()) touch();
+  refreshToday(); renderNotifs(); if (!TODO_OFF && tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
