@@ -212,7 +212,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="dlBtnTop" onclick="downloadPdf()" title="Download PDF">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="clear_form()" title="Clear Form">&times;</button>
-      <span class="badge">NS v1.06</span>
+      <span class="badge">NS v1.07</span>
     </div>
   </div>
   <div class="body">
@@ -354,7 +354,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" id="apDlBtnTop" onclick="apDownload()" title="Download Updated PDF" disabled>&#8595;</button>
       <button class="hdr-icon clr-x" onclick="apClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.06</span>
+      <span class="badge">NS v1.07</span>
     </div>
   </div>
   <div class="body">
@@ -408,7 +408,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-actions">
       <button class="hdr-icon dl" onclick="impGenerate()" title="Generate Copy Row">&#8595;</button>
       <button class="hdr-icon clr-x" onclick="impClear()" title="Clear">&times;</button>
-      <span class="badge">NS v1.06</span>
+      <span class="badge">NS v1.07</span>
     </div>
   </div>
   <div class="body">
@@ -740,7 +740,7 @@ document.getElementById('swatchFile').addEventListener('change',e=>{
 // NS v1.03: the sew-out photo from the live NetSuite portal. Its "Open Sew-Out Approver with photo" button opens this page and
 // posts {type:'rhoback-sewout-photo', name, dataUrl, requestId} a few times; the first one lands in 4 · Sew-Out Photo, the same as a
 // manual upload (preview, rotate, crop). Only accepted from Rhoback's NetSuite, and only image data.
-const NS_PHOTO_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com'];
+const NS_PHOTO_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com', location.origin];   // NS v1.07: also Noelle's Embroidery Portal on this same site (its DST files)
 let nsPhotoSeen = '';
 function nsTakePhoto(origin, d){
   if (!NS_PHOTO_ORIGINS.includes(origin) || !d || d.type !== 'rhoback-sewout-photo') return;

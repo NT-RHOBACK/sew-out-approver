@@ -478,7 +478,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.15</span>
+    <span class="vbadge">EP v2.16</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -497,7 +497,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.15';
+const VERSION = 'EP v2.16';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -675,6 +675,10 @@ async function dstMeasure(l){ if (!dirHandle || dstBusy[l.id]) return; const tod
     for (const f of todo){ f.dstTried = true; try { const s = dstSize(await (await getFile(l, f.name)).arrayBuffer()); if (s){ f.dstH = s.h; f.dstW = s.w; changed = true;
       if (!l.size || l.size === 'DST provided'){ const old = l.size; l.size = s.h + ' x ' + s.w + ' in'; log(l, 'Edit', 'Size: ' + (old || '(blank)') + ' > ' + l.size + ' (from ' + f.name + ')', AUTO); } } } catch(e){} }
   } finally { delete dstBusy[l.id]; } if (changed){ touch(); render(); } }
+// EP v2.16 (updates doc Part 16): send the logo's DST files to the Sew-Out Approver window, once a second for 10 seconds (it ignores repeats)
+async function sendDsts(l, win){ if (!win) return; const dsts = (l.files || []).filter(f => /\.dst$/i.test(f.name)); if (!dsts.length || !dirHandle || !(await permOk(dirHandle, false))) return;
+  const files = []; for (const f of dsts){ try { const fl = await getFile(l, f.name); files.push({name:f.name, dataUrl:await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(fl); })}); } catch(e){} }
+  if (!files.length) return; let n = 0; const send = () => { try { win.postMessage({type:'rhoback-sewout-dst', requestId:String(l.id), files}, location.origin); } catch(e){} if (++n < 10) setTimeout(send, 1000); }; send(); }
 let renameOpen = {};
 async function renameFile(l, name, base){ const dot = name.lastIndexOf('.'), ext = dot > 0 ? name.slice(dot) : '', nn = safeName(base.replace(/\.[^.]*$/, '') === base ? base : base) + ext;
   if (!base.trim() || nn === name) return false; if (l.files.some(x => x.name === nn)){ toast('There&rsquo;s already a file called ' + esc(nn) + '.'); return false; }
@@ -1249,7 +1253,7 @@ document.addEventListener('click', async e => {
     toast(esc(reqNo(l) + ' ' + l.logo) + ' was approved by ' + esc(who) + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); return; }
   if (act === 'appr-undo'){ if (!confirm('Undo the approval by ' + l.approvedBy + '?\n\nIt goes back to Sent for Approval.')) return;
     log(l, 'Status', 'Approval undone (was approved by ' + l.approvedBy + ')'); l.approvedBy = ''; l.approvedAt = ''; l.approvedDate = ''; setStatus(l, 'Sent for Approval', ME); touch(); openLogo(l); toast('Approval undone. It&rsquo;s back in Sent for Approval.'); return; }
-  if (act === 'appr-open'){ window.open(approverLink(l), 'sewOutApprover'); }
+  if (act === 'appr-open'){ const win = window.open(approverLink(l), 'sewOutApprover'); sendDsts(l, win); }   // EP v2.16 (updates doc Part 16)
   if (act === 'appr-upload'){ const fi = document.getElementById('fileIn'); fi.accept = 'application/pdf,.pdf'; fileTarget = {l, sheet:true}; fi.click(); }
   if (act === 'appr-sent'){
     if (!l.sheetFile){ toast('Upload the approval sheet PDF first.'); return; }
