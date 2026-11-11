@@ -392,6 +392,14 @@ h1{font-size:20px;margin-bottom:14px}
 .emb-card input:not([type=checkbox]),.emb-card select,.emb-card textarea,.emb-in{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);color:var(--navy);background:#fff;resize:vertical}
 .emb-card textarea{min-height:52px}
 .emb-card select.st{font-weight:700}
+/* EP v2.12: the open Status list is white with dark text; the closed dropdown keeps its color */
+select.st option{background:#fff;color:#1b2033;font-weight:400}
+.claim-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:12px;border:1px solid #d6dbe4;border-radius:8px;background:#f7f8fb;font-size:13px}
+.claimed{display:block;font-size:11px;color:#6b7280;font-weight:400;margin-top:1px}
+.claim-mini{display:inline-block;margin-top:2px;font:inherit;font-size:11px;padding:0 8px;border:1px solid #c9cfdb;border-radius:10px;background:#fff;color:#24304d;cursor:pointer}
+.claim-mini:hover{background:#eef0f6}
+.appr-mark{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.appr-mark input{flex:1;min-width:140px}
 .emb-val{font-size:13px;color:var(--navy);padding:6px 0}
 .emb-dim{color:#6B7385;font-size:12px}
 .emb-stepper{display:flex;align-items:center;gap:6px}
@@ -450,7 +458,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.11</span>
+    <span class="vbadge">EP v2.12</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -469,7 +477,7 @@ h1{font-size:20px;margin-bottom:14px}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.11';
+const VERSION = 'EP v2.12';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -496,6 +504,7 @@ const STATUS_COLORS = {
   'Review Sew Out':    {title:'#c25e00', bg:'#f6b26b', fg:'#4a2a00'},
   'Sent for Approval': {title:'#3b8fd0', bg:'#e6f3fc', fg:'#1f6fa8'},
   'Waiting on Reply':  {title:'#a88600', bg:'#fff6b3', fg:'#6b5600'},
+  'Send Invoice':      {title:'#b4236e', bg:'#fbe3ef', fg:'#8a1c55'},   // EP v2.12 (updates doc Part 2)
   'Need to Upload':    {title:'#1f5fbf', bg:'#c6e4f7', fg:'#0b4f80'},
   'Completed':         {title:'#2e7d32', bg:'#e2f5dc', fg:'#2e7d32'},
   'Archive':           {title:'#6b7280', bg:'#d1d1d1', fg:'#333333'}
@@ -507,8 +516,8 @@ const TABS = [
   {key:'dashboard', title:'Dashboard',     sub:'Every open logo with an In Hand Date 30 days away or less (or past), or past its due time (red Submitted date).', focus:true},
   {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
   {key:'barrett',   title:'Barrett Queue',  sub:'Logos at Barrett for sew-outs.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
-  {key:'approvals', title:'Approvals / Need to Upload', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Need to Upload (approved, waiting to be uploaded to EpicStitch).', sections:['Sent for Approval','Need to Upload'],
-     extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Need to Upload':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
+  {key:'approvals', title:'Approvals / Need to Upload', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Need to Upload (approved, waiting to be uploaded to EpicStitch).', sections:['Sent for Approval','Send Invoice','Need to Upload'],
+     extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Send Invoice':{h:'Approved', f:'approvedDate'}, 'Need to Upload':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
   {key:'accounts',  title:'Accounts', sub:'', accounts:true},   // EP v2.04
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
@@ -570,11 +579,25 @@ splitLive(DB);
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
 function newId(){ const n = DB.logos.concat(DB.hidden || [], DB.history).reduce((m, x) => Math.max(m, parseInt(String(x.id || '').replace(/\D/g, ''), 10) || 0), 0); return 'EP-' + String(n + 1).padStart(4, '0'); }
 function blankLogo(){ return {id:'', nsId:'', logo:'', account:'', rep:'', type:'Sew-Out', dept:'', status:'New Request', submitted:todayIso(), inHand:'', size:'', sizeNotes:'', count:'', colorType:'', threadNotes:'', placement:'',
-  ver:1, rev:0, scratch:false, submitNotes:'', sewSentDate:'', sewSentTime:'', sentDate:'', approvedDate:'', completedDate:'', files:[], dir:'', sewReq:null, sheetFile:'', school:'', project:'', assigned:'', logoStatus:'', comms:[], digitized:null, rushFee:false, invoiceSent:''}; }
+  ver:1, rev:0, scratch:false, submitNotes:'', sewSentDate:'', sewSentTime:'', sentDate:'', approvedDate:'', completedDate:'', files:[], dir:'', sewReq:null, sheetFile:'', school:'', project:'', assigned:'', logoStatus:'', comms:[], digitized:null, rushFee:false, invoiceSent:'', claimedBy:'', approvedBy:'', approvedAt:''}; }
 function log(l, kind, what, by){ DB.history.push({ts:nowStamp(), id:l.id, logo:l.logo, account:l.account, kind, what, by:by || ME}); }
+// EP v2.12 (updates doc Parts 4-5): claiming; Assigned To and Logo Status follow the status
+const CLAIMER = 'Noelle Thompson';   // only me in this portal
+const PEOPLE = ['Noelle Thompson', 'Jette Wade', 'Bryana Kramer'];
+const WORKFLOW = ['Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Need to Upload'];
+function assignFor(l, st){ return st === 'Digitizing' ? 'QDigitizing' : st === 'Pending Sew Out' ? 'Barrett' : (st === 'Sent for Approval' || st === 'Waiting on Reply') ? (l.rep || '') : DONE.includes(st) ? 'No one' : (l.claimedBy || ''); }
+function logoStatusFor(l, st, from){ if (st === 'Completed') return 'Active'; if (st === 'Archive') return 'Inactive'; if (WORKFLOW.includes(st)) return 'In Progress';
+  return from === 'Archive' || !l.logoStatus ? '' : 'In Progress'; }   // New Request: Not Started, or stays In Progress when it moves back
+function autoFollow(l, st, from){ const a = assignFor(l, st), s = logoStatusFor(l, st, from);
+  if ((l.assigned || '') !== a){ l.assigned = a; log(l, 'Edit', 'Assigned to: ' + (a || 'Unassigned'), AUTO); }
+  if ((l.logoStatus || '') !== s){ log(l, 'Edit', 'Logo Status: ' + (l.logoStatus || 'Not Started') + ' > ' + (s || 'Not Started'), AUTO); l.logoStatus = s; } }
+const OPS_OF = {Mason:['Bryana'], Steve:['Bryana'], Ryan:['Bryana'], Will:['Bryana','Jette'], Rob:['Jette'], Knox:['Jette']};   // updates doc Part 2.3
+const opsFor = l => (OPS_OF[String(l.rep || '').split(/\s+/)[0]] || []).join(' and ');
 function setStatus(l, st, by){
   if (l.status === st) return;
+  const from = l.status;
   log(l, 'Status', 'Status: ' + l.status + ' > ' + st, by); l.status = st;
+  autoFollow(l, st, from);   // EP v2.12
   if (!TODO_OFF) tdFromPortal(l, st);   // EP v1.24: also lands in today's To Do / What I did
   if (st === 'Pending Sew Out'){ const n = nowStamp(); l.sewSentDate = n.slice(0, 10); l.sewSentTime = n.slice(11, 16); }   // EP v1.32: Pending Sew Out = submitted for sew out
   if (st === 'Sent for Approval' && !l.sentDate) l.sentDate = todayIso();
@@ -612,7 +635,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || ''})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || ''})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -661,7 +684,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -876,11 +899,14 @@ function openLogo(l){ msearch = ''; document.getElementById('msearch').value = '
 function stSelect(l){ const c = STATUS_COLORS[l.status] || STATUS_COLORS['New Request'];   // the logo's portal Status dropdown
   return '<select class="st" data-id="' + esc(l.id) + '" onclick="event.stopPropagation()" style="background:' + c.bg + ';color:' + c.fg + ';border-color:' + c.bg + ';font-weight:600">' +
     STATUSES.map(s => '<option' + (s === l.status ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>'; }
+const claimTag = l => l.claimedBy ? '<span class="claimed">Claimed by ' + esc(l.claimedBy) + '</span>' : DONE.includes(l.status) ? '' : '<button class="claim-mini" data-x="claim" data-id="' + esc(l.id) + '">Claim</button>';   // EP v2.12
+const claimBar = l => '<div class="claim-bar">' + (l.claimedBy ? 'Claimed by <b>' + esc(l.claimedBy) + '</b><button class="btn light small" data-x="release" data-id="' + esc(l.id) + '">Release</button>'
+  : '<span class="emb-dim">Not claimed yet</span><button class="btn small" data-x="claim" data-id="' + esc(l.id) + '">Claim</button>') + '</div>';
 const acctShown = l => l.account || l.school || l.project || l.dept || '';   // EP v2.03: no account → School / Project name → department
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
-    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + '</span></div>'},
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + claimTag(l) + '</span></div>'},
     {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="acct dabbr" title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
     {k:'account', h:'Account', v:l => acctShown(l).toLowerCase(), td:l => '<span class="acct">' + esc(acctShown(l)) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
@@ -891,7 +917,7 @@ function columns(tab, section){
   const extra = tab.extraBySection && tab.extraBySection[section] ? tab.extraBySection[section]
     : (tab.extraMixed && section && !tab.sections.includes(section)) ? tab.extraMixed : tab.extra;
   if (extra && extra.f === 'sentOrApproved'){
-    const pickD = l => l.status === 'Need to Upload' ? l.approvedDate : l.sentDate;
+    const pickD = l => l.status === 'Need to Upload' || l.status === 'Send Invoice' ? l.approvedDate : l.sentDate;
     cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
   } else if (extra && extra.f === 'photo'){
     cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>'});
@@ -953,7 +979,9 @@ function sheetBox(l){   // EP v2.05: live layout
     '<div class="emb-dim" style="margin:8px 0">Open the Sew-Out Approver to make the approval sheet, then upload the PDF here to email it to ' + esc(l.rep || 'the rep') + '.</div>' +
     '<div style="display:flex;align-items:center;gap:8px"><button class="btn light small" data-x="appr-upload" data-id="' + id + '">Choose File</button><span class="emb-dim" style="flex:1">' + (l.sheetFile ? esc(l.sheetFile) : 'No file chosen') + '</span>' +
     '<button class="btn small" data-x="appr-sent" data-id="' + id + '" title="Marks it sent. Email it to the rep from Outlook.">Mark sent</button></div>' +
-    (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(l.rep || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : ''));
+    (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(l.rep || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : '') +
+    (l.approvedBy ? '<div class="emb-ok">&#10003; Approved by ' + esc(l.approvedBy) + ' on ' + fmt(l.approvedAt) + ' ' + time12(l.approvedAt) + '</div><button class="btn light small" data-x="appr-undo" data-id="' + id + '">Undo approval</button>'   // EP v2.12
+     : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="repAll" value="' + esc(l.rep) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' : ''));
 }
 // EP v2.05: the logo card, laid out like the live portal's
 const ebox = (num, title, right, body) => '<div class="emb-box"><div class="emb-box-hd">' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
@@ -979,7 +1007,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
   const notes = DB.notes.filter(n => n.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
   const hist = DB.history.filter(h => h.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
   const ta = (k, ph) => '<textarea data-edit="' + k + '" data-id="' + id + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '>' + esc(l[k] || '') + '</textarea>';
-  const assignOpts = ['Noelle Thompson', 'QDigitizing', 'Barrett'].concat(l.rep && !['Noelle Thompson'].includes(l.rep) ? [l.rep] : []);
+  const assignOpts = PEOPLE.concat(['QDigitizing', 'Barrett'], l.rep && !PEOPLE.includes(l.rep) ? [l.rep] : [], ['No one']);   // EP v2.12 (Part 4.4)
   const details = ebox(1, 'Logo details', 'Request ' + esc(reqNo(l)), '<div class="emb-grid">' +
     ef('Account', inp('account', l, ' list="acctList"')) + ef('Logo / Design Name', inp('logo', l)) +
     ef('Request Type', '<div class="emb-val">' + esc(l.type) + ' <span class="emb-dim">&rarr; ' + (l.type === 'Digitize' ? 'QDigitizing' : 'Barrett') + '</span></div>') + ef('Department', sel('dept', l, DEPTS)) +
@@ -1007,7 +1035,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
   const fee = ebox(6, 'Digitizing fee', '',
     '<label class="emb-fee-chk"><input type="checkbox" data-x="fee-dig" data-id="' + id + '"' + (dig ? ' checked' : '') + '> This logo was digitized <span class="emb-dim">($75)</span></label>' +
     '<label class="emb-fee-chk"><input type="checkbox" data-x="fee-rush" data-id="' + id + '"' + (l.rushFee ? ' checked' : '') + (dig ? '' : ' disabled') + '> Add the $5 rush fee</label>' +
-    (l.invoiceSent ? '<div class="emb-ok">&#10003; Invoice sent &middot; ' + fmt(l.invoiceSent) + '</div><button class="btn light small" data-x="fee-undo" data-id="' + id + '">Undo</button>'
+    (l.invoiceSent ? '<div class="emb-ok">&#10003; Fee email sent' + (opsFor(l) ? ' to ' + esc(opsFor(l)) : '') + ' on ' + fmt(l.invoiceSent) + '</div><button class="btn light small" data-x="fee-undo" data-id="' + id + '">Undo</button>'
       : dig ? '<button class="btn light small" style="margin-top:6px" data-x="fee-sent" data-id="' + id + '">Mark invoice sent</button>' : ''));
   const histBox = ebox(7, 'History', '', '<details class="emb-hist"><summary>Show history (' + hist.length + ' entr' + (hist.length === 1 ? 'y' : 'ies') + ')</summary>' +
     (hist.length ? hist.map(h => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmt(h.ts) + ' ' + time12(h.ts) + '</span><span>' + esc(h.what) + '</span><span class="emb-hist-by">' + esc(h.by || '') + '</span></div>').join('') : '<div class="emb-dim">No history yet.</div>') + '</details>');
@@ -1015,7 +1043,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     '<div class="emb-col">' + files + sewBox(l) + sheetBox(l) + fee + histBox +
     '<div class="emb-card-foot"><button class="btn light small" data-x="archive" data-id="' + id + '">Archive</button><button class="emb-btn-del" data-x="delete" data-id="' + id + '">Delete</button></div></div></div></div>';
 }
-function card(l, ncols){ return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '">' + cardBody(l, TODO_OFF ? '' : todoStrip(l)) + '</td></tr>'; }
+function card(l, ncols){ return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '">' + cardBody(l, TODO_OFF ? claimBar(l) : todoStrip(l)) + '</td></tr>'; }
 
 // Answers coming back from the Sew-Out Request page (same site)
 window.addEventListener('message', e => {
@@ -1065,6 +1093,15 @@ document.addEventListener('click', async e => {
     l.sewSentDate = todayIso(); l.sewSentTime = nowStamp().slice(11, 16); l.sewReq = null; log(l, 'Email', 'Sew-out request sent to Barrett' + (files.length ? ' (' + files.join(', ') + ')' : ''));
     setStatus(l, 'Pending Sew Out', AUTO); touch(); openLogo(l); toast('Moved to Barrett Queue &rarr; Pending Sew Out.');
   }
+  if (act === 'claim' || act === 'release'){ e.stopPropagation(); e.preventDefault();   // EP v2.12 (Part 4)
+    if (act === 'claim'){ l.claimedBy = CLAIMER; log(l, 'Edit', 'Claimed by ' + CLAIMER); } else { log(l, 'Edit', 'Released by ' + l.claimedBy); l.claimedBy = ''; }
+    autoFollow(l, l.status, l.status); touch(); render(); toast(act === 'claim' ? 'Claimed.' : 'Released. It&rsquo;s unclaimed now.'); return; }
+  if (act === 'appr-mark'){ const inp = document.getElementById('apprBy-' + l.id), who = (inp && inp.value.trim()) || l.rep || 'the rep', n = nowStamp();   // EP v2.12 (Departments doc Part 6)
+    l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (marked by ' + ME + ')');
+    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Need to Upload'; setStatus(l, next, ME); touch(); openLogo(l);
+    toast(esc(reqNo(l) + ' ' + l.logo) + ' was approved by ' + esc(who) + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); return; }
+  if (act === 'appr-undo'){ if (!confirm('Undo the approval by ' + l.approvedBy + '?\n\nIt goes back to Sent for Approval.')) return;
+    log(l, 'Status', 'Approval undone (was approved by ' + l.approvedBy + ')'); l.approvedBy = ''; l.approvedAt = ''; l.approvedDate = ''; setStatus(l, 'Sent for Approval', ME); touch(); openLogo(l); toast('Approval undone. It&rsquo;s back in Sent for Approval.'); return; }
   if (act === 'appr-open'){ window.open(approverLink(l), 'sewOutApprover'); }
   if (act === 'appr-upload'){ const fi = document.getElementById('fileIn'); fi.accept = 'application/pdf,.pdf'; fileTarget = {l, sheet:true}; fi.click(); }
   if (act === 'appr-sent'){
@@ -1090,7 +1127,9 @@ document.addEventListener('click', async e => {
     if (act === 'msg-reopen'){ m.resolved = false; delete m.resolvedAt; log(l, 'Note', 'Communication reopened'); touch(); render(); return; } }
   if (act === 'fee-dig'){ l.digitized = x.checked; if (!x.checked) l.rushFee = false; log(l, 'Edit', x.checked ? 'Marked as digitized' : 'Digitized unchecked'); touch(); render(); return; }
   if (act === 'fee-rush'){ l.rushFee = x.checked; log(l, 'Edit', x.checked ? 'Rush fee added' : 'Rush fee removed'); touch(); render(); return; }
-  if (act === 'fee-sent'){ l.invoiceSent = todayIso(); log(l, 'Email', 'Digitizing fee invoice sent ($' + (75 + (l.rushFee ? 5 : 0)) + ')'); touch(); render(); return; }
+  if (act === 'fee-sent'){ l.invoiceSent = todayIso(); log(l, 'Email', 'Digitizing fee email sent' + (opsFor(l) ? ' to ' + opsFor(l) : '') + ' ($' + (75 + (l.rushFee ? 5 : 0)) + ')');
+    if (l.status === 'Send Invoice'){ setStatus(l, 'Need to Upload', AUTO); touch(); openLogo(l); toast('Fee email marked sent. Moved to Need to Upload.'); return; }   // EP v2.12
+    touch(); render(); return; }
   if (act === 'fee-undo'){ l.invoiceSent = ''; log(l, 'Edit', 'Invoice sent undone'); touch(); render(); return; }
   if (act === 'note-add'){
     const t = document.querySelector('.note-in[data-id="' + l.id + '"]'), text = t ? t.value.trim() : ''; if (!text) return;
