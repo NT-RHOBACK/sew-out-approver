@@ -232,6 +232,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .sf-yellow{background:#fdf6e3;border:1px solid #f0dfaa;color:#7a5a12;font-weight:700;font-size:13px;border-radius:6px;padding:9px 12px}
 .sf-yn{font:inherit;font-size:17px;font-weight:700;color:var(--navy);background:#fff;border:2px solid var(--line);border-radius:6px;padding:10px;cursor:pointer}
 .sf-lav{margin-top:10px;background:#f3f0fb;border:1px solid #e0d8f5;border-radius:8px;padding:12px 14px}
+.sf-note-y{margin-top:8px;font-size:13px;font-weight:600;color:#6b5600;background:#fff8db;border:1px solid #f0dc8a;border-radius:6px;padding:8px 12px}
+.sf-in.dt-red{background:#fdecec;color:#8a1c1c;border-color:#f3c4c4}
+.sf-in.dt-yellow{background:#fff8db;color:#6b5600;border-color:#f0dc8a}
+.emb-box-hd.tog{cursor:pointer;user-select:none}
+.emb-box-hd .bchev{font-size:11px;color:#6b7280;width:10px}
+.q-mail{border:1px solid #d6dbe4;border-radius:8px;margin-top:8px;background:#fff}
 .sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
 .sf-upload{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;font-size:14px;color:#49516C}
 .sf .btn{font-size:14px}
@@ -458,7 +464,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.12</span>
+    <span class="vbadge">EP v2.13</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -477,7 +483,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.12';
+const VERSION = 'EP v2.13';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -556,13 +562,13 @@ function clockStart(l){   // the latest move back into the queue, or when it was
 }
 function turnaround(l){   // {tier, due, late} while the clock runs, else null
   if (!CLOCK_RUN.includes(l.status)) return null; const s = clockStart(l); if (!s) return null;
-  const ih = parseIso(l.inHand), n = ih ? Math.round((ih - parseIso(s)) / 86400000) : null, tier = n === null ? TIERS[2] : TIERS.find(t => n <= t.max);
+  const ih = parseIso(l.inHand), n = ih ? Math.round((ih - parseIso(s)) / 86400000) : null, tier = l.rush ? TIERS[0] : n === null ? TIERS[2] : TIERS.find(t => n <= t.max);   // EP v2.13: marked Rush = RUSH
   const due = bizAdd(new Date(s), tier.hrs); return {tier, due, late:new Date() > due};
 }
 function subUrg(l){ const t = turnaround(l); return t && t.late ? 'red' : ''; }   // Submitted: red once it's past due
 function noDate(l){ const t = turnaround(l), c = !t ? 'plain' : t.late ? 'red' : isoOf(t.due) === todayIso() ? 'yellow' : 'plain';   // EP v1.30: no In Hand Date: yellow on the day its 5 days are up, red once past
   return '<span class="dtp ' + c + '">No date</span>'; }
-const rushR = l => { const t = turnaround(l); return t && t.tier.name === 'RUSH' ? '<span class="rush-r" title="RUSH">R</span>' : ''; };
+const rushR = l => { const t = turnaround(l); return (t && t.tier.name === 'RUSH') || (!DONE.includes(l.status) && (l.rush || (l.sewUrgent && ['Pending Sew Out','Review Sew Out'].includes(l.status)))) ? '<span class="rush-r" title="RUSH">R</span>' : ''; };
 function priTag(l){ const t = turnaround(l); if (!t) return '';
   const when = (t.due.getMonth() + 1) + '/' + t.due.getDate() + ' ' + time12('T' + pad(t.due.getHours()) + ':' + pad(t.due.getMinutes()));
   return '<div class="pri ' + t.tier.cls + '">' + t.tier.name + '</div><div class="pri-due' + (t.late ? ' late' : '') + '">' + (t.late ? 'Late &middot; due ' : 'Due ') + when + '</div>'; }
@@ -635,7 +641,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || ''})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -684,7 +690,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -937,7 +943,7 @@ const f = (label, input, full) => '<div class="f' + (full ? ' full' : '') + '"><
 const sel = (field, l, opts) => '<select data-edit="' + field + '" data-id="' + esc(l.id) + '"><option value=""></option>' + opts.map(o => '<option' + (o === l[field] ? ' selected' : '') + '>' + esc(o) + '</option>').join('') +
   (l[field] && !opts.includes(l[field]) ? '<option selected>' + esc(l[field]) + '</option>' : '') + '</select>';
 const inp = (field, l, extra) => '<input data-edit="' + field + '" data-id="' + esc(l.id) + '" value="' + esc(l[field]) + '"' + (extra || '') + '>';
-function requestLink(l){ const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id)}); if (l.inHand) p.set('inhand', l.inHand); return REQUEST_URL + '#' + p.toString().replace(/\+/g, '%20'); }
+function requestLink(l){ const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id)}); if (l.inHand) p.set('inhand', l.inHand); if (l.rush) p.set('urgency', 'urgent'); return REQUEST_URL + '#' + p.toString().replace(/\+/g, '%20'); }
 function approverLink(l){
   const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id), ver:String(l.ver)});
   if (l.count) p.set('count', l.count); if (l.colorType) p.set('colortype', l.colorType); if (l.threadNotes) p.set('thread', l.threadNotes);
@@ -985,19 +991,40 @@ function sheetBox(l){   // EP v2.05: live layout
 }
 // EP v2.05: the logo card, laid out like the live portal's
 const ebox = (num, title, right, body) => '<div class="emb-box"><div class="emb-box-hd">' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
+let boxShut = {};   // EP v2.13 (Part 7.1): Internal notes / Communication closed by clicking the heading
+const eboxT = (key, num, title, right, body) => { const shut = !!boxShut[key];
+  return '<div class="emb-box"><div class="emb-box-hd tog" data-x="box-tog" data-id="' + esc(key.split('|')[0]) + '" data-k="' + esc(key) + '"><span class="bchev">' + (shut ? '&#9656;' : '&#9662;') + '</span>' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div>' + (shut ? '' : '<div class="emb-box-bd">' + body + '</div>') + '</div>'; };
 const ef = (label, input, full) => '<div class="emb-fld' + (full ? ' full' : '') + '"><label>' + label + '</label>' + input + '</div>';
 const digOf = l => l.digitized == null ? !!l.scratch : !!l.digitized;
 let msgOpen = {}, replyOpen = {};
+// EP v2.13 (updates doc Parts 3 + 14): the question email, with every earlier Communication message (newest first) and the request's one subject
+const chainSubject = l => 'Logo request ' + reqNo(l) + ' \u2013 ' + (acctShown(l) || 'No account') + ' \u2013 ' + l.logo;
+function questionEmail(l, m){
+  const all = [];
+  (l.comms || []).forEach(x => { all.push({by:x.by, ts:x.ts, text:x.text, files:x.files}); (x.replies || []).forEach(r => all.push({by:r.by, ts:r.ts, text:r.text, files:r.files})); });
+  const earlier = all.filter(x => x.ts < m.ts || (x.ts === m.ts && x.text !== m.text)).sort((a, b) => b.ts.localeCompare(a.ts));
+  const who = n => n === ME ? 'Noelle Thompson' : n;
+  const one = x => '<div style="border-top:1px solid #e5e7eb;padding:8px 0"><div style="font-size:12px;color:#6b7280"><b style="color:#1b2033">' + esc(who(x.by)) + '</b> &middot; ' + fmt(x.ts) + ' ' + time12(x.ts) + '</div><div>' + esc(x.text).replace(/\n/g, '<br>') + '</div>' + (x.files && x.files.length ? '<div style="font-size:12px;color:#6b7280">Files: ' + esc(x.files.join(', ')) + '</div>' : '') + '</div>';
+  const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1b2033;max-width:620px">' +
+    '<div style="background:#e8892b;color:#fff;font-weight:bold;padding:10px 14px;border-radius:6px 6px 0 0">Question on Your Embroidery Request</div>' +
+    '<div style="padding:12px 14px;border:1px solid #f0c89a;border-top:0"><div><b>Account:</b> ' + esc(acctShown(l)) + '</div><div><b>Design:</b> ' + esc(l.logo) + '</div><div><b>Type:</b> ' + esc(l.type) + '</div>' +
+    '<div style="margin:12px 0;padding:10px 12px;background:#fff3e6;border:1px solid #f5d2a8;border-radius:6px">' + esc(m.text).replace(/\n/g, '<br>') + '</div>' +
+    (earlier.length ? '<div style="margin-top:14px;font-weight:bold">Earlier messages</div>' + earlier.map(one).join('') : '') +
+    '<p style="margin-top:14px">Reply to this email or in your portal&rsquo;s Communication box.</p><p>Thanks,<br>Noelle Thompson</p></div></div>';
+  const text = 'Question on Your Embroidery Request\nAccount: ' + acctShown(l) + '\nDesign: ' + l.logo + '\nType: ' + l.type + '\n\n' + m.text +
+    (earlier.length ? '\n\nEarlier messages\n' + earlier.map(x => who(x.by) + ' \u00b7 ' + fmt(x.ts) + ' ' + time12(x.ts) + '\n' + x.text).join('\n\n') : '') + '\n\nThanks,\nNoelle Thompson';
+  return {subject:chainSubject(l), html, text};
+}
 function commBox(l){
   const id = esc(l.id), list = l.comms || [], open = list.filter(m => !m.resolved), done = list.filter(m => m.resolved);
   const line = (m, cls) => '<div class="' + cls + '"><div class="emb-msg-by"><b>' + esc(m.by) + '</b> <span class="emb-dim">' + fmt(m.ts) + ' ' + time12(m.ts) + '</span></div><div class="emb-msg-text">' + esc(m.text).replace(/\n/g, '<br>') + '</div></div>';
   const msg = m => '<div class="emb-msg' + (m.resolved ? ' resolved' : '') + '">' + line(m, 'emb-msg-main') + (m.replies || []).map(r => line(r, 'emb-msg-reply')).join('') +
     (m.resolved ? '<div class="emb-msg-acts"><span class="emb-dim">Resolved ' + fmt(m.resolvedAt) + '</span><button class="btn light small" data-x="msg-reopen" data-id="' + id + '" data-m="' + esc(m.id) + '">Reopen</button></div>'
       : (replyOpen[m.id] ? '<textarea class="emb-in msg-reply-in" data-id="' + id + '" data-m="' + esc(m.id) + '" placeholder="Write a reply&hellip;"></textarea><div class="emb-msg-acts"><button class="btn light small" data-x="msg-reply-x" data-id="' + id + '" data-m="' + esc(m.id) + '">Cancel</button><button class="btn small" data-x="msg-reply-send" data-id="' + id + '" data-m="' + esc(m.id) + '">Reply</button></div>'
-        : '<div class="emb-msg-acts"><button class="btn light small" data-x="msg-reply" data-id="' + id + '" data-m="' + esc(m.id) + '">Reply</button><button class="btn light small" data-x="msg-resolve" data-id="' + id + '" data-m="' + esc(m.id) + '">Resolve</button></div>')) + '</div>';
+        : '<div class="emb-msg-acts">' + (m.by === ME ? '<button class="btn light small" data-x="msg-email" data-id="' + id + '" data-m="' + esc(m.id) + '">Copy email</button>' : '') + '<button class="btn light small" data-x="msg-reply" data-id="' + id + '" data-m="' + esc(m.id) + '">Reply</button><button class="btn light small" data-x="msg-resolve" data-id="' + id + '" data-m="' + esc(m.id) + '">Resolve</button></div>')) + '</div>';
   const composer = msgOpen[l.id] ? '<div class="emb-msg-new"><textarea class="emb-in msg-in" data-id="' + id + '" placeholder="Write a message or question&hellip;"></textarea>' +
     '<div class="emb-msg-acts"><button class="btn light small" data-x="msg-cancel" data-id="' + id + '">Cancel</button><button class="btn small" data-x="msg-send" data-id="' + id + '">Send</button></div></div>' : '';
-  return ebox('', 'Communication', '<button class="btn light small" data-x="msg-new" data-id="' + id + '">+ New message</button>',
+  return eboxT(l.id + '|comm', '', 'Communication', '<button class="btn light small" data-x="msg-new" data-id="' + id + '">+ New message</button>',
     composer + (open.length ? open.map(msg).join('') : (msgOpen[l.id] ? '' : '<div class="emb-dim">No messages yet. Use &ldquo;+ New message&rdquo; to start a conversation.</div>')) +
     (done.length ? '<details class="emb-hist" style="margin-top:8px"><summary>Show ' + done.length + ' resolved</summary>' + done.map(msg).join('') + '</details>' : '') +
     '<div class="emb-dim" style="margin-top:8px;font-size:11px">Saved on this page only. No emails are sent.</div>');
@@ -1016,6 +1043,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     ef('Number of Thread Colors', sel('count', l, SF_COUNTS)) + ef('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
     ef('Thread Color Notes', ta('threadNotes'), true) +
     ef('Placement', inp('placement', l)) + ef('In Hand Date', '<input type="date" data-edit="inHand" data-id="' + id + '" value="' + esc(l.inHand) + '">' + (priTag(l) ? '<div class="emb-tierline">' + priTag(l) + '</div>' : '')) +
+    ef('Rush', '<label class="emb-fee-chk"><input type="checkbox" data-x="rush-tog" data-id="' + id + '"' + (l.rush ? ' checked' : '') + '> Mark as rush <span class="emb-dim">(24-hour goal)</span></label>') +
     ef('File Version', '<div class="emb-stepper"><button class="sbtn" data-act="ver-" data-id="' + id + '">&minus;</button><span class="emb-step-val">v' + l.ver + '</span><button class="sbtn" data-act="ver+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="ver-edit" data-id="' + id + '">Edit</button></div>') +
     ef('Revisions', '<div class="emb-stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="emb-step-val rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
     ef('Rep Notes', ta('submitNotes'), true) +
@@ -1023,7 +1051,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     ef('Assigned To', '<select data-edit="assigned" data-id="' + id + '"><option value="">Unassigned</option>' + assignOpts.map(o => '<option' + (o === l.assigned ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + (l.assigned && !assignOpts.includes(l.assigned) ? '<option selected>' + esc(l.assigned) + '</option>' : '') + '</select>') +
     ef('Logo Status', '<select data-edit="logoStatus" data-id="' + id + '"><option value="">Not Started</option>' + ['In Progress', 'Active', 'Inactive'].map(o => '<option' + (o === l.logoStatus ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>') +
     '</div>');
-  const notesBox = ebox(2, 'Internal notes', '<span class="emb-private">private</span>',
+  const notesBox = eboxT(l.id + '|notes', 2, 'Internal notes', '<span class="emb-private">private</span>',
     (notes.length ? notes.map(n => '<div class="emb-note"><span class="emb-dim">' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.by) + '</span><div>' + esc(n.text) + '</div></div>').join('') : '<div class="emb-dim">No notes yet.</div>') +
     '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px"><textarea class="emb-in note-in" data-id="' + id + '" placeholder="Add an internal note&hellip;"></textarea><button class="btn small" data-x="note-add" data-id="' + id + '">Add</button></div><div class="emb-dim" style="font-size:11px;margin-top:4px">Cmd/Ctrl+Enter to save</div>');
   const files = ebox(3, 'Files', '<button class="btn light small" data-x="file-zip" data-id="' + id + '">&#11015; Download all (' + l.files.length + ')</button>',
@@ -1051,6 +1079,7 @@ window.addEventListener('message', e => {
   const l = byId(e.data.id); if (!l) return;
   const rn = 'Request ' + reqNo(l);
   l.sewReq = {subject:(e.data.subject || '') + ' — ' + rn, html:'<p style="margin:0 0 10px"><b>' + esc(rn) + '</b></p>' + (e.data.html || ''), text:rn + '\n\n' + (e.data.text || ''), urgency:e.data.urgency, fabricColor:e.data.fabricColor, substitutions:e.data.substitutions, notes:e.data.notes};
+  l.sewUrgent = /URGENT/i.test(e.data.urgency || '');   // EP v2.13 (Part 13.2): red R in the Barrett Queue
   delete l._waiting; log(l, 'Email', 'Sew-out request filled in (' + (e.data.urgency || '') + ')');
   try { e.source.postMessage({type:'rhoback-sewout-received', id:e.data.id}, e.origin); } catch(err){}
   touch(); state.open[l.id] = true; render(); toast('Sew-out request came back for ' + esc(l.logo) + '. Copy the email, send it, then click Mark sent to Barrett.');
@@ -1093,6 +1122,11 @@ document.addEventListener('click', async e => {
     l.sewSentDate = todayIso(); l.sewSentTime = nowStamp().slice(11, 16); l.sewReq = null; log(l, 'Email', 'Sew-out request sent to Barrett' + (files.length ? ' (' + files.join(', ') + ')' : ''));
     setStatus(l, 'Pending Sew Out', AUTO); touch(); openLogo(l); toast('Moved to Barrett Queue &rarr; Pending Sew Out.');
   }
+  if (act === 'box-tog'){ if (e.target.closest('button, input, select, textarea, a')) return; boxShut[x.dataset.k] = !boxShut[x.dataset.k]; render(); return; }   // EP v2.13
+  if (act === 'rush-tog'){ l.rush = x.checked; log(l, 'Edit', x.checked ? 'Marked as rush' : 'Rush removed'); touch(); render(); return; }   // EP v2.13 (Part 13)
+  if (act === 'msg-email'){ const m = (l.comms || []).find(z => z.id === x.dataset.m); if (!m) return; const q = questionEmail(l, m);   // EP v2.13 (Parts 3 + 14)
+    const ok = await copyHtml(q.html, q.text);
+    toast(ok ? '&#10003; Question email copied. Subject: <b>' + esc(q.subject) + '</b>' : 'Couldn&rsquo;t copy. Try again.', 6000); return; }
   if (act === 'claim' || act === 'release'){ e.stopPropagation(); e.preventDefault();   // EP v2.12 (Part 4)
     if (act === 'claim'){ l.claimedBy = CLAIMER; log(l, 'Edit', 'Claimed by ' + CLAIMER); } else { log(l, 'Edit', 'Released by ' + l.claimedBy); l.claimedBy = ''; }
     autoFollow(l, l.status, l.status); touch(); render(); toast(act === 'claim' ? 'Claimed.' : 'Released. It&rsquo;s unclaimed now.'); return; }
@@ -1210,6 +1244,14 @@ const SF_WORD = {'1 color':'One','2 colors':'Two','3 colors':'Three','4 colors':
 const REPS = ['Mason','Steve','Ryan','Will','Rob','Knox'];
 const sfBlank = () => ({rep:'', account:'', logo:'', placement:'', dept:'Wholesale', altName:'', school:'', project:'', type:'', h:'', w:'', sizeNotes:'', scratch:false, count:'', color:'', thread:'', start:'', date:'', notes:'', files:[], review:false, errs:[]});
 let sf = sfBlank();
+// EP v2.13 (updates doc Part 6): Order Start Date colored like In Hand Dates, with a note (never says rush or 30 days)
+const sfDateCls = iso => { const u = iso ? urg(off(iso)) : ''; return u ? ' dt-' + u : ''; };
+function sfDateNote(iso, bd){ if (!iso) return '';
+  if (bd !== null && bd <= 4) return '<div class="sf-warn">&#9888; Heads up &mdash; this start date is within 4 business days. Please coordinate with the embroidery specialist to ensure on-time completion.</div>';
+  const u = urg(off(iso));
+  if (u === 'red') return '<div class="sf-warn">Heads up: this start date doesn&rsquo;t leave much time to complete the order. Can you push the date out? If not, please reach out to Noelle to make sure it&rsquo;s done on time.</div>';
+  if (u === 'yellow') return '<div class="sf-note-y">This is a tight timeline. Please reach out to Noelle if this date can&rsquo;t move.</div>';
+  return ''; }
 function bizDaysTo(iso){ const n = off(iso); return n === null ? null : n < 0 ? -1 : bizDays(n); }
 function sfSize(){ if (sf.type !== 'digitize') return 'DST provided'; return sf.h && sf.w ? sf.h + ' x ' + sf.w + ' in' : sf.h ? sf.h + ' in high' : sf.w ? sf.w + ' in wide' : ''; }
 function sfMissing(){
@@ -1288,8 +1330,8 @@ function renderSubmit(tab){
     sec('Does This Logo Have a Start Date?', true) + '<div class="sf-blue"><b>Workflow priority:</b> Sew-outs with orders on-hand are completed first, then new account sew-outs. If no order exists, do not include an in-hand date &mdash; we&rsquo;ll still complete it ASAP, but this lets logos with orders waiting go first.</div>' +
       '<div class="sf-grid" style="margin-top:8px"><div class="sf-green">ONLY if there is an order, ATS, or prebook in the system.</div><div class="sf-yellow">No order placed yet &mdash; customer will place an order ASAP once sew-out is received.</div>' +
       '<button class="sf-yn' + pick(sf.start === 'yes') + '" data-sf="start" data-v="yes">Yes</button><button class="sf-yn' + pick(sf.start === 'no') + '" data-sf="start" data-v="no">No</button></div>' +
-      (sf.start === 'yes' ? '<div class="sf-lav"><div class="sf-mini">Order Start Date <span class="req">*</span></div><input type="date" class="sf-in" data-sf="date" value="' + v('date') + '" style="max-width:220px">' +
-        (bd !== null && bd <= 4 ? '<div class="sf-warn">&#9888; Heads up &mdash; this start date is within 4 business days. Please coordinate with the embroidery specialist to ensure on-time completion.</div>' : '') + '</div>' : '')) +
+      (sf.start === 'yes' ? '<div class="sf-lav"><div class="sf-mini">Order Start Date <span class="req">*</span></div><input type="date" class="sf-in' + sfDateCls(sf.date) + '" data-sf="date" value="' + v('date') + '" style="max-width:220px">' +
+        sfDateNote(sf.date, bd) + '</div>' : '')) +
     sec('Logo Files &amp; Attachments') + '<div class="sf-upload" data-sf="pick">Click to browse or drag files here &middot; Max 10 MB per file</div>' +
       (sf.files.length ? '<div class="sf-files">' + sf.files.map((x, i) => '<span class="sf-file">' + esc(x.name) + ' <button data-sf="unfile" data-v="' + i + '" title="Remove">&times;</button></span>').join('') + '</div>' : '') +
       '<input type="file" id="sfFiles" multiple hidden>' +
@@ -1349,7 +1391,8 @@ const matchQ = (l, q) => { if (!q) return true; const n = q.trim().replace(/^#/,
 // Sorts (EP v1.46): sort by several things, like Asana. A column header click sorts by just that column; Reset filters brings back the defaults.
 let sortsOpen = false, srtDrag = null;   // which tab's Sorts box is open; the row being dragged
 const sortKeyNow = () => msearch.trim() ? 'search' : state.tab;
-const ihRank = l => { if (!l || !l.inHand || DONE.includes(l.status)) return 2; const u = urg(off(l.inHand)); return u === 'red' ? 0 : u === 'yellow' ? 1 : 2; };   // In Hand Date color: red, yellow, none
+const ihRank = l => { if (l && l.rush && !DONE.includes(l.status)) return 0;   // EP v2.13: Rush sorts with the reds
+  if (!l || !l.inHand || DONE.includes(l.status)) return 2; const u = urg(off(l.inHand)); return u === 'red' ? 0 : u === 'yellow' ? 1 : 2; };   // In Hand Date color: red, yellow, none
 const reqNum = l => parseInt(String(l.nsId || l.id || '').replace(/\D/g, ''), 10) || 0;
 function defaultSorts(key, kind){ if (key !== 'todo') return [{k:'ihc', dir:1}, {k:'sub', dir:1}];   // red In Hand Dates first, then first come, first served
   return (kind || (state.todoView === 'did' ? 'did' : 'task')) === 'did' ? [] : [{k:'pri', dir:1}]; }   // To Do: Rush, then Important, on top

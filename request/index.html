@@ -63,7 +63,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 
     <div><h1>Sew-Out Request</h1><p>Rhoback Embroidery &middot; to Barrett</p></div>
     <div class="hdr-actions">
       <button class="icon-btn" onclick="clearForm()" title="Clear form">&times;</button>
-      <span class="badge">SR v1.02</span>
+      <span class="badge">SR v1.03</span>
     </div>
   </div>
   <div class="body">
@@ -125,7 +125,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 
 // NetSuite opens this page with the logo info in the link:
 //   .../sew-out-approver/request/#customer=..&logo=..&inhand=YYYY-MM-DD&id=..   (values URL-encoded; ?query also works)
 // "Send to NetSuite" posts the answers + finished email back to the NetSuite tab that opened it (window.opener).
-const VERSION = 'SR v1.02';
+const VERSION = 'SR v1.03';   // v1.03: a link with urgency=urgent starts Urgency as URGENT (a logo marked Rush in the Embroidery Portal)
 const NS_ORIGINS = ['https://5263233.app.netsuite.com', 'https://5263233-sb1.app.netsuite.com', 'https://5263233-sb2.app.netsuite.com'];
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) NS_ORIGINS.push(location.origin);   // local testing only
 const PORTAL_ORIGINS = ['https://nt-rhoback.github.io'];   // Noelle's Embroidery Portal (/sew-out-approver/embroidery-portal/)
@@ -324,6 +324,7 @@ function fillFromLink(){
     if (get('inhand')) $('inHand').value = toIsoDate(get('inhand'));
     if (get('notes')) $('notes').value = get('notes');
     st.id = get('id'); st.urgencyManual = false; st.fabric = null; st.subs = null;   // new logo = fresh choices
+    if (get('urgency') === 'urgent'){ st.urgency = 'urgent'; st.urgencyManual = true; }   // SR v1.03: marked Rush
     const b = $('nsBanner'); b.textContent = '';
     const strong = document.createElement('strong');
     strong.textContent = 'Filled in from NetSuite' + (st.id ? ' (record ' + st.id + ')' : '') + ': ';
