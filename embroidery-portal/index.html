@@ -237,6 +237,16 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .sf-in.dt-yellow{background:#fff8db;color:#6b5600;border-color:#f0dc8a}
 .emb-box-hd.tog{cursor:pointer;user-select:none}
 .emb-box-hd .bchev{font-size:11px;color:#6b7280;width:10px}
+.new-reply{display:inline-block;margin-left:6px;padding:0 6px;border-radius:8px;background:#a61b1b;color:#fff;font-size:10px;font-weight:700;vertical-align:middle}
+.bar-conv{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.bar-sub{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);user-select:none}
+.bar-msg{border:1px solid #e5e7eb;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:13px;background:#fff}
+.bar-msg.barrett{border-color:#f3c4c4;background:#fff7f7}
+.bar-msg.auto{background:#f7f8fb;color:#49516c}
+.bar-msg.resolved{opacity:.6}
+.bar-test{margin-top:10px;padding:8px 10px;border:1px dashed #c9cfdb;border-radius:6px;background:#fafbfd}
+.bar-test .emb-dim{font-size:11px}
+.snz{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
 .q-mail{border:1px solid #d6dbe4;border-radius:8px;margin-top:8px;background:#fff}
 .sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
 .sf-upload{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;font-size:14px;color:#49516C}
@@ -348,7 +358,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 body{background:#fff}
 .header{padding:16px 24px}
 .brand-sub{font-size:14px;letter-spacing:2px}
-.notif{display:none!important}
+/* EP v2.14: bell shown again (follow-up and Barrett reply notifications) */
 .msearch input{width:260px;padding:7px 28px 7px 12px;border:1px solid var(--line);border-radius:18px;font-size:13px;color:var(--navy);background:#fff}
 .tab{padding:14px 24px}
 h1{font-size:20px;margin-bottom:14px}
@@ -464,7 +474,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.13</span>
+    <span class="vbadge">EP v2.14</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -483,7 +493,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.13';
+const VERSION = 'EP v2.14';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -611,9 +621,10 @@ function setStatus(l, st, by){
   if (st === 'Completed' && !l.completedDate) l.completedDate = todayIso();
 }
 function touch(){ DB.savedAt = new Date().toISOString(); dirty = true; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} scheduleSave(); }
-const photoIn = l => { const d = sentStamp(l).slice(0, 10); return !!d && (l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') >= d); };
+const photoIn = l => { const d = sentStamp(l).slice(0, 10); return !!d && ((l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') >= d) || (!!l.barPhoto && l.barPhoto.slice(0, 16) >= sentStamp(l))); };
 // Sew-out clock (EP v1.04): Follow Up when it's still Pending Sew Out with no sew-out photo 24 business hours after it was sent to Barrett (weekends don't count)
-const FOLLOW_UP = 'Follow Up';
+const FOLLOW_UP = 'Follow Up';   // EP v2.14: no longer a section (automatic follow-ups instead)
+const BAR_REVIEW = 'Review', BAR_WAIT = 'Waiting on Barrett';
 const sentTime = l => l.sewSentTime || (DB.history.filter(h => h.id === l.id && h.kind === 'Email' && /^Sew-out request sent to Barrett/.test(h.what) && h.ts.slice(0, 10) === l.sewSentDate).map(h => h.ts).sort().pop() || '').slice(11, 16);   // older ones: time from History
 function sentStamp(l){   // EP v1.14: no Sent to Barrett date → when it moved to Pending Sew Out (History)
   if (l.sewSentDate) return l.sewSentDate + 'T' + (sentTime(l) || '00:00');   // no time known: counts from the start of that day
@@ -624,6 +635,21 @@ function bizHoursSince(d){ let ms = 0; const t = new Date(d), now = new Date(); 
 // Follow-ups (EP v1.28): marking a logo followed up adds it to What I did and restarts the 24-business-hour clock (only follow-ups after the latest send count)
 const fuList = l => (l.followUps || []).filter(x => x.slice(0, 16) > sentStamp(l));
 const fuAt = l => fuList(l).pop() || '';
+// EP v2.14 (updates doc Parts 8-9): Barrett conversation in box 4, automatic follow-ups, snooze, waiting on thread colors
+const barNew = l => (l.bar || []).some(m => m.by === 'Barrett' && m.kind === 'reply' && !m.resolved);   // thread-color notes go to Waiting on Barrett instead   // a Barrett reply I haven't resolved -> Review section + New reply tag
+const barPush = (l, m) => { (l.bar = l.bar || []).push(Object.assign({id:'B' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), ts:nowStamp(), resolved:false}, m)); };
+const notify = (l, text) => (DB.notifs = DB.notifs || []).push({ts:nowStamp(), id:l.id, text, read:false});
+function fuNextDue(l){ const sent = sewSentAt(l); if (!sent) return null; const f = fuAt(l), base = f && new Date(f) > sent ? new Date(f) : sent;
+  if (l.waitThreads) return new Date(base.getTime() + 7 * 86400000);   // waiting on threads: once a week
+  return bizAdd(base, urg(off(l.inHand)) === 'red' ? 24 : 48); }
+const snoozed = l => !!l.snoozeUntil && new Date(l.snoozeUntil) > new Date();
+function barAutoFollow(){ let n = 0; const now = new Date(); if (!tdReady()) return 0;   // only while connected to the Excel, so a stale browser copy never gets them
+  DB.logos.forEach(l => { if (l.status !== 'Pending Sew Out' || photoIn(l) || snoozed(l)) return; const due = fuNextDue(l); if (!due || now < due) return;
+    const red = urg(off(l.inHand)) === 'red', why = l.waitThreads ? ' (weekly check-in on thread colors)' : red ? ' (the in hand date is close)' : '';
+    (l.followUps = l.followUps || []).push(nowStamp()); barPush(l, {by:AUTO, kind:'followup', text:'Follow-up sent to Barrett' + why});
+    log(l, 'Email', 'Follow-up sent to Barrett (automatic' + (l.waitThreads ? ', weekly' : red ? ', 24 hours' : ', 48 hours') + ')', AUTO);
+    notify(l, 'Follow-up sent to Barrett \u00b7 ' + reqNo(l) + ' ' + l.logo); n++; });
+  return n; }
 function bizAdd(d, hrs){ const t = new Date(d); let left = hrs * 3600000;   // hrs business hours later (weekends don't count)
   while (left > 0){ const end = new Date(t); end.setHours(24, 0, 0, 0); const w = t.getDay(); if (w && w !== 6){ const step = Math.min(end - t, left); t.setTime(t.getTime() + step); left -= step; } else t.setTime(end.getTime()); }
   return t; }
@@ -641,7 +667,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || ''})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -690,7 +716,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -785,6 +811,7 @@ window.addEventListener('beforeunload', e => { if (dirHandle && dirty){ e.preven
 // EP v1.07: look for newly copied live-portal logos (portal-logos.json) every 5 minutes and when you come back to this tab (v1.08: they're added right away)
 async function recheckSeed(){ if (!dirHandle || saveState === 'reconnect' || saveState === 'unsupported' || !(await permOk(dirHandle, false))) return; await checkSeed(); }
 setInterval(recheckSeed, 5 * 60 * 1000);
+setInterval(() => { refreshToday(); if (barAutoFollow()){ touch(); renderNotifs(); } }, 5 * 60 * 1000);   // EP v2.14: automatic follow-ups while the page is open
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') recheckSeed(); });
 
 // Logos copied from the live portal (portal-logos.json in the same folder)
@@ -912,7 +939,7 @@ const acctShown = l => l.account || l.school || l.project || l.dept || '';   // 
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
-    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + claimTag(l) + '</span></div>'},
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + (barNew(l) ? '<span class="new-reply">New reply</span>' : '') + claimTag(l) + '</span></div>'},
     {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="acct dabbr" title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
     {k:'account', h:'Account', v:l => acctShown(l).toLowerCase(), td:l => '<span class="acct">' + esc(acctShown(l)) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
@@ -926,7 +953,7 @@ function columns(tab, section){
     const pickD = l => l.status === 'Need to Upload' || l.status === 'Send Invoice' ? l.approvedDate : l.sentDate;
     cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
   } else if (extra && extra.f === 'photo'){
-    cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>'});
+    cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>' + (fuAt(l) ? '<div class="td-when">Last follow-up: ' + fmt(fuAt(l)) + '</div>' : '')});   // EP v2.14
     cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp red">Late</span>' : '<span class="img-pend">Pending</span>'});
   } else if (extra){
     cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
@@ -970,15 +997,32 @@ function sewBox(l){
   inner += '<div class="f" style="margin-top:12px"><label>Sent to Barrett (date and time)</label><div style="display:flex;gap:6px">' +
     '<input type="date" data-edit="sewSentDate" data-id="' + esc(l.id) + '" value="' + esc(l.sewSentDate) + '"><input type="time" data-edit="sewSentTime" data-id="' + esc(l.id) + '" value="' + esc(sentTime(l)) + '"></div>' +
     (!l.sewSentDate && sentStamp(l) ? '<div class="note">The 24-hour clock counts from when it moved to Pending Sew Out: ' + sentText(l) + '.</div>' : '') + '</div>';
-  if (l.status === 'Pending Sew Out' && sewSentAt(l)){ const fs = fuAt(l), n = fuList(l).length, due = fuDue(l);   // EP v1.28
-    inner += '<div class="f fu-box"><label>Follow-up</label><div>' + (fs ? 'Followed up ' + fmt(fs) + ' ' + time12(fs) + (n > 1 ? ' (' + n + ' times)' : '') : 'Not followed up yet') +
-      (photoIn(l) ? '' : sewLate(l) ? ' &middot; <b style="color:#a61b1b">In Follow Up now</b>' : due ? ' &middot; back in Follow Up ' + dayName(isoOf(due)) + ' ' + time12('T' + pad(due.getHours()) + ':' + pad(due.getMinutes())) + ' if it isn&rsquo;t in' : '') + '</div>' +
-      '<div class="btns"><button class="btn small" data-x="followUp" data-id="' + esc(l.id) + '">Mark followed up</button>' + (fs && fs.slice(0, 10) === todayIso() ? '<button class="btn light small" data-x="followUndo" data-id="' + esc(l.id) + '">Undo</button>' : '') + '</div>' +
-      '<div class="note">Adds it to today&rsquo;s What I did and snoozes the Follow Up for another 24 business hours.</div></div>'; }
+  if (l.status === 'Pending Sew Out' && sewSentAt(l)){ const fs = fuAt(l), n = fuList(l).length, due = fuNextDue(l), id = esc(l.id);   // EP v2.14 (Part 9)
+    const dueTxt = d => dayName(isoOf(d)) + ' ' + time12('T' + pad(d.getHours()) + ':' + pad(d.getMinutes()));
+    inner += '<div class="f fu-box"><label>Follow-ups to Barrett</label><div>' + (fs ? 'Last follow-up ' + fmt(fs) + ' ' + time12(fs) + (n > 1 ? ' (' + n + ' so far)' : '') : 'No follow-ups yet') +
+      (photoIn(l) ? ' &middot; sew-out is in, follow-ups stopped' : snoozed(l) ? ' &middot; <b>snoozed until ' + fmt(l.snoozeUntil) + ' ' + time12(l.snoozeUntil) + '</b>' : due ? ' &middot; next one goes ' + dueTxt(due) + ' (' + (l.waitThreads ? 'weekly, waiting on threads' : urg(off(l.inHand)) === 'red' ? 'every 24 hrs, in hand date is close' : 'every 48 hrs') + ')' : '') + '</div>' +
+      '<div class="btns"><button class="btn small" data-x="followUp" data-id="' + id + '">Send follow up email</button>' + (fs && fs.slice(0, 10) === todayIso() ? '<button class="btn light small" data-x="followUndo" data-id="' + id + '">Undo</button>' : '') + '</div>' +
+      '<div class="snz">' + (snoozed(l) ? '<button class="btn light small" data-x="unsnooze" data-id="' + id + '">Unsnooze</button>' :
+        '<span class="emb-dim">Snooze follow-ups:</span><select id="snz-' + id + '"><option value="4h">4 hours</option><option value="1d">1 day</option><option value="2d">2 days</option><option value="1w">1 week</option><option value="date">Until a date&hellip;</option></select>' +
+        '<input type="date" id="snzd-' + id + '" style="max-width:150px"><button class="btn light small" data-x="snooze" data-id="' + id + '">Snooze</button>') + '</div>' +
+      (l.waitThreads ? '<div class="snz"><b style="color:#a88600">Waiting on thread colors</b><button class="btn light small" data-x="threadsIn" data-id="' + id + '">Threads are in</button></div>' : '') +
+      '<div class="note">Automatic follow-ups are logged here and in the bell (no emails are sent from this page).</div></div>'; }
   inner += '<div class="emb-grid" style="margin-top:12px">' + ef('Sent to Barrett', '<div class="emb-val emb-dim">' + (sentStamp(l) ? sentText(l) : 'Not sent yet') + '</div>') +
     ef('Sew-out image', '<div class="emb-val emb-dim">' + (photoIn(l) ? '&#10003; Uploaded' : 'Pending') + '</div>') + '</div>';
-  return ebox(4, 'Sew-out request to Barrett', '', inner);
+  inner += barConv(l);   // EP v2.14 (Part 8)
+  return ebox(4, 'Sew-out request to Barrett', barNew(l) ? '<span class="new-reply">New reply</span>' : '', inner);
 }
+let barMsgOpen = {};
+function barConv(l){ const id = esc(l.id), key = l.id + '|bar', shut = !!boxShut[key], list = (l.bar || []).slice().sort((a, b) => a.ts.localeCompare(b.ts));
+  const one = m => '<div class="bar-msg' + (m.by === 'Barrett' ? ' barrett' : m.by === AUTO ? ' auto' : '') + (m.resolved && m.by === 'Barrett' ? ' resolved' : '') + '"><div class="emb-dim"><b style="color:#1b2033">' + esc(m.by === ME ? 'Noelle Thompson' : m.by) + '</b> &middot; ' + fmt(m.ts) + ' ' + time12(m.ts) +
+    (m.by === 'Barrett' && m.kind === 'reply' && !m.resolved ? ' <span class="new-reply">New reply</span>' : '') + '</div><div>' + esc(m.text).replace(/\n/g, '<br>') + '</div>' +
+    (m.by === 'Barrett' && m.kind === 'reply' ? '<div class="btns" style="margin-top:4px">' + (m.resolved ? '<button class="btn light small" data-x="bar-reopen" data-id="' + id + '" data-m="' + esc(m.id) + '">Reopen</button>' : '<button class="btn light small" data-x="bar-resolve" data-id="' + id + '" data-m="' + esc(m.id) + '">Resolve</button>') + '</div>' : '') + '</div>';
+  return '<div class="bar-conv"><div class="bar-sub" data-x="box-tog" data-id="' + id + '" data-k="' + esc(key) + '"><span class="bchev">' + (shut ? '&#9656;' : '&#9662;') + '</span>Barrett conversation <span class="emb-dim" style="font-weight:400;text-transform:none;letter-spacing:0">(' + list.length + ', reps never see this)</span></div>' +
+    (shut ? '' : (list.length ? list.map(one).join('') : '<div class="emb-dim" style="margin-top:6px">Starts when the sew-out request is sent.</div>') +
+      (barMsgOpen[l.id] ? '<textarea class="emb-in bar-in" data-id="' + id + '" placeholder="Message to Barrett&hellip;" style="margin-top:6px"></textarea><div class="btns"><button class="btn light small" data-x="bar-cancel" data-id="' + id + '">Cancel</button><button class="btn small" data-x="bar-send" data-id="' + id + '">Send</button></div>'
+        : '<div class="btns" style="margin-top:6px"><button class="btn light small" data-x="bar-new" data-id="' + id + '">+ Message to Barrett</button></div>') +
+      (['Pending Sew Out','Review Sew Out'].includes(l.status) ? '<div class="bar-test"><div class="emb-dim"><b>Test only:</b> what Barrett would do in their portal or by email.</div><textarea class="emb-in bar-test-in" data-id="' + id + '" placeholder="Barrett&rsquo;s reply or note&hellip;" style="margin-top:4px"></textarea>' +
+        '<div class="btns"><button class="btn light small" data-x="bt-reply" data-id="' + id + '">Barrett replies</button><button class="btn light small" data-x="bt-threads" data-id="' + id + '">Waiting on thread colors</button>' + (l.status === 'Pending Sew Out' ? '<button class="btn light small" data-x="bt-photo" data-id="' + id + '">Sew-out photo uploaded</button>' : '') + '</div></div>' : '')) + '</div>'; }
 function sheetBox(l){   // EP v2.05: live layout
   const id = esc(l.id);
   return ebox(5, 'Approval Sheet', '', '<button class="btn small" data-x="appr-open" data-id="' + id + '">&#8599; Open Sew-Out Approver</button>' +
@@ -1104,7 +1148,7 @@ document.addEventListener('click', async e => {
     if (t && t.state !== 'done'){ state.todoView = 'todo'; todoOpen = t.id; } else { state.todoView = 'did'; todoOpen = t ? (tdTaskSteps(t).pop() || {}).id : w && w.id; }
     save(); render(); const c = document.querySelector('.td-card'); if (c) c.scrollIntoView({block:'center'}); return; }
   if (['todoAdd','todoLink','emailSave','emailClear','followUp','followUndo'].includes(act) && !tdReady()){ toast('Reconnect Excel first (top right).'); return; }
-  if (act === 'followUp' && TODO_OFF){ fuMark(l); touch(); render(); toast('Marked followed up. Snoozed for 24 business hours.'); return; }   // EP v2.10: no What I did line
+  if (act === 'followUp' && TODO_OFF){ fuMark(l); barPush(l, {by:ME, kind:'followup', text:'Follow-up sent to Barrett (by hand)'}); touch(); render(); toast('Follow-up logged. (No email is sent from this page.)'); return; }   // EP v2.14
   if (act === 'followUp'){ fuMark(l); tdLogoStep(l, 'Followed up on', 'marked ' + l.logo + ' followed up'); touch(); render(); toast('Marked followed up. It&rsquo;s in today&rsquo;s What I did and snoozed for 24 business hours.'); return; }
   if (act === 'followUndo'){ fuUndo(l); tdUndoLogoStep(l, 'Followed up on'); touch(); render(); toast('Follow-up undone.'); return; }
   if (act === 'todoAdd'){ const sec = document.getElementById('tdAddSec-' + l.id).value, t = {id:tdId(), day:todayIso(), sec, text:l.logo, state:'', doneSec:'', ts:nowStamp(), logoId:l.id};
@@ -1119,9 +1163,27 @@ document.addEventListener('click', async e => {
   if (act === 'req-outlook'){ location.href = 'mailto:' + BARRETT_TO.join(',') + '?cc=' + encodeURIComponent(BARRETT_CC.join(',')) + '&subject=' + encodeURIComponent(l.sewReq.subject); }
   if (act === 'req-sent'){
     const files = [...document.querySelectorAll('.att[data-id="' + l.id + '"]:checked')].map(c => c.value);
+    const rq = l.sewReq || {}; barPush(l, {by:ME, kind:'sent', text:'Sew-out request sent' + (rq.urgency ? '\nUrgency: ' + rq.urgency : '') + (rq.fabricColor ? '\nFabric color: ' + rq.fabricColor : '') + (rq.substitutions ? '\nThread substitutions: ' + rq.substitutions : '') + (rq.notes ? '\nNotes: ' + rq.notes : '') + (files.length ? '\nFiles: ' + files.join(', ') : '')});   // EP v2.14 (Part 8.2)
+    l.waitThreads = false; l.snoozeUntil = '';
     l.sewSentDate = todayIso(); l.sewSentTime = nowStamp().slice(11, 16); l.sewReq = null; log(l, 'Email', 'Sew-out request sent to Barrett' + (files.length ? ' (' + files.join(', ') + ')' : ''));
     setStatus(l, 'Pending Sew Out', AUTO); touch(); openLogo(l); toast('Moved to Barrett Queue &rarr; Pending Sew Out.');
   }
+  // EP v2.14 (Parts 8-9): Barrett conversation, snooze, threads, test-only Barrett actions
+  if (act === 'bar-new'){ barMsgOpen[l.id] = true; render(); const ta = document.querySelector('.bar-in[data-id="' + l.id + '"]'); if (ta) ta.focus(); return; }
+  if (act === 'bar-cancel'){ delete barMsgOpen[l.id]; render(); return; }
+  if (act === 'bar-send'){ const ta = document.querySelector('.bar-in[data-id="' + l.id + '"]'), text = ta ? ta.value.trim() : ''; if (!text) return; barPush(l, {by:ME, kind:'msg', text}); delete barMsgOpen[l.id]; log(l, 'Email', 'Message to Barrett: ' + text); touch(); render(); return; }
+  if (act === 'bar-resolve' || act === 'bar-reopen'){ const m = (l.bar || []).find(z => z.id === x.dataset.m); if (!m) return; m.resolved = act === 'bar-resolve'; log(l, 'Note', m.resolved ? 'Barrett reply resolved' : 'Barrett reply reopened'); touch(); render(); return; }
+  if (act === 'snooze'){ const v = document.getElementById('snz-' + l.id).value, d = new Date();
+    if (v === 'date'){ const dv = document.getElementById('snzd-' + l.id).value; if (!dv){ toast('Pick a date first.'); return; } const p2 = parseIso(dv); p2.setHours(8, 0, 0, 0); d.setTime(p2.getTime()); }
+    else d.setTime(d.getTime() + ({'4h':4, '1d':24, '2d':48, '1w':168}[v]) * 3600000);
+    l.snoozeUntil = isoOf(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':00'; log(l, 'Edit', 'Follow-ups snoozed until ' + fmt(l.snoozeUntil) + ' ' + time12(l.snoozeUntil)); touch(); render(); return; }
+  if (act === 'unsnooze'){ l.snoozeUntil = ''; log(l, 'Edit', 'Follow-up snooze removed'); touch(); render(); return; }
+  if (act === 'threadsIn'){ l.waitThreads = false; log(l, 'Edit', 'Threads are in (back to regular follow-ups)'); touch(); render(); return; }
+  if (act === 'bt-reply' || act === 'bt-threads' || act === 'bt-photo'){ const ta = document.querySelector('.bar-test-in[data-id="' + l.id + '"]'), text = ta ? ta.value.trim() : '';
+    if (act === 'bt-reply'){ if (!text){ toast('Type Barrett&rsquo;s reply first.'); return; } barPush(l, {by:'Barrett', kind:'reply', text}); log(l, 'Email', 'Barrett replied: ' + text, 'Barrett'); notify(l, 'New reply from Barrett \u00b7 ' + reqNo(l) + ' ' + l.logo); }
+    if (act === 'bt-threads'){ l.waitThreads = true; barPush(l, {by:'Barrett', kind:'threads', text:'Waiting on thread colors' + (text ? ': ' + text : '')}); log(l, 'Email', 'Barrett: waiting on thread colors' + (text ? ' (' + text + ')' : ''), 'Barrett'); notify(l, 'Barrett is waiting on thread colors \u00b7 ' + reqNo(l) + ' ' + l.logo); }
+    if (act === 'bt-photo'){ l.barPhoto = nowStamp(); l.waitThreads = false; barPush(l, {by:AUTO, kind:'photo', text:'Barrett uploaded the sew-out photo' + (text ? ': ' + text : '')}); setStatus(l, 'Review Sew Out', 'Barrett'); notify(l, 'Sew-out photo uploaded \u00b7 ' + reqNo(l) + ' ' + l.logo); }
+    touch(); render(); return; }
   if (act === 'box-tog'){ if (e.target.closest('button, input, select, textarea, a')) return; boxShut[x.dataset.k] = !boxShut[x.dataset.k]; render(); return; }   // EP v2.13
   if (act === 'rush-tog'){ l.rush = x.checked; log(l, 'Edit', x.checked ? 'Marked as rush' : 'Rush removed'); touch(); render(); return; }   // EP v2.13 (Part 13)
   if (act === 'msg-email'){ const m = (l.comms || []).find(z => z.id === x.dataset.m); if (!m) return; const q = questionEmail(l, m);   // EP v2.13 (Parts 3 + 14)
@@ -1956,7 +2018,7 @@ function renderAccounts(tab){
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
 function render(){
-  refreshToday(); renderNotifs(); if (!TODO_OFF && tdApprovalCheck()) touch();
+  refreshToday(); if (barAutoFollow()) touch(); renderNotifs();   // EP v2.14 if (!TODO_OFF && tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
@@ -1971,7 +2033,7 @@ function render(){
   if (tab.submit){ renderSubmit(tab); return; }
   if (tab.accounts){ renderAccounts(tab); return; }
   const group = state.group[tab.key] || 'status';
-  let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div><div class="bar" style="margin:-6px 0 12px">' + sortsCtl(tab.key) + '</div>'
+  let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div><div class="bar" style="margin:-6px 0 12px">' + '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' + sortsCtl(tab.key) + '</div>'
                         : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Red In Hand Dates show first, then the oldest. Change it with Sorts, or click a column name.</div>') +
     (tab.focus ? '' : '<div class="bar"><input id="search" placeholder="Search account, logo, sales rep or #&hellip;" value="' + esc(state.search[tab.key] || '') + '">' +
     (tab.sections ? '<select id="statF"><option value="">All statuses</option>' + tab.sections.map(x => '<option' + (state.stat[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' : '') +
@@ -1979,18 +2041,20 @@ function render(){
     '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '<option value="none"' + (state.dept[tab.key] === 'none' ? ' selected' : '') + '>No department</option></select>' +
     sortsCtl(tab.key) + '<button class="btn light" id="reset">Reset filters</button><button class="btn light" data-collapse="all">Collapse all</button></div>');
   let list = tab.sections ? DB.logos.filter(l => tab.sections.includes(l.status)) : DB.logos.filter(l => !DONE.includes(l.status) && (subUrg(l) || urg(off(l.inHand)) === 'red'));   // EP v1.30: In Hand 30 days or less (or past), or past its due time
+  if (tab.focus && state.dept[tab.key]) list = list.filter(l => l.dept === state.dept[tab.key]);   // EP v2.14: Department filter on the Dashboard too
   if (!tab.focus){ const q = (state.search[tab.key] || '').toLowerCase(), dp = state.dept[tab.key], st = state.stat[tab.key]; list = list.filter(l => matchQ(l, q) && (!dp || (dp === 'none' ? !l.dept : l.dept === dp)) && (!st || l.status === st)); }
   let groups;
   if (!tab.sections || group === 'none') groups = [[tab.sections ? 'All' : null, list]];
-  else if (group === 'status'){ groups = tab.sections.map(s => [s, list.filter(l => l.status === s && !(tab.key === 'barrett' && sewLate(l)))]); if (tab.key === 'barrett') groups.unshift([FOLLOW_UP, list.filter(sewLate)]); }
+  else if (group === 'status'){ groups = tab.sections.map(s => [s, list.filter(l => l.status === s && !(tab.key === 'barrett' && (barNew(l) || (l.waitThreads && l.status === 'Pending Sew Out'))))]);
+    if (tab.key === 'barrett'){ groups.unshift([BAR_REVIEW, list.filter(barNew)]); groups.push([BAR_WAIT, list.filter(l => !barNew(l) && l.waitThreads && l.status === 'Pending Sew Out')]); } }   // EP v2.14 (Parts 8-9)
   else { const keyOf = l => (group === 'account' ? l.account : l.rep) || '(blank)'; const keys = [...new Set(list.map(keyOf))].sort(); groups = keys.map(k => [k, list.filter(l => keyOf(l) === k)]); }
   const joined = groups.length && groups[0][0] !== null;   // EP v2.07: each section is its own box, with its heading above it
   if (joined){
     html += groups.map(([name, items]) => {
       const ck = tab.key + '|' + group + '|' + name, closed = !!state.collapsed[ck];
-      const color = name === FOLLOW_UP && group === 'status' ? '#a61b1b' : (group === 'status' && STATUS_COLORS[name]) ? STATUS_COLORS[name].title : 'var(--navy)';
+      const color = (name === FOLLOW_UP || name === BAR_REVIEW) && group === 'status' ? '#a61b1b' : name === BAR_WAIT && group === 'status' ? '#a88600' : (group === 'status' && STATUS_COLORS[name]) ? STATUS_COLORS[name].title : 'var(--navy)';
       return '<div class="sec"><div class="sec-head" data-sec="' + esc(ck) + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name" style="color:' + color + '">' + esc(name) + '</span><span class="cnt">' + items.length + '</span>' +
-        (name === FOLLOW_UP && group === 'status' ? '<span class="note">Sew-out not back 24 business hours after it was sent to Barrett or after your last follow-up (weekends don&rsquo;t count)</span>' : '') + '</div>' +
+        (name === BAR_REVIEW && group === 'status' ? '<span class="note">Barrett replied. Resolve the message to clear it.</span>' : name === BAR_WAIT && group === 'status' ? '<span class="note">Barrett is waiting on thread colors. Follow-ups go once a week.</span>' : '') + '</div>' +
         (closed ? '' : items.length ? rowsHtml(items, tab, columns(tab, name)) : '<div class="tblwrap"><div class="empty">No logos here.</div></div>') + '</div>';
     }).join('');
   } else html += groups.map(([name, items]) => {
