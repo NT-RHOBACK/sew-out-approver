@@ -437,7 +437,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.05</span>
+    <span class="vbadge">EP v2.06</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -448,13 +448,14 @@ h1{font-size:20px;margin-bottom:14px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
+// EP v2.06: Collegiate school list (103 schools with their embroidery abbreviations) for the School box.
 // EP v2.05: the logo card looks like the live portal's (7 numbered boxes + Communication, saved here only).
 // EP v2.04: looks like the live portal (header, joined sections, toolbar, Dept column, Accounts tab); the Excel save button is the difference.
 // EP v2.03: the whole portal again (like the live portal) for logos that didn't come from the live portal, plus To Do. Logos copied from the live portal (NetSuite ID) stay in the Excel but are set aside (DB.hidden).
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.05';
+const VERSION = 'EP v2.06';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -464,6 +465,12 @@ const BARRETT_TO = ['Rhobackembroideryteam@barrettdistribution.com', 'carla.gote
 const BARRETT_CC = ['rosemarie.lincoln@barrettdistribution.com', 'paulina.rivas@barrettdistribution.com'];
 const DEPTS = ['Wholesale','Special Projects','Collegiate','Mainline','Custom'];
 const DEPT_ABBR = {'Wholesale':'W', 'Special Projects':'SP', 'Collegiate':'C', 'Mainline':'M', 'Custom':'CU'};   // EP v2.04
+// EP v2.06: Collegiate schools and their embroidery abbreviations (from Collegiate Embroidery Codes by School.xlsx). NFL teams will be added here too.
+const SCHOOLS = [["AIR FORCE", "UAF"], ["ALABAMA", "BAMA"], ["APP STATE", "APP"], ["ARIZONA", "AZU"], ["ARIZONA STATE", "ASU"], ["ARKANSAS", "AK"], ["ARMY", "ARMY"], ["AUBURN", "AU"], ["BAYLOR", "BU"], ["BOISE STATE", "BOISE"], ["BOSTON COLLEGE", "BSTN"], ["BYU", "BYU"], ["CALIFORNIA", "CAL"], ["CINCINNATI", "CINCI"], ["CLEMSON", "CLM"], ["COASTAL CAROLINA", "CSTLC"], ["COLORADO", "COL"], ["COLORADO STATE", "CLST"], ["CREIGHTON", "CRU"], ["DAVIDSON", "DVSN"], ["DAYTON", "DTYN"], ["DUKE", "DUKE"], ["EAST CAROLINA", "ECU"], ["FLORIDA", "UF"], ["FLORIDA ATLANTIC", "FAU"], ["FLORIDA STATE", "FSU"], ["GEORGETOWN", "GTWN"], ["GEORGIA", "GA"], ["GEORGIA SOUTHERN", "GAS"], ["GEORGIA TECH", "GTCH"], ["GONZAGA", "GNZ"], ["HOUSTON", "UH"], ["ILLINOIS", "IL"], ["INDIANA", "IU"], ["IOWA", "IOWA"], ["IOWA STATE", "ISU"], ["JAMES MADISON", "JMU"], ["KANSAS", "KU"], ["KANSAS STATE", "KST"], ["KENTUCKY", "UK"], ["LIBERTY", "LBRTY"], ["LOUISIANA LAFAYETTE", "LSLF"], ["LOUISIANA TECH", "LSTCH"], ["LOUISVILLE", "UL"], ["LSU", "LSU"], ["MARQUETTE", "MRQT"], ["MARSHALL", "MRSL"], ["MARYLAND", "MRLND"], ["MEMPHIS", "MEM"], ["MIAMI", "MIA"], ["MIAMI UNIVERSITY", "MIAOH"], ["MICHIGAN", "MICH"], ["MICHIGAN STATE", "MSU"], ["MINNESOTA", "MIN"], ["MISSISSIPPI STATE", "MST"], ["MIZZOU", "MZ"], ["NAVY", "USN"], ["NC STATE", "NCST"], ["NEBRASKA", "NE"], ["NOTRE DAME", "ND"], ["OHIO STATE", "OSU"], ["OKLAHOMA", "OU"], ["OKLAHOMA STATE", "OKST"], ["OLD DOMINION", "ODU"], ["OLE MISS", "OLM"], ["OREGON", "ORGN"], ["OREGON STATE", "OGST"], ["PENN STATE", "PSU"], ["PITT", "PITT"], ["PURDUE", "PRDU"], ["RUTGERS", "RTGRS"], ["SAN DIEGO STATE", "SDSU"], ["SMU", "SMU"], ["SOUTH CAROLINA", "USC"], ["ST. JOHN'S", "STJN"], ["STANFORD", "STNFD"], ["SYRACUSE", "CUSE"], ["TCU", "TCU"], ["TENNESSEE", "TEN"], ["TEXAS", "UT"], ["TEXAS A&M", "TAM"], ["TEXAS TECH", "TTU"], ["TULANE", "TULN"], ["UCF", "UCF"], ["UCLA", "UCLA"], ["UCONN", "UCONN"], ["UNC", "UNC"], ["USC", "SCAL"], ["USF", "USF"], ["UTAH", "UTAH"], ["UTSA", "UTSA"], ["UVA", "UVA"], ["VANDERBILT", "VAN"], ["VILLANOVA", "VIL"], ["VIRGINIA TECH", "VT"], ["WAKE FOREST", "WF"], ["WASHINGTON", "WASH"], ["WASHINGTON STATE", "WSHST"], ["WEST VIRGINIA", "WVU"], ["WESTERN KENTUCKY", "WKU"], ["WESTERN MICHIGAN", "WMU"], ["WISCONSIN", "WISC"], ["XAVIER", "XAV"]];
+const schoolLabel = (n, a) => n + ' (' + a + ')';
+function schoolFix(v){   // a typed school name or abbreviation becomes "NAME (ABBR)"; anything else stays as typed
+  const t = String(v || '').trim(); if (!t) return ''; const u = t.toUpperCase();
+  const hit = SCHOOLS.find(([n, a]) => u === n || u === a || u === schoolLabel(n, a)); return hit ? schoolLabel(hit[0], hit[1]) : t; }
 const reqNo = l => l.nsId ? '#' + l.nsId : String(l.id || '');   // request number (EP v1.12)
 const deptTag = l => { const bits = [esc(reqNo(l))].filter(Boolean); return bits.length ? '<span class="dtag">' + bits.join(' &middot; ') + '</span>' : ''; };   // e.g. #78 · Wholesale
 const AUTO = 'System (auto)';   // who, for moves the portal makes on its own
@@ -961,7 +968,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
   const details = ebox(1, 'Logo details', 'Request ' + esc(reqNo(l)), '<div class="emb-grid">' +
     ef('Account', inp('account', l, ' list="acctList"')) + ef('Logo / Design Name', inp('logo', l)) +
     ef('Request Type', '<div class="emb-val">' + esc(l.type) + ' <span class="emb-dim">&rarr; ' + (l.type === 'Digitize' ? 'QDigitizing' : 'Barrett') + '</span></div>') + ef('Department', sel('dept', l, DEPTS)) +
-    (l.dept === 'Special Projects' || l.project ? ef('Project name', inp('project', l)) : '') + (l.dept === 'Collegiate' || l.dept === 'Mainline' || l.school ? ef('School', inp('school', l)) : '') +
+    (l.dept === 'Special Projects' || l.project ? ef('Project name', inp('project', l)) : '') + (l.dept === 'Collegiate' || l.dept === 'Mainline' || l.school ? ef('School', inp('school', l, ' list="schoolList"')) : '') +
     ef('Size', inp('size', l)) + ef('Size notes', ta('sizeNotes'), true) +
     ef('Number of Thread Colors', sel('count', l, SF_COUNTS)) + ef('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
     ef('Thread Color Notes', ta('threadNotes'), true) +
@@ -1094,7 +1101,8 @@ document.addEventListener('change', e => {
   const el = e.target.closest('[data-edit]');
   if (el){ const l = byId(el.dataset.id), k = el.dataset.edit; if (!l) return; const old = l[k] || '', v = el.value.trim(); if (old === v) return;
     const show = x => !x ? '(blank)' : (k === 'inHand' || k === 'sewSentDate') ? fmt(x) : k === 'sewSentTime' ? time12('T' + x) : x;
-    l[k] = v; log(l, 'Edit', LABELS[k] + ': ' + show(old) + ' > ' + show(v)); touch(); render(); return; }
+    const nv = k === 'school' ? schoolFix(v) : v; if (old === nv) return;   // EP v2.06
+    l[k] = nv; log(l, 'Edit', LABELS[k] + ': ' + show(old) + ' > ' + show(nv)); touch(); render(); return; }
   const s = e.target.closest('select.st'); if (!s) return;
   const l = byId(s.dataset.id); if (!l) return; setStatus(l, s.value); touch(); render();
 });
@@ -1196,7 +1204,7 @@ function renderSubmit(tab){
     sec('Department', true) + '<div class="sf-depts">' + DEPTS.map(d => '<label class="sf-dept' + pick(sf.dept === d) + '"><input type="checkbox" data-sf="dept" data-v="' + esc(d) + '"' + (sf.dept === d ? ' checked' : '') + '> ' + esc(d) + '</label>').join('') + '</div>' +
       (SPJ ? '<div class="sf-lav"><div class="sf-mini">Project name</div><input class="sf-in" data-sfv="project" value="' + v('project') + '" placeholder="Optional" style="max-width:420px">' +
         '<div class="sf-italic">Optional. You&rsquo;re the sales rep for Special Projects requests.</div></div>'
-       : SCH ? '<div class="sf-lav"><div class="sf-mini">School</div><input class="sf-in" data-sfv="school" value="' + v('school') + '" placeholder="Optional: which school is it for?" style="max-width:420px">' +
+       : SCH ? '<div class="sf-lav"><div class="sf-mini">School</div><input class="sf-in" data-sfv="school" list="schoolList" value="' + v('school') + '" placeholder="Optional: search a school or abbreviation (e.g. BAMA)" style="max-width:420px">' +
         '<div class="sf-italic">Optional, and you can change it later on the logo card. You&rsquo;re the sales rep for ' + esc(sf.dept) + ' requests.</div></div>' : '') +
     sec('Who Is Submitting') + '<div class="sf-grid"><div><label class="sf-lbl">Submitted by</label><input class="sf-in" value="Noelle Thompson" disabled></div>' +
       (W ? '<div><label class="sf-lbl">Submitting on behalf of <span class="req">*</span></label><input class="sf-in" list="repList" data-sfv="rep" value="' + v('rep') + '" placeholder="Select or type a rep..."></div></div>'
@@ -1239,7 +1247,7 @@ function renderSubmit(tab){
 async function submitLogo(){
   if (!dirHandle){ toast('Connect Excel first (top right), so the logo and its files save to your OneDrive folder.'); return; }
   const l = blankLogo(), W = sfW(), SCH = sfSch();
-  Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:SCH ? '' : sf.account.trim(), school:SCH ? sf.school.trim() : '', project:sf.dept === 'Special Projects' ? sf.project.trim() : '', rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
+  Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:SCH ? '' : sf.account.trim(), school:SCH ? schoolFix(sf.school) : '', project:sf.dept === 'Special Projects' ? sf.project.trim() : '', rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
     size:sfSize(), sizeNotes:sf.type === 'digitize' ? sf.sizeNotes.trim() : '', scratch:sf.type === 'digitize' && sf.scratch, count:sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count,
     colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sf.start === 'yes' ? sf.date : '', submitNotes:sf.notes.trim()});
   DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
@@ -1850,6 +1858,7 @@ function render(){
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
+  if (!document.getElementById('schoolList')){ const sl = document.createElement('datalist'); sl.id = 'schoolList'; sl.innerHTML = SCHOOLS.map(([n, a]) => '<option value="' + esc(schoolLabel(n, a)) + '">').join(''); document.body.appendChild(sl); }   // EP v2.06
   let rl = document.getElementById('repAll'); if (!rl){ rl = document.createElement('datalist'); rl.id = 'repAll'; document.body.appendChild(rl); }   // EP v2.05
   rl.innerHTML = [...new Set(REPS.concat(DB.logos.concat(DB.hidden || []).map(l => l.rep).filter(Boolean)))].sort().map(a => '<option value="' + esc(a) + '">').join('');
   showBanner();
