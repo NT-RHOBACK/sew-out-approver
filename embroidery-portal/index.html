@@ -251,6 +251,20 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .f-ren{display:flex;gap:6px;align-items:center;flex:1}
 .f-ren input{flex:1;min-width:120px}
 .dst-size{margin-left:6px;font-size:11px;color:#6b7280;white-space:nowrap}
+.rp-card{margin-bottom:16px}
+.rp-h{font-weight:800;font-size:15px;color:var(--navy);margin-bottom:10px}
+.rp-sub{font-weight:700;font-size:13px;color:var(--navy);margin:14px 0 6px}
+.rp-tbl td,.rp-tbl th{white-space:nowrap}
+.rp-kpis{display:flex;gap:14px;flex-wrap:wrap}
+.rp-kpis>div{flex:1;min-width:180px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#f7f8fb}
+.rp-kpis b{display:block;font-size:18px;color:var(--navy)}
+.rp-kpis span{font-size:12px;color:#6b7280}
+.rp-barrow{display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0}
+.rp-barrow span{width:64px;color:#6b7280}
+.rp-bar{height:12px;background:#3b8fd0;border-radius:3px;min-width:4px}
+.rp-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.rp-modal-in{background:#fff;border-radius:10px;padding:18px;max-width:760px;width:100%;max-height:90vh;overflow:auto}
+.rp-pre{white-space:pre-wrap;font:13px/1.5 Consolas,monospace;background:#f7f8fb;border:1px solid var(--line);border-radius:6px;padding:12px}
 .q-mail{border:1px solid #d6dbe4;border-radius:8px;margin-top:8px;background:#fff}
 .sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
 .sf-upload{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;font-size:14px;color:#49516C}
@@ -478,7 +492,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.16</span>
+    <span class="vbadge">EP v2.17</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -497,7 +511,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.16';
+const VERSION = 'EP v2.17';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -541,6 +555,7 @@ const TABS = [
   {key:'accounts',  title:'Accounts', sub:'', accounts:true},   // EP v2.04
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
+  {key:'reports',   title:'Reports', sub:'', reports:true},   // EP v2.17 (updates doc Part 18)
   {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
   // EP v2.10: To Do tab removed (Noelle 11/11). Its old data stays in the Excel, untouched.
 ];
@@ -737,7 +752,7 @@ function buildWorkbook(){
   const tn = XLSX.utils.aoa_to_sheet([['Date','Time','Task','Note','By','Chain']].concat((DB.tdNotes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.task, n.text, n.by, n.chain])));
   tn['!cols'] = [12, 10, 40, 70, 14, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, tn, 'To Do Notes');
-  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')],
+  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')], ['Goals', JSON.stringify(DB.goals || [])],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
   info['!cols'] = [{wch:12}, {wch:110}];
   XLSX.utils.book_append_sheet(wb, info, 'Info');
@@ -768,6 +783,7 @@ function readWorkbook(buf){
   rows('To Do Notes').slice(1).filter(r => r[0]).forEach(r => db.tdNotes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), text:String(r[3]), by:String(r[4]), chain:String(r[5])}));
   rows('To Do History').slice(1).filter(r => r[0]).forEach(r => db.taskLog.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), what:String(r[3]), chain:String(r[4])}));
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
+  const gl = inf.find(r => r[0] === 'Goals'); try { db.goals = gl && gl[1] ? JSON.parse(String(gl[1])) : []; } catch(e){ db.goals = []; }   // EP v2.17
   const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
   return db;
 }
@@ -2072,8 +2088,169 @@ function renderAccounts(tab){
   const s = document.getElementById('acctSearch'); s.oninput = () => { state.search.accounts = s.value; save(); const pos = s.selectionStart; render(); const n = document.getElementById('acctSearch'); n.focus(); n.setSelectionRange(pos, pos); };
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
+// ================= EP v2.17: Reports tab (updates doc Part 18). Only in Noelle's portal. Uses the status changes and dates already saved in History. =================
+const RP_STATUSES = ['New Request','Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Need to Upload'];
+const RP_TEAM = ['Noelle Thompson','Jette Wade','Bryana Kramer'];
+const RP_HOLDERS = [['all','Everyone together'], ['team','Embroidery team (me, Jette, Bryana)'], ['QDigitizing','QDigitizing'], ['Barrett','Barrett'], ['rep','Sales rep']];
+let rpt = {mode:'month', month:'', from:'', to:'', dept:'', person:'', holder:'all', preview:false, to_:''};
+const DEFAULT_GOALS = [{start:'2026-01-01', hours:72, note:'Will’s current goal: 48 to 72 business hours, submitted to approval sheet sent'}];
+const rpGoals = () => (DB.goals && DB.goals.length ? DB.goals : DEFAULT_GOALS).slice().sort((a, b) => a.start.localeCompare(b.start));
+function bizHoursBetween(a, b){ if (!a || !b || b <= a) return 0; let ms = 0; const t = new Date(a); while (t < b){ const end = new Date(t); end.setHours(24, 0, 0, 0); const stop = end < b ? end : b; const w = t.getDay(); if (w && w !== 6) ms += stop - t; t.setTime(stop); } return ms / 3600000; }
+const rpH = h => h == null || isNaN(h) ? '&mdash;' : h < 48 ? h.toFixed(1) + ' hrs' : (h / 24).toFixed(1) + ' business days <span class="muted">(' + Math.round(h) + ' hrs)</span>';
+const rpHt = h => h == null || isNaN(h) ? '-' : h < 48 ? h.toFixed(1) + ' hrs' : (h / 24).toFixed(1) + ' business days (' + Math.round(h) + ' hrs)';
+const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+const rpAll = () => DB.logos.slice();   // the logos shown in this portal (not the set-aside live-portal copies)
+function rpSubmitAt(l){ const a = DB.history.filter(e => e.id === l.id && e.kind === 'Added').map(e => e.ts).sort()[0]; return new Date(a || ((l.submitted || todayIso()) + 'T09:00:00')); }
+function rpSpans(l){   // time in each status, from History
+  const h = DB.history.filter(e => e.id === l.id && e.kind === 'Status').sort((a, b) => a.ts.localeCompare(b.ts)), out = [];
+  let cur = 'New Request', from = rpSubmitAt(l);
+  h.forEach(e => { const m = e.what.match(/^Status: (.+) > (.+)$/); if (!m) return; const at = new Date(e.ts); if (at < from) return; out.push({st:m[1], from, to:at, next:m[2], done:true}); cur = m[2]; from = at; });
+  if (!DONE.includes(cur)) out.push({st:cur, from, to:new Date(), next:'', done:false});
+  return out;
+}
+function rpRange(kind){ const now = new Date(), y = now.getFullYear();
+  if (kind === 'year') return [new Date(y, 0, 1), now, 'This year'];
+  if (kind === 'all') return [new Date(2000, 0, 1), now, 'All time'];
+  if (rpt.mode === 'custom' && rpt.from){ const a = parseIso(rpt.from), b = rpt.to ? parseIso(rpt.to) : now; if (rpt.to) b.setHours(23, 59, 59); return [a, b, fmt(rpt.from) + ' to ' + (rpt.to ? fmt(rpt.to) : 'today')]; }
+  if (rpt.mode === 'year') return [new Date(y, 0, 1), now, 'This year'];
+  if (rpt.mode === 'all') return [new Date(2000, 0, 1), now, 'All time'];
+  const m = rpt.month ? rpt.month.split('-').map(Number) : [y, now.getMonth() + 1], a = new Date(m[0], m[1] - 1, 1), b = new Date(m[0], m[1], 0, 23, 59, 59);
+  return [a, b > now ? now : b, a.toLocaleDateString('en-US', {month:'long', year:'numeric'})]; }
+const inR = (d, r) => d && d >= r[0] && d <= r[1];
+function rpLogos(dept){ return rpAll().filter(l => (dept === undefined ? (!rpt.dept || l.dept === rpt.dept) : (!dept || l.dept === dept)) && (!rpt.person || l.rep === rpt.person || l.claimedBy === rpt.person || l.assigned === rpt.person)); }
+const rpHolder = st => st === 'Digitizing' ? 'QDigitizing' : st === 'Pending Sew Out' ? 'Barrett' : (st === 'Sent for Approval' || st === 'Waiting on Reply') ? 'rep' : 'team';
+function rpGoalRuns(l){   // each time the approval sheet was sent: business hours since the clock started (submitted, or the last revision)
+  const sp = rpSpans(l), runs = []; let start = rpSubmitAt(l);
+  sp.forEach(s => {
+    if (s.done && s.next === 'Sent for Approval'){ const end = s.to, inWin = sp.filter(x => x.to > start && x.from < end), by = {team:0, QDigitizing:0, Barrett:0, rep:0};
+      inWin.forEach(x => { by[rpHolder(x.st)] += bizHoursBetween(x.from < start ? start : x.from, x.to > end ? end : x.to); });
+      runs.push({l, start, end, hours:bizHoursBetween(start, end), by}); }
+    if (s.done && ((['Sent for Approval','Waiting on Reply'].includes(s.st) && s.next === 'New Request') || (s.st === 'Review Sew Out' && s.next === 'Pending Sew Out'))) start = s.to;   // revision: the clock starts over
+  });
+  return runs; }
+const goalAt = d => { const iso = isoOf(d); return rpGoals().filter(g => g.start <= iso).pop() || rpGoals()[0]; };
+function rpMetrics(r, dept){
+  const L = rpLogos(dept), spans = L.flatMap(l => rpSpans(l).map(s => Object.assign({l}, s)));
+  const submitted = L.filter(l => inR(rpSubmitAt(l), r));
+  const completedSp = spans.filter(s => s.done && s.next === 'Completed' && inR(s.to, r)), completed = completedSp.map(s => ({l:s.l, at:s.to}));
+  const whole = completed.map(c => bizHoursBetween(rpSubmitAt(c.l), c.at));
+  const byStatus = {}; RP_STATUSES.forEach(st => { byStatus[st] = avg(spans.filter(s => s.done && s.st === st && inR(s.from, r)).map(s => bizHoursBetween(s.from, s.to))); });
+  const barSp = spans.filter(s => s.done && s.st === 'Pending Sew Out' && s.next === 'Review Sew Out' && inR(s.to, r));
+  const photoDays = {}; spans.filter(s => s.done && s.next === 'Review Sew Out' && inR(s.to, r)).forEach(s => { const k = isoOf(s.to); photoDays[k] = (photoDays[k] || 0) + 1; });
+  const fuTs = L.flatMap(l => (l.followUps || []).map(t => ({l, t:new Date(t)}))).filter(x => inR(x.t, r)), sentToBarrett = new Set(spans.filter(s => s.st === 'Pending Sew Out' && inR(s.from, r)).map(s => s.l.id));
+  const approvedL = [...new Set(spans.filter(s => s.done && s.st === 'Sent for Approval' && ['Send Invoice','Need to Upload'].includes(s.next) && inR(s.to, r)).map(s => s.l))];   // approved = moved on from Sent for Approval
+  const runs = L.flatMap(rpGoalRuns).filter(x => inR(x.end, r)), hold = x => rpt.holder === 'all' ? x.hours : x.by[rpt.holder] || 0;
+  const met = runs.filter(x => hold(x) <= goalAt(x.end).hours);
+  return {L, submitted, completed, whole:avg(whole), byStatus, barrett:avg(barSp.map(s => bizHoursBetween(s.from, s.to))), barrettN:barSp.length, photoDays,
+    followUps:fuTs.length, fuPer:sentToBarrett.size ? fuTs.length / sentToBarrett.size : null,
+    revAvg:avg(completed.map(c => c.l.rev || 0)), firstTry:approvedL.filter(l => !(l.rev || 0)).length, approvedN:approvedL.length,
+    runs, met:met.length, goalAvg:avg(runs.map(hold)), reminders:L.flatMap(l => l.apprRem || []).filter(t => inR(new Date(t), r)).length, spans};
+}
+function rpReps(r){   // sales reps: reply time, waiting on them, approval time, reminders, counts
+  const reps = [...new Set(rpLogos().map(l => l.rep).filter(Boolean))].sort();
+  return reps.map(rep => { const L = rpLogos().filter(l => l.rep === rep), sp = L.flatMap(l => rpSpans(l).map(s => Object.assign({l}, s)));
+    const replies = []; L.forEach(l => (l.comms || []).forEach(m => { if (m.by !== ME) return; const rr = (m.replies || []).find(x => x.by !== ME && x.ts > m.ts); if (rr && inR(new Date(rr.ts), r)) replies.push(bizHoursBetween(new Date(m.ts), new Date(rr.ts))); }));
+    const wait = sp.filter(s => s.done && s.st === 'Waiting on Reply' && inR(s.from, r)).map(s => bizHoursBetween(s.from, s.to));
+    const appr = sp.filter(s => s.done && s.st === 'Sent for Approval' && ['Send Invoice','Need to Upload'].includes(s.next) && inR(s.to, r)).map(s => bizHoursBetween(s.from, s.to));
+    const comp = sp.filter(s => s.done && s.next === 'Completed' && inR(s.to, r));
+    const L2 = L.filter(l => inR(rpSubmitAt(l), r));
+    return {rep, reply:avg(replies), wait:avg(wait), appr:avg(appr), reminders:L.flatMap(l => l.apprRem || []).filter(t => inR(new Date(t), r)).length, submitted:L2.length, completed:comp.length,
+      perReq:avg(comp.map(s => bizHoursBetween(rpSubmitAt(s.l), s.to)))};
+  }); }
+function renderReports(tab){
+  const R = rpRange(), Y = rpRange('year'), A = rpRange('all'), m = rpMetrics(R), my = rpMetrics(Y), ma = rpMetrics(A);
+  const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '&mdash;';
+  const people = [...new Set(RP_TEAM.concat(rpAll().map(l => l.rep).filter(Boolean)))].sort();
+  const btn = (k, label) => '<button class="btn' + (rpt.mode === k ? '' : ' light') + '" data-rp="mode" data-v="' + k + '">' + label + '</button>';
+  let h = '<h1>Reports</h1><div class="sub">Only in your portal. Times count business hours (weekends don&rsquo;t count). Numbers come from the status changes and dates saved in History, so past logos count too.</div>' +
+    '<div class="bar">' + btn('month', 'Monthly') + btn('year', 'Yearly') + btn('all', 'All time') +
+    (rpt.mode === 'month' ? '<input type="month" id="rpMonth" value="' + esc(rpt.month || todayIso().slice(0, 7)) + '" style="flex:none;min-width:0">' : '') +
+    '<label class="muted" style="font-size:12px">From <input type="date" id="rpFrom" value="' + esc(rpt.from) + '" style="flex:none;min-width:0"></label><label class="muted" style="font-size:12px">To <input type="date" id="rpTo" value="' + esc(rpt.to) + '" style="flex:none;min-width:0"></label>' +
+    '<select id="rpDept"><option value="">All departments</option>' + DEPTS.map(d => '<option' + (rpt.dept === d ? ' selected' : '') + '>' + esc(d) + '</option>').join('') + '</select>' +
+    '<select id="rpPerson"><option value="">Everyone</option>' + people.map(p => '<option' + (rpt.person === p ? ' selected' : '') + '>' + esc(p) + '</option>').join('') + '</select>' +
+    '<button class="btn" data-rp="gen">Generate report</button></div>';
+  const card = (title, body) => '<div class="lcard rp-card"><div class="rp-h">' + title + '</div>' + body + '</div>';
+  const tbl = (head, rows) => '<div class="tblwrap"><table class="tbl rp-tbl"><thead><tr>' + head.map(x => '<th>' + x + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+  // 1. Summary: this range, this year, all time
+  h += card('Summary &middot; ' + esc(R[2]), tbl(['', esc(R[2]), 'This year', 'All time'], [
+    ['Requests submitted', m.submitted.length, my.submitted.length, ma.submitted.length],
+    ['Requests completed', m.completed.length, my.completed.length, ma.completed.length],
+    ['Average submitted &rarr; Completed', rpH(m.whole), rpH(my.whole), rpH(ma.whole)],
+    ['Barrett: sent &rarr; sew-out photo', rpH(m.barrett), rpH(my.barrett), rpH(ma.barrett)],
+    ['Follow-ups to Barrett', m.followUps, my.followUps, ma.followUps],
+    ['Average revisions per logo', m.revAvg == null ? '&mdash;' : m.revAvg.toFixed(2), my.revAvg == null ? '&mdash;' : my.revAvg.toFixed(2), ma.revAvg == null ? '&mdash;' : ma.revAvg.toFixed(2)],
+    ['Approved on the first try', m.firstTry + ' of ' + m.approvedN, my.firstTry + ' of ' + my.approvedN, ma.firstTry + ' of ' + ma.approvedN],
+    ['Approval reminders sent', m.reminders, my.reminders, ma.reminders],
+    ['Met the goal (submitted &rarr; approval sheet sent)', m.met + ' of ' + m.runs.length + ' (' + pct(m.met, m.runs.length) + ')', my.met + ' of ' + my.runs.length + ' (' + pct(my.met, my.runs.length) + ')', ma.met + ' of ' + ma.runs.length + ' (' + pct(ma.met, ma.runs.length) + ')']]));
+  // 2. Time in each status, overall and by department
+  const per = DEPTS.map(d => rpMetrics(R, d));
+  h += card('How long each step takes &middot; ' + esc(R[2]), tbl(['Status', 'All departments'].concat(DEPTS.map(d => esc(DEPT_ABBR[d] || d))), RP_STATUSES.map(st => [esc(st), rpH(m.byStatus[st])].concat(per.map(x => rpH(x.byStatus[st]))))) +
+    '<div class="note">' + DEPTS.map(d => esc(DEPT_ABBR[d] || d) + ' = ' + esc(d)).join(' &middot; ') + '</div>');
+  // 3. Barrett
+  const days = Object.keys(m.photoDays).sort(), mx = Math.max(1, ...Object.values(m.photoDays));
+  h += card('Barrett &middot; ' + esc(R[2]), '<div class="rp-kpis"><div><b>' + rpH(m.barrett) + '</b><span>average from sent to sew-out photo (' + m.barrettN + ')</span></div><div><b>' + m.followUps + '</b><span>follow-ups sent</span></div><div><b>' + (m.fuPer == null ? '&mdash;' : m.fuPer.toFixed(1)) + '</b><span>follow-ups per logo sent</span></div></div>' +
+    '<div class="rp-sub">Sew-outs sent back each day</div>' + (days.length ? days.map(d => '<div class="rp-barrow"><span>' + fmt(d) + '</span><div class="rp-bar" style="width:' + Math.round(m.photoDays[d] / mx * 100) + '%"></div><b>' + m.photoDays[d] + '</b></div>').join('') : '<div class="muted">None in this range.</div>'));
+  // 4. Whole request by department + estimated finish for open requests
+  const allDept = DEPTS.map(d => rpMetrics(A, d)), avgAll = ma.whole;
+  const openL = rpLogos().filter(l => !DONE.includes(l.status)).sort((a, b) => rpSubmitAt(a) - rpSubmitAt(b));
+  h += card('Whole request: submitted &rarr; Completed', tbl(['Department', esc(R[2]), 'All time'], [['All departments', rpH(m.whole), rpH(ma.whole)]].concat(DEPTS.map((d, i) => [esc(d), rpH(per[i].whole), rpH(allDept[i].whole)]))) +
+    '<div class="rp-sub">Estimated finish for open requests (from the department&rsquo;s all-time average)</div>' +
+    (openL.length ? tbl(['Request', 'Logo', 'Dept', 'Status', 'Submitted', 'Estimated finish'], openL.map(l => { const i = DEPTS.indexOf(l.dept), a = (i >= 0 && allDept[i].whole) || avgAll, est = a ? bizAdd(rpSubmitAt(l), a) : null;
+      return [esc(reqNo(l)), esc(l.logo), esc(DEPT_ABBR[l.dept] || l.dept || ''), esc(l.status), fmt(isoOf(rpSubmitAt(l))), est ? fmt(isoOf(est)) : '&mdash;']; })) : '<div class="muted">No open requests.</div>'));
+  // 5. Revisions + 6. Counts
+  h += card('Revisions &middot; ' + esc(R[2]), tbl(['Department', 'Average revisions', 'Approved on the first try'], [['All departments', m.revAvg == null ? '&mdash;' : m.revAvg.toFixed(2), m.firstTry + ' of ' + m.approvedN]].concat(DEPTS.map((d, i) => [esc(d), per[i].revAvg == null ? '&mdash;' : per[i].revAvg.toFixed(2), per[i].firstTry + ' of ' + per[i].approvedN]))));
+  const byPerson = {}; m.submitted.forEach(l => { const k = l.rep || '(no rep)'; (byPerson[k] = byPerson[k] || [0, 0])[0]++; }); m.completed.forEach(c => { const k = c.l.rep || '(no rep)'; (byPerson[k] = byPerson[k] || [0, 0])[1]++; });
+  h += card('Submitted and completed &middot; ' + esc(R[2]), tbl(['Department', 'Submitted', 'Completed'], DEPTS.map((d, i) => [esc(d), per[i].submitted.length, per[i].completed.length]).concat([['<b>All</b>', '<b>' + m.submitted.length + '</b>', '<b>' + m.completed.length + '</b>']])) +
+    tbl(['Person (sales rep)', 'Submitted', 'Completed'], Object.keys(byPerson).sort().map(k => [esc(k), byPerson[k][0], byPerson[k][1]])));
+  // 7. Sales reps
+  const reps = rpReps(R);
+  h += card('Sales reps &middot; ' + esc(R[2]), reps.length ? tbl(['Sales rep', 'Reply to a message', 'Waiting on Reply', 'Approval sheet &rarr; approved', 'Approval reminders', 'Submitted', 'Completed', 'Average per request'],
+    reps.map(x => [esc(x.rep), rpH(x.reply), rpH(x.wait), rpH(x.appr), x.reminders, x.submitted, x.completed, rpH(x.perReq)])) : '<div class="muted">No sales rep logos in this range.</div>');
+  // 8. Goals
+  const g = goalAt(new Date()), months = []; { const d = new Date(); d.setDate(1); for (let i = 5; i >= 0; i--){ const a = new Date(d.getFullYear(), d.getMonth() - i, 1), b = new Date(d.getFullYear(), d.getMonth() - i + 1, 0, 23, 59, 59); months.push([a, b]); } }
+  const trend = months.map(([a, b]) => { const x = rpMetrics([a, b, '']); return [a.toLocaleDateString('en-US', {month:'short', year:'numeric'}), x.runs.length, x.met + ' (' + pct(x.met, x.runs.length) + ')', rpH(x.goalAvg)]; });
+  h += card('Goals', '<div class="rp-kpis"><div><b>' + g.hours + ' business hrs</b><span>current goal, since ' + fmt(g.start) + (g.note ? ' &middot; ' + esc(g.note) : '') + '</span></div>' +
+      '<div><b>' + m.met + ' of ' + m.runs.length + ' (' + pct(m.met, m.runs.length) + ')</b><span>met the goal &middot; ' + esc(R[2]) + '</span></div><div><b>' + rpH(m.goalAvg) + '</b><span>average time</span></div></div>' +
+    '<div class="bar" style="margin-top:10px"><span class="muted" style="font-size:12px">Whose time:</span><select id="rpHolder">' + RP_HOLDERS.map(([k, t]) => '<option value="' + k + '"' + (rpt.holder === k ? ' selected' : '') + '>' + esc(t) + '</option>').join('') + '</select>' +
+      '<span class="muted" style="font-size:12px">Clock: submitted (or the last revision) until the approval sheet is sent.</span></div>' +
+    tbl(['Who had it', 'Average hours per logo', 'Share'], (() => { const tot = {team:0, QDigitizing:0, Barrett:0, rep:0}; m.runs.forEach(x => Object.keys(tot).forEach(k => tot[k] += x.by[k])); const all = Object.values(tot).reduce((s, v) => s + v, 0);
+      return RP_HOLDERS.slice(1).map(([k, t]) => [esc(t), m.runs.length ? rpH(tot[k] / m.runs.length) : '&mdash;', all ? Math.round(tot[k] / all * 100) + '%' : '&mdash;']); })()) +
+    '<div class="rp-sub">Month by month</div>' + tbl(['Month', 'Approval sheets sent', 'Met the goal', 'Average time'], trend) +
+    '<div class="rp-sub">Goal history</div>' + tbl(['Starts', 'Goal', 'Note'], rpGoals().slice().reverse().map(x => [fmt(x.start), x.hours + ' business hrs', esc(x.note || '')])) +
+    '<div class="bar" style="margin-top:8px"><span class="muted" style="font-size:12px">New goal:</span><input type="date" id="gStart" value="' + todayIso() + '" style="flex:none;min-width:0"><input id="gHours" type="number" min="1" placeholder="Hours" style="flex:none;width:90px"><input id="gNote" placeholder="Note (optional)"><button class="btn light" data-rp="goalAdd">Add goal</button></div>');
+  // 9. Generate report preview
+  if (rpt.preview){ const txt = rpText(R, m); h += '<div class="rp-modal"><div class="rp-modal-in"><div class="rp-h">Report preview &middot; ' + esc(R[2]) + '</div><pre class="rp-pre">' + esc(txt) + '</pre>' +
+    '<div class="bar"><label class="muted" style="font-size:12px">To <input id="rpTo_" value="' + esc(rpt.to_) + '" placeholder="Your email, plus anyone you add (separate with ;)" style="min-width:320px"></label></div>' +
+    '<div class="btns"><button class="btn light" data-rp="close">Close</button><button class="btn light" data-rp="copy">Copy report</button><button class="btn" data-rp="send">Send (opens Outlook)</button></div><div class="note">Nothing is sent on its own. Send opens an Outlook email you can review first.</div></div></div>'; }
+  document.getElementById('page').innerHTML = h;
+  const on = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); render(); }; };
+  on('rpMonth', v => { rpt.month = v; rpt.mode = 'month'; }); on('rpFrom', v => { rpt.from = v; rpt.mode = v ? 'custom' : 'month'; }); on('rpTo', v => { rpt.to = v; if (rpt.from) rpt.mode = 'custom'; });
+  on('rpDept', v => { rpt.dept = v; }); on('rpPerson', v => { rpt.person = v; }); on('rpHolder', v => { rpt.holder = v; });
+  const t2 = document.getElementById('rpTo_'); if (t2) t2.oninput = () => { rpt.to_ = t2.value; };
+}
+function rpText(R, m){ const g = goalAt(new Date()), L = [];
+  L.push('Embroidery report: ' + R[2] + (rpt.dept ? ' (' + rpt.dept + ')' : '') + (rpt.person ? ' (' + rpt.person + ')' : ''), '');
+  L.push('Requests submitted: ' + m.submitted.length, 'Requests completed: ' + m.completed.length, 'Average submitted to Completed: ' + rpHt(m.whole));
+  L.push('Barrett, sent to sew-out photo: ' + rpHt(m.barrett) + ' (' + m.barrettN + ' sew-outs)', 'Follow-ups to Barrett: ' + m.followUps);
+  L.push('Average revisions per logo: ' + (m.revAvg == null ? '-' : m.revAvg.toFixed(2)), 'Approved on the first try: ' + m.firstTry + ' of ' + m.approvedN, '');
+  L.push('Goal: ' + g.hours + ' business hours from submitted to approval sheet sent (since ' + fmt(g.start) + ')');
+  L.push('Met the goal: ' + m.met + ' of ' + m.runs.length + (m.runs.length ? ' (' + Math.round(m.met / m.runs.length * 100) + '%)' : ''), 'Average time: ' + rpHt(m.goalAvg), '');
+  L.push('Time in each step:'); RP_STATUSES.forEach(st => L.push('  ' + st + ': ' + rpHt(m.byStatus[st])));
+  return L.join('\n'); }
+document.addEventListener('click', async e => { const b = e.target.closest('[data-rp]'); if (!b || state.tab !== 'reports') return; const k = b.dataset.rp;
+  if (k === 'mode'){ rpt.mode = b.dataset.v; if (rpt.mode !== 'custom'){ rpt.from = ''; rpt.to = ''; } render(); return; }
+  if (k === 'gen'){ rpt.preview = true; render(); return; }
+  if (k === 'close'){ rpt.preview = false; render(); return; }
+  const R = rpRange(), txt = () => rpText(R, rpMetrics(R));
+  if (k === 'copy'){ try { await navigator.clipboard.writeText(txt()); toast('&#10003; Report copied.'); } catch(err){ toast('Couldn&rsquo;t copy. Try again.'); } return; }
+  if (k === 'send'){ location.href = 'mailto:' + encodeURIComponent(rpt.to_) + '?subject=' + encodeURIComponent('Embroidery report: ' + R[2]) + '&body=' + encodeURIComponent(txt()); return; }
+  if (k === 'goalAdd'){ const s = document.getElementById('gStart').value, hrs = +document.getElementById('gHours').value, note = document.getElementById('gNote').value.trim();
+    if (!s || !(hrs > 0)){ toast('Pick a start date and the hours.'); return; } DB.goals = rpGoals().filter(x => x.start !== s).concat([{start:s, hours:hrs, note}]); touch(); render(); toast('Goal added.'); return; }
+});
+
 function render(){
-  refreshToday(); { const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2) touch(); } renderNotifs();   // EP v2.14 / v2.15 if (!TODO_OFF && tdApprovalCheck()) touch();
+  refreshToday(); { const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2) touch(); } renderNotifs();   // EP v2.14 / v2.15
+  if (!TODO_OFF && tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
@@ -2087,6 +2264,7 @@ function render(){
   if (tab.todo){ renderTodo(tab); return; }
   if (tab.submit){ renderSubmit(tab); return; }
   if (tab.accounts){ renderAccounts(tab); return; }
+  if (tab.reports){ renderReports(tab); return; }   // EP v2.17
   const group = state.group[tab.key] || 'status';
   let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div><div class="bar" style="margin:-6px 0 12px">' + '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' + sortsCtl(tab.key) + '</div>'
                         : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Red In Hand Dates show first, then the oldest. Change it with Sorts, or click a column name.</div>') +
