@@ -450,7 +450,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.07</span>
+    <span class="vbadge">EP v2.08</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -469,7 +469,7 @@ h1{font-size:20px;margin-bottom:14px}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.07';
+const VERSION = 'EP v2.08';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1178,7 +1178,7 @@ function sfMissing(){
   if (!sf.logo.trim()) m.push('Logo / Design Name');
   if (!sf.type) m.push('Request Type'); if (sf.type === 'digitize' && !sf.h && !sf.w && !sf.sizeNotes.trim()) m.push('Size (a height, a width, or size notes)');
   if (!club && !sf.count) m.push('Number of Thread Colors'); if (!sf.color) m.push('Color Type');
-  if (!sf.thread.trim() && !(sf.count === '1 color' && sf.color === 'Color Coordinate')) m.push('Thread Color Notes');
+  if (!sf.thread.trim() && sf.dept === 'Wholesale' && !(sf.count === '1 color' && sf.color === 'Color Coordinate')) m.push('Thread Color Notes');   // EP v2.08: only required for Wholesale
   if (!sf.start) m.push('Does this logo have a start date?'); if (sf.start === 'yes' && !sf.date) m.push('Order Start Date');
   return m;
 }
@@ -1207,7 +1207,7 @@ function renderSubmit(tab){
       '<div><div class="sf-mini">Width</div><div class="sf-unit"><input class="sf-in" placeholder="0.00" inputmode="decimal" data-num="1" data-sfv="w" value="' + v('w') + '"><span>in</span></div></div></div>' +
       '<div class="sf-mini" style="margin-top:8px">Size notes</div><input class="sf-in" data-sfv="sizeNotes" value="' + v('sizeNotes') + '" placeholder="please use best judgement for size (artist discretion)"></div>' : '') + '</div>';
   const club = sf.color === 'Club Colors';
-  const notesOptional = sf.count === '1 color' && sf.color === 'Color Coordinate';
+  const notesOptional = sf.dept !== 'Wholesale' || (sf.count === '1 color' && sf.color === 'Color Coordinate');   // EP v2.08: Thread Color Notes only required for Wholesale
   const tag = sf.color && (club || sf.count) ? '<span class="sf-tag">' + (club ? 'Club Colors' : ((SF_WORD[sf.count] ? SF_WORD[sf.count] + ' ' : '') + (sf.color === 'Color Coordinate' ? 'Color Coordinate' : 'Color ' + sf.color))) + '</span>' : '';
   const bd = bizDaysTo(sf.date);
   const W = sfW(), SPJ = sf.dept === 'Special Projects', SCH = sfSch();   // EP v2.03: Wholesale + Custom pick the rep and account; Special Projects / Collegiate / Mainline: Noelle is the rep
