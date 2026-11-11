@@ -400,7 +400,7 @@ h1{font-size:20px;margin-bottom:14px}
 .tbl tr.sec-head .cnt{display:inline-block;min-width:22px;padding:1px 8px;border-radius:10px;background:var(--bg);color:var(--grey);font-size:12px;font-weight:600;text-align:center;border:none}
 .tbl tr.sec-head .note{font-size:12px;color:#49516C;margin-left:10px}
 .tbl td.empty-row{color:var(--grey);font-size:13px;padding:12px 8px 12px 30px}
-.dabbr{cursor:default}
+.dabbr{cursor:default;white-space:nowrap}   /* EP v2.18: 3-letter codes (COL, MNL, CUS) stay on one line */
 /* Dashboard pipeline strip */
 .pipe{display:flex;gap:0;margin:4px 0;overflow-x:auto;padding:4px 0}
 .pipe .stage{flex:1 1 0;min-width:130px;text-align:center;padding:10px 8px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);background:var(--bg);border:1px solid var(--line);border-radius:0;margin:0;box-shadow:none}
@@ -492,7 +492,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.17</span>
+    <span class="vbadge">EP v2.18</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -511,7 +511,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.17';
+const VERSION = 'EP v2.18';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -520,7 +520,7 @@ const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSu
 const BARRETT_TO = ['Rhobackembroideryteam@barrettdistribution.com', 'carla.gotera@barrettdistribution.com'];
 const BARRETT_CC = ['rosemarie.lincoln@barrettdistribution.com', 'paulina.rivas@barrettdistribution.com'];
 const DEPTS = ['Wholesale','Special Projects','Collegiate','Mainline','Custom'];
-const DEPT_ABBR = {'Wholesale':'W', 'Special Projects':'SP', 'Collegiate':'C', 'Mainline':'M', 'Custom':'CU'};   // EP v2.04
+const DEPT_ABBR = {'Wholesale':'WH', 'Special Projects':'SP', 'Collegiate':'COL', 'Mainline':'MNL', 'Custom':'CUS'};   // EP v2.04; EP v2.18 (Noelle 11/11): WH, SP, COL, MNL, CUS
 // EP v2.06: Collegiate schools and their embroidery abbreviations (from Collegiate Embroidery Codes by School.xlsx). NFL teams will be added here too.
 const SCHOOLS = [["AIR FORCE", "UAF"], ["ALABAMA", "BAMA"], ["APP STATE", "APP"], ["ARIZONA", "AZU"], ["ARIZONA STATE", "ASU"], ["ARKANSAS", "AK"], ["ARMY", "ARMY"], ["AUBURN", "AU"], ["BAYLOR", "BU"], ["BOISE STATE", "BOISE"], ["BOSTON COLLEGE", "BSTN"], ["BYU", "BYU"], ["CALIFORNIA", "CAL"], ["CINCINNATI", "CINCI"], ["CLEMSON", "CLM"], ["COASTAL CAROLINA", "CSTLC"], ["COLORADO", "COL"], ["COLORADO STATE", "CLST"], ["CREIGHTON", "CRU"], ["DAVIDSON", "DVSN"], ["DAYTON", "DTYN"], ["DUKE", "DUKE"], ["EAST CAROLINA", "ECU"], ["FLORIDA", "UF"], ["FLORIDA ATLANTIC", "FAU"], ["FLORIDA STATE", "FSU"], ["GEORGETOWN", "GTWN"], ["GEORGIA", "GA"], ["GEORGIA SOUTHERN", "GAS"], ["GEORGIA TECH", "GTCH"], ["GONZAGA", "GNZ"], ["HOUSTON", "UH"], ["ILLINOIS", "IL"], ["INDIANA", "IU"], ["IOWA", "IOWA"], ["IOWA STATE", "ISU"], ["JAMES MADISON", "JMU"], ["KANSAS", "KU"], ["KANSAS STATE", "KST"], ["KENTUCKY", "UK"], ["LIBERTY", "LBRTY"], ["LOUISIANA LAFAYETTE", "LSLF"], ["LOUISIANA TECH", "LSTCH"], ["LOUISVILLE", "UL"], ["LSU", "LSU"], ["MARQUETTE", "MRQT"], ["MARSHALL", "MRSL"], ["MARYLAND", "MRLND"], ["MEMPHIS", "MEM"], ["MIAMI", "MIA"], ["MIAMI UNIVERSITY", "MIAOH"], ["MICHIGAN", "MICH"], ["MICHIGAN STATE", "MSU"], ["MINNESOTA", "MIN"], ["MISSISSIPPI STATE", "MST"], ["MIZZOU", "MZ"], ["NAVY", "USN"], ["NC STATE", "NCST"], ["NEBRASKA", "NE"], ["NOTRE DAME", "ND"], ["OHIO STATE", "OSU"], ["OKLAHOMA", "OU"], ["OKLAHOMA STATE", "OKST"], ["OLD DOMINION", "ODU"], ["OLE MISS", "OLM"], ["OREGON", "ORGN"], ["OREGON STATE", "OGST"], ["PENN STATE", "PSU"], ["PITT", "PITT"], ["PURDUE", "PRDU"], ["RUTGERS", "RTGRS"], ["SAN DIEGO STATE", "SDSU"], ["SMU", "SMU"], ["SOUTH CAROLINA", "USC"], ["ST. JOHN'S", "STJN"], ["STANFORD", "STNFD"], ["SYRACUSE", "CUSE"], ["TCU", "TCU"], ["TENNESSEE", "TEN"], ["TEXAS", "UT"], ["TEXAS A&M", "TAM"], ["TEXAS TECH", "TTU"], ["TULANE", "TULN"], ["UCF", "UCF"], ["UCLA", "UCLA"], ["UCONN", "UCONN"], ["UNC", "UNC"], ["USC", "SCAL"], ["USF", "USF"], ["UTAH", "UTAH"], ["UTSA", "UTSA"], ["UVA", "UVA"], ["VANDERBILT", "VAN"], ["VILLANOVA", "VIL"], ["VIRGINIA TECH", "VT"], ["WAKE FOREST", "WF"], ["WASHINGTON", "WASH"], ["WASHINGTON STATE", "WSHST"], ["WEST VIRGINIA", "WVU"], ["WESTERN KENTUCKY", "WKU"], ["WESTERN MICHIGAN", "WMU"], ["WISCONSIN", "WISC"], ["XAVIER", "XAV"]];
 const schoolLabel = (n, a) => n + ' (' + a + ')';
@@ -842,7 +842,13 @@ document.getElementById('savePill').onclick = async () => {
   if (saveState === 'saved' && !confirm('Saving to the "' + dirHandle.name + '" folder.\n\nPick a different folder?')) return;
   pickFolder();
 };
+// EP v2.18: every account from the live portal, read from live-accounts.json in the connected OneDrive folder (read-only copy; never on GitHub)
+const LS_ACCTS = 'embroideryPortal_liveAccounts_v1';
+let LIVE_ACCTS = (() => { try { return JSON.parse(localStorage.getItem(LS_ACCTS) || 'null') || {accounts:[]}; } catch(e){ return {accounts:[]}; } })();
+async function loadLiveAccounts(){ try { const fh = await dirHandle.getFileHandle('live-accounts.json'), j = JSON.parse(await (await fh.getFile()).text());
+  if (j && Array.isArray(j.accounts)){ LIVE_ACCTS = j; try { localStorage.setItem(LS_ACCTS, JSON.stringify(j)); } catch(e){} } } catch(e){} }
 async function afterConnect(){
+  await loadLiveAccounts();   // EP v2.18
   let file = null;
   try { const fh = await dirHandle.getFileHandle(XLSX_NAME); file = splitLive(readWorkbook(await (await fh.getFile()).arrayBuffer())); }
   catch(e){ if (e.name !== 'NotFoundError'){ toast('Couldn&rsquo;t read ' + esc(XLSX_NAME) + ' (' + esc(e.name) + '). Is it open in Excel?'); setSave('error'); return; } }
@@ -2079,12 +2085,16 @@ function placeSorts(){ const p = document.querySelector('.srt-pop'); if (p && p.
 function syncCollapse(){ placeSorts(); const b = document.querySelector('#page [data-collapse]'); if (!b) return; const c = collapseState(); b.style.display = c.any ? '' : 'none'; b.textContent = c.open ? 'Collapse all' : 'Expand all'; }
 // EP v2.04: Accounts tab, like the live portal (Account / Account # / Open SO / Emb. Requests). Click an account to see its logos.
 function renderAccounts(tab){
-  const q = (state.search.accounts || '').toLowerCase(), m = new Map();
+  const q = (state.search.accounts || '').toLowerCase(), m = new Map(), live = new Map();
   DB.logos.forEach(l => { const a = acctShown(l) || '(blank)'; m.set(a, (m.get(a) || 0) + 1); });
-  const rows = [...m.entries()].filter(([a]) => a.toLowerCase().includes(q)).sort((x, y) => x[0].localeCompare(y[0]));
+  (LIVE_ACCTS.accounts || []).forEach(a => live.set(a.name, a));   // EP v2.18
+  const names = [...new Set([...m.keys(), ...live.keys()])], rows = names.map(a => [a, m.get(a) || 0, live.get(a)]).filter(([a, n, x]) => (a + ' ' + (x ? x.number : '')).toLowerCase().includes(q)).sort((x, y) => (y[1] > 0) - (x[1] > 0) || x[0].localeCompare(y[0]));
+  const SHOW = 300;
   document.getElementById('page').innerHTML = '<h1>Accounts</h1><div class="bar"><input id="acctSearch" style="flex:1" placeholder="Search by account name or number&hellip;" value="' + esc(state.search.accounts || '') + '"></div>' +
-    '<div class="tblwrap"><table class="tbl acct-tbl"><thead><tr><th>Account</th><th>Account #</th><th>Open SO</th><th>Emb. Requests</th></tr></thead><tbody>' +
-    rows.map(([a, n]) => '<tr class="row" data-acct="' + esc(a) + '"><td>' + esc(a) + '</td><td class="muted">&mdash;</td><td class="muted">&mdash;</td><td>' + n + '</td></tr>').join('') + '</tbody></table></div>';
+    '<div class="sub">' + (LIVE_ACCTS.accounts && LIVE_ACCTS.accounts.length ? LIVE_ACCTS.accounts.length + ' accounts from the live portal (copied ' + fmt((LIVE_ACCTS.readAt || '').slice(0, 10)) + '), plus any only in this portal. Accounts with logos here show first.' : 'Connect Excel to load the live-portal accounts (live-accounts.json in your Embroidery Portal folder).') + '</div>' +
+    '<div class="tblwrap"><table class="tbl acct-tbl"><thead><tr><th>Account</th><th>Account #</th><th>Open SO</th><th>Emb. Requests (live)</th><th>Logos here</th></tr></thead><tbody>' +
+    rows.slice(0, SHOW).map(([a, n, x]) => '<tr class="row" data-acct="' + esc(a) + '"><td>' + esc(a) + '</td><td class="muted">' + (x ? esc(x.number) : '&mdash;') + '</td><td>' + (x ? x.openSO : '&mdash;') + '</td><td>' + (x ? x.embRequests : '&mdash;') + '</td><td>' + (n || '<span class="muted">0</span>') + '</td></tr>').join('') + '</tbody></table></div>' +
+    (rows.length > SHOW ? '<div class="note" style="margin-top:8px">Showing ' + SHOW + ' of ' + rows.length + '. Search to find the rest.</div>' : '');
   const s = document.getElementById('acctSearch'); s.oninput = () => { state.search.accounts = s.value; save(); const pos = s.selectionStart; render(); const n = document.getElementById('acctSearch'); n.focus(); n.setSelectionRange(pos, pos); };
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
@@ -2253,7 +2263,8 @@ function render(){
   if (!TODO_OFF && tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
-  dl.innerHTML = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
+  const acctNames = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).concat((LIVE_ACCTS.accounts || []).map(a => a.name)).filter(Boolean))].sort((a, b) => a.localeCompare(b));   // EP v2.18: + live-portal accounts
+  if (dl.dataset.n !== String(acctNames.length)){ dl.innerHTML = acctNames.map(a => '<option value="' + esc(a) + '">').join(''); dl.dataset.n = acctNames.length; }
   if (!document.getElementById('schoolList')){ const sl = document.createElement('datalist'); sl.id = 'schoolList'; sl.innerHTML = SCHOOLS.map(([n, a]) => '<option value="' + esc(schoolLabel(n, a)) + '">').join(''); document.body.appendChild(sl); }   // EP v2.06
   let rl = document.getElementById('repAll'); if (!rl){ rl = document.createElement('datalist'); rl.id = 'repAll'; document.body.appendChild(rl); }   // EP v2.05
   rl.innerHTML = [...new Set(REPS.concat(DB.logos.concat(DB.hidden || []).map(l => l.rep).filter(Boolean)))].sort().map(a => '<option value="' + esc(a) + '">').join('');
