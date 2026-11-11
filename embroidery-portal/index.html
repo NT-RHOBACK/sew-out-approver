@@ -421,6 +421,19 @@ h1{font-size:20px;margin-bottom:14px}
 .emb-msg-by{font-size:12.5px;margin-bottom:2px}.emb-msg-text{font-size:13px;line-height:1.45}
 .emb-msg-reply{margin:8px 0 0 14px;padding-left:10px;border-left:3px solid #E6EAF6}
 .emb-msg-acts{display:flex;gap:6px;justify-content:flex-end;align-items:center;margin-top:6px}
+
+/* ===== EP v2.07: each section in its own box (Departments doc, Part 5) ===== */
+.sec{margin-bottom:20px}
+.sec-head{display:flex;align-items:center;gap:8px;padding:0;margin:0 0 10px;cursor:pointer;user-select:none}
+.sec-head .chev{width:14px;font-size:12px;color:var(--navy)}
+.sec-head .name{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic","Futura",sans-serif;font-size:16px;font-weight:700}
+.sec-head .cnt{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;background:#F0F2F7;color:var(--grey);border:none}
+.sec-head .note{font-size:12px;color:#49516C}
+.tblwrap{background:#fff;border:1px solid #E8ECF0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;margin:0}
+.tbl th{background:#fff;font-size:12px;font-weight:600;letter-spacing:1px;color:var(--grey);border-bottom:2px solid var(--navy);padding:12px 8px}
+.tbl td{border-bottom:1px solid #E8ECF0}
+.tbl tr:last-child td{border-bottom:none}
+.tblwrap .empty{padding:14px 16px;color:var(--grey);font-size:13px;border:none;background:#fff;text-align:left}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -437,7 +450,7 @@ h1{font-size:20px;margin-bottom:14px}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.06</span>
+    <span class="vbadge">EP v2.07</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -448,6 +461,7 @@ h1{font-size:20px;margin-bottom:14px}
 <input type="file" id="fileIn" multiple hidden>
 
 <script>
+// EP v2.07: each section is its own box again (the look Noelle asked Renee for in the Departments doc, Part 5).
 // EP v2.06: Collegiate school list (103 schools with their embroidery abbreviations) for the School box.
 // EP v2.05: the logo card looks like the live portal's (7 numbered boxes + Communication, saved here only).
 // EP v2.04: looks like the live portal (header, joined sections, toolbar, Dept column, Accounts tab); the Excel save button is the difference.
@@ -455,7 +469,7 @@ h1{font-size:20px;margin-bottom:14px}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.06';
+const VERSION = 'EP v2.07';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1882,19 +1896,15 @@ function render(){
   if (!tab.sections || group === 'none') groups = [[tab.sections ? 'All' : null, list]];
   else if (group === 'status'){ groups = tab.sections.map(s => [s, list.filter(l => l.status === s && !(tab.key === 'barrett' && sewLate(l)))]); if (tab.key === 'barrett') groups.unshift([FOLLOW_UP, list.filter(sewLate)]); }
   else { const keyOf = l => (group === 'account' ? l.account : l.rep) || '(blank)'; const keys = [...new Set(list.map(keyOf))].sort(); groups = keys.map(k => [k, list.filter(l => keyOf(l) === k)]); }
-  const joined = groups.length && groups[0][0] !== null;   // EP v2.04: every section in one table, like the live portal
+  const joined = groups.length && groups[0][0] !== null;   // EP v2.07: each section is its own box, with its heading above it
   if (joined){
-    const cols0 = columns(tab, groups[0][0]), W0 = colWidths(tab, cols0);
-    html += '<div class="tblwrap"><table class="tbl">' + '<colgroup>' + cols0.map(c => '<col style="width:' + (W0[c.k] || 10) + '%">').join('') + '</colgroup>' +
-      groups.map(([name, items]) => {
-        const ck = tab.key + '|' + group + '|' + name, closed = !!state.collapsed[ck], cols = columns(tab, name), n = cols.length;
-        const color = name === FOLLOW_UP && group === 'status' ? '#a61b1b' : (group === 'status' && STATUS_COLORS[name]) ? STATUS_COLORS[name].title : 'var(--navy)';
-        const head = '<tr class="sec-head" data-sec="' + esc(ck) + '"><td colspan="' + n + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name" style="color:' + color + '">' + esc(name) + '</span><span class="cnt">' + items.length + '</span>' +
-          (name === FOLLOW_UP && group === 'status' ? '<span class="note">Sew-out not back 24 business hours after it was sent to Barrett or after your last follow-up (weekends don&rsquo;t count)</span>' : '') + '</td></tr>';
-        if (closed) return '<tbody>' + head + '</tbody>';
-        const p = rowsParts(items, tab, cols);
-        return '<tbody>' + head + p.head + (items.length ? p.body : '<tr><td class="empty-row" colspan="' + n + '">No logos here.</td></tr>') + '</tbody>';
-      }).join('') + '</table></div>';
+    html += groups.map(([name, items]) => {
+      const ck = tab.key + '|' + group + '|' + name, closed = !!state.collapsed[ck];
+      const color = name === FOLLOW_UP && group === 'status' ? '#a61b1b' : (group === 'status' && STATUS_COLORS[name]) ? STATUS_COLORS[name].title : 'var(--navy)';
+      return '<div class="sec"><div class="sec-head" data-sec="' + esc(ck) + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name" style="color:' + color + '">' + esc(name) + '</span><span class="cnt">' + items.length + '</span>' +
+        (name === FOLLOW_UP && group === 'status' ? '<span class="note">Sew-out not back 24 business hours after it was sent to Barrett or after your last follow-up (weekends don&rsquo;t count)</span>' : '') + '</div>' +
+        (closed ? '' : items.length ? rowsHtml(items, tab, columns(tab, name)) : '<div class="tblwrap"><div class="empty">No logos here.</div></div>') + '</div>';
+    }).join('');
   } else html += groups.map(([name, items]) => {
     if (name === null && tab.focus && items.length > FOCUS_LIMIT) return rowsHtml(items, tab, columns(tab, null), state.focusAll ? 0 : FOCUS_LIMIT) +
       '<div class="focus-more"><button class="btn light small" id="focusMore">' + (state.focusAll ? 'Show less' : 'Show all ' + items.length) + '</button></div>';
