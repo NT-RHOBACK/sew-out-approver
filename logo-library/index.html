@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Rhoback — Logo Library</title>
+<style>
+/* Same look as the Embroidery Portal / live portal: Admiral Navy, Old Glory Red, #E8ECF0 lines, Futura PT headings, Aptos body. */
+:root{--navy:#29304E;--navy-h:#49516C;--red:#BF2033;--line:#E8ECF0;--bg:#FAFAFA;--text:#29304E;--grey:#6B7B8D}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Aptos","Segoe UI",sans-serif;font-size:14px;color:var(--text);background:#fff;-webkit-font-smoothing:antialiased}
+h1,.brand-sub,.sec-head .name,.top-bar,.emb-box-title{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic","Futura",sans-serif}
+.top-bar{background:var(--navy);color:#fff;font-size:12px;font-weight:500;letter-spacing:3px;text-transform:uppercase;padding:10px 24px;text-align:center}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);gap:12px;background:#fff;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:16px}
+.brand{font-size:20px;font-weight:700;letter-spacing:3px;color:var(--navy)}
+.ridge{display:flex}.ridge span{width:4px;height:36px}.ridge .r{background:var(--red)}.ridge .n{background:var(--navy)}
+.brand-sub{font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--navy)}
+.header-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.header-user{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:var(--navy)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.msearch{position:relative}
+.msearch input{width:260px;padding:7px 28px 7px 12px;border:1px solid var(--line);border-radius:18px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.msearch button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--grey);font-size:16px;cursor:pointer;padding:0 4px}
+.vbadge{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--grey);border:1px solid var(--line);border-radius:10px;padding:3px 9px;background:#fff}
+.savepill{font:inherit;font-size:12px;font-weight:600;border-radius:14px;padding:6px 12px;border:1px solid var(--line);background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap}
+.savepill.ok{color:#2e7d32;border-color:#c5e5cb;background:#f1faf2}
+.savepill.warn{color:#7a5800;border-color:#f0d58a;background:#fff8e1}
+.savepill.err{color:#a61b1b;border-color:#f3c4c4;background:#fdecec}
+.tabs{background:#fff;border-bottom:1px solid var(--line);padding:0 24px;display:flex;overflow-x:auto}
+.tab{padding:14px 24px;font:inherit;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--navy)}.tab.on{color:var(--navy);border-bottom-color:var(--red)}
+.tab .tcnt{font-size:11px;font-weight:600;letter-spacing:0;margin-left:6px;color:var(--grey)}
+.page{max-width:1400px;margin:0 auto;padding:24px 24px 60px}
+h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.bar select{padding:6px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.bar .count{font-size:13px;color:var(--grey);margin-left:auto}
+.btn{font:inherit;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer}
+.btn:hover{background:var(--navy-h);border-color:var(--navy-h)}
+.btn.light{background:#fff;color:var(--navy);border-color:var(--line)}.btn.light:hover{background:var(--bg)}
+.btn.small{padding:5px 12px;font-size:12px}
+.bar .btn{padding:6px 14px;font-size:12px}
+.lnk{border:none;background:none;color:var(--navy);font:inherit;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0}
+/* sections */
+.sec{margin-bottom:16px}
+.sec-head{display:flex;align-items:center;gap:8px;margin:0 0 8px;cursor:pointer;user-select:none}
+.sec-head .chev{width:14px;font-size:12px;color:var(--navy)}
+.sec-head .name{font-size:16px;font-weight:700;color:var(--navy)}
+.sec-head .cnt{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;background:#F0F2F7;color:var(--grey)}
+/* tables (emb-list look) */
+.tblwrap{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
+.tbl th{background:#fff;font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--grey);text-align:left;border-bottom:2px solid var(--navy);padding:12px 8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl th.nos{cursor:default;padding-left:4px;padding-right:4px;letter-spacing:.3px;text-overflow:clip}
+.tbl th .arr{font-size:10px;margin-left:3px;color:#B5BCC8}.tbl th.sorted{color:var(--navy)}.tbl th.sorted .arr{color:var(--navy)}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow-wrap:anywhere}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.row{cursor:pointer}.tbl tr.row:hover td{background:#F8F9FC}.tbl tr.row.open td{background:#F3F5FA}
+.tbl .chev{color:var(--grey);font-size:11px}
+.emb{font-weight:600;color:var(--navy)}.sch{display:block;font-size:11px;color:#49516C;margin-top:2px;font-weight:400}
+.th{width:48px;height:48px;border-radius:4px;border:1px solid var(--line);background:#F7F8FB;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#C2C8D2;font-size:11px}
+.th img{width:100%;height:100%;object-fit:contain;background:#fff}
+.ft{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 5px;margin:1px 3px 1px 0}
+.ft.on{background:#eaf6ec;color:#256b31}.ft.off{background:#F3F4F6;color:#A0A7B3;text-decoration:line-through}
+.tdt{display:inline-block;font-size:11px;font-weight:600;border-radius:10px;padding:2px 8px;margin:1px 3px 1px 0;background:#eef0f6;color:#49516C}
+.flag{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#fdf0c4;color:#7a5800}
+.chk-bad{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;background:#f8d7d7;color:#a61b1b;margin-left:4px}
+.muted{color:#A0A7B3}
+.empty{background:#fff;border:1px dashed #d6dbe4;border-radius:8px;padding:18px;text-align:center;color:var(--grey);font-size:13px}
+.tblwrap .empty{border:none;text-align:left;padding:14px 16px}
+.done-btn{font:inherit;font-size:12px;font-weight:600;color:#256b31;background:#eaf6ec;border:1px solid #c5e5cb;border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.done-btn:hover{border-color:#256b31}
+/* connect screen */
+.connect{max-width:620px;margin:40px auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:28px;text-align:center}
+.connect h2{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic",sans-serif;color:var(--navy);font-size:20px;margin-bottom:10px}
+.connect p{color:#49516C;font-size:14px;line-height:1.55;margin-bottom:16px}
+/* logo card (emb-card look) */
+.card-cell{padding:0!important;background:#FAFAFA!important;cursor:default}
+.emb-card{padding:14px 14px 14px 30px}
+.emb-card-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:900px){.emb-card-cols{grid-template-columns:1fr}.emb-card{padding-left:14px}}
+.emb-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.emb-box{background:#fff;border:1px solid var(--line);border-radius:8px}
+.emb-box-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.emb-box-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+.emb-box-title{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy)}
+.emb-box-right{margin-left:auto;font-size:12px;color:var(--grey);font-weight:600}
+.emb-box-bd{padding:12px}
+.emb-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px}
+.emb-grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.emb-fld{min-width:0}.emb-fld.full{grid-column:1 / -1}
+.emb-fld>label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:3px}
+.emb-card input:not([type=checkbox]):not([type=file]),.emb-card select,.emb-card textarea,.af input,.af select{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.emb-card textarea{min-height:56px;resize:vertical}
+.emb-val{font-size:13px;color:var(--navy);padding:6px 0}
+.cb{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;cursor:pointer;color:var(--navy)}
+.cb input{width:16px;height:16px;accent-color:var(--navy);cursor:pointer}
+.cbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 14px}
+.cbs.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pic{text-align:center}
+.pic .lbl{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:4px}
+.pic .big{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:#F7F8FB;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#B5BCC8;font-size:12px}
+.pic .big img{width:100%;height:100%;object-fit:contain;background:#fff}
+.pic .big.over{border:2px dashed var(--red);background:var(--bg)}
+.pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
+.pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.pathrow{display:flex;gap:6px;align-items:center}
+.note{font-size:12px;color:var(--grey);margin-top:6px;line-height:1.45}
+/* add logo */
+.addbox{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:14px}
+.af{display:grid;grid-template-columns:1.2fr 1fr .8fr auto auto;gap:10px;align-items:end}
+.af label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:3px}
+@media(max-width:800px){.af{grid-template-columns:1fr}}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:14px 24px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+@media(max-width:700px){.msearch input{width:180px}.header-user{display:none}.page{padding:16px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="top-bar">Rhoback &mdash; Embroidery Logo Library</div>
+<div class="header">
+  <div class="header-left">
+    <div class="brand">RHOBACK</div>
+    <div class="ridge"><span class="r"></span><span class="n"></span></div>
+    <div class="brand-sub">Logo Library</div>
+  </div>
+  <div class="header-right">
+    <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
+    <button class="savepill" id="savePill" type="button"></button>
+    <span class="vbadge">LL v1.00</span>
+    <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
+  </div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div class="page" id="page"></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="picFile" accept="image/*" hidden>
+<script>
+// Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
+// in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
+const VERSION = 'LL v1.00';
+const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
+const BY = 'Noelle';
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const coll = new Intl.Collator(undefined, {numeric:true, sensitivity:'base'});
+const pad = n => String(n).padStart(2, '0');
+const nowStamp = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+const safeName = s => String(s || 'logo').replace(/[\\/:*?"<>|]/g, '-').trim();
+
+// ---------------- Data ----------------
+const SLOTS = [['spec', 'Spec Artwork', 'Spec'], ['logo', 'Logo (stitch)', 'Logo'], ['sew', 'Sew-Out', 'Sew-Out']];
+const FILES = [['fEmb', 'EMB'], ['fDst', 'DST'], ['fPng', 'PNG'], ['fSpec', 'Spec']];
+// Logos sheet: [header, field, kind]
+const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Type','type'],['Ver','ver'],['Spec H','specH','num'],['Spec W','specW','num'],['DST H','dstH','num'],['DST W','dstW','num'],
+  ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Clrs','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
+  ['Approved (Box)','box','box'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes'],['Folder','folder'],
+  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew']];
+const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Clrs',
+  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
+const KNOWN_SHEETS = ['Logos', 'Lists', 'Page Edits', 'Info'];
+let DB = emptyDB();
+function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], other:[], savedAt:''}; }
+function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:''}}; }
+const byId = id => DB.logos.find(l => l.id === id);
+function sizeCheck(l){ const n = [l.specH, l.specW, l.dstH, l.dstW].map(v => parseFloat(v));
+  if (String(l.specH).trim() === '' || String(l.dstH).trim() === '' || n.some(isNaN)) return '';
+  return Math.max(Math.abs(n[0] - n[2]), Math.abs(n[1] - n[3])) > 0.05 ? 'CHECK' : 'OK'; }
+function missing(l){ return [!l.fEmb ? 'EMB' : '', !l.img.sew ? 'Sew-Out' : ''].filter(Boolean).join(' + '); }
+const fmtNum = v => { const n = parseFloat(v); return isNaN(n) ? '' : n.toFixed(2); };
+
+// ---------------- Excel (SheetJS) ----------------
+function cellOut(l, f, kind){
+  if (kind === 'calc') return f === 'sizeCheck' ? sizeCheck(l) : missing(l);
+  if (kind === 'check') return l[f] ? '✓' : '—';
+  if (kind === 'box') return l[f] ? '✓' : '';
+  if (kind === 'list') return (l[f] || []).join('; ');
+  if (kind === 'num'){ const s = String(l[f] == null ? '' : l[f]).trim(); return s !== '' && isFinite(+s) ? +s : s; }
+  if (f.startsWith('img_')) return l.img[f.slice(4)] || '';
+  return l[f] == null ? '' : l[f];
+}
+function buildWorkbook(){
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(DB.logos.map(l => COLS.map(([, f, k]) => cellOut(l, f, k)))));
+  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 16, 40, 8, 14, 40, 40, 28, 28, 28].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Logos');
+  DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
+  const L = DB.lists, n = Math.max(L.status.length, L.todo.length, L.type.length, L.flag.length);
+  const lr = [['STATUS', 'TO DO', 'TYPE', 'FLAG', '', DB.listsNote || 'Edit these lists - the Logo Library page reads its dropdowns and To Do checkboxes from here.']];
+  for (let i = 0; i < n; i++) lr.push([L.status[i] || '', L.todo[i] || '', L.type[i] || '', L.flag[i] || '']);
+  const ls = XLSX.utils.aoa_to_sheet(lr); ls['!cols'] = [20, 22, 12, 10, 4, 60].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ls, 'Lists');
+  const es = XLSX.utils.aoa_to_sheet([['Date','Time','LL ID','EMB ID','What changed','From','To','By']].concat(DB.edits.slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(e => [e.ts.slice(0, 10), e.ts.slice(11), e.id, e.emb, e.what, e.from, e.to, e.by])));
+  es['!cols'] = [12, 10, 10, 24, 30, 30, 30, 14].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, es, 'Page Edits');
+  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || nowStamp()], ['Saved by', VERSION],
+    ['Note', 'Keep this file closed in Excel while the Logo Library page is open. Pictures live in the Images folder; the image columns hold their file names. To Do = items separated by "; ".']]);
+  info['!cols'] = [{wch:12}, {wch:110}];
+  XLSX.utils.book_append_sheet(wb, info, 'Info');
+  return XLSX.write(wb, {bookType:'xlsx', type:'array'});
+}
+function readWorkbook(buf){
+  const wb = XLSX.read(buf, {type:'array'});
+  const rows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:'', raw:false}) : [];
+  const db = emptyDB();
+  const lr = rows('Logos'), head = (lr[0] || []).map(h => String(h).trim());
+  lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
+    const l = blankLogo(), get = h => { const i = head.indexOf(h); return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+    COLS.forEach(([h, f, k]) => { const v = get(h);
+      if (k === 'calc') return;
+      if (k === 'check' || k === 'box') l[f] = /✓|^y/i.test(v);
+      else if (k === 'list') l[f] = v.split(/\s*;\s*/).filter(Boolean);
+      else if (f.startsWith('img_')) l.img[f.slice(4)] = v;
+      else l[f] = v; });
+    db.logos.push(l);
+  });
+  let next = db.logos.reduce((m, l) => Math.max(m, parseInt(String(l.id).replace(/\D/g, ''), 10) || 0), 0);
+  db.logos.forEach(l => { if (!l.id) l.id = 'LL-' + String(++next).padStart(4, '0'); });
+  const li = rows('Lists'); if (li.length){
+    const h = li[0].map(x => String(x).trim().toUpperCase()), col = name => { const i = h.indexOf(name); return i < 0 ? [] : li.slice(1).map(r => String(r[i] || '').trim()).filter(Boolean); };
+    db.lists = {status:col('STATUS'), todo:col('TO DO'), type:col('TYPE'), flag:col('FLAG')};
+    if (!db.lists.type.length) db.lists.type = ['Collegiate', 'Mainline'];
+    db.listsNote = String(li[0][5] || '');
+  }
+  rows('Page Edits').slice(1).filter(r => r[0]).forEach(r => db.edits.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), emb:String(r[3]), what:String(r[4]), from:String(r[5]), to:String(r[6]), by:String(r[7])}));
+  wb.SheetNames.filter(n => !KNOWN_SHEETS.includes(n)).forEach(n => db.other.push({name:n, rows:rows(n), cols:wb.Sheets[n]['!cols']}));   // Approved - No Sew-Out, Logo Change Log, anything you add: kept as-is
+  const s = rows('Info').find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
+  return db;
+}
+
+// ---------------- OneDrive folder (File System Access API) ----------------
+const FS_OK = 'showDirectoryPicker' in window;
+let dirHandle = null, saveTimer = null, retryTimer = null, saving = false, again = false, lastSaved = null, saveState = 'local', saveErr = '', dirty = false;
+const idb = (mode, fn) => new Promise((res, rej) => { const o = indexedDB.open('logoLibrary', 1); o.onupgradeneeded = () => o.result.createObjectStore('kv');
+  o.onsuccess = () => { const t = o.result.transaction('kv', mode), r = fn(t.objectStore('kv')); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }; o.onerror = () => rej(o.error); });
+const idbGet = k => idb('readonly', s => s.get(k)).catch(() => null);
+const idbSet = (k, v) => idb('readwrite', s => s.put(v, k)).catch(() => null);
+function touch(){ DB.savedAt = nowStamp(); dirty = true; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} scheduleSave(); }
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 700); if (dirHandle) setSave('saving'); }
+async function saveNow(){
+  clearTimeout(retryTimer);
+  if (!dirHandle){ setSave('local'); return; }
+  if (saving){ again = true; return; }
+  if (!(await permOk(dirHandle, false))){ setSave('reconnect'); return; }
+  saving = true; setSave('saving');
+  try {
+    const fh = await dirHandle.getFileHandle(XLSX_NAME, {create:true});
+    const w = await fh.createWritable(); await w.write(new Blob([buildWorkbook()])); await w.close();
+    lastSaved = new Date(); dirty = false; setSave('saved');
+  } catch(e){
+    saveErr = e && e.name || 'Error'; setSave('error');
+    retryTimer = setTimeout(saveNow, 10000);   // usually the file is open in Excel; try again
+  }
+  saving = false;
+  if (again){ again = false; saveNow(); }
+}
+function setSave(s){
+  saveState = s; const p = document.getElementById('savePill');
+  const t = lastSaved ? lastSaved.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+  const map = {
+    unsupported: ['warn', '&#9888; Open in Edge or Chrome to use the Logo Library'],
+    local: ['warn', '&#9729; Connect Excel'],
+    reconnect: ['warn', '&#9729; Reconnect Excel'],
+    saving: ['', 'Saving&hellip;'],
+    saved: ['ok', '&#10003; Saved to Excel ' + t],
+    error: ['err', /NoModificationAllowed|InvalidState/.test(saveErr) ? '&#9888; Can&rsquo;t save: close ' + esc(XLSX_NAME) + ' in Excel' : '&#9888; Can&rsquo;t save (' + esc(saveErr) + '). Click to try again']
+  };
+  const [cls, html] = map[s] || map.local;
+  p.className = 'savepill ' + cls; p.innerHTML = html;
+  p.title = s === 'saved' ? 'Saving to the "' + (dirHandle ? dirHandle.name : '') + '" folder. Click to pick a different folder.' : s === 'error' ? 'Retrying every 10 seconds. Click to try now.' : '';
+}
+async function permOk(h, ask){ const o = {mode:'readwrite'}; if ((await h.queryPermission(o)) === 'granted') return true; return ask ? (await h.requestPermission(o)) === 'granted' : false; }
+async function pickFolder(){
+  try {
+    const h = await window.showDirectoryPicker({id:'logoLibrary', mode:'readwrite', startIn:'documents'});
+    dirHandle = h; imgDir = null; await idbSet('dir', h); await afterConnect();
+  } catch(e){ if (e.name !== 'AbortError') toast('Couldn&rsquo;t open that folder (' + esc(e.name) + ').'); }
+}
+document.getElementById('savePill').onclick = async () => {
+  if (saveState === 'unsupported') return;
+  if (saveState === 'error'){ saveNow(); return; }
+  if (saveState === 'reconnect' && dirHandle){ if (await permOk(dirHandle, true)) await afterConnect(); return; }
+  if (saveState === 'saved' && !confirm('Saving to the "' + dirHandle.name + '" folder.\n\nPick a different folder?')) return;
+  pickFolder();
+};
+async function afterConnect(){
+  let file = null;
+  try { const fh = await dirHandle.getFileHandle(XLSX_NAME); file = readWorkbook(await (await fh.getFile()).arrayBuffer()); }
+  catch(e){
+    if (e.name === 'NotFoundError'){ toast('No "' + esc(XLSX_NAME) + '" in that folder. Pick the Logo Library folder.', 6000); dirHandle = null; setSave('local'); render(); return; }
+    toast('Couldn&rsquo;t read ' + esc(XLSX_NAME) + ' (' + esc(e.name) + '). Is it open in Excel?', 6000); setSave('error'); return;
+  }
+  const browserNewer = DB.logos.length && DB.savedAt && file.savedAt && DB.savedAt > file.savedAt && JSON.stringify(DB.logos) !== JSON.stringify(file.logos);
+  if (browserNewer && confirm('This browser has changes from ' + new Date(DB.savedAt).toLocaleString() + ' that aren’t in the Excel file yet (saved ' + new Date(file.savedAt).toLocaleString() + ').\n\nOK = keep this browser’s version and save it to Excel\nCancel = use the Excel file')){
+    touch();
+  } else {
+    DB = file; dirty = false; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} lastSaved = file.savedAt ? new Date(file.savedAt) : null; setSave('saved');
+  }
+  render();
+}
+async function boot(){
+  try { const d = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (d && d.logos) DB = Object.assign(emptyDB(), d); } catch(e){}
+  if (!FS_OK){ setSave('unsupported'); render(); return; }
+  const h = await idbGet('dir');
+  if (!h){ setSave('local'); render(); return; }
+  dirHandle = h;
+  if (await permOk(h, false)) await afterConnect(); else { setSave('reconnect'); render(); }
+}
+window.addEventListener('beforeunload', e => { if (dirHandle && dirty){ e.preventDefault(); e.returnValue = ''; } });   // changes not in Excel yet
+
+// ---------------- Pictures (Images folder) ----------------
+let imgDir = null; const imgUrl = new Map();
+async function getImgDir(create){ if (!imgDir) imgDir = await dirHandle.getDirectoryHandle(IMG_DIR, {create:!!create}); return imgDir; }
+async function loadImg(name){
+  if (imgUrl.has(name)) return imgUrl.get(name);
+  const p = (async () => { try { const f = await (await (await getImgDir()).getFileHandle(name)).getFile(); return URL.createObjectURL(f); } catch(e){ return ''; } })();
+  imgUrl.set(name, p); return p;
+}
+// watch the picture's box (a hidden <img> never "intersects"), then load the file from the Images folder
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting){ io.unobserve(en.target); const i = en.target.querySelector('img[data-img]'); if (i) showImg(i); } }), {rootMargin:'400px'}) : null;
+async function showImg(el){ if (!dirHandle || saveState === 'reconnect') return; const u = await loadImg(el.dataset.img); if (u){ el.src = u; el.hidden = false; const ph = el.nextElementSibling; if (ph) ph.hidden = true; } }
+function hookImgs(){ document.querySelectorAll('img[data-img]').forEach(el => { if (io) io.observe(el.parentElement); else showImg(el); }); }
+const imgTag = name => name ? '<img data-img="' + esc(name) + '" alt="" hidden><span>&hellip;</span>' : '<span>&mdash;</span>';
+async function fileExists(d, name){ try { await d.getFileHandle(name); return true; } catch(e){ return false; } }
+async function moveToDelete(name){   // never delete: the old picture moves to Images\DELETE
+  const d = await getImgDir(true), f = await (await d.getFileHandle(name)).getFile();
+  const del = await d.getDirectoryHandle(DELETE_DIR, {create:true});
+  let to = name, i = 2; while (await fileExists(del, to)) to = name.replace(/(\.[^.]+)?$/, ' (' + (i++) + ')$1');
+  const w = await (await del.getFileHandle(to, {create:true})).createWritable(); await w.write(f); await w.close();
+  await d.removeEntry(name); imgUrl.delete(name);
+}
+async function putPicture(l, slot, file){
+  if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
+  if (!/^image\//.test(file.type)){ toast('That isn&rsquo;t a picture.'); return; }
+  const s = SLOTS.find(x => x[0] === slot), old = l.img[slot];
+  try {
+    const d = await getImgDir(true);
+    if (old && await fileExists(d, old)) await moveToDelete(old);
+    const ext = (file.name.match(/\.[a-z0-9]+$/i) || ['.jpg'])[0].toLowerCase(), base = safeName(l.emb || l.id) + ' - ' + s[2];
+    let name = base + ext, i = 2; while (await fileExists(d, name)) name = base + ' (' + (i++) + ')' + ext;
+    const w = await (await d.getFileHandle(name, {create:true})).createWritable(); await w.write(file); await w.close();
+    l.img[slot] = name; logEdit(l, s[1] + ' picture', old, name + (old ? ' (old one moved to Images\\DELETE)' : '')); touch(); render();
+  } catch(e){ toast('Couldn&rsquo;t save the picture (' + esc(e.name) + ').'); }
+}
+async function removePicture(l, slot){
+  const s = SLOTS.find(x => x[0] === slot), old = l.img[slot]; if (!old) return;
+  if (!confirm('Remove the ' + s[1] + ' picture from ' + (l.emb || l.id) + '?\n\nIt moves to the Images\\DELETE folder, so you can delete it yourself later.')) return;
+  try { if (dirHandle && await permOk(dirHandle, true) && await fileExists(await getImgDir(true), old)) await moveToDelete(old); } catch(e){}
+  l.img[slot] = ''; logEdit(l, s[1] + ' picture', old, '(removed, moved to Images\\DELETE)'); touch(); render();
+}
+
+// ---------------- Edits ----------------
+function logEdit(l, what, from, to){ DB.edits.push({ts:nowStamp(), id:l.id, emb:l.emb, what, from:String(from == null ? '' : from), to:String(to == null ? '' : to), by:BY}); }
+const showVal = v => v === true ? '✓' : v === false ? '—' : v;
+function setField(l, f, v){
+  const old = l[f]; if (old === v || (old == null && v === '')) return;
+  l[f] = v; logEdit(l, LABEL[f] || f, showVal(old), showVal(v)); touch();
+}
+function setTodo(l, item, on){
+  const has = l.todo.includes(item); if (has === on) return;
+  l.todo = on ? l.todo.concat(item) : l.todo.filter(t => t !== item);
+  logEdit(l, 'To Do', on ? '' : item, on ? item : '(done)'); touch();
+}
+function addLogo(emb, school, type){
+  const next = DB.logos.reduce((m, l) => Math.max(m, parseInt(String(l.id).replace(/\D/g, ''), 10) || 0), 0) + 1;
+  const l = Object.assign(blankLogo(), {id:'LL-' + String(next).padStart(4, '0'), emb, school, type});
+  DB.logos.push(l); logEdit(l, 'Added logo', '', emb + (school ? ' (' + school + ')' : '')); touch(); return l;
+}
+
+// ---------------- UI state ----------------
+const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'mainline', label:'Mainline'}, {key:'all', label:'All Logos'}, {key:'todo', label:'To Do'}];
+let state = {tab:'collegiate', open:'', sort:{}, secOpen:{}, f:{}, adding:false};
+try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
+state.open = ''; state.adding = false; if (!TABS.some(t => t.key === state.tab)) state.tab = 'collegiate';
+let q = '';
+const saveUi = () => { try { localStorage.setItem(LS_UI, JSON.stringify(Object.assign({}, state, {open:'', adding:false}))); } catch(e){} };
+function toast(msg, ms){ const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('on'); clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('on'), ms || 3600); }
+const isCol = l => /^coll/i.test(l.type), isMain = l => /^main/i.test(l.type);
+function matches(l){
+  if (!q) return true;
+  const hay = [l.id, l.emb, l.school, l.type, l.ver, l.threads, l.notes, l.status, l.flag, l.todo.join(' '), l.folder].join(' ').toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+
+// ---------------- Columns ----------------
+const C = {
+  chev: {h:'', w:'22px', nos:true, v:l => '<span class="chev">' + (state.open === l.id ? '&#9660;' : '&#9654;') + '</span>'},
+  spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th">' + imgTag(l.img.spec) + '</div>'},
+  logo: {h:'Logo', w:'76px', nos:true, v:l => '<div class="th">' + imgTag(l.img.logo) + '</div>'},
+  sew:  {h:'Sew-Out', w:'76px', nos:true, v:l => '<div class="th">' + imgTag(l.img.sew) + '</div>'},
+  emb:  {h:'EMB ID', w:'17%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span>'},
+  embS: {h:'EMB ID', w:'19%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span><span class="sch">' + esc(l.school) + '</span>'},
+  school:{h:'School / Account', w:'12%', s:l => l.school, v:l => esc(l.school)},
+  type: {h:'Type', w:'9%', s:l => l.type, v:l => esc(l.type)},
+  ver:  {h:'Ver', w:'5%', s:l => l.ver, v:l => esc(l.ver) || '<span class="muted">&mdash;</span>'},
+  size: {h:'Size (H × W)', w:'11%', s:l => parseFloat(l.specH) || 0, v:l => (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : '<span class="muted">&mdash;</span>') + (sizeCheck(l) === 'CHECK' ? '<span class="chk-bad" title="Spec and DST sizes differ by more than 0.05&quot;">CHECK</span>' : '')},
+  clrs: {h:'# Clrs', w:'6%', s:l => parseFloat(l.clrs) || 0, v:l => esc(l.clrs) || '<span class="muted">&mdash;</span>'},
+  files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length, v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('')},
+  status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
+  todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
+  flag: {h:'Flag', w:'7%', s:l => l.flag, v:l => l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : ''},
+  done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
+};
+const TAB_COLS = {
+  collegiate: ['chev','spec','logo','sew','emb','ver','size','clrs','files','status','todo','flag'],
+  mainline:   ['chev','spec','logo','sew','emb','ver','size','clrs','files','status','todo','flag'],
+  all:        ['chev','spec','logo','sew','emb','school','type','ver','size','clrs','files','status','todo','flag'],
+  todo:       ['chev','spec','logo','sew','embS','type','ver','size','clrs','files','status','flag','done']
+};
+function sorted(tab, list){
+  const s = state.sort[tab] || {k:'emb', d:1}, col = C[s.k] || C.emb;
+  return list.slice().sort((a, b) => { const x = col.s(a), y = col.s(b);
+    const r = typeof x === 'number' ? x - y : coll.compare(String(x || ''), String(y || ''));
+    return (r || coll.compare(a.emb, b.emb)) * (r ? s.d : 1); });
+}
+function tableHtml(tab, list, sec){
+  const cols = TAB_COLS[tab].map(k => [k, C[k]]), s = state.sort[tab] || {k:'emb', d:1};
+  const sk = k => k === 'embS' ? 'emb' : k;
+  let h = '<div class="tblwrap"><table class="tbl"><colgroup>' + cols.map(([, c]) => '<col style="width:' + c.w + '">').join('') + '</colgroup><thead><tr>' +
+    cols.map(([k, c]) => c.nos ? '<th class="nos">' + esc(c.h) + '</th>' : '<th data-sort="' + sk(k) + '" class="' + (s.k === sk(k) ? 'sorted' : '') + '">' + esc(c.h) + '<span class="arr">' + (s.k === sk(k) ? (s.d > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr></thead><tbody>';
+  if (!list.length) h += '<tr><td colspan="' + cols.length + '"><div class="empty">No logos here' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div></td></tr>';
+  sorted(tab, list).forEach(l => {
+    h += '<tr class="row' + (state.open === l.id ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(([, c]) => '<td>' + c.v(l, sec) + '</td>').join('') + '</tr>';
+    if (state.open === l.id) h += '<tr><td class="card-cell" colspan="' + cols.length + '">' + cardHtml(l) + '</td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+function sectionHtml(tab, name, list, defOpen, sec){
+  const key = tab + '|' + name, open = q ? list.length > 0 : (state.secOpen[key] == null ? defOpen : state.secOpen[key]);
+  return '<div class="sec"><div class="sec-head" data-sec="' + esc(key) + '"><span class="chev">' + (open ? '&#9660;' : '&#9654;') + '</span><span class="name">' + esc(name) + '</span><span class="cnt">' + list.length + '</span></div>' +
+    (open ? tableHtml(tab, list, sec) : '') + '</div>';
+}
+
+// ---------------- Logo card ----------------
+function opt(list, cur, blank){ const all = list.slice(); if (cur && !all.includes(cur)) all.push(cur);
+  return (blank ? '<option value="">' + esc(blank) + '</option>' : '') + all.map(v => '<option' + (v === cur ? ' selected' : '') + '>' + esc(v) + '</option>').join(''); }
+const fld = (l, f, label, cls) => '<div class="emb-fld' + (cls ? ' ' + cls : '') + '"><label>' + esc(label) + '</label><input data-f="' + f + '" data-id="' + esc(l.id) + '" value="' + esc(l[f]) + '"' + (f === 'school' ? ' list="schoolList"' : '') + '></div>';
+const box = (n, title, right, body) => '<div class="emb-box"><div class="emb-box-hd"><span class="emb-box-num">' + n + '</span><span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
+function cardHtml(l){
+  const id = esc(l.id), sc = sizeCheck(l), L = DB.lists;
+  const b1 = '<div class="emb-grid">' + fld(l, 'emb', 'EMB ID') + fld(l, 'school', 'School / Account') +
+    '<div class="emb-fld"><label>Type</label><select data-f="type" data-id="' + id + '">' + opt(L.type, l.type, '—') + '</select></div>' + fld(l, 'ver', 'Ver') +
+    '<div class="emb-fld"><label>Status</label><select data-f="status" data-id="' + id + '">' + opt(L.status, l.status, '—') + '</select></div>' +
+    '<div class="emb-fld"><label>Flag</label><select data-f="flag" data-id="' + id + '">' + opt(L.flag, l.flag, '—') + '</select></div>' +
+    '<div class="emb-fld full"><label class="cb" style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;color:var(--navy)"><input type="checkbox" data-f="box" data-id="' + id + '"' + (l.box ? ' checked' : '') + '> Approved (Box)</label></div></div>';
+  const b2 = '<div class="emb-grid g4">' + fld(l, 'specH', 'Spec H') + fld(l, 'specW', 'Spec W') + fld(l, 'dstH', 'DST H') + fld(l, 'dstW', 'DST W') + '</div>' +
+    '<div class="note" id="sc-' + id + '">' + scText(l) + '</div>' +
+    '<div class="emb-grid" style="margin-top:10px"><div class="emb-fld full"><label>Thread Colors (Madeira)</label><textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea></div>' + fld(l, 'clrs', '# Clrs') + '</div>';
+  const b3 = '<div class="cbs c4">' + FILES.map(([k, n]) => '<label class="cb"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '> ' + n + '</label>').join('') + '</div>' +
+    '<div class="emb-fld" style="margin-top:10px"><label>Folder</label><div class="pathrow"><input data-f="folder" data-id="' + id + '" value="' + esc(l.folder) + '"><button class="btn light small" data-act="copyFolder" data-id="' + id + '"' + (l.folder ? '' : ' disabled') + '>Copy</button></div>' +
+    '<div class="note">Copy the path, then paste it into File Explorer&rsquo;s address bar (browsers can&rsquo;t open folders from a web page).</div></div>' +
+    '<div class="note" id="ms-' + id + '">' + msText(l) + '</div>';
+  const b4 = '<textarea data-f="notes" data-id="' + id + '" style="min-height:80px">' + esc(l.notes) + '</textarea>';
+  const b5 = '<div class="cbs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t) + '</label>').join('') + '</div>';
+  const b6 = '<div class="pics">' + SLOTS.map(([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '" title="Drop a picture here">' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
+    '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts"><button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">' + (l.img[k] ? 'Replace' : 'Add') + '</button>' + (l.img[k] ? '<button class="btn light small" data-act="unpic" data-slot="' + k + '" data-id="' + id + '">Remove</button>' : '') + '</div></div>').join('') + '</div>' +
+    '<div class="note">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
+  return '<div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + box(1, 'Logo', esc(l.id), b1) + box(2, 'Size &amp; Thread Colors', '', b2) + box(3, 'Files on Hand', '', b3) + box(4, 'Notes', '', b4) +
+    '</div><div class="emb-col">' + box(5, 'To Do', '<span id="tc-' + id + '">' + tcText(l) + '</span>', b5) + box(6, 'Pictures', '', b6) + '</div></div></div>';
+}
+function scText(l){ const sc = sizeCheck(l); return 'Size Check: ' + (sc === 'CHECK' ? '<span class="chk-bad" style="margin:0">CHECK</span> spec and DST differ by more than 0.05&quot;' : sc === 'OK' ? '<b style="color:#256b31">OK</b>' : 'needs Spec H and DST H'); }
+const msText = l => 'Missing: ' + (missing(l) ? '<b>' + esc(missing(l)) + '</b>' : 'nothing');
+const tcText = l => l.todo.length ? l.todo.length + ' open' : 'nothing open';
+
+// ---------------- Tabs ----------------
+function addBoxHtml(tab){
+  if (!state.adding) return '';
+  const t = tab === 'mainline' ? 'Mainline' : tab === 'collegiate' ? 'Collegiate' : '';
+  return '<div class="addbox"><div class="af"><div><label>EMB ID</label><input id="addEmb" placeholder="e.g. AK 11 RED"></div><div><label>School / Account</label><input id="addSchool" list="schoolList"></div>' +
+    '<div><label>Type</label><select id="addType">' + opt(DB.lists.type, t, '—') + '</select></div><button class="btn" data-act="addSave">Add logo</button><button class="btn light" data-act="addCancel">Cancel</button></div></div>';
+}
+function groupsHtml(tab, list, defOpen){
+  const g = {}; list.forEach(l => { const k = l.school || '(no school / account)'; (g[k] = g[k] || []).push(l); });
+  const names = Object.keys(g).sort(coll.compare);
+  if (!names.length) return '<div class="empty">No logos' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div>';
+  return names.map(n => sectionHtml(tab, n, g[n], defOpen)).join('');
+}
+function renderGrouped(tab){
+  const all = DB.logos.filter(tab === 'mainline' ? isMain : isCol), list = all.filter(matches);
+  const word = tab === 'mainline' ? 'accounts' : 'schools';
+  return '<h1>' + (tab === 'mainline' ? 'Mainline' : 'Collegiate') + '</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
+    '<span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school)).size + ' ' + word + '</span></div>' + addBoxHtml(tab) + groupsHtml(tab, list, tab === 'mainline');
+}
+const FILTERS = [['type', 'All types', () => DB.lists.type, (l, v) => l.type === v],
+  ['school', 'All schools / accounts', () => [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare), (l, v) => l.school === v],
+  ['status', 'All statuses', () => DB.lists.status.concat('(no status)'), (l, v) => v === '(no status)' ? !l.status : l.status === v],
+  ['todo', 'All To Do', () => DB.lists.todo.concat('(nothing to do)'), (l, v) => v === '(nothing to do)' ? !l.todo.length : l.todo.includes(v)],
+  ['flag', 'Any flag', () => DB.lists.flag.concat('(no flag)'), (l, v) => v === '(no flag)' ? !l.flag : l.flag === v],
+  ['missing', 'Missing: any', () => ['EMB', 'Sew-Out', 'EMB + Sew-Out', 'Nothing missing'], (l, v) => { const m = missing(l); return v === 'Nothing missing' ? !m : v === 'EMB + Sew-Out' ? m === v : m.split(' + ').includes(v); }],
+  ['box', 'Approved (Box): any', () => ['Approved (Box)', 'Not approved (Box)'], (l, v) => v === 'Approved (Box)' ? l.box : !l.box],
+  ['size', 'Size Check: any', () => ['CHECK', 'OK', '(no DST size)'], (l, v) => v === '(no DST size)' ? !sizeCheck(l) : sizeCheck(l) === v]];
+function renderAll(){
+  const f = state.f, list = DB.logos.filter(l => matches(l) && FILTERS.every(([k, , , test]) => !f[k] || test(l, f[k])));
+  const any = FILTERS.some(([k]) => f[k]);
+  return '<h1>All Logos</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button>' +
+    FILTERS.map(([k, label, opts]) => '<select data-filter="' + k + '">' + opt(opts(), f[k] || '', label) + '</select>').join('') +
+    (any ? '<button class="lnk" data-act="clearF">Clear filters</button>' : '') + '<span class="count">' + list.length + ' of ' + DB.logos.length + ' logos</span></div>' + addBoxHtml('all') + tableHtml('all', list);
+}
+function renderTodo(){
+  const items = DB.lists.todo.concat([...new Set(DB.logos.flatMap(l => l.todo))].filter(t => !DB.lists.todo.includes(t)));
+  const total = DB.logos.filter(l => l.todo.length).length;
+  return '<h1>To Do</h1><div class="bar"><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button><span class="count">' + total + ' logos with something to do</span></div>' +
+    items.map(t => sectionHtml('todo', t, DB.logos.filter(l => l.todo.includes(t) && matches(l)), false, t)).join('');
+}
+function renderConnect(){
+  if (!FS_OK) return '<div class="connect"><h2>Open this page in Edge or Chrome</h2><p>The Logo Library reads and saves your Excel file in OneDrive, which only works in Microsoft Edge or Google Chrome.</p></div>';
+  if (saveState === 'reconnect') return '<div class="connect"><h2>Reconnect your Logo Library</h2><p>Click below and allow access so the page can read and save <b>' + esc(XLSX_NAME) + '</b> and its pictures.</p><button class="btn" data-act="reconnect">Reconnect Excel</button></div>';
+  return '<div class="connect"><h2>Connect your Logo Library</h2><p>Pick the <b>Logo Library</b> folder in OneDrive<br><span style="color:var(--grey)">CLAUDE AI &rsaquo; CLAUDE &rsaquo; Logo Library</span><br>It holds <b>' + esc(XLSX_NAME) + '</b> and the <b>Images</b> folder. Nothing is stored on GitHub.</p><button class="btn" data-act="connect">Connect Excel</button></div>';
+}
+function renderTabs(){
+  const counts = {collegiate:DB.logos.filter(isCol).length, mainline:DB.logos.filter(isMain).length, all:DB.logos.length, todo:DB.logos.filter(l => l.todo.length).length};
+  document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (state.tab === t.key ? ' on' : '') + '" data-tab="' + t.key + '">' + t.label + (DB.logos.length ? '<span class="tcnt">' + counts[t.key] + '</span>' : '') + '</button>').join('');
+}
+function render(){
+  const y = window.scrollY;
+  renderTabs();
+  const p = document.getElementById('page');
+  const needConnect = !dirHandle || saveState === 'reconnect' || saveState === 'unsupported';
+  p.innerHTML = (needConnect && !DB.logos.length) || saveState === 'unsupported' ? renderConnect()
+    : (needConnect ? renderConnect() : '') + (state.tab === 'all' ? renderAll() : state.tab === 'todo' ? renderTodo() : renderGrouped(state.tab)) +
+      '<datalist id="schoolList">' + [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>';
+  hookImgs(); window.scrollTo(0, y);
+}
+
+// ---------------- Events ----------------
+document.getElementById('tabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; state.open = ''; saveUi(); render(); window.scrollTo(0, 0); };
+const ms = document.getElementById('msearch');
+ms.oninput = () => { q = ms.value.trim(); render(); };
+document.getElementById('msclear').onclick = () => { ms.value = ''; q = ''; render(); };
+const page = document.getElementById('page');
+let pickFor = null;
+page.addEventListener('click', async e => {
+  const act = e.target.closest('[data-act]');
+  if (act){
+    e.stopPropagation(); const a = act.dataset.act, l = act.dataset.id ? byId(act.dataset.id) : null;
+    if (a === 'connect') return pickFolder();
+    if (a === 'reconnect'){ if (dirHandle && await permOk(dirHandle, true)) await afterConnect(); return; }
+    if (a === 'add'){ state.adding = true; render(); const i = document.getElementById('addEmb'); if (i) i.focus(); return; }
+    if (a === 'addCancel'){ state.adding = false; render(); return; }
+    if (a === 'addSave'){
+      const emb = document.getElementById('addEmb').value.trim(), school = document.getElementById('addSchool').value.trim(), type = document.getElementById('addType').value;
+      if (!emb){ toast('Type the EMB ID first.'); return; }
+      if (DB.logos.some(x => x.emb.toLowerCase() === emb.toLowerCase()) && !confirm(emb + ' is already in the library. Add it again anyway?')) return;
+      const n = addLogo(emb, school, type); state.adding = false; state.open = n.id;
+      if (state.tab !== 'all') state.secOpen[state.tab + '|' + (school || '(no school / account)')] = true;
+      if ((state.tab === 'collegiate' && !isCol(n)) || (state.tab === 'mainline' && !isMain(n))) state.tab = 'all';
+      saveUi(); render(); toast('Added ' + esc(emb) + '.');
+      setTimeout(() => { const r = document.querySelector('.row[data-id="' + n.id + '"]'); if (r) r.scrollIntoView({block:'center'}); }, 30); return;
+    }
+    if (a === 'expand' || a === 'collapse'){
+      document.querySelectorAll('.sec-head[data-sec]').forEach(h => { state.secOpen[h.dataset.sec] = a === 'expand'; });
+      if (state.tab === 'todo') DB.lists.todo.forEach(t => { state.secOpen['todo|' + t] = a === 'expand'; });
+      saveUi(); render(); return;
+    }
+    if (a === 'clearF'){ state.f = {}; saveUi(); render(); return; }
+    if (a === 'done' && l){ setTodo(l, act.dataset.todo, false); render(); toast(esc(l.emb) + ': ' + esc(act.dataset.todo) + ' done.'); return; }
+    if (a === 'copyFolder' && l){ try { await navigator.clipboard.writeText(l.folder); toast('Folder path copied.'); } catch(err){ toast('Couldn&rsquo;t copy.'); } return; }
+    if (a === 'pic' && l){ pickFor = [l.id, act.dataset.slot]; const fi = document.getElementById('picFile'); fi.value = ''; fi.click(); return; }
+    if (a === 'unpic' && l){ removePicture(l, act.dataset.slot); return; }
+    return;
+  }
+  const th = e.target.closest('th[data-sort]');
+  if (th){ const k = th.dataset.sort, s = state.sort[state.tab]; state.sort[state.tab] = s && s.k === k ? {k, d:-s.d} : {k, d:1}; saveUi(); render(); return; }
+  const sh = e.target.closest('.sec-head[data-sec]');
+  if (sh){ const k = sh.dataset.sec, open = sh.querySelector('.chev').innerHTML.charCodeAt(0) === 9660; state.secOpen[k] = !open; saveUi(); render(); return; }
+  if (e.target.closest('.card-cell')) return;
+  const row = e.target.closest('tr.row');
+  if (row){ state.open = state.open === row.dataset.id ? '' : row.dataset.id; render(); }
+});
+page.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.filter){ state.f[t.dataset.filter] = t.value; saveUi(); render(); return; }
+  const l = t.dataset.id ? byId(t.dataset.id) : null; if (!l) return;
+  if (t.dataset.todo){ setTodo(l, t.dataset.todo, t.checked); refreshRow(l); return; }
+  const f = t.dataset.f; if (!f) return;
+  if (t.type === 'checkbox') setField(l, f, t.checked); else setField(l, f, t.value.trim());
+  refreshRow(l);
+});
+// After an edit in the open card, update just that logo's row + the card's live notes (a full redraw would eat the click into the next field).
+function refreshRow(l){
+  const tr = document.querySelector('tr.row[data-id="' + l.id + '"]');
+  if (tr){ const d = tr.querySelector('[data-todo]'), sec = d ? d.dataset.todo : ''; tr.innerHTML = TAB_COLS[state.tab].map(k => '<td>' + C[k].v(l, sec) + '</td>').join(''); }
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l));
+  const cb = document.querySelector('[data-act="copyFolder"][data-id="' + l.id + '"]'); if (cb) cb.disabled = !l.folder;
+  renderTabs(); hookImgs();
+}
+document.getElementById('picFile').onchange = e => { const f = e.target.files[0], l = pickFor && byId(pickFor[0]); if (f && l) putPicture(l, pickFor[1], f); };
+page.addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d){ e.preventDefault(); d.classList.add('over'); } });
+page.addEventListener('dragleave', e => { const d = e.target.closest('[data-drop]'); if (d) d.classList.remove('over'); });
+page.addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); if (!d) return; e.preventDefault(); d.classList.remove('over');
+  const f = e.dataTransfer.files[0], l = byId(d.dataset.id); if (f && l) putPicture(l, d.dataset.drop, f); });
+
+boot();
+</script>
+</body>
+</html>
