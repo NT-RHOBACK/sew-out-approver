@@ -247,6 +247,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .bar-test{margin-top:10px;padding:8px 10px;border:1px dashed #c9cfdb;border-radius:6px;background:#fafbfd}
 .bar-test .emb-dim{font-size:11px}
 .snz{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.appr-rem{font-size:12px;color:#49516c;margin-top:4px}
+.f-ren{display:flex;gap:6px;align-items:center;flex:1}
+.f-ren input{flex:1;min-width:120px}
+.dst-size{margin-left:6px;font-size:11px;color:#6b7280;white-space:nowrap}
 .q-mail{border:1px solid #d6dbe4;border-radius:8px;margin-top:8px;background:#fff}
 .sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
 .sf-upload{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;font-size:14px;color:#49516C}
@@ -474,7 +478,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.14</span>
+    <span class="vbadge">EP v2.15</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -493,7 +497,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.14';
+const VERSION = 'EP v2.15';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -650,6 +654,38 @@ function barAutoFollow(){ let n = 0; const now = new Date(); if (!tdReady()) ret
     log(l, 'Email', 'Follow-up sent to Barrett (automatic' + (l.waitThreads ? ', weekly' : red ? ', 24 hours' : ', 48 hours') + ')', AUTO);
     notify(l, 'Follow-up sent to Barrett \u00b7 ' + reqNo(l) + ' ' + l.logo); n++; });
   return n; }
+// EP v2.15 (updates doc Part 11): approval reminders to the rep while Sent for Approval (every 5 days, 3 when the In Hand Date is red); logged, no emails
+function apprSentAt(l){ const h = DB.history.filter(e => e.id === l.id && /> Sent for Approval$/.test(e.what)).map(e => e.ts).sort().pop(); return h ? new Date(h) : l.sentDate ? new Date(l.sentDate + 'T09:00:00') : null; }
+const apprRems = l => { const s = apprSentAt(l); return s ? (l.apprRem || []).filter(x => new Date(x) > s) : []; };
+function apprNextDue(l){ const s = apprSentAt(l); if (!s) return null; const last = apprRems(l).pop(), base = last ? new Date(last) : s; return new Date(base.getTime() + (urg(off(l.inHand)) === 'red' ? 3 : 5) * 86400000); }
+function apprAutoRemind(){ let n = 0; const now = new Date(); if (!tdReady()) return 0;
+  DB.logos.forEach(l => { if (l.status !== 'Sent for Approval') return; const due = apprNextDue(l); if (!due || now < due) return;
+    (l.apprRem = l.apprRem || []).push(nowStamp()); log(l, 'Email', 'Approval reminder sent to ' + (l.rep || 'the rep') + (urg(off(l.inHand)) === 'red' ? ' (in hand date is close)' : ''), AUTO); n++; });
+  return n; }
+// EP v2.15: a message from the rep (reply or requested changes) shows New reply until I reply or resolve it
+const commNew = l => (l.comms || []).some(m => !m.resolved && (m.newForMe || (m.replies || []).some(r => r.newForMe)));
+// EP v2.15 (updates doc Part 15): DST size from the file's header (+X/-X/+Y/-Y in 0.1 mm)
+function dstSize(buf){ const h = new TextDecoder('latin1').decode(new Uint8Array(buf).slice(0, 512)), g = k => { const m = h.match(new RegExp('\\' + k + ':\\s*(\\d+)')); return m ? +m[1] : null; };
+  const px = g('+X'), mx = g('-X'), py = g('+Y'), my = g('-Y'); if ([px, mx, py, my].some(v => v === null)) return null;
+  return {h:((py + my) / 254).toFixed(2), w:((px + mx) / 254).toFixed(2)}; }
+let dstBusy = {};
+async function dstMeasure(l){ if (!dirHandle || dstBusy[l.id]) return; const todo = (l.files || []).filter(f => /\.dst$/i.test(f.name) && !f.dstTried); if (!todo.length) return;
+  dstBusy[l.id] = true; let changed = false;
+  try { if (!(await permOk(dirHandle, false))) return;
+    for (const f of todo){ f.dstTried = true; try { const s = dstSize(await (await getFile(l, f.name)).arrayBuffer()); if (s){ f.dstH = s.h; f.dstW = s.w; changed = true;
+      if (!l.size || l.size === 'DST provided'){ const old = l.size; l.size = s.h + ' x ' + s.w + ' in'; log(l, 'Edit', 'Size: ' + (old || '(blank)') + ' > ' + l.size + ' (from ' + f.name + ')', AUTO); } } } catch(e){} }
+  } finally { delete dstBusy[l.id]; } if (changed){ touch(); render(); } }
+let renameOpen = {};
+async function renameFile(l, name, base){ const dot = name.lastIndexOf('.'), ext = dot > 0 ? name.slice(dot) : '', nn = safeName(base.replace(/\.[^.]*$/, '') === base ? base : base) + ext;
+  if (!base.trim() || nn === name) return false; if (l.files.some(x => x.name === nn)){ toast('There&rsquo;s already a file called ' + esc(nn) + '.'); return false; }
+  if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Reconnect Excel first (top right).'); return false; }
+  const d = await logoDir(l), fh = await d.getFileHandle(name);
+  let moved = false; try { if (fh.move){ await fh.move(nn); moved = true; } } catch(e){}
+  if (!moved){ const f = await fh.getFile(), w = await (await d.getFileHandle(nn, {create:true})).createWritable(); await w.write(f); await w.close();   // copy, then the old name goes to Files\DELETE (never deleted)
+    const del = await (await (await dirHandle.getDirectoryHandle(FILES_DIR, {create:true})).getDirectoryHandle(DELETE_DIR, {create:true})).getDirectoryHandle(l.dir, {create:true});
+    const w2 = await (await del.getFileHandle(name, {create:true})).createWritable(); await w2.write(f); await w2.close(); await d.removeEntry(name); }
+  const x = l.files.find(z => z.name === name); x.name = nn; if (l.sheetFile === name) l.sheetFile = nn;
+  log(l, 'File', 'File renamed: ' + name + ' > ' + nn); return true; }
 function bizAdd(d, hrs){ const t = new Date(d); let left = hrs * 3600000;   // hrs business hours later (weekends don't count)
   while (left > 0){ const end = new Date(t); end.setHours(24, 0, 0, 0); const w = t.getDay(); if (w && w !== 6){ const step = Math.min(end - t, left); t.setTime(t.getTime() + step); left -= step; } else t.setTime(end.getTime()); }
   return t; }
@@ -667,7 +703,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || ''})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || []})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -716,7 +752,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -811,7 +847,7 @@ window.addEventListener('beforeunload', e => { if (dirHandle && dirty){ e.preven
 // EP v1.07: look for newly copied live-portal logos (portal-logos.json) every 5 minutes and when you come back to this tab (v1.08: they're added right away)
 async function recheckSeed(){ if (!dirHandle || saveState === 'reconnect' || saveState === 'unsupported' || !(await permOk(dirHandle, false))) return; await checkSeed(); }
 setInterval(recheckSeed, 5 * 60 * 1000);
-setInterval(() => { refreshToday(); if (barAutoFollow()){ touch(); renderNotifs(); } }, 5 * 60 * 1000);   // EP v2.14: automatic follow-ups while the page is open
+setInterval(() => { refreshToday(); const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2){ touch(); renderNotifs(); } }, 5 * 60 * 1000);   // EP v2.14: automatic follow-ups while the page is open
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') recheckSeed(); });
 
 // Logos copied from the live portal (portal-logos.json in the same folder)
@@ -939,7 +975,7 @@ const acctShown = l => l.account || l.school || l.project || l.dept || '';   // 
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
-    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + (barNew(l) ? '<span class="new-reply">New reply</span>' : '') + claimTag(l) + '</span></div>'},
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + (barNew(l) || commNew(l) ? '<span class="new-reply">New reply</span>' : '') + claimTag(l) + '</span></div>'},
     {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="acct dabbr" title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
     {k:'account', h:'Account', v:l => acctShown(l).toLowerCase(), td:l => '<span class="acct">' + esc(acctShown(l)) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
@@ -1031,8 +1067,12 @@ function sheetBox(l){   // EP v2.05: live layout
     '<button class="btn small" data-x="appr-sent" data-id="' + id + '" title="Marks it sent. Email it to the rep from Outlook.">Mark sent</button></div>' +
     (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(l.rep || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : '') +
     (l.approvedBy ? '<div class="emb-ok">&#10003; Approved by ' + esc(l.approvedBy) + ' on ' + fmt(l.approvedAt) + ' ' + time12(l.approvedAt) + '</div><button class="btn light small" data-x="appr-undo" data-id="' + id + '">Undo approval</button>'   // EP v2.12
-     : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="repAll" value="' + esc(l.rep) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' : ''));
+     : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="repAll" value="' + esc(l.rep) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' : '') + apprExtra(l));
 }
+function apprExtra(l){ const id = esc(l.id), rs = apprRems(l), due = l.status === 'Sent for Approval' ? apprNextDue(l) : null;   // EP v2.15
+  return (rs.length || due ? '<div class="appr-rem">' + rs.map(r => '<div>Approval reminder sent &middot; ' + fmt(r) + ' ' + time12(r) + '</div>').join('') + (due ? '<div class="emb-dim">Next reminder to ' + esc(l.rep || 'the rep') + ': ' + fmt(isoOf(due)) + ' (every ' + (urg(off(l.inHand)) === 'red' ? '3' : '5') + ' days)</div>' : '') + '</div>' : '') +
+    (['Sent for Approval','Waiting on Reply'].includes(l.status) ? '<div class="bar-test"><div class="emb-dim"><b>Test only:</b> what ' + esc(l.rep || 'the rep') + ' would do (email button, email reply, or their portal).</div><textarea class="emb-in rep-test-in" data-id="' + id + '" placeholder="What they want changed&hellip;" style="margin-top:4px"></textarea>' +
+      '<div class="btns"><button class="btn light small" data-x="rt-approve" data-id="' + id + '">Rep approves</button><button class="btn light small" data-x="rt-changes" data-id="' + id + '">Rep requests changes</button></div></div>' : ''); }
 // EP v2.05: the logo card, laid out like the live portal's
 const ebox = (num, title, right, body) => '<div class="emb-box"><div class="emb-box-hd">' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
 let boxShut = {};   // EP v2.13 (Part 7.1): Internal notes / Communication closed by clicking the heading
@@ -1068,13 +1108,13 @@ function commBox(l){
         : '<div class="emb-msg-acts">' + (m.by === ME ? '<button class="btn light small" data-x="msg-email" data-id="' + id + '" data-m="' + esc(m.id) + '">Copy email</button>' : '') + '<button class="btn light small" data-x="msg-reply" data-id="' + id + '" data-m="' + esc(m.id) + '">Reply</button><button class="btn light small" data-x="msg-resolve" data-id="' + id + '" data-m="' + esc(m.id) + '">Resolve</button></div>')) + '</div>';
   const composer = msgOpen[l.id] ? '<div class="emb-msg-new"><textarea class="emb-in msg-in" data-id="' + id + '" placeholder="Write a message or question&hellip;"></textarea>' +
     '<div class="emb-msg-acts"><button class="btn light small" data-x="msg-cancel" data-id="' + id + '">Cancel</button><button class="btn small" data-x="msg-send" data-id="' + id + '">Send</button></div></div>' : '';
-  return eboxT(l.id + '|comm', '', 'Communication', '<button class="btn light small" data-x="msg-new" data-id="' + id + '">+ New message</button>',
+  return eboxT(l.id + '|comm', '', 'Communication', (commNew(l) ? '<span class="new-reply">New reply</span> ' : '') + '<button class="btn light small" data-x="msg-new" data-id="' + id + '">+ New message</button>',
     composer + (open.length ? open.map(msg).join('') : (msgOpen[l.id] ? '' : '<div class="emb-dim">No messages yet. Use &ldquo;+ New message&rdquo; to start a conversation.</div>')) +
     (done.length ? '<details class="emb-hist" style="margin-top:8px"><summary>Show ' + done.length + ' resolved</summary>' + done.map(msg).join('') + '</details>' : '') +
     '<div class="emb-dim" style="margin-top:8px;font-size:11px">Saved on this page only. No emails are sent.</div>');
 }
 function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (queues) or the task box (To Do)
-  const id = esc(l.id);
+  const id = esc(l.id); dstMeasure(l);   // EP v2.15
   const notes = DB.notes.filter(n => n.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
   const hist = DB.history.filter(h => h.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
   const ta = (k, ph) => '<textarea data-edit="' + k + '" data-id="' + id + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '>' + esc(l[k] || '') + '</textarea>';
@@ -1099,8 +1139,8 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     (notes.length ? notes.map(n => '<div class="emb-note"><span class="emb-dim">' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.by) + '</span><div>' + esc(n.text) + '</div></div>').join('') : '<div class="emb-dim">No notes yet.</div>') +
     '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px"><textarea class="emb-in note-in" data-id="' + id + '" placeholder="Add an internal note&hellip;"></textarea><button class="btn small" data-x="note-add" data-id="' + id + '">Add</button></div><div class="emb-dim" style="font-size:11px;margin-top:4px">Cmd/Ctrl+Enter to save</div>');
   const files = ebox(3, 'Files', '<button class="btn light small" data-x="file-zip" data-id="' + id + '">&#11015; Download all (' + l.files.length + ')</button>',
-    l.files.map(x => '<div class="emb-file"><span class="emb-file-ext">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="emb-file-name" title="' + esc(x.name) + '">' + esc(x.name) + '</span>' +
-      '<button class="btn light small" data-x="file-open" data-id="' + id + '" data-name="' + esc(x.name) + '">View</button><button class="btn small" data-x="file-dl" data-id="' + id + '" data-name="' + esc(x.name) + '">Download</button>' +
+    l.files.map(x => renameOpen[l.id + '|' + x.name] ? '<div class="emb-file"><div class="f-ren"><input class="emb-in ren-in" data-id="' + id + '" data-name="' + esc(x.name) + '" value="' + esc(x.name.replace(/\.[^.]*$/, '')) + '"><span class="emb-dim">' + esc((x.name.match(/\.[^.]*$/) || [''])[0]) + '</span></div><button class="btn light small" data-x="ren-x" data-id="' + id + '" data-name="' + esc(x.name) + '">Cancel</button><button class="btn small" data-x="ren-save" data-id="' + id + '" data-name="' + esc(x.name) + '">Save name</button></div>' : '<div class="emb-file"><span class="emb-file-ext">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="emb-file-name" title="' + esc(x.name) + '">' + esc(x.name) + (x.dstH ? '<span class="dst-size">' + x.dstH + ' x ' + x.dstW + ' in</span>' : '') + '</span>' +
+      '<button class="btn light small" data-x="ren-open" data-id="' + id + '" data-name="' + esc(x.name) + '">Rename</button><button class="btn light small" data-x="file-open" data-id="' + id + '" data-name="' + esc(x.name) + '">View</button><button class="btn small" data-x="file-dl" data-id="' + id + '" data-name="' + esc(x.name) + '">Download</button>' +
       '<button class="emb-btn-del" data-x="file-rm" data-id="' + id + '" data-name="' + esc(x.name) + '">Delete</button></div>').join('') +
     '<div class="emb-drop" data-x="file-add" data-id="' + id + '">&#128206; Click to add files or drag &amp; drop<div class="emb-dim" style="font-size:11px;margin-top:2px">DST, PNG, JPG, PDF, AI, EPS, SVG &mdash; Max 10 MB</div></div>');
   const dig = digOf(l);
@@ -1168,6 +1208,17 @@ document.addEventListener('click', async e => {
     l.sewSentDate = todayIso(); l.sewSentTime = nowStamp().slice(11, 16); l.sewReq = null; log(l, 'Email', 'Sew-out request sent to Barrett' + (files.length ? ' (' + files.join(', ') + ')' : ''));
     setStatus(l, 'Pending Sew Out', AUTO); touch(); openLogo(l); toast('Moved to Barrett Queue &rarr; Pending Sew Out.');
   }
+  // EP v2.15: rename a file (Part 15); test-only rep approve / request changes (Departments doc Part 6, updates doc Part 17)
+  if (act === 'ren-open'){ renameOpen = {}; renameOpen[l.id + '|' + x.dataset.name] = true; render(); const ip = document.querySelector('.ren-in[data-id="' + l.id + '"]'); if (ip){ ip.focus(); ip.select(); } return; }
+  if (act === 'ren-x'){ renameOpen = {}; render(); return; }
+  if (act === 'ren-save'){ const ip = document.querySelector('.ren-in[data-id="' + l.id + '"]'); try { if (await renameFile(l, x.dataset.name, ip ? ip.value.trim() : '')){ renameOpen = {}; touch(); render(); toast('Renamed.'); } else { renameOpen = {}; render(); } } catch(err){ toast('Couldn&rsquo;t rename it. Is the file open somewhere?'); } return; }
+  if (act === 'rt-approve'){ const who = l.rep || 'the rep', n = nowStamp(); l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (test: rep)', who);
+    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Need to Upload'; setStatus(l, next, who);
+    notify(l, reqNo(l) + ' ' + l.logo + ' was approved by ' + who + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); touch(); openLogo(l); toast('Approved by ' + esc(who) + '. Moved to ' + next + '.'); return; }
+  if (act === 'rt-changes'){ const ta = document.querySelector('.rep-test-in[data-id="' + l.id + '"]'), text = ta ? ta.value.trim() : ''; if (!text){ toast('Type what they want changed first.'); return; } const who = l.rep || 'Sales rep';
+    (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:who, text:'Requested changes: ' + text, replies:[], resolved:false, newForMe:true});
+    const r0 = l.rev || 0; l.rev = r0 + 1; log(l, 'Edit', 'Revisions: ' + r0 + ' > ' + l.rev, who); log(l, 'Status', 'Changes requested by ' + who + ' (test: rep): ' + text, who);
+    setStatus(l, 'New Request', who); notify(l, reqNo(l) + ' ' + l.logo + ': ' + who + ' requested changes'); touch(); openLogo(l); toast(esc(who) + ' requested changes. Back in New Request.'); return; }
   // EP v2.14 (Parts 8-9): Barrett conversation, snooze, threads, test-only Barrett actions
   if (act === 'bar-new'){ barMsgOpen[l.id] = true; render(); const ta = document.querySelector('.bar-in[data-id="' + l.id + '"]'); if (ta) ta.focus(); return; }
   if (act === 'bar-cancel'){ delete barMsgOpen[l.id]; render(); return; }
@@ -1218,8 +1269,8 @@ document.addEventListener('click', async e => {
   if (['msg-reply','msg-reply-x','msg-reply-send','msg-resolve','msg-reopen'].includes(act)){ const m = (l.comms || []).find(z => z.id === x.dataset.m); if (!m) return;
     if (act === 'msg-reply'){ replyOpen[m.id] = true; render(); const t = document.querySelector('.msg-reply-in[data-m="' + m.id + '"]'); if (t) t.focus(); return; }
     if (act === 'msg-reply-x'){ delete replyOpen[m.id]; render(); return; }
-    if (act === 'msg-reply-send'){ const t = document.querySelector('.msg-reply-in[data-m="' + m.id + '"]'), text = t ? t.value.trim() : ''; if (!text) return; (m.replies = m.replies || []).push({ts:nowStamp(), by:ME, text}); delete replyOpen[m.id]; log(l, 'Note', 'Communication reply: ' + text); touch(); render(); return; }
-    if (act === 'msg-resolve'){ m.resolved = true; m.resolvedAt = nowStamp(); log(l, 'Note', 'Communication resolved'); touch(); render(); return; }
+    if (act === 'msg-reply-send'){ const t = document.querySelector('.msg-reply-in[data-m="' + m.id + '"]'), text = t ? t.value.trim() : ''; if (!text) return; (m.replies = m.replies || []).push({ts:nowStamp(), by:ME, text}); delete replyOpen[m.id]; delete m.newForMe; (m.replies || []).forEach(r => delete r.newForMe); log(l, 'Note', 'Communication reply: ' + text); touch(); render(); return; }
+    if (act === 'msg-resolve'){ m.resolved = true; m.resolvedAt = nowStamp(); delete m.newForMe; (m.replies || []).forEach(r => delete r.newForMe); log(l, 'Note', 'Communication resolved'); touch(); render(); return; }
     if (act === 'msg-reopen'){ m.resolved = false; delete m.resolvedAt; log(l, 'Note', 'Communication reopened'); touch(); render(); return; } }
   if (act === 'fee-dig'){ l.digitized = x.checked; if (!x.checked) l.rushFee = false; log(l, 'Edit', x.checked ? 'Marked as digitized' : 'Digitized unchecked'); touch(); render(); return; }
   if (act === 'fee-rush'){ l.rushFee = x.checked; log(l, 'Edit', x.checked ? 'Rush fee added' : 'Rush fee removed'); touch(); render(); return; }
@@ -2018,7 +2069,7 @@ function renderAccounts(tab){
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
 function render(){
-  refreshToday(); if (barAutoFollow()) touch(); renderNotifs();   // EP v2.14 if (!TODO_OFF && tdApprovalCheck()) touch();
+  refreshToday(); { const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2) touch(); } renderNotifs();   // EP v2.14 / v2.15 if (!TODO_OFF && tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
   dl.innerHTML = [...new Set(DB.logos.concat(DB.hidden || []).map(l => l.account).filter(Boolean))].sort().map(a => '<option value="' + esc(a) + '">').join('');
