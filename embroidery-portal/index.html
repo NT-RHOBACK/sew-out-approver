@@ -503,7 +503,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.28</span>
+    <span class="vbadge">EP v2.29</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -522,7 +522,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.28';
+const VERSION = 'EP v2.29';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -545,7 +545,7 @@ const AUTO = 'System (auto)';   // who, for moves the portal makes on its own
 const STATUS_COLORS = {
   'New Request':       {title:'#5b3a8e', bg:'#5b3a8e', fg:'#ffffff'},
   'Digitizing':        {title:'#0f766e', bg:'#d2f0ec', fg:'#0f5f58'},
-  'Need to Request Sew Out': {title:'#b45309', bg:'#fef3c7', fg:'#92400e'},   // EP v2.25: ready for a sew-out, not requested yet
+  'Need to Request Sew Out': {title:'#ea580c', bg:'#fed7aa', fg:'#9a3412'},   // EP v2.25: ready for a sew-out, not requested yet
   'Pending Sew Out':   {title:'#d9822b', bg:'#fdeee2', fg:'#a35a1f'},
   'Review Sew Out':    {title:'#c25e00', bg:'#f6b26b', fg:'#4a2a00'},
   'Sent for Approval': {title:'#3b8fd0', bg:'#e6f3fc', fg:'#1f6fa8'},
@@ -560,8 +560,8 @@ const OPEN_STATUSES = STATUSES.slice(0, 7);
 const TODO_OFF = true;   // EP v2.10: no To Do tab, no To Do strip on logo cards, no automatic To Do tasks
 const TABS = [
   {key:'dashboard', title:'Dashboard',     sub:'Every open logo with an In Hand Date 30 days away or less (or past), or past its due time (red Submitted date).', focus:true},
-  {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, Need to Request Sew Out, and Waiting on Reply.', sections:['New Request','Digitizing','Need to Request Sew Out','Waiting on Reply']},
-  {key:'barrett',   title:'Barrett Queue',  sub:'Logos at Barrett for sew-outs.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
+  {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
+  {key:'barrett',   title:'Barrett Queue',  sub:'Sew-outs: ones you still need to request, and the ones at Barrett.', sections:['Need to Request Sew Out','Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
   {key:'approvals', title:'Approvals / Upload / Send', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Upload / Send (approved: upload to EpicStitch + FTP, or send the files, depending on the department).', sections:['Sent for Approval','Send Invoice','Upload / Send'],
      extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Send Invoice':{h:'Approved', f:'approvedDate'}, 'Upload / Send':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
   {key:'accounts',  title:'Accounts', sub:'', accounts:true},   // EP v2.04
@@ -1043,7 +1043,7 @@ function columns(tab, section){
     cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
   } else if (extra && extra.f === 'photo'){
     cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>' + (fuAt(l) ? '<div class="td-when">Last follow-up: ' + fmt(fuAt(l)) + '</div>' : '')});   // EP v2.14
-    cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp red">Late</span>' : '<span class="img-pend">Pending</span>'});
+    cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => l.status === 'Need to Request Sew Out' ? '<span class="muted">&mdash;</span>' : photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp red">Late</span>' : '<span class="img-pend">Pending</span>'});
   } else if (extra){
     cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
   }
