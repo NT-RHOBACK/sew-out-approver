@@ -503,7 +503,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.29</span>
+    <span class="vbadge">EP v2.30</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -522,7 +522,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.29';
+const VERSION = 'EP v2.30';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1023,6 +1023,7 @@ function claimBar(l){ const id = esc(l.id), lk = claimLocked(l), mine = l.claime
     (!lk && mine ? '<button class="btn small" data-x="claim-lock" data-id="' + id + '">&#128274; Lock to me</button>' : '') +
     (l.claimLocked && l.status === 'New Request' ? '<button class="btn light small" data-x="claim-unlock" data-id="' + id + '">Unlock</button>' : '') +
     (!mine ? '<button class="btn light small" data-x="claim" data-id="' + id + '">Take it back</button>' : '') +
+    '<select class="claim-to" data-id="' + id + '" title="Change who has it" style="font:inherit;font-size:12px;padding:2px 4px"><option value="">Change to&hellip;</option>' + PEOPLE.filter(n => n !== l.claimedBy).map(n => '<option>' + esc(n) + '</option>').join('') + '<option value="(none)">Not claimed</option></select>' +   /* EP v2.30 */
     (!lk && mine ? '<span class="emb-dim" style="font-size:11px;margin-left:auto">Test only: <a href="#" data-x="claim-test" data-id="' + id + '">Jette claims it</a></span>' : '') + '</div>'; }
 const acctShown = l => l.account || l.school || l.project || l.dept || '';   // EP v2.03: no account → School / Project name → department
 function columns(tab, section){
@@ -1694,6 +1695,10 @@ document.addEventListener('change', e => {
   if (e.target.id === 'bulkVal') bulkVal = e.target.value;
 });
 document.addEventListener('input', e => { if (e.target.id === 'bulkVal') bulkVal = e.target.value; });
+document.addEventListener('change', e => { const s = e.target.closest && e.target.closest('select.claim-to'); if (!s || !s.value) return; const l = byId(s.dataset.id); if (!l) return;   // EP v2.30: change who has it (me only)
+  const nv = s.value === '(none)' ? '' : s.value, was = l.claimedBy || '';
+  if (nv){ l.claimedBy = nv; log(l, 'Edit', 'Claim changed: ' + (was || '(not claimed)') + ' > ' + nv); } else { l.claimedBy = ''; l.claimLocked = false; log(l, 'Edit', 'Unclaimed (was ' + was + ')'); }
+  autoFollow(l, l.status, l.status); touch(); render(); toast(nv ? 'Now claimed by ' + esc(nv) + '.' : 'Unclaimed.'); });
 document.addEventListener('click', e => { const b = e.target.closest('[data-bulk]'); if (!b) return; e.preventDefault();
   if (b.dataset.bulk === 'clear'){ bulkSel.clear(); render(); return; }
   const v = (document.getElementById('bulkVal') || {}).value != null ? document.getElementById('bulkVal').value : bulkVal;
