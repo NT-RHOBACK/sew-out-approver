@@ -490,6 +490,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 .emb-sew-toggle:hover{border-color:#C4CDE8}
 .emb-fee-chk{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer}
 .emb-fee-chk input{width:16px;height:16px;accent-color:var(--navy)}
+.fee-waived-tag{font-size:11px;font-weight:700;color:#2e7d32;background:#e2f5dc;border-radius:8px;padding:2px 8px}
 .emb-ok{color:#2E7D32;font-weight:600;font-size:13px;margin:6px 0}
 .emb-private{background:#F3E5F5;color:#6A1B9A;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600}
 .emb-note{padding:6px 0;border-bottom:1px solid #EEF0F4;font-size:13px}
@@ -528,7 +529,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.43</span>
+    <span class="vbadge">EP v2.44</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -547,7 +548,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.43';
+const VERSION = 'EP v2.44';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -768,7 +769,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || [], apprContact:l.apprContact || '', poDate:l.poDate || '', lineSheet:l.lineSheet || '', mailSel:l.mailSel || null, claimLocked:!!l.claimLocked})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || [], apprContact:l.apprContact || '', poDate:l.poDate || '', lineSheet:l.lineSheet || '', mailSel:l.mailSel || null, claimLocked:!!l.claimLocked, feeWaived:!!l.feeWaived, feeWaivedReason:l.feeWaivedReason || ''})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -827,7 +828,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; l.apprContact = x.apprContact || ''; l.poDate = x.poDate || ''; l.lineSheet = x.lineSheet || ''; l.mailSel = x.mailSel || null; l.claimLocked = !!x.claimLocked; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; l.apprContact = x.apprContact || ''; l.poDate = x.poDate || ''; l.lineSheet = x.lineSheet || ''; l.mailSel = x.mailSel || null; l.claimLocked = !!x.claimLocked; l.feeWaived = !!x.feeWaived; l.feeWaivedReason = x.feeWaivedReason || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -1204,6 +1205,8 @@ let boxShut = {};   // EP v2.13 (Part 7.1): Internal notes / Communication close
 const eboxT = (key, num, title, right, body) => { const shut = !!boxShut[key];
   return '<div class="emb-box"><div class="emb-box-hd tog" data-x="box-tog" data-id="' + esc(key.split('|')[0]) + '" data-k="' + esc(key) + '"><span class="bchev">' + (shut ? '&#9656;' : '&#9662;') + '</span>' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div>' + (shut ? '' : '<div class="emb-box-bd">' + body + '</div>') + '</div>'; };
 const ef = (label, input, full) => '<div class="emb-fld' + (full ? ' full' : '') + '"><label>' + label + '</label>' + input + '</div>';
+document.addEventListener('change', e => { const w = e.target; if (!w.classList || !w.classList.contains('fee-why')) return; const l = byId(w.dataset.id); if (!l) return; const v = w.value.trim();   // EP v2.44: reason the fee was waived
+  if (v === (l.feeWaivedReason || '')) return; l.feeWaivedReason = v; log(l, 'Edit', 'Fee waived reason: ' + (v || '(cleared)')); touch(); render(); });
 const digOf = l => l.digitized == null ? !!l.scratch : !!l.digitized;
 let msgOpen = {}, replyOpen = {};
 // EP v2.13 (updates doc Parts 3 + 14): the question email, with every earlier Communication message (newest first) and the request's one subject
@@ -1280,11 +1283,13 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
       '<button class="emb-btn-del" data-x="file-rm" data-id="' + id + '" data-name="' + esc(x.name) + '">Delete</button></div>').join('') +
     '<div class="emb-drop" data-x="file-add" data-id="' + id + '">&#128206; Click to add files or drag &amp; drop<div class="emb-dim" style="font-size:11px;margin-top:2px">DST, PNG, JPG, PDF, AI, EPS, SVG &mdash; Max 10 MB</div></div>');
   const dig = digOf(l);
-  const fee = ebox(6, 'Digitizing fee', '',
+  const fee = ebox(6, 'Digitizing fee', l.feeWaived ? '<span class="fee-waived-tag">Fee waived</span>' : '',
     '<label class="emb-fee-chk"><input type="checkbox" data-x="fee-dig" data-id="' + id + '"' + (dig ? ' checked' : '') + '> This logo was digitized <span class="emb-dim">($75)</span></label>' +
     '<label class="emb-fee-chk"><input type="checkbox" data-x="fee-rush" data-id="' + id + '"' + (l.rushFee ? ' checked' : '') + (dig ? '' : ' disabled') + '> Add the $5 rush fee</label>' +
+    '<label class="emb-fee-chk"><input type="checkbox" data-x="fee-waive" data-id="' + id + '"' + (l.feeWaived ? ' checked' : '') + '> Fee waived</label>' +   // EP v2.44
+    (l.feeWaived ? '<div class="emb-fld" style="margin:2px 0 4px 24px"><label>Why was the fee waived?</label><input class="emb-in fee-why" data-id="' + id + '" value="' + esc(l.feeWaivedReason || '') + '" placeholder="e.g., I digitized it myself / I edited the file"></div>' : '') +
     (l.invoiceSent ? '<div class="emb-ok">&#10003; Fee email sent' + (opsFor(l) ? ' to ' + esc(opsFor(l)) : '') + ' on ' + fmt(l.invoiceSent) + '</div><button class="btn light small" data-x="fee-undo" data-id="' + id + '">Undo</button>'
-      : dig ? '<button class="btn light small" style="margin-top:6px" data-x="fee-sent" data-id="' + id + '">Mark invoice sent</button>' : ''));
+      : dig && !l.feeWaived ? '<button class="btn light small" style="margin-top:6px" data-x="fee-sent" data-id="' + id + '">Mark invoice sent</button>' : ''));
   const histBox = ebox(7, 'History', '', '<details class="emb-hist"><summary>Show history (' + hist.length + ' entr' + (hist.length === 1 ? 'y' : 'ies') + ')</summary>' +
     (hist.length ? hist.map(h => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmt(h.ts) + ' ' + time12(h.ts) + '</span><span>' + esc(h.what) + '</span><span class="emb-hist-by">' + esc(h.by || '') + '</span></div>').join('') : '<div class="emb-dim">No history yet.</div>') + '</details>');
   return '<div class="emb-card">' + top + '<div class="emb-card-cols"><div class="emb-col">' + statusBox + details + notesBox + commBox(l) + '</div>' +
@@ -1349,7 +1354,7 @@ document.addEventListener('click', async e => {
   if (act === 'ren-x'){ renameOpen = {}; render(); return; }
   if (act === 'ren-save'){ const ip = document.querySelector('.ren-in[data-id="' + l.id + '"]'); try { if (await renameFile(l, x.dataset.name, ip ? ip.value.trim() : '')){ renameOpen = {}; touch(); render(); toast('Renamed.'); } else { renameOpen = {}; render(); } } catch(err){ toast('Couldn&rsquo;t rename it. Is the file open somewhere?'); } return; }
   if (act === 'rt-approve'){ const who = apprContactOf(l) || 'the rep', n = nowStamp(); l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (test: rep)', who);
-    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Upload / Send'; setStatus(l, next, who);
+    const next = digOf(l) && !l.invoiceSent && !l.feeWaived ? 'Send Invoice' : 'Upload / Send'; setStatus(l, next, who);
     notify(l, reqNo(l) + ' ' + l.logo + ' was approved by ' + who + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); touch(); openLogo(l); toast('Approved by ' + esc(who) + '. Moved to ' + next + '.'); return; }
   if (act === 'rt-changes'){ const ta = document.querySelector('.rep-test-in[data-id="' + l.id + '"]'), text = ta ? ta.value.trim() : ''; if (!text){ toast('Type what they want changed first.'); return; } const who = apprContactOf(l) || 'Sales rep';
     (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:who, text:'Requested changes: ' + text, replies:[], resolved:false, newForMe:true});
@@ -1395,7 +1400,7 @@ document.addEventListener('click', async e => {
     autoFollow(l, l.status, l.status); touch(); render(); return; }
   if (act === 'appr-mark'){ const inp = document.getElementById('apprBy-' + l.id), who = (inp && inp.value.trim()) || l.rep || 'the rep', n = nowStamp();   // EP v2.12 (Departments doc Part 6)
     l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (marked by ' + ME + ')');
-    const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Upload / Send'; setStatus(l, next, ME); touch(); openLogo(l);
+    const next = digOf(l) && !l.invoiceSent && !l.feeWaived ? 'Send Invoice' : 'Upload / Send'; setStatus(l, next, ME); touch(); openLogo(l);
     toast(esc(reqNo(l) + ' ' + l.logo) + ' was approved by ' + esc(who) + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); return; }
   if (act === 'appr-undo'){ if (!confirm('Undo the approval by ' + l.approvedBy + '?\n\nIt goes back to Sent for Approval.')) return;
     log(l, 'Status', 'Approval undone (was approved by ' + l.approvedBy + ')'); l.approvedBy = ''; l.approvedAt = ''; l.approvedDate = ''; setStatus(l, 'Sent for Approval', ME); touch(); openLogo(l); toast('Approval undone. It&rsquo;s back in Sent for Approval.'); return; }
@@ -1423,6 +1428,7 @@ document.addEventListener('click', async e => {
     if (act === 'msg-resolve'){ m.resolved = true; m.resolvedAt = nowStamp(); delete m.newForMe; (m.replies || []).forEach(r => delete r.newForMe); log(l, 'Note', 'Communication resolved'); touch(); render(); return; }
     if (act === 'msg-reopen'){ m.resolved = false; delete m.resolvedAt; log(l, 'Note', 'Communication reopened'); touch(); render(); return; } }
   if (act === 'fee-dig'){ l.digitized = x.checked; if (!x.checked) l.rushFee = false; log(l, 'Edit', x.checked ? 'Marked as digitized' : 'Digitized unchecked'); touch(); render(); return; }
+  if (act === 'fee-waive'){ l.feeWaived = x.checked; log(l, 'Edit', x.checked ? 'Digitizing fee waived' : 'Fee waiver removed'); touch(); render(); if (x.checked){ const w = document.querySelector('.fee-why[data-id="' + l.id + '"]'); if (w) w.focus(); } return; }   // EP v2.44
   if (act === 'fee-rush'){ l.rushFee = x.checked; log(l, 'Edit', x.checked ? 'Rush fee added' : 'Rush fee removed'); touch(); render(); return; }
   if (act === 'fee-sent'){ l.invoiceSent = todayIso(); log(l, 'Email', 'Digitizing fee email sent' + (opsFor(l) ? ' to ' + opsFor(l) : '') + ' ($' + (75 + (l.rushFee ? 5 : 0)) + ')');
     if (l.status === 'Send Invoice'){ setStatus(l, 'Upload / Send', AUTO); touch(); openLogo(l); toast('Fee email marked sent. Moved to Upload / Send.'); return; }   // EP v2.12
