@@ -290,6 +290,8 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .pl-row.done .pl-tx{color:#9ca3af;text-decoration:line-through}
 .pl-subrow{display:flex;gap:6px;align-items:center;margin:0 0 6px}.pl-subrow .emb-in{flex:1}.pl-sdone{color:#9ca3af !important;text-decoration:line-through}
 .pl-secs{margin:0 0 14px}
+.pl-st{width:100%;font:inherit;font-size:13px;font-weight:600;padding:6px 8px;border:1px solid;border-radius:6px;cursor:pointer}
+.pl-st option{background:#fff;color:#1b2033;font-weight:400}
 .t2-check{color:#2e7d32;font-weight:700;text-decoration:none;display:inline-block}
 .bsel,.bsel-all{width:15px;height:15px;margin:0 6px 0 0;vertical-align:middle;cursor:pointer;accent-color:#1b2a4a}
 #bulkBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:10px;background:#1b2a4a;color:#fff;padding:10px 16px;border-radius:10px;box-shadow:0 6px 24px rgba(15,23,42,.3);font-size:14px}
@@ -523,7 +525,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.39</span>
+    <span class="vbadge">EP v2.40</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -542,7 +544,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.39';
+const VERSION = 'EP v2.40';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -791,9 +793,9 @@ function buildWorkbook(){
   const tn = XLSX.utils.aoa_to_sheet([['Date','Time','Task','Note','By','Chain']].concat((DB.tdNotes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.task, n.text, n.by, n.chain])));
   tn['!cols'] = [12, 10, 40, 70, 14, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, tn, 'To Do Notes');
-  const pls = XLSX.utils.aoa_to_sheet([['Task','To-do date','Priority','Done','Done at','Sub-tasks','Rolled over from','Created','ID','Section']].concat((DB.planner || []).map(x => [x.text, x.date || '(backlog)', x.pri || '', x.done ? 'Yes' : '', x.doneAt || '',
-    JSON.stringify((x.subs || []).map(s => typeof s === 'string' ? {t:s, done:false} : s)), x.rolledFrom || '', x.created || '', x.id, x.sec || ''])));   // EP v2.36; v2.39 Section
-  pls['!cols'] = [60, 12, 9, 6, 20, 60, 14, 20, 16, 20].map(w => ({wch:w}));
+  const pls = XLSX.utils.aoa_to_sheet([['Task','To-do date','Priority','Done','Done at','Sub-tasks','Rolled over from','Created','ID','Section','Status']].concat((DB.planner || []).map(x => [x.text, x.date || '(backlog)', x.pri || '', x.done ? 'Yes' : '', x.doneAt || '',
+    JSON.stringify((x.subs || []).map(s => typeof s === 'string' ? {t:s, done:false} : s)), x.rolledFrom || '', x.created || '', x.id, x.sec || '', plStatus(x)])));   // EP v2.36; v2.39 Section
+  pls['!cols'] = [60, 12, 9, 6, 20, 60, 14, 20, 16, 20, 12].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, pls, 'Planner');
   const dts = XLSX.utils.aoa_to_sheet([['Day','Locked list (please don’t edit)','What I did lines (please don’t edit)']].concat(Object.keys(DB.todayNotes || {}).sort().map(d => { const n = DB.todayNotes[d] || {}; return [d, n.locked ? JSON.stringify(n.locked) : '', (n.did || []).length ? JSON.stringify(n.did) : '']; }).filter(r => r[1] || r[2])));
   dts['!cols'] = [12, 80, 60].map(w => ({wch:w}));
@@ -833,7 +835,7 @@ function readWorkbook(buf){
   rows('Daily To Do').slice(1).filter(r => r[0]).forEach(r => { const d = normDate(r[0]), n = db.todayNotes[d] = db.todayNotes[d] || {todo:[], did:[]}; n.todo = n.todo || [];
     try { if (r[1]) n.locked = JSON.parse(String(r[1])); } catch(e){} try { if (r[2]) n.did = JSON.parse(String(r[2])); } catch(e){} });   // EP v2.36
   db.planner = rows('Planner').slice(1).filter(r => r[0] || r[8]).map(r => { let subs = []; try { subs = r[5] ? JSON.parse(String(r[5])) : []; } catch(e){}
-    const dd = String(r[1] || ''); return {id:String(r[8] || ('T' + Math.random().toString(36).slice(2, 9))), text:String(r[0]), date:/backlog/i.test(dd) ? '' : normDate(dd), pri:String(r[2] || ''), done:/^y/i.test(String(r[3])), doneAt:String(r[4] || ''), subs, rolledFrom:normDate(String(r[6] || '')), created:String(r[7] || ''), sec:String(r[9] || '')}; });
+    const dd = String(r[1] || ''); return {id:String(r[8] || ('T' + Math.random().toString(36).slice(2, 9))), text:String(r[0]), date:/backlog/i.test(dd) ? '' : normDate(dd), pri:String(r[2] || ''), done:/^y/i.test(String(r[3])), doneAt:String(r[4] || ''), subs, rolledFrom:normDate(String(r[6] || '')), created:String(r[7] || ''), sec:String(r[9] || ''), status:String(r[10] || '')}; });
   const psx = inf.find(r => r[0] === 'Planner sections'); try { db.plSecs = psx && psx[1] ? JSON.parse(String(psx[1])) : []; } catch(e){ db.plSecs = []; }   // EP v2.39
   const gl = inf.find(r => r[0] === 'Goals'); try { db.goals = gl && gl[1] ? JSON.parse(String(gl[1])) : []; } catch(e){ db.goals = []; }   // EP v2.17
   const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
@@ -2517,6 +2519,10 @@ function plRollover(){   // anything not done from an earlier day moves to today
 const dayShort = iso => parseIso(iso).toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'});
 // EP v2.39: Planner works like the queue tabs: sections you name (collapsible, with counts), one row per task with a drop-down arrow that opens it to edit
 const plSecs = () => (DB.plSecs = DB.plSecs || []);
+const PL_ST = ['Not started', 'In progress', 'Waiting', 'Done'];   /* EP v2.40: task Status, colored like the logo Status dropdown */
+const PL_ST_C = {'Not started':{bg:'#e3e6ec', fg:'#3a4256'}, 'In progress':{bg:'#bcd9f5', fg:'#0b4f80'}, 'Waiting':{bg:'#fbe08a', fg:'#5c4a00'}, 'Done':{bg:'#bfe3c0', fg:'#1b5e20'}};
+const plStatus = t => t.done ? 'Done' : (PL_ST.includes(t.status) && t.status !== 'Done' ? t.status : 'Not started');
+const plStSel = t => { const s = plStatus(t), c = PL_ST_C[s]; return '<select class="pl-st" data-pl="status" data-id="' + esc(t.id) + '" style="background:' + c.bg + ';color:' + c.fg + ';border-color:' + c.bg + '">' + PL_ST.map(x => '<option' + (x === s ? ' selected' : '') + '>' + x + '</option>').join('') + '</select>'; };
 let plOpen = null, plSecPanel = false;
 const plSecOpts = cur => '<option value="">(No section)</option>' + plSecs().concat(cur && !plSecs().includes(cur) ? [cur] : []).map(s => '<option' + (cur === s ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '<option value="__new">+ New section&hellip;</option>';
 function plNewSecName(){ const v = (prompt('New section name:') || '').trim(); if (!v) return ''; if (!plSecs().includes(v)){ plSecs().push(v); touch(); } return v; }
@@ -2527,7 +2533,7 @@ function plTaskRow(t, today){
       (subs.length ? ' <span class="pl-tag">' + sd + '/' + subs.length + ' sub-tasks</span>' : '') + (t.rolledFrom && !t.done ? ' <span class="pl-tag">rolled over from ' + esc(dayShort(t.rolledFrom)) + '</span>' : '') + '</td>' +
     '<td>' + (t.date ? esc(dayShort(t.date)) + (t.date === today ? ' <span class="muted">(today)</span>' : '') : '<span class="muted">Backlog</span>') + '</td>' +
     '<td>' + (t.pri ? '<span class="pl-pri pl-' + esc(t.pri.toLowerCase()) + '">' + esc(t.pri) + '</span>' : '<span class="muted">&mdash;</span>') + '</td>' +
-    '<td class="wrap">' + (t.sec ? esc(t.sec) : '<span class="muted">&mdash;</span>') + '</td></tr>' + (open ? plBox(t) : '');
+    '<td class="wrap">' + (t.sec ? esc(t.sec) : '<span class="muted">&mdash;</span>') + '</td><td>' + plStSel(t) + '</td></tr>' + (open ? plBox(t) : '');
 }
 function plBox(t){
   const id = esc(t.id), subs = (t.subs || []).map(plSub), sd = subs.filter(s => s.done).length;
@@ -2537,13 +2543,13 @@ function plBox(t){
     fld('To-do date (blank = backlog)', '<input type="date" data-pl="date" data-id="' + id + '" value="' + esc(t.date || '') + '">') +
     fld('Priority', '<select data-pl="pri" data-id="' + id + '"><option value="">(none)</option>' + PL_PRI.map(p => '<option' + (t.pri === p ? ' selected' : '') + '>' + p + '</option>').join('') + '</select>') +
     fld('Section', '<select data-pl="sec" data-id="' + id + '">' + plSecOpts(t.sec || '') + '</select>') +
-    fld('Status', '<label class="pl-chk" style="display:inline-flex;align-items:center;padding:6px 0;font-size:13px"><input type="checkbox" data-pl="done" data-id="' + id + '"' + (t.done ? ' checked' : '') + '>Done</label>') +
+    fld('Status', plStSel(t)) +
     '<div class="emb-fld full emb-dim">' + info + '</div></div>';
   const subH = subs.map((s, j) => '<div class="pl-subrow"><label class="pl-chk"><input type="checkbox" data-pl="subdone" data-id="' + id + '" data-j="' + j + '"' + (s.done ? ' checked' : '') + '></label><input class="emb-in' + (s.done ? ' pl-sdone' : '') + '" data-pl="subtext" data-id="' + id + '" data-j="' + j + '" value="' + esc(s.t) + '"><button class="emb-btn-del" data-pl="subrm" data-id="' + id + '" data-j="' + j + '">Remove</button></div>').join('') +
     '<div class="pl-subrow"><input id="plSubNew" class="emb-in" placeholder="Add a sub-task&hellip;"><button class="btn light small" data-pl="subadd2" data-id="' + id + '">Add</button></div>';
   const foot = '<div class="emb-card-foot">' + (t.date ? '<button class="btn light small" data-pl="backlog" data-id="' + id + '">&rarr; Backlog</button>' : '<button class="btn light small" data-pl="today" data-id="' + id + '">&rarr; Today</button>') +
     '<button class="emb-btn-del" data-pl="rm" data-id="' + id + '">Remove</button></div>';
-  return '<tr class="card-row"><td class="card-cell" colspan="4"><div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + ebox(0, 'Task', '', details) + '</div><div class="emb-col">' +
+  return '<tr class="card-row"><td class="card-cell" colspan="5"><div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + ebox(0, 'Task', '', details) + '</div><div class="emb-col">' +
     ebox(0, 'Sub-tasks', subs.length ? sd + ' of ' + subs.length + ' done' : '', subH) + foot + '</div></div></div></td></tr>';
 }
 
@@ -2643,7 +2649,8 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'
   if (k === 'rm'){ if (!confirm('Remove "' + t.text + '"?')) return; DB.planner = PL().filter(x => x !== t); touch(); render(); return; }
 });
 document.addEventListener('change', e => { const b = e.target.closest && e.target.closest('[data-pl]'); if (!b) return; const t = plGet(b.dataset.id); if (!t) return;
-  if (b.dataset.pl === 'done'){ t.done = b.checked; t.doneAt = b.checked ? nowStamp() : ''; touch(); render(); if (b.checked) toast('&#10003; Done. It&rsquo;s in today&rsquo;s What I did.'); return; }
+  if (b.dataset.pl === 'status'){ const v = b.value, was = t.done; t.status = v; t.done = v === 'Done'; t.doneAt = t.done ? (was ? t.doneAt : nowStamp()) : ''; touch(); render(); if (t.done && !was) toast('&#10003; Done. It&rsquo;s in today&rsquo;s What I did.'); return; }   // EP v2.40
+  if (b.dataset.pl === 'done'){ t.done = b.checked; t.doneAt = b.checked ? nowStamp() : ''; t.status = b.checked ? 'Done' : (t.status === 'Done' ? 'Not started' : t.status); touch(); render(); if (b.checked) toast('&#10003; Done. It&rsquo;s in today&rsquo;s What I did.'); return; }
   if (b.dataset.pl === 'subdone'){ t.subs = (t.subs || []).map(plSub); const s = t.subs[+b.dataset.j]; if (s){ s.done = b.checked; touch(); render(); } return; }
   if (b.dataset.pl === 'pri'){ t.pri = b.value || ''; touch(); render(); return; }
   if (b.dataset.pl === 'text'){ const v = b.value.trim(); if (v && v !== t.text){ t.text = v; touch(); render(); } else b.value = t.text; return; }   // EP v2.39
@@ -2654,7 +2661,7 @@ document.addEventListener('change', e => { const b = e.target.closest && e.targe
 let plV = {show:'upcoming', day:'', q:'', pri:'', sort:'pri', group:'section', lastSec:''};
 const PL_SHOW = [['upcoming', 'Today + upcoming'], ['day', 'One day (past or future)'], ['backlog', 'Backlog'], ['done', 'Done'], ['all', 'Everything']];
 const PL_SORT = [['pri', 'Priority'], ['date', 'Date'], ['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A to Z']];
-const PL_GROUP = [['section', 'Section'], ['date', 'Date'], ['priority', 'Priority'], ['none', 'No grouping']];
+const PL_GROUP = [['section', 'Section'], ['status', 'Status'], ['date', 'Date'], ['priority', 'Priority'], ['none', 'No grouping']];
 function plSorted(list){ const s = plV.sort;
   return list.slice().sort(s === 'date' ? (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || plOrder(a, b) : s === 'new' ? (a, b) => (b.created || '').localeCompare(a.created || '')
     : s === 'old' ? (a, b) => (a.created || '').localeCompare(b.created || '') : s === 'az' ? (a, b) => a.text.localeCompare(b.text) : plOrder); }
@@ -2667,16 +2674,17 @@ function plList(){ const today = todayIso(), all = PL().filter(plMatch), s = plV
   if (s === 'done') return all.filter(t => t.done);
   return all; }
 const plDateName = d => !d ? 'Backlog' : d === todayIso() ? 'Today · ' + dayShort(d) : dayShort(d);
-function plGroupOf(t){ const g = plV.group; return g === 'section' ? (t.sec || '(No section)') : g === 'priority' ? (t.pri || 'No priority') : g === 'date' ? plDateName(t.date) : null; }
+function plGroupOf(t){ const g = plV.group; return g === 'status' ? plStatus(t) : g === 'section' ? (t.sec || '(No section)') : g === 'priority' ? (t.pri || 'No priority') : g === 'date' ? plDateName(t.date) : null; }
 function plGroups(list){ const g = plV.group;
   if (g === 'none') return [[null, list]];
   if (g === 'section'){ const names = plSecs().slice(); list.forEach(t => { if (t.sec && !names.includes(t.sec)) names.push(t.sec); });
     const out = names.map(n => [n, list.filter(t => t.sec === n)]), ns = list.filter(t => !t.sec); if (ns.length || !names.length) out.push(['(No section)', ns]); return out; }
+  if (g === 'status') return PL_ST.map(s => [s, list.filter(t => plStatus(t) === s)]);
   if (g === 'priority') return PL_PRI.concat(['No priority']).map(p => [p, list.filter(t => (t.pri || 'No priority') === p)]).filter(x => x[1].length);
   return [...new Set(list.map(t => t.date || ''))].sort((a, b) => (a || '9999').localeCompare(b || '9999')).map(d => [plDateName(d), list.filter(t => (t.date || '') === d)]); }
 function plTable(items){ const today = todayIso();
-  return '<div class="tblwrap"><table class="tbl pl-tbl"><colgroup><col style="width:56%"><col style="width:16%"><col style="width:11%"><col style="width:17%"></colgroup><thead><tr><th>Task</th><th>To-do date</th><th>Priority</th><th>Section</th></tr></thead><tbody>' +
-    (items.length ? plSorted(items).map(t => plTaskRow(t, today)).join('') : '<tr><td colspan="4" class="muted" style="padding:12px">Nothing here.</td></tr>') + '</tbody></table></div>'; }
+  return '<div class="tblwrap"><table class="tbl pl-tbl"><colgroup><col style="width:44%"><col style="width:14%"><col style="width:10%"><col style="width:15%"><col style="width:17%"></colgroup><thead><tr><th>Task</th><th>To-do date</th><th>Priority</th><th>Section</th><th>Status</th></tr></thead><tbody>' +
+    (items.length ? plSorted(items).map(t => plTaskRow(t, today)).join('') : '<tr><td colspan="5" class="muted" style="padding:12px">Nothing here.</td></tr>') + '</tbody></table></div>'; }
 function renderPlanner(tab){
   const today = todayIso(), list = plList(), groups = plGroups(list);
   let body = plV.show === 'day' ? '<div class="bar" style="margin-bottom:10px"><button class="btn light small" data-pl="nav" data-v="-1">&#9664; Previous day</button><input type="date" id="plDay" value="' + (plV.day || today) + '" style="flex:none;min-width:0"><button class="btn light small" data-pl="nav" data-v="1">Next day &#9654;</button>' +
