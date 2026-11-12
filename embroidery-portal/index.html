@@ -503,7 +503,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.30</span>
+    <span class="vbadge">EP v2.31</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -522,7 +522,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.30';
+const VERSION = 'EP v2.31';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2244,18 +2244,40 @@ function collapseState(){ const heads = [...document.querySelectorAll('#page .se
 function placeSorts(){ const p = document.querySelector('.srt-pop'); if (p && p.getBoundingClientRect().right > document.documentElement.clientWidth - 8){ p.style.left = 'auto'; p.style.right = '0'; } }   // EP v1.46
 function syncCollapse(){ placeSorts(); const b = document.querySelector('#page [data-collapse]'); if (!b) return; const c = collapseState(); b.style.display = c.any ? '' : 'none'; b.textContent = c.open ? 'Collapse all' : 'Expand all'; }
 // EP v2.04: Accounts tab, like the live portal (Account / Account # / Open SO / Emb. Requests). Click an account to see its logos.
+// EP v2.31: Accounts tab with filters + sorting like the other tabs (search, Show, Department, Reset filters; click a column to sort)
+let acctF = {show:'', dept:'', sort:'', dir:1};
+const ACCT_SHOW = [['', 'All accounts'], ['logos', 'With logos here'], ['open', 'With logos in progress'], ['so', 'With open SOs'], ['emb', 'With embroidery requests (live)'], ['none', 'No logos here yet']];
+const ACCT_COLS = [['name', 'Account'], ['number', 'Account #'], ['so', 'Open SO'], ['emb', 'Emb. Requests (live)'], ['here', 'Logos here'], ['open', 'In progress']];
 function renderAccounts(tab){
-  const q = (state.search.accounts || '').toLowerCase(), m = new Map(), live = new Map();
-  DB.logos.forEach(l => { const a = acctShown(l) || '(blank)'; m.set(a, (m.get(a) || 0) + 1); });
-  (LIVE_ACCTS.accounts || []).forEach(a => live.set(a.name, a));   // EP v2.18
-  const names = [...new Set([...m.keys(), ...live.keys()])], rows = names.map(a => [a, m.get(a) || 0, live.get(a)]).filter(([a, n, x]) => (a + ' ' + (x ? x.number : '')).toLowerCase().includes(q)).sort((x, y) => (y[1] > 0) - (x[1] > 0) || x[0].localeCompare(y[0]));
-  const SHOW = 300;
-  document.getElementById('page').innerHTML = '<h1>Accounts</h1><div class="bar"><input id="acctSearch" style="flex:1" placeholder="Search by account name or number&hellip;" value="' + esc(state.search.accounts || '') + '"></div>' +
-    '<div class="sub">' + (LIVE_ACCTS.accounts && LIVE_ACCTS.accounts.length ? LIVE_ACCTS.accounts.length + ' accounts from the live portal (copied ' + fmt((LIVE_ACCTS.readAt || '').slice(0, 10)) + '), plus any only in this portal. Accounts with logos here show first.' : 'Connect Excel to load the live-portal accounts (live-accounts.json in your Embroidery Portal folder).') + '</div>' +
-    '<div class="tblwrap"><table class="tbl acct-tbl"><thead><tr><th>Account</th><th>Account #</th><th>Open SO</th><th>Emb. Requests (live)</th><th>Logos here</th></tr></thead><tbody>' +
-    rows.slice(0, SHOW).map(([a, n, x]) => '<tr class="row" data-acct="' + esc(a) + '"><td>' + esc(a) + '</td><td class="muted">' + (x ? esc(x.number) : '&mdash;') + '</td><td>' + (x ? x.openSO : '&mdash;') + '</td><td>' + (x ? x.embRequests : '&mdash;') + '</td><td>' + (n || '<span class="muted">0</span>') + '</td></tr>').join('') + '</tbody></table></div>' +
-    (rows.length > SHOW ? '<div class="note" style="margin-top:8px">Showing ' + SHOW + ' of ' + rows.length + '. Search to find the rest.</div>' : '');
+  const q = (state.search.accounts || '').toLowerCase(), live = new Map(), mine = new Map();
+  DB.logos.forEach(l => { const a = acctShown(l) || '(blank)'; const r = mine.get(a) || {here:0, open:0, depts:new Set()}; r.here++; if (!DONE.includes(l.status)) r.open++; if (l.dept) r.depts.add(l.dept); mine.set(a, r); });
+  (LIVE_ACCTS.accounts || []).forEach(a => live.set(a.name, a));
+  let rows = [...new Set([...mine.keys(), ...live.keys()])].map(name => { const x = live.get(name), r = mine.get(name) || {here:0, open:0, depts:new Set()};
+    return {name, number:x ? x.number : '', so:x ? +x.openSO || 0 : null, emb:x ? +x.embRequests || 0 : null, here:r.here, open:r.open, depts:r.depts}; });
+  rows = rows.filter(r => (r.name + ' ' + r.number).toLowerCase().includes(q) &&
+    (!acctF.show || (acctF.show === 'logos' ? r.here > 0 : acctF.show === 'open' ? r.open > 0 : acctF.show === 'so' ? r.so > 0 : acctF.show === 'emb' ? r.emb > 0 : r.here === 0)) &&
+    (!acctF.dept || r.depts.has(acctF.dept)));
+  const val = (r, k) => k === 'name' || k === 'number' ? (r[k] || '~').toLowerCase() : (r[k] == null ? -1 : r[k]);
+  rows.sort(acctF.sort ? (a, b) => { const x = val(a, acctF.sort), y = val(b, acctF.sort); return (x < y ? -1 : x > y ? 1 : 0) * acctF.dir || a.name.localeCompare(b.name); }
+                       : (a, b) => (b.here > 0) - (a.here > 0) || a.name.localeCompare(b.name));   // default: accounts with logos here first, then A to Z
+  const SHOW = 300, filtered = !!(q || acctF.show || acctF.dept || acctF.sort);
+  const th = ([k, h]) => '<th data-asort="' + k + '"' + (acctF.sort === k ? ' class="sorted"' : '') + '>' + h + '<span class="arr">' + (acctF.sort === k ? (acctF.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>';
+  const cell = v => v == null ? '<span class="muted">&mdash;</span>' : v;
+  document.getElementById('page').innerHTML = '<h1>Accounts</h1>' +
+    '<div class="bar"><input id="acctSearch" style="flex:1" placeholder="Search by account name or number&hellip;" value="' + esc(state.search.accounts || '') + '">' +
+    '<select id="acctShow">' + ACCT_SHOW.map(([v, t]) => '<option value="' + v + '"' + (acctF.show === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>' +
+    '<select id="acctDept"><option value="">All departments</option>' + DEPTS.map(d => '<option' + (acctF.dept === d ? ' selected' : '') + '>' + esc(d) + '</option>').join('') + '</select>' +
+    '<button class="btn light" id="acctReset">Reset filters</button></div>' +
+    '<div class="sub">' + (LIVE_ACCTS.accounts && LIVE_ACCTS.accounts.length ? LIVE_ACCTS.accounts.length + ' accounts from the live portal (copied ' + fmt((LIVE_ACCTS.readAt || '').slice(0, 10)) + '), plus any only in this portal.' : 'Connect Excel to load the live-portal accounts (live-accounts.json in your Embroidery Portal folder).') +
+      ' ' + rows.length + ' shown. Click a column name to sort; click an account to see its logos.</div>' +
+    '<div class="tblwrap"><table class="tbl acct-tbl"><thead><tr>' + ACCT_COLS.map(th).join('') + '</tr></thead><tbody>' +
+    rows.slice(0, SHOW).map(r => '<tr class="row" data-acct="' + esc(r.name) + '"><td>' + esc(r.name) + '</td><td class="muted">' + (r.number ? esc(r.number) : '&mdash;') + '</td><td>' + cell(r.so) + '</td><td>' + cell(r.emb) + '</td><td>' + (r.here || '<span class="muted">0</span>') + '</td><td>' + (r.open || '<span class="muted">0</span>') + '</td></tr>').join('') +
+    '</tbody></table></div>' + (rows.length > SHOW ? '<div class="note" style="margin-top:8px">Showing ' + SHOW + ' of ' + rows.length + '. Search or filter to find the rest.</div>' : '');
   const s = document.getElementById('acctSearch'); s.oninput = () => { state.search.accounts = s.value; save(); const pos = s.selectionStart; render(); const n = document.getElementById('acctSearch'); n.focus(); n.setSelectionRange(pos, pos); };
+  document.getElementById('acctShow').onchange = e => { acctF.show = e.target.value; render(); };
+  document.getElementById('acctDept').onchange = e => { acctF.dept = e.target.value; render(); };
+  document.getElementById('acctReset').onclick = () => { acctF = {show:'', dept:'', sort:'', dir:1}; state.search.accounts = ''; save(); render(); };
+  document.querySelectorAll('#page th[data-asort]').forEach(h => h.onclick = ev => { ev.stopPropagation(); const k = h.dataset.asort; if (acctF.sort === k) acctF.dir = -acctF.dir; else { acctF.sort = k; acctF.dir = k === 'name' || k === 'number' ? 1 : -1; } render(); });
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
 // ================= EP v2.17: Reports tab (updates doc Part 18). Only in Noelle's portal. Uses the status changes and dates already saved in History. =================
