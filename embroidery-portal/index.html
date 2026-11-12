@@ -265,6 +265,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .rp-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .rp-modal-in{background:#fff;border-radius:10px;padding:18px;max-width:760px;width:100%;max-height:90vh;overflow:auto}
 .rp-pre{white-space:pre-wrap;font:13px/1.5 Consolas,monospace;background:#f7f8fb;border:1px solid var(--line);border-radius:6px;padding:12px}
+.t2-sec{margin:0 0 16px}
+.t2-h{font-weight:800;color:var(--navy);margin-bottom:4px}
+.t2-ol{margin:0 0 0 22px;padding:0}
+.t2-ol li{margin:2px 0;font-size:14px}
+.t2-ol a{color:inherit;text-decoration:none}
+.t2-ol a:hover{text-decoration:underline}
 .q-mail{border:1px solid #d6dbe4;border-radius:8px;margin-top:8px;background:#fff}
 .sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
 .sf-upload{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;font-size:14px;color:#49516C}
@@ -492,7 +498,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.22</span>
+    <span class="vbadge">EP v2.23</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -511,7 +517,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.22';
+const VERSION = 'EP v2.23';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -556,6 +562,7 @@ const TABS = [
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
   {key:'reports',   title:'Reports', sub:'', reports:true},   // EP v2.17 (updates doc Part 18)
+  {key:'today',     title:'To Do', sub:'', today:true},   // EP v2.23: built from the portal; Copy list
   {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
   // EP v2.10: To Do tab removed (Noelle 11/11). Its old data stays in the Excel, untouched.
 ];
@@ -755,7 +762,7 @@ function buildWorkbook(){
   const tn = XLSX.utils.aoa_to_sheet([['Date','Time','Task','Note','By','Chain']].concat((DB.tdNotes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.task, n.text, n.by, n.chain])));
   tn['!cols'] = [12, 10, 40, 70, 14, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, tn, 'To Do Notes');
-  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')], ['Goals', JSON.stringify(DB.goals || [])],
+  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')], ['Goals', JSON.stringify(DB.goals || [])], ['To Do notes', JSON.stringify(DB.todayNotes || {})],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
   info['!cols'] = [{wch:12}, {wch:110}];
   XLSX.utils.book_append_sheet(wb, info, 'Info');
@@ -786,6 +793,7 @@ function readWorkbook(buf){
   rows('To Do Notes').slice(1).filter(r => r[0]).forEach(r => db.tdNotes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), text:String(r[3]), by:String(r[4]), chain:String(r[5])}));
   rows('To Do History').slice(1).filter(r => r[0]).forEach(r => db.taskLog.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), task:String(r[2]), what:String(r[3]), chain:String(r[4])}));
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
+  const tn = inf.find(r => r[0] === 'To Do notes'); try { db.todayNotes = tn && tn[1] ? JSON.parse(String(tn[1])) : {}; } catch(e){ db.todayNotes = {}; }   // EP v2.23
   const gl = inf.find(r => r[0] === 'Goals'); try { db.goals = gl && gl[1] ? JSON.parse(String(gl[1])) : []; } catch(e){ db.goals = []; }   // EP v2.17
   const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
   return db;
@@ -2321,6 +2329,64 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
     if (!s || !(hrs > 0)){ toast('Pick a start date and the hours.'); return; } DB.goals = rpGoals().filter(x => x.start !== s).concat([{start:s, hours:hrs, note}]); touch(); render(); toast('Goal added.'); return; }
 });
 
+// ================= EP v2.23: To Do tab (built from the portal on its own; Copy list for the morning list and for What I did) =================
+const TD2_SECS = ['Request digitization', 'Request sew out', 'Review Barrett Sew Out', 'Add to ES/FTP', 'Other', 'Check on digitization', 'Check on Sew out requests'];
+const DID2_SECS = ['Submitted for digitization', 'Requested sew out', 'Sent for approval', 'Added to ES/FTP', 'Followed up on', 'Completed', 'Other'];
+let td2Day = '', td2View = 'todo';
+const td2Notes = day => { DB.todayNotes = DB.todayNotes || {}; return DB.todayNotes[day] = DB.todayNotes[day] || {todo:[], did:[]}; };
+const td2Sort = (a, b) => (a.inHand || '9999').localeCompare(b.inHand || '9999') || (a.submitted || '').localeCompare(b.submitted || '');
+function td2Line(l){ return {l, text:l.logo}; }   // just the logo name (Noelle: no due dates, rush, or IDs)
+function td2Todo(day){
+  const of = st => DB.logos.filter(l => l.status === st).sort(td2Sort).map(td2Line);
+  const notes = td2Notes(day).todo.map(text => ({text, mine:true}));
+  return {'Request digitization': DB.logos.filter(l => l.status === 'New Request' && l.type === 'Digitize').sort(td2Sort).map(td2Line),
+    'Request sew out': DB.logos.filter(l => l.status === 'New Request' && l.type !== 'Digitize').sort(td2Sort).map(td2Line),
+    'Review Barrett Sew Out': of('Review Sew Out'), 'Add to ES/FTP': of('Upload / Send'),
+    'Other': of('Send Invoice').map(x => ({l:x.l, text:'Send the digitizing fee invoice: ' + x.text})).concat(notes),
+    'Check on digitization': of('Digitizing'), 'Check on Sew out requests': of('Pending Sew Out')};
+}
+function td2Did(day){   // from that day's History (things I did, not System (auto) or Barrett)
+  const out = {}; DID2_SECS.forEach(s => out[s] = []); const seen = new Set();
+  const add = (sec, id, text) => { const k = sec + '|' + id; if (seen.has(k)) return; seen.add(k); const l = byId(id); out[sec].push({l, text}); };
+  DB.history.filter(h => h.ts.slice(0, 10) === day && h.by !== AUTO && h.by !== 'Barrett').sort((a, b) => a.ts.localeCompare(b.ts)).forEach(h => {
+    const m = h.kind === 'Status' && h.what.match(/^Status: (.+) > (.+)$/), to = m && stNorm(m[2]), name = h.logo || h.id;
+    if (to === 'Digitizing') add('Submitted for digitization', h.id, name);
+    else if (to === 'Pending Sew Out') add('Requested sew out', h.id, name);
+    else if (to === 'Sent for Approval') add('Sent for approval', h.id, name);
+    else if (to === 'Completed') add(/^Status: (Upload \/ Send|Need to Upload) >/.test(h.what) ? 'Added to ES/FTP' : 'Completed', h.id, name);
+    else if (to === 'Archive') add('Other', h.id, 'Archived: ' + name);
+    else if (/^Followed up|^Follow-up sent to Barrett \(by hand\)/.test(h.what)) add('Followed up on', h.id, name);
+    else if (/^Approved by /.test(h.what)) add('Other', h.id, name + ': ' + h.what.replace(/ \(marked by .*\)$/, ''));
+  });
+  td2Notes(day).did.forEach(text => out['Other'].push({text, mine:true}));
+  return out;
+}
+function td2Text(secs, data){ return secs.map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text).join('\n') : '1. ')).join('\n\n'); }
+function renderToday2(tab){
+  const day = td2Day || todayIso(), isToday = day === todayIso(), view = td2View, secs = view === 'did' ? DID2_SECS : TD2_SECS, data = view === 'did' ? td2Did(day) : td2Todo(day);
+  const nice = parseIso(day).toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'});
+  let h = '<h1>To Do</h1><div class="sub">' + (view === 'did' ? 'What you did, pulled from History.' : 'Built from the portal: each logo shows under its next step, sorted by In Hand Date, then submitted.') + ' Click a logo to open it. <b>Copy list</b> copies it as text to paste anywhere.</div>' +
+    '<div class="bar"><button class="btn' + (view === 'todo' ? '' : ' light') + '" data-t2="view" data-v="todo">To do</button><button class="btn' + (view === 'did' ? '' : ' light') + '" data-t2="view" data-v="did">What I did</button>' +
+    '<input type="date" id="t2Day" value="' + day + '" style="flex:none;min-width:0"><span class="muted" style="font-size:12px">' + esc(nice) + (isToday ? ' (today)' : '') + '</span>' +
+    '<button class="btn" data-t2="copy" style="margin-left:auto">&#128203; Copy list</button></div>' +
+    (view === 'todo' && !isToday ? '<div class="note" style="margin-bottom:8px">The list shows where things are right now; only the Other lines you typed are saved per day.</div>' : '') +
+    '<div class="lcard">' + secs.map(s => '<div class="t2-sec"><div class="t2-h">' + esc(s) + ':</div><ol class="t2-ol">' +
+      (data[s].length ? data[s].map((x, i) => '<li>' + (x.l ? '<a href="#" data-t2="open" data-id="' + esc(x.l.id) + '">' + esc(x.text) + '</a>' : esc(x.text)) +
+        (x.mine ? ' <button class="emb-btn-del" style="padding:0 6px;font-size:11px" data-t2="rm" data-i="' + (view === 'did' ? td2Notes(day).did : td2Notes(day).todo).indexOf(x.text) + '">Remove</button>' : '') + '</li>').join('') : '<li class="muted">&nbsp;</li>') + '</ol>' +
+      (s === 'Other' ? '<div class="snz"><input id="t2Add" class="emb-in" placeholder="Add a line to Other&hellip;" style="flex:1"><button class="btn light small" data-t2="add">Add</button></div>' : '') + '</div>').join('') + '</div>';
+  document.getElementById('page').innerHTML = h;
+  const di = document.getElementById('t2Day'); di.onchange = () => { td2Day = di.value || todayIso(); render(); };
+  const ai = document.getElementById('t2Add'); if (ai) ai.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-t2="add"]').click(); } };
+}
+document.addEventListener('click', async e => { const b = e.target.closest('[data-t2]'); if (!b || state.tab !== 'today') return; e.preventDefault(); const k = b.dataset.t2, day = td2Day || todayIso();
+  if (k === 'view'){ td2View = b.dataset.v; render(); return; }
+  if (k === 'open'){ const l = byId(b.dataset.id); if (l) openLogo(l); return; }
+  if (k === 'add'){ const ai = document.getElementById('t2Add'), v = ai ? ai.value.trim() : ''; if (!v) return; td2Notes(day)[td2View === 'did' ? 'did' : 'todo'].push(v); touch(); render(); const n = document.getElementById('t2Add'); if (n) n.focus(); return; }
+  if (k === 'rm'){ const arr = td2Notes(day)[td2View === 'did' ? 'did' : 'todo'], i = +b.dataset.i; if (i >= 0) arr.splice(i, 1); touch(); render(); return; }
+  if (k === 'copy'){ const txt = td2View === 'did' ? td2Text(DID2_SECS, td2Did(day)) : td2Text(TD2_SECS, td2Todo(day));
+    try { await navigator.clipboard.writeText(txt); toast('&#10003; Copied. Paste it anywhere.'); } catch(err){ toast('Couldn&rsquo;t copy. Try again.'); } return; }
+});
+
 function render(){
   refreshToday(); { const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2) touch(); } renderNotifs();   // EP v2.14 / v2.15
   if (!TODO_OFF && tdApprovalCheck()) touch();
@@ -2341,6 +2407,7 @@ function render(){
   if (tab.submit){ renderSubmit(tab); return; }
   if (tab.accounts){ renderAccounts(tab); return; }
   if (tab.reports){ renderReports(tab); return; }   // EP v2.17
+  if (tab.today){ renderToday2(tab); return; }   // EP v2.23
   const group = state.group[tab.key] || 'status';
   let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div><div class="bar" style="margin:-6px 0 12px">' + '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' + sortsCtl(tab.key) + '</div>'
                         : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Red In Hand Dates show first, then the oldest. Change it with Sorts, or click a column name.</div>') +
