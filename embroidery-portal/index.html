@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.47</span>
+    <span class="vbadge">EP v2.48</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.47';
+const VERSION = 'EP v2.48';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2525,7 +2525,7 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
 // ================= EP v2.23: To Do tab (built from the portal on its own; Copy list for the morning list and for What I did) =================
 // EP v2.36: your own tasks live in the Planner tab (dates, sub-tasks, mark done, roll over, backlog); each day's planner tasks show in that day's To Do "Other".
 const TD2_SECS = ['Request digitization', 'Request sew out', 'Review Barrett Sew Out', 'Add to ES/FTP', 'Other', 'Check on digitization', 'Check on Sew out requests'];
-const DID2_SECS = ['Submitted for digitization', 'Requested sew out', 'Sent for approval', 'Added to ES/FTP', 'Followed up on', 'Completed', 'Other'];
+const DID2_SECS = ['Submitted for digitization', 'Sent for approval', 'Requested Sew Out', 'Added to ES/FTP', 'Other', 'Followed up on', 'Completed'];   // EP v2.48: Noelle's order and names
 let td2Day = '', td2View = 'todo';
 const t2It = x => typeof x === 'string' ? {text:x, subs:[]} : {text:x.text, subs:x.subs || [], at:x.at || ''};
 const td2Notes = day => { DB.todayNotes = DB.todayNotes || {}; return DB.todayNotes[day] = DB.todayNotes[day] || {todo:[], did:[]}; };
@@ -2639,7 +2639,7 @@ function td2DidLive(day){   // from that day's History (things I did, not System
   DB.history.filter(h => h.ts.slice(0, 10) === day && h.by !== AUTO && h.by !== 'Barrett').sort((a, b) => a.ts.localeCompare(b.ts)).forEach(h => {
     curTs = h.ts; const m = h.kind === 'Status' && h.what.match(/^Status: (.+) > (.+)$/), to = m && stNorm(m[2]), name = h.logo || h.id;
     if (to === 'Digitizing') add('Submitted for digitization', h.id, name);
-    else if (to === 'Pending Sew Out') add('Requested sew out', h.id, name);
+    else if (to === 'Pending Sew Out') add('Requested Sew Out', h.id, name);
     else if (to === 'Sent for Approval') add('Sent for approval', h.id, name);
     else if (to === 'Completed') add(/^Status: (Upload \/ Send|Need to Upload) >/.test(h.what) ? 'Added to ES/FTP' : 'Completed', h.id, name);
     else if (to === 'Archive') add('Other', h.id, 'Archived: ' + name);
@@ -2654,7 +2654,7 @@ function td2DidLive(day){   // from that day's History (things I did, not System
 function td2Text(secs, data){ return secs.map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text + (x.subs && x.subs.length ? '\n' + x.subs.map((sb, j) => '   ' + String.fromCharCode(97 + j) + '. ' + (typeof sb === 'string' ? sb : sb.t)).join('\n') : '')).join('\n') : '1. ')).join('\n\n'); }
 // EP v2.42: Edit list. Fix or move any line on the To do / What I did list. The day's list saves as an edited copy (To do: inside the locked copy; What I did: didEdit). Planner tasks in Other stay live.
 let td2Editing = false;
-function td2Snap(day, view, make){ const n = td2Notes(day);
+function td2Snap(day, view, make){ const n = td2Notes(day); td2DidKeyFix(n);
   if (view === 'did'){
     if (!n.didEdit && make){ const live = td2DidLive(day), secs = {};
       DID2_SECS.forEach(s => { secs[s] = live[s].filter(x => !x.pl).map(x => ({id:x.l ? x.l.id : '', text:x.text, at:x.at || '', subs:(x.subs || []).map(sb => typeof sb === 'string' ? sb : sb.t)})); });
@@ -2662,7 +2662,8 @@ function td2Snap(day, view, make){ const n = td2Notes(day);
     return n.didEdit ? n.didEdit.secs : null; }
   if (!n.locked && make) td2Lock(day); if (n.locked && make) n.locked.edited = true;
   return n.locked ? n.locked.secs : null; }
-function td2Did(day){ const n = td2Notes(day); if (!n.didEdit) return td2DidLive(day);
+function td2DidKeyFix(n){ const s = n.didEdit && n.didEdit.secs; if (s && s['Requested sew out']){ s['Requested Sew Out'] = (s['Requested Sew Out'] || []).concat(s['Requested sew out']); delete s['Requested sew out']; } }
+function td2Did(day){ const n = td2Notes(day); td2DidKeyFix(n); if (!n.didEdit) return td2DidLive(day);
   const out = {}; DID2_SECS.forEach(s => { out[s] = (n.didEdit.secs[s] || []).map(x => ({l:x.id ? byId(x.id) : null, text:x.text, at:x.at || '', subs:x.subs || []})); });
   PL().filter(t => t.done && (t.doneAt || '').slice(0, 10) === day).sort((a, b) => a.doneAt.localeCompare(b.doneAt)).forEach(t => { const it = {pl:t, text:t.text, at:t.doneAt, subs:(t.subs || []).map(plSub).map(s => s.t)}, O = out['Other'], i = O.findIndex(x => x.at && x.at > it.at); if (i < 0) O.push(it); else O.splice(i, 0, it); });   // EP v2.46: in time order among your lines
   return out; }
