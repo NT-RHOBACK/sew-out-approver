@@ -525,7 +525,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.40</span>
+    <span class="vbadge">EP v2.41</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -544,7 +544,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.40';
+const VERSION = 'EP v2.41';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2521,6 +2521,7 @@ const dayShort = iso => parseIso(iso).toLocaleDateString('en-US', {weekday:'shor
 const plSecs = () => (DB.plSecs = DB.plSecs || []);
 const PL_ST = ['Not started', 'In progress', 'Waiting', 'Done'];   /* EP v2.40: task Status, colored like the logo Status dropdown */
 const PL_ST_C = {'Not started':{bg:'#e3e6ec', fg:'#3a4256'}, 'In progress':{bg:'#bcd9f5', fg:'#0b4f80'}, 'Waiting':{bg:'#fbe08a', fg:'#5c4a00'}, 'Done':{bg:'#bfe3c0', fg:'#1b5e20'}};
+const plDateCls = t => { if (t.done || !t.date) return 'plain'; const b = bizDaysTo(t.date); return b === null ? 'plain' : b <= 5 ? 'red' : b <= 14 ? 'yellow' : 'plain'; };   /* EP v2.41 */
 const plStatus = t => t.done ? 'Done' : (PL_ST.includes(t.status) && t.status !== 'Done' ? t.status : 'Not started');
 const plStSel = t => { const s = plStatus(t), c = PL_ST_C[s]; return '<select class="pl-st" data-pl="status" data-id="' + esc(t.id) + '" style="background:' + c.bg + ';color:' + c.fg + ';border-color:' + c.bg + '">' + PL_ST.map(x => '<option' + (x === s ? ' selected' : '') + '>' + x + '</option>').join('') + '</select>'; };
 let plOpen = null, plSecPanel = false;
@@ -2531,7 +2532,7 @@ function plTaskRow(t, today){
   return '<tr class="pl-row' + (open ? ' open' : '') + (t.done ? ' done' : '') + '" data-id="' + id + '">' +
     '<td class="wrap"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span><label class="pl-chk"><input type="checkbox" data-pl="done" data-id="' + id + '"' + (t.done ? ' checked' : '') + ' title="Done"></label><span class="pl-tx">' + esc(t.text) + '</span>' +
       (subs.length ? ' <span class="pl-tag">' + sd + '/' + subs.length + ' sub-tasks</span>' : '') + (t.rolledFrom && !t.done ? ' <span class="pl-tag">rolled over from ' + esc(dayShort(t.rolledFrom)) + '</span>' : '') + '</td>' +
-    '<td>' + (t.date ? esc(dayShort(t.date)) + (t.date === today ? ' <span class="muted">(today)</span>' : '') : '<span class="muted">Backlog</span>') + '</td>' +
+    '<td>' + (t.date ? '<span class="dtp ' + plDateCls(t) + '">' + esc(dayShort(t.date)) + '</span>' + (t.date === today ? ' <span class="muted">(today)</span>' : '') : '<span class="muted">Backlog</span>') + '</td>' +
     '<td>' + (t.pri ? '<span class="pl-pri pl-' + esc(t.pri.toLowerCase()) + '">' + esc(t.pri) + '</span>' : '<span class="muted">&mdash;</span>') + '</td>' +
     '<td class="wrap">' + (t.sec ? esc(t.sec) : '<span class="muted">&mdash;</span>') + '</td><td>' + plStSel(t) + '</td></tr>' + (open ? plBox(t) : '');
 }
@@ -2659,7 +2660,7 @@ document.addEventListener('change', e => { const b = e.target.closest && e.targe
   if (b.dataset.pl === 'date'){ t.date = b.value || ''; if (t.date && t.date >= todayIso()) delete t.rolledFrom; touch(); render(); return; }
 });
 let plV = {show:'upcoming', day:'', q:'', pri:'', sort:'pri', group:'section', lastSec:''};
-const PL_SHOW = [['upcoming', 'Today + upcoming'], ['day', 'One day (past or future)'], ['backlog', 'Backlog'], ['done', 'Done'], ['all', 'Everything']];
+const PL_SHOW = [['upcoming', 'Today + upcoming'], ['today', 'Today'], ['week', 'This week (through Sunday)'], ['soon', 'Due soon (5 business days or less)'], ['two', 'Next 2 weeks (14 business days)'], ['day', 'One day (past or future)'], ['backlog', 'Backlog'], ['done', 'Done'], ['all', 'Everything']];   // EP v2.41: Today, This week, Due soon, Next 2 weeks
 const PL_SORT = [['pri', 'Priority'], ['date', 'Date'], ['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A to Z']];
 const PL_GROUP = [['section', 'Section'], ['status', 'Status'], ['date', 'Date'], ['priority', 'Priority'], ['none', 'No grouping']];
 function plSorted(list){ const s = plV.sort;
@@ -2670,6 +2671,9 @@ function plMatch(t){ const q = plV.q.toLowerCase();
 function plList(){ const today = todayIso(), all = PL().filter(plMatch), s = plV.show;
   if (s === 'upcoming') return all.filter(t => t.date === today || (!t.done && (!t.date || t.date > today)));
   if (s === 'day'){ const d = plV.day || today; return all.filter(t => t.date === d || (t.done && (t.doneAt || '').slice(0, 10) === d) || t.rolledFrom === d); }
+  if (s === 'today') return all.filter(t => t.date === today);
+  if (s === 'week'){ const d = parseIso(today); d.setDate(d.getDate() + (7 - d.getDay()) % 7); const end = isoOf(d); return all.filter(t => t.date && t.date >= today && t.date <= end); }
+  if (s === 'soon' || s === 'two'){ const max = s === 'soon' ? 5 : 14; return all.filter(t => !t.done && t.date && bizDaysTo(t.date) <= max); }
   if (s === 'backlog') return all.filter(t => !t.done && !t.date);
   if (s === 'done') return all.filter(t => t.done);
   return all; }
@@ -2701,6 +2705,7 @@ function renderPlanner(tab){
     '<div class="bar"><input id="plNew" placeholder="New task&hellip;" style="flex:1"><input type="date" id="plNewDate" value="' + today + '" style="flex:none;min-width:0" title="To-do date"><select id="plNewPri" title="Priority"><option value="">Priority</option>' + PL_PRI.map(p => '<option>' + p + '</option>').join('') + '</select>' +
       '<select id="plNewSec" title="Section">' + plSecOpts(plV.lastSec || '') + '</select><button class="btn" data-pl="add">Add</button><button class="btn light" data-pl="addBacklog">Add to backlog</button></div>' +
     '<div class="bar"><select id="plShow">' + PL_SHOW.map(([v, l]) => '<option value="' + v + '"' + (plV.show === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+      '<input type="date" id="plPick" value="' + (plV.show === 'day' ? (plV.day || today) : '') + '" style="flex:none;min-width:0" title="Pick a day to see its tasks">' +
       '<input id="plQ" placeholder="Search tasks&hellip;" value="' + esc(plV.q) + '" style="flex:1">' +
       '<select id="plPri"><option value="">All priorities</option>' + PL_PRI.map(p => '<option' + (plV.pri === p ? ' selected' : '') + '>' + p + '</option>').join('') + '<option value="none"' + (plV.pri === 'none' ? ' selected' : '') + '>No priority</option></select>' +
       '<select id="plGroup">' + PL_GROUP.map(([v, l]) => '<option value="' + v + '"' + (plV.group === v ? ' selected' : '') + '>Group: ' + l + '</option>').join('') + '</select>' +
@@ -2710,7 +2715,7 @@ function renderPlanner(tab){
   syncCollapse(); plKeys();
   const ni = document.getElementById('plNew'); if (ni) ni.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-pl="add"]').click(); } };
   const on = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); render(); }; };
-  on('plShow', v => { plV.show = v; if (v === 'day' && !plV.day) plV.day = today; }); on('plPri', v => { plV.pri = v; }); on('plSort', v => { plV.sort = v; }); on('plDay', v => { plV.day = v || today; }); on('plGroup', v => { plV.group = v; });
+  on('plShow', v => { plV.show = v; if (v === 'day' && !plV.day) plV.day = today; }); on('plPri', v => { plV.pri = v; }); on('plSort', v => { plV.sort = v; }); on('plDay', v => { plV.day = v || today; }); on('plPick', v => { plV.day = v || today; plV.show = v ? 'day' : 'upcoming'; }); on('plGroup', v => { plV.group = v; });
   const ns = document.getElementById('plNewSec'); if (ns) ns.onchange = () => { if (ns.value !== '__new'){ plV.lastSec = ns.value; return; }
     const keep = ['plNew', 'plNewDate', 'plNewPri'].map(id => document.getElementById(id).value); plV.lastSec = plNewSecName() || plV.lastSec; render();
     ['plNew', 'plNewDate', 'plNewPri'].forEach((id, i) => { document.getElementById(id).value = keep[i]; }); document.getElementById('plNew').focus(); };
