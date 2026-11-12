@@ -492,6 +492,10 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 .emb-fee-chk{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer}
 .emb-fee-chk input{width:16px;height:16px;accent-color:var(--navy)}
 .fee-waived-tag{font-size:11px;font-weight:700;color:#2e7d32;background:#e2f5dc;border-radius:8px;padding:2px 8px}
+.rs-len{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;border-radius:8px;padding:1px 7px;white-space:nowrap;vertical-align:middle}
+.rs-len.ok{background:#e2f5dc;color:#2e7d32}
+.rs-len.bad{background:#fde2e2;color:#a61b1b}
+.f-ren{flex-wrap:wrap}.f-ren .rs-live{flex-basis:100%;margin:4px 0 0;width:max-content;max-width:100%}
 .emb-ok{color:#2E7D32;font-weight:600;font-size:13px;margin:6px 0}
 .emb-private{background:#F3E5F5;color:#6A1B9A;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600}
 .emb-note{padding:6px 0;border-bottom:1px solid #EEF0F4;font-size:13px}
@@ -530,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.46</span>
+    <span class="vbadge">EP v2.47</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -549,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.46';
+const VERSION = 'EP v2.47';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1208,6 +1212,10 @@ const eboxT = (key, num, title, right, body) => { const shut = !!boxShut[key];
 const ef = (label, input, full) => '<div class="emb-fld' + (full ? ' full' : '') + '"><label>' + label + '</label>' + input + '</div>';
 document.addEventListener('change', e => { const w = e.target; if (!w.classList || !w.classList.contains('fee-why')) return; const l = byId(w.dataset.id); if (!l) return; const v = w.value.trim();   // EP v2.44: reason the fee was waived
   if (v === (l.feeWaivedReason || '')) return; l.feeWaivedReason = v; log(l, 'Edit', 'Fee waived reason: ' + (v || '(cleared)')); touch(); render(); });
+// EP v2.47: RepSpark file name check. The name + ".png" can be at most 44 characters.
+const RS_MAX = 44, rsName = n => String(n || '').replace(/\.[^.]*$/, '') + '.png';
+const rsTag = (n, live) => { const nm = rsName(n), k = nm.length, bad = k > RS_MAX; return '<span class="rs-len ' + (bad ? 'bad' : 'ok') + (live ? ' rs-live' : '') + '" title="RepSpark name: ' + esc(nm) + ' (' + k + ' characters with .png; ' + RS_MAX + ' max)">' + k + '/' + RS_MAX + (bad ? ' &middot; too long for RepSpark' : '') + '</span>'; };
+document.addEventListener('input', e => { const i = e.target; if (!i.classList || !i.classList.contains('ren-in')) return; const s = i.closest('.emb-file') && i.closest('.emb-file').querySelector('.rs-live'); if (s) s.outerHTML = rsTag(i.value + '.png', true); });
 const digOf = l => l.digitized == null ? !!l.scratch : !!l.digitized;
 let msgOpen = {}, replyOpen = {};
 // EP v2.13 (updates doc Parts 3 + 14): the question email, with every earlier Communication message (newest first) and the request's one subject
@@ -1279,7 +1287,7 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     (notes.length ? notes.map(n => '<div class="emb-note"><span class="emb-dim">' + fmt(n.ts) + ' ' + time12(n.ts) + ' &middot; ' + esc(n.by) + '</span><div>' + esc(n.text) + '</div></div>').join('') : '<div class="emb-dim">No notes yet.</div>') +
     '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px"><textarea class="emb-in note-in" data-id="' + id + '" placeholder="Add an internal note&hellip;"></textarea><button class="btn small" data-x="note-add" data-id="' + id + '">Add</button></div><div class="emb-dim" style="font-size:11px;margin-top:4px">Cmd/Ctrl+Enter to save</div>');
   const files = ebox(3, 'Files', '<button class="btn light small" data-x="file-zip" data-id="' + id + '">&#11015; Download all (' + l.files.length + ')</button>',
-    l.files.map(x => renameOpen[l.id + '|' + x.name] ? '<div class="emb-file"><div class="f-ren"><input class="emb-in ren-in" data-id="' + id + '" data-name="' + esc(x.name) + '" value="' + esc(x.name.replace(/\.[^.]*$/, '')) + '"><span class="emb-dim">' + esc((x.name.match(/\.[^.]*$/) || [''])[0]) + '</span></div><button class="btn light small" data-x="ren-x" data-id="' + id + '" data-name="' + esc(x.name) + '">Cancel</button><button class="btn small" data-x="ren-save" data-id="' + id + '" data-name="' + esc(x.name) + '">Save name</button></div>' : '<div class="emb-file"><span class="emb-file-ext">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="emb-file-name" title="' + esc(x.name) + '">' + esc(x.name) + (l.lineSheet === x.name ? '<span class="dst-size" style="color:#5b3a8e;font-weight:700">Line sheet</span>' : '') + (x.dstH ? '<span class="dst-size">' + x.dstH + ' x ' + x.dstW + ' in</span>' : '') + '</span>' +
+    l.files.map(x => renameOpen[l.id + '|' + x.name] ? '<div class="emb-file"><div class="f-ren"><input class="emb-in ren-in" data-id="' + id + '" data-name="' + esc(x.name) + '" value="' + esc(x.name.replace(/\.[^.]*$/, '')) + '"><span class="emb-dim">' + esc((x.name.match(/\.[^.]*$/) || [''])[0]) + '</span>' + rsTag(x.name.replace(/\.[^.]*$/, '') + '.png', true) + '</div><button class="btn light small" data-x="ren-x" data-id="' + id + '" data-name="' + esc(x.name) + '">Cancel</button><button class="btn small" data-x="ren-save" data-id="' + id + '" data-name="' + esc(x.name) + '">Save name</button></div>' : '<div class="emb-file"><span class="emb-file-ext">' + esc((x.name.split('.').pop() || '').toUpperCase().slice(0, 4)) + '</span><span class="emb-file-name" title="' + esc(x.name) + '">' + esc(x.name) + (l.lineSheet === x.name ? '<span class="dst-size" style="color:#5b3a8e;font-weight:700">Line sheet</span>' : '') + (x.dstH ? '<span class="dst-size">' + x.dstH + ' x ' + x.dstW + ' in</span>' : '') + rsTag(x.name) + '</span>' +
       '<button class="btn light small" data-x="ren-open" data-id="' + id + '" data-name="' + esc(x.name) + '">Rename</button><button class="btn light small" data-x="file-open" data-id="' + id + '" data-name="' + esc(x.name) + '">View</button><button class="btn small" data-x="file-dl" data-id="' + id + '" data-name="' + esc(x.name) + '">Download</button>' +
       '<button class="emb-btn-del" data-x="file-rm" data-id="' + id + '" data-name="' + esc(x.name) + '">Delete</button></div>').join('') +
     '<div class="emb-drop" data-x="file-add" data-id="' + id + '">&#128206; Click to add files or drag &amp; drop<div class="emb-dim" style="font-size:11px;margin-top:2px">DST, PNG, JPG, PDF, AI, EPS, SVG &mdash; Max 10 MB</div></div>');
