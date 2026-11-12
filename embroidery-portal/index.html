@@ -274,6 +274,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .bsel,.bsel-all{width:15px;height:15px;margin:0 6px 0 0;vertical-align:middle;cursor:pointer;accent-color:#1b2a4a}
 #bulkBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:10px;background:#1b2a4a;color:#fff;padding:10px 16px;border-radius:10px;box-shadow:0 6px 24px rgba(15,23,42,.3);font-size:14px}
 #bulkBar select{font:inherit;padding:4px 6px;border-radius:6px}
+#bulkBar b{white-space:nowrap}
 #bulkBar .btn.light{background:transparent;color:#fff;border-color:#8b93ad}
 .q-mail{border:1px solid #d6dbe4;border-radius:8px;margin-top:8px;background:#fff}
 .sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
@@ -502,7 +503,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.27</span>
+    <span class="vbadge">EP v2.28</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -521,7 +522,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.27';
+const VERSION = 'EP v2.28';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1661,23 +1662,66 @@ function rowsParts(list, tab, cols){   // EP v2.04: the column-heading row + row
 }
 // EP v2.24: bulk status change. Tick logos, pick a status, Apply (each move is logged in History like a normal status change)
 let bulkSel = new Set();
+// EP v2.28: bulk actions on the ticked logos: status, Assigned To, Claimed by, lock/unlock claim, department, any field, archive, delete. Each change is logged in History.
+const BULK_ACTS = [['status','Change status'], ['assign','Assign to'], ['claim','Claimed by'], ['lock','Lock claim'], ['unlock','Unlock claim'], ['dept','Change department'], ['field','Edit a field'], ['archive','Archive'], ['delete','Delete']];
+const BULK_FIELDS = [['inHand','In Hand Date','date'], ['rep','Sales Rep','list:repAll'], ['account','Account','list:acctList'], ['type','Request Type',['Sew-Out','Digitize']], ['count','Number of Thread Colors',SF_COUNTS],
+  ['colorType','Color Type',Object.keys(SF_DESC)], ['placement','Placement','text'], ['size','Size','text'], ['school','School','list:schoolList'], ['project','Project name','text'], ['apprContact','Approval contact','list:peopleList']];
+let bulkAct = 'status', bulkField = 'inHand', bulkVal = '';
+const bulkOpt = (v, label, cur) => '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(label) + '</option>';
+function bulkValCtl(){
+  const pick = (opts, ph) => '<select id="bulkVal"><option value="">' + ph + '</option>' + opts.map(o => Array.isArray(o) ? bulkOpt(o[0], o[1], bulkVal) : bulkOpt(o, o, bulkVal)).join('') + '</select>';
+  if (bulkAct === 'status') return pick(STATUSES, 'Pick a status&hellip;');
+  if (bulkAct === 'assign') return pick([['(unassigned)','Unassigned']].concat(PEOPLE, ['QDigitizing','Barrett'], [['(rep)','Their sales rep']], ['No one']), 'Assign to&hellip;');
+  if (bulkAct === 'claim') return pick(PEOPLE.concat([['(none)','Not claimed']]), 'Claimed by&hellip;');
+  if (bulkAct === 'dept') return pick(DEPTS, 'Pick a department&hellip;');
+  if (bulkAct === 'field'){ const f = BULK_FIELDS.find(x => x[0] === bulkField) || BULK_FIELDS[0], kind = f[2];
+    const fsel = '<select id="bulkField">' + BULK_FIELDS.map(x => bulkOpt(x[0], x[1], bulkField)).join('') + '</select>';
+    const vin = Array.isArray(kind) ? pick(kind, 'Pick&hellip;') : kind === 'date' ? '<input id="bulkVal" type="date" value="' + esc(bulkVal) + '">'
+      : '<input id="bulkVal" value="' + esc(bulkVal) + '" placeholder="New value (blank clears it)"' + (kind.startsWith('list:') ? ' list="' + kind.slice(5) + '"' : '') + ' style="min-width:180px">';
+    return fsel + vin; }
+  return '';
+}
 function bulkBar(){ let b = document.getElementById('bulkBar'); const n = [...bulkSel].filter(id => byId(id)).length;
   if (!n || !['dashboard','queue','barrett','approvals','completed'].includes(state.tab) && !msearch.trim()){ if (b) b.remove(); return; }
   if (!b){ b = document.createElement('div'); b.id = 'bulkBar'; document.body.appendChild(b); }
-  const keep = b.querySelector('select') ? b.querySelector('select').value : '';
-  b.innerHTML = '<b>' + n + ' selected</b><span>Move to</span><select id="bulkSt"><option value="">Pick a status&hellip;</option>' + STATUSES.map(s => '<option' + (s === keep ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select>' +
+  b.innerHTML = '<b>' + n + ' selected</b><select id="bulkAct">' + BULK_ACTS.map(a => bulkOpt(a[0], a[1], bulkAct)).join('') + '</select>' + bulkValCtl() +
     '<button class="btn small" data-bulk="apply" style="background:#fff;color:#1b2a4a">Apply</button><button class="btn light small" data-bulk="clear">Clear</button>'; }
 document.addEventListener('change', e => {
   if (e.target.classList.contains('bsel')){ const id = e.target.dataset.bid; if (e.target.checked) bulkSel.add(id); else bulkSel.delete(id); render(); return; }
   if (e.target.classList.contains('bsel-all')){ const ids = (e.target.dataset.ids || '').split(',').filter(Boolean); ids.forEach(id => e.target.checked ? bulkSel.add(id) : bulkSel.delete(id)); render(); return; }
+  if (e.target.id === 'bulkAct'){ bulkAct = e.target.value; bulkVal = ''; bulkBar(); return; }
+  if (e.target.id === 'bulkField'){ bulkField = e.target.value; bulkVal = ''; bulkBar(); return; }
+  if (e.target.id === 'bulkVal') bulkVal = e.target.value;
 });
+document.addEventListener('input', e => { if (e.target.id === 'bulkVal') bulkVal = e.target.value; });
 document.addEventListener('click', e => { const b = e.target.closest('[data-bulk]'); if (!b) return; e.preventDefault();
   if (b.dataset.bulk === 'clear'){ bulkSel.clear(); render(); return; }
-  const st = (document.getElementById('bulkSt') || {}).value; if (!st){ toast('Pick a status first.'); return; }
-  const ls = [...bulkSel].map(byId).filter(Boolean), move = ls.filter(l => l.status !== st);
-  if (!move.length){ toast('They&rsquo;re all in ' + esc(st) + ' already.'); return; }
-  if (!confirm('Move ' + move.length + ' logo' + (move.length > 1 ? 's' : '') + ' to ' + st + '?\n\n' + move.map(l => l.logo).slice(0, 15).join('\n') + (move.length > 15 ? '\n\u2026and ' + (move.length - 15) + ' more' : ''))) return;
-  move.forEach(l => setStatus(l, st, ME)); bulkSel.clear(); touch(); render(); toast('Moved ' + move.length + ' logo' + (move.length > 1 ? 's' : '') + ' to ' + esc(st) + '.'); });
+  const v = (document.getElementById('bulkVal') || {}).value != null ? document.getElementById('bulkVal').value : bulkVal;
+  const ls = [...bulkSel].map(byId).filter(Boolean), names = ls.map(l => l.logo), nn = ls.length + ' logo' + (ls.length > 1 ? 's' : '');
+  const list = '\n\n' + names.slice(0, 15).join('\n') + (names.length > 15 ? '\n…and ' + (names.length - 15) + ' more' : '');
+  const need = ['status','assign','claim','dept'].includes(bulkAct);
+  if (need && !v){ toast('Pick what to change it to first.'); return; }
+  const fieldDef = BULK_FIELDS.find(x => x[0] === bulkField) || BULK_FIELDS[0];
+  const what = {status:'Move ' + nn + ' to ' + v, assign:'Assign ' + nn + ' to ' + (v === '(rep)' ? 'their sales rep' : v === '(unassigned)' ? 'Unassigned' : v), claim:(v === '(none)' ? 'Unclaim ' + nn : 'Set Claimed by to ' + v + ' on ' + nn),
+    lock:'Lock the claim on ' + nn, unlock:'Unlock the claim on ' + nn, dept:'Change ' + nn + ' to ' + v, field:'Set ' + fieldDef[1] + ' to "' + (bulkField === 'inHand' && v ? fmt(v) : v || '(blank)') + '" on ' + nn,
+    archive:'Archive ' + nn, delete:'Delete ' + nn + ' for good? Archive keeps them instead. Their history stays in the Audit tab, and their files stay in the Files folder.'}[bulkAct];
+  if (!confirm(what + (bulkAct === 'delete' ? '' : '?') + list)) return;
+  let done = 0;
+  ls.forEach(l => {
+    if (bulkAct === 'status'){ if (l.status !== v){ setStatus(l, v, ME); done++; } }
+    else if (bulkAct === 'archive'){ if (l.status !== 'Archive'){ setStatus(l, 'Archive', ME); done++; } }
+    else if (bulkAct === 'delete'){ log(l, 'Deleted', 'Deleted ' + l.logo + ' (bulk)'); DB.logos = DB.logos.filter(z => z !== l); done++; }
+    else if (bulkAct === 'assign'){ const nv = v === '(rep)' ? (l.rep || '') : v === '(unassigned)' ? '' : v; if ((l.assigned || '') !== nv){ l.assigned = nv; log(l, 'Edit', 'Assigned to: ' + (nv || 'Unassigned') + ' (bulk)'); done++; } }
+    else if (bulkAct === 'claim'){ const nv = v === '(none)' ? '' : v; if ((l.claimedBy || '') !== nv){ log(l, 'Edit', nv ? 'Claimed by ' + nv + (l.claimedBy ? ' (was ' + l.claimedBy + ')' : '') + ' (bulk)' : 'Unclaimed (was ' + l.claimedBy + ') (bulk)'); l.claimedBy = nv; if (!nv) l.claimLocked = false; done++; } }
+    else if (bulkAct === 'lock'){ if (l.claimedBy && !l.claimLocked){ l.claimLocked = true; log(l, 'Edit', 'Claim locked to ' + l.claimedBy + ' (bulk)'); done++; } }
+    else if (bulkAct === 'unlock'){ if (l.claimLocked){ l.claimLocked = false; log(l, 'Edit', 'Claim unlocked (bulk)'); done++; } }
+    else if (bulkAct === 'dept'){ if ((l.dept || '') !== v){ log(l, 'Edit', 'Department: ' + (l.dept || '(blank)') + ' > ' + v + ' (bulk)'); l.dept = v; done++; } }
+    else if (bulkAct === 'field'){ const k = bulkField, old = l[k] || '', nv = k === 'school' ? schoolFix(v.trim()) : v.trim(), show = x => !x ? '(blank)' : k === 'inHand' ? fmt(x) : x;
+      if (old !== nv){ l[k] = nv; log(l, 'Edit', (LABELS[k] || fieldDef[1]) + ': ' + show(old) + ' > ' + show(nv) + ' (bulk)'); done++; } }
+  });
+  if (!done){ toast('Nothing to change: they already match.'); return; }
+  bulkSel.clear(); bulkVal = ''; touch(); render(); toast('Done: ' + done + ' logo' + (done > 1 ? 's' : '') + ' changed.');
+});
 function rowsHtml(list, tab, cols, limit){
   const act = activeSorts(tab.key), prim = act.find(x => cols.some(c => c.k === x.k));   // EP v1.46: Sorts (replaces RUSH first)
   list = multiSort(list, act, k => k === 'ihc' ? ihRank : k === 'req' ? reqNum : (cols.find(c => c.k === k) || {}).v);
