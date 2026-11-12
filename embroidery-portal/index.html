@@ -502,7 +502,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.24</span>
+    <span class="vbadge">EP v2.25</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -521,7 +521,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.24';
+const VERSION = 'EP v2.25';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -544,6 +544,7 @@ const AUTO = 'System (auto)';   // who, for moves the portal makes on its own
 const STATUS_COLORS = {
   'New Request':       {title:'#5b3a8e', bg:'#5b3a8e', fg:'#ffffff'},
   'Digitizing':        {title:'#0f766e', bg:'#d2f0ec', fg:'#0f5f58'},
+  'Need to Request Sew Out': {title:'#b45309', bg:'#fef3c7', fg:'#92400e'},   // EP v2.25: ready for a sew-out, not requested yet
   'Pending Sew Out':   {title:'#d9822b', bg:'#fdeee2', fg:'#a35a1f'},
   'Review Sew Out':    {title:'#c25e00', bg:'#f6b26b', fg:'#4a2a00'},
   'Sent for Approval': {title:'#3b8fd0', bg:'#e6f3fc', fg:'#1f6fa8'},
@@ -558,7 +559,7 @@ const OPEN_STATUSES = STATUSES.slice(0, 7);
 const TODO_OFF = true;   // EP v2.10: no To Do tab, no To Do strip on logo cards, no automatic To Do tasks
 const TABS = [
   {key:'dashboard', title:'Dashboard',     sub:'Every open logo with an In Hand Date 30 days away or less (or past), or past its due time (red Submitted date).', focus:true},
-  {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, and Waiting on Reply.', sections:['New Request','Digitizing','Waiting on Reply']},
+  {key:'queue',     title:'Queue',          sub:'New Request, Digitizing, Need to Request Sew Out, and Waiting on Reply.', sections:['New Request','Digitizing','Need to Request Sew Out','Waiting on Reply']},
   {key:'barrett',   title:'Barrett Queue',  sub:'Logos at Barrett for sew-outs.', sections:['Review Sew Out','Pending Sew Out'], extra:{h:'Sew-Out Photo', f:'photo'}, defaultSort:'ih'},
   {key:'approvals', title:'Approvals / Upload / Send', label:'Approvals / Upload', sub:'Sent for Approval (approval sheet sent to the rep) and Upload / Send (approved: upload to EpicStitch + FTP, or send the files, depending on the department).', sections:['Sent for Approval','Send Invoice','Upload / Send'],
      extra:{h:'Sheet Sent', f:'sentDate'}, extraBySection:{'Send Invoice':{h:'Approved', f:'approvedDate'}, 'Upload / Send':{h:'Approved', f:'approvedDate'}}, extraMixed:{h:'Sent / Approved', f:'sentOrApproved'}},
@@ -593,7 +594,7 @@ const FOCUS_LIMIT = 10;   // Today's Focus shows this many, then "Show all" (EP 
 // Turnaround (EP v1.29): how far away the In Hand Date is when the clock starts sets how fast it's due (weekends don't count):
 // 30 days or less (or past) RUSH 24 business hours, 31-45 IMPORTANT 72, 46+ (or no date) STANDARD 5 business days.
 // The clock runs until Sent for Approval or Waiting on Reply, and starts over when the logo moves back (Need to Upload, Completed, Archive keep it stopped).
-const CLOCK_RUN = ['New Request','Digitizing','Pending Sew Out','Review Sew Out'];
+const CLOCK_RUN = ['New Request','Digitizing','Need to Request Sew Out','Pending Sew Out','Review Sew Out'];
 const TIERS = [{max:30, name:'RUSH', cls:'red', hrs:24}, {max:45, name:'IMPORTANT', cls:'yellow', hrs:72}, {max:Infinity, name:'STANDARD', cls:'std', hrs:120}];
 function clockStart(l){   // the latest move back into the queue, or when it was submitted
   const h = DB.history.filter(e => e.id === l.id);
@@ -631,7 +632,7 @@ function log(l, kind, what, by){ DB.history.push({ts:nowStamp(), id:l.id, logo:l
 // EP v2.12 (updates doc Parts 4-5): claiming; Assigned To and Logo Status follow the status
 const CLAIMER = 'Noelle Thompson';   // only me in this portal
 const PEOPLE = ['Noelle Thompson', 'Jette Wade', 'Bryana Kramer'];
-const WORKFLOW = ['Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Upload / Send'];
+const WORKFLOW = ['Digitizing','Need to Request Sew Out','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Upload / Send'];
 // EP v2.22: who gets the approval sheet and approves it
 const apprContactOf = l => l.apprContact || (l.dept === 'Special Projects' ? 'Elizabeth' : l.rep) || '';
 function assignFor(l, st){ return st === 'Digitizing' ? 'QDigitizing' : st === 'Pending Sew Out' ? 'Barrett' : (st === 'Sent for Approval' || st === 'Waiting on Reply') ? apprContactOf(l) : DONE.includes(st) ? 'No one' : (l.claimedBy || ''); }
@@ -2194,7 +2195,7 @@ function renderAccounts(tab){
   document.querySelectorAll('#page tr[data-acct]').forEach(tr => tr.onclick = () => { msearch = tr.dataset.acct; const ms = document.getElementById('msearch'); if (ms) ms.value = msearch; render(); });
 }
 // ================= EP v2.17: Reports tab (updates doc Part 18). Only in Noelle's portal. Uses the status changes and dates already saved in History. =================
-const RP_STATUSES = ['New Request','Digitizing','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Upload / Send'];
+const RP_STATUSES = ['New Request','Digitizing','Need to Request Sew Out','Pending Sew Out','Review Sew Out','Sent for Approval','Waiting on Reply','Send Invoice','Upload / Send'];
 const RP_TEAM = ['Noelle Thompson','Jette Wade','Bryana Kramer'];
 const RP_HOLDERS = [['all','Everyone together'], ['team','Embroidery team (me, Jette, Bryana)'], ['QDigitizing','QDigitizing'], ['Barrett','Barrett'], ['rep','Sales rep']];
 let rpt = {mode:'month', month:'', from:'', to:'', dept:'', person:'', holder:'all', preview:false, to_:''};
@@ -2364,7 +2365,7 @@ function td2Todo(day){
   const of = st => DB.logos.filter(l => l.status === st).sort(td2Sort).map(td2Line);
   const notes = td2Notes(day).todo.map(text => ({text, mine:true}));
   return {'Request digitization': DB.logos.filter(l => l.status === 'New Request' && l.type === 'Digitize').sort(td2Sort).map(td2Line),
-    'Request sew out': DB.logos.filter(l => l.status === 'New Request' && l.type !== 'Digitize').sort(td2Sort).map(td2Line),
+    'Request sew out': DB.logos.filter(l => (l.status === 'New Request' && l.type !== 'Digitize') || l.status === 'Need to Request Sew Out').sort(td2Sort).map(td2Line),   // EP v2.25
     'Review Barrett Sew Out': of('Review Sew Out'), 'Add to ES/FTP': of('Upload / Send'),
     'Other': of('Send Invoice').map(x => ({l:x.l, text:'Send the digitizing fee invoice: ' + x.text})).concat(notes),
     'Check on digitization': of('Digitizing'), 'Check on Sew out requests': of('Pending Sew Out')};
