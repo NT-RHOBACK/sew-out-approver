@@ -502,7 +502,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.26</span>
+    <span class="vbadge">EP v2.27</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -521,7 +521,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.26';
+const VERSION = 'EP v2.27';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -621,7 +621,7 @@ let DB = {logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:
 try { const s = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (s && Array.isArray(s.logos)) DB = Object.assign({logos:[], history:[], notes:[], notifs:[], tasks:[], did:[], todoDays:[], taskLog:[], tdNotes:[], savedAt:''}, s); } catch(e){}
 // EP v2.03: logos copied from the live portal (they have a NetSuite ID) are set aside: saved to Excel, not shown anywhere
 const stNorm = s => s === 'Need to Upload' ? 'Upload / Send' : s;   // EP v2.22: old name
-function splitLive(db){ (db.logos || []).forEach(l => { l.status = stNorm(l.status); }); const keep = [], away = db.hidden || []; (db.logos || []).forEach(l => (l.nsId ? away : keep).push(l)); db.logos = keep; db.hidden = away; return db; }
+function splitLive(db){ (db.logos || []).forEach(l => { l.status = stNorm(l.status); if (!l.nsId && !l.claimedBy && !DONE.includes(l.status)) l.claimedBy = 'Noelle Thompson'; });   /* EP v2.27: open ones auto-claimed to me */ const keep = [], away = db.hidden || []; (db.logos || []).forEach(l => (l.nsId ? away : keep).push(l)); db.logos = keep; db.hidden = away; return db; }
 const hiddenIds = () => new Set((DB.hidden || []).map(l => l.id));
 splitLive(DB);
 const byId = id => DB.logos.find(l => String(l.id) === String(id));
@@ -646,6 +646,7 @@ const opsFor = l => (OPS_OF[String(l.rep || '').split(/\s+/)[0]] || []).join(' a
 function setStatus(l, st, by){
   if (l.status === st) return;
   const from = l.status;
+  if (from === 'New Request' && st !== 'New Request' && l.claimedBy && !l.claimLocked){ l.claimLocked = true; log(l, 'Edit', 'Claim locked to ' + l.claimedBy + ' (moved out of New Request)', AUTO); }   // EP v2.27
   log(l, 'Status', 'Status: ' + l.status + ' > ' + st, by); l.status = st;
   autoFollow(l, st, from);   // EP v2.12
   if (!TODO_OFF) tdFromPortal(l, st);   // EP v1.24: also lands in today's To Do / What I did
@@ -737,7 +738,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || [], apprContact:l.apprContact || '', poDate:l.poDate || '', lineSheet:l.lineSheet || '', mailSel:l.mailSel || null})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || [], apprContact:l.apprContact || '', poDate:l.poDate || '', lineSheet:l.lineSheet || '', mailSel:l.mailSel || null, claimLocked:!!l.claimLocked})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -786,7 +787,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; l.apprContact = x.apprContact || ''; l.poDate = x.poDate || ''; l.lineSheet = x.lineSheet || ''; l.mailSel = x.mailSel || null; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; l.apprContact = x.apprContact || ''; l.poDate = x.poDate || ''; l.lineSheet = x.lineSheet || ''; l.mailSel = x.mailSel || null; l.claimLocked = !!x.claimLocked; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -1010,9 +1011,18 @@ function openLogo(l){ msearch = ''; document.getElementById('msearch').value = '
 function stSelect(l){ const c = STATUS_COLORS[l.status] || STATUS_COLORS['New Request'];   // the logo's portal Status dropdown
   return '<select class="st" data-id="' + esc(l.id) + '" onclick="event.stopPropagation()" style="background:' + c.bg + ';color:' + c.fg + ';border-color:' + c.bg + ';font-weight:600">' +
     STATUSES.map(s => '<option' + (s === l.status ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>'; }
-const claimTag = l => l.claimedBy ? '<span class="claimed">Claimed by ' + esc(l.claimedBy) + '</span>' : DONE.includes(l.status) ? '' : '<button class="claim-mini" data-x="claim" data-id="' + esc(l.id) + '">Claim</button>';   // EP v2.12
-const claimBar = l => '<div class="claim-bar">' + (l.claimedBy ? 'Claimed by <b>' + esc(l.claimedBy) + '</b><button class="btn light small" data-x="release" data-id="' + esc(l.id) + '">Release</button>'
-  : '<span class="emb-dim">Not claimed yet</span><button class="btn small" data-x="claim" data-id="' + esc(l.id) + '">Claim</button>') + '</div>';
+// EP v2.27: claiming. Every request is claimed to me automatically. While it's a New Request and not locked, someone else can claim it.
+// It locks when I click Lock, or as soon as it moves out of New Request; then only I can change it.
+const claimLocked = l => !!l.claimLocked || (l.status !== 'New Request' && !!l.claimedBy);
+const claimTag = l => l.claimedBy ? '<span class="claimed">' + (claimLocked(l) ? '&#128274; ' : '') + 'Claimed by ' + esc(l.claimedBy) + '</span>' : DONE.includes(l.status) ? '' : '<button class="claim-mini" data-x="claim" data-id="' + esc(l.id) + '">Claim</button>';
+function claimBar(l){ const id = esc(l.id), lk = claimLocked(l), mine = l.claimedBy === CLAIMER;
+  if (!l.claimedBy) return '<div class="claim-bar"><span class="emb-dim">Not claimed</span><button class="btn small" data-x="claim" data-id="' + id + '">Claim</button></div>';
+  return '<div class="claim-bar">' + (lk ? '&#128274; ' : '') + 'Claimed by <b>' + esc(l.claimedBy) + '</b>' +
+    '<span class="emb-dim" style="font-size:12px">' + (lk ? (l.status !== 'New Request' && !l.claimLocked ? 'locked (out of New Request), only you can change it' : 'locked, only you can change it') : 'others can still claim it while it&rsquo;s a New Request') + '</span>' +
+    (!lk && mine ? '<button class="btn small" data-x="claim-lock" data-id="' + id + '">&#128274; Lock to me</button>' : '') +
+    (l.claimLocked && l.status === 'New Request' ? '<button class="btn light small" data-x="claim-unlock" data-id="' + id + '">Unlock</button>' : '') +
+    (!mine ? '<button class="btn light small" data-x="claim" data-id="' + id + '">Take it back</button>' : '') +
+    (!lk && mine ? '<span class="emb-dim" style="font-size:11px;margin-left:auto">Test only: <a href="#" data-x="claim-test" data-id="' + id + '">Jette claims it</a></span>' : '') + '</div>'; }
 const acctShown = l => l.account || l.school || l.project || l.dept || '';   // EP v2.03: no account → School / Project name → department
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
@@ -1312,8 +1322,13 @@ document.addEventListener('click', async e => {
     const ok = await copyHtml(q.html, q.text);
     toast(ok ? '&#10003; Question email copied. Subject: <b>' + esc(q.subject) + '</b>' : 'Couldn&rsquo;t copy. Try again.', 6000); return; }
   if (act === 'claim' || act === 'release'){ e.stopPropagation(); e.preventDefault();   // EP v2.12 (Part 4)
-    if (act === 'claim'){ l.claimedBy = CLAIMER; log(l, 'Edit', 'Claimed by ' + CLAIMER); } else { log(l, 'Edit', 'Released by ' + l.claimedBy); l.claimedBy = ''; }
+    if (act === 'claim'){ const was = l.claimedBy; l.claimedBy = CLAIMER; log(l, 'Edit', was ? 'Claim taken back from ' + was + ' by ' + CLAIMER : 'Claimed by ' + CLAIMER); } else { log(l, 'Edit', 'Released by ' + l.claimedBy); l.claimedBy = ''; l.claimLocked = false; }
     autoFollow(l, l.status, l.status); touch(); render(); toast(act === 'claim' ? 'Claimed.' : 'Released. It&rsquo;s unclaimed now.'); return; }
+  if (act === 'claim-lock' || act === 'claim-unlock' || act === 'claim-test'){ e.preventDefault(); e.stopPropagation();   // EP v2.27
+    if (act === 'claim-lock'){ l.claimLocked = true; log(l, 'Edit', 'Claim locked to ' + l.claimedBy); }
+    if (act === 'claim-unlock'){ l.claimLocked = false; log(l, 'Edit', 'Claim unlocked'); }
+    if (act === 'claim-test'){ if (claimLocked(l)){ toast('It&rsquo;s locked, so no one else can claim it.'); return; } l.claimedBy = 'Jette Wade'; log(l, 'Edit', 'Claimed by Jette Wade (test)', 'Jette Wade'); }
+    autoFollow(l, l.status, l.status); touch(); render(); return; }
   if (act === 'appr-mark'){ const inp = document.getElementById('apprBy-' + l.id), who = (inp && inp.value.trim()) || l.rep || 'the rep', n = nowStamp();   // EP v2.12 (Departments doc Part 6)
     l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (marked by ' + ME + ')');
     const next = digOf(l) && !l.invoiceSent ? 'Send Invoice' : 'Upload / Send'; setStatus(l, next, ME); touch(); openLogo(l);
@@ -1550,6 +1565,7 @@ async function submitLogo(hold){
   Object.assign(l, {id:newId(), logo:sf.logo.trim(), account:SCH ? '' : sf.account.trim(), school:SCH ? schoolFix(sf.school) : '', project:sf.dept === 'Special Projects' ? sf.project.trim() : '', rep:W ? sf.rep.trim() : 'Noelle Thompson', type:sf.type === 'digitize' ? 'Digitize' : 'Sew-Out', dept:sf.dept, placement:sf.placement.trim(),
     size:sfSize(), sizeNotes:sf.type === 'digitize' ? sf.sizeNotes.trim() : '', scratch:sf.type === 'digitize' && sf.scratch, count:sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count,
     colorType:sf.color, threadNotes:sf.thread.trim(), inHand:sfPO() ? poDue(sf.po) : sfDue() || sf.start === 'yes' ? sf.date : '', poDate:sf.dept === 'Special Projects' ? sf.po : '', submitNotes:sf.notes.trim()});
+  l.claimedBy = CLAIMER;   // EP v2.27: auto-claimed to me
   DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
   if (sf.files.length) await saveFiles(l, sf.files);
   if (sf.dept === 'Special Projects' && sf.lineFile){ const ln = await saveFiles(l, [sf.lineFile]); if (ln[0]){ l.lineSheet = ln[0]; log(l, 'File', 'Line sheet: ' + ln[0]); } }   // EP v2.22
