@@ -505,7 +505,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.33</span>
+    <span class="vbadge">EP v2.34</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -524,7 +524,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.33';
+const VERSION = 'EP v2.34';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -681,7 +681,7 @@ function fuNextDue(l){ const sent = sewSentAt(l); if (!sent) return null; const 
   if (l.waitThreads) return new Date(base.getTime() + 7 * 86400000);   // waiting on threads: once a week
   return bizAdd(base, urg(off(l.inHand)) === 'red' ? 24 : 48); }
 const snoozed = l => !!l.snoozeUntil && new Date(l.snoozeUntil) > new Date();
-function barAutoFollow(){ let n = 0; const now = new Date(); if (!tdReady()) return 0;   // only while connected to the Excel, so a stale browser copy never gets them
+function barAutoFollow(){ return 0;   /* EP v2.34: automatic follow-ups are off; the Late tag replaces them (Part 5) */ let n = 0; const now = new Date(); if (!tdReady()) return 0;   // only while connected to the Excel, so a stale browser copy never gets them
   DB.logos.forEach(l => { if (l.status !== 'Pending Sew Out' || photoIn(l) || snoozed(l)) return; const due = fuNextDue(l); if (!due || now < due) return;
     const red = urg(off(l.inHand)) === 'red', why = l.waitThreads ? ' (weekly check-in on thread colors)' : red ? ' (the in hand date is close)' : '';
     (l.followUps = l.followUps || []).push(nowStamp()); barPush(l, {by:AUTO, kind:'followup', text:'Follow-up sent to Barrett' + why});
@@ -730,7 +730,10 @@ function bizAdd(d, hrs){ const t = new Date(d); let left = hrs * 3600000;   // h
 function fuDue(l){ const s = fuAt(l), t = s ? new Date(s) : sewSentAt(l); return t ? bizAdd(t, 24) : null; }
 function fuMark(l, from){ (l.followUps = l.followUps || []).push(nowStamp()); log(l, 'Edit', 'Followed up' + (from || '') + (l.status === 'Pending Sew Out' ? ': Follow Up snoozed 24 business hours' : '')); }
 function fuUndo(l, from){ if ((l.followUps || []).length){ l.followUps.pop(); log(l, 'Edit', 'Follow-up undone' + (from || '')); } }
-const sewLate = l => l.status === 'Pending Sew Out' && !photoIn(l) && !!sewSentAt(l) && bizHoursSince(fuAt(l) ? new Date(fuAt(l)) : sewSentAt(l)) >= 24;
+// EP v2.34 (Part 5 sent to Renee 11/11): Late tag instead of follow-ups. Regular: yellow after 24 business hrs, red after 48. Rush (In Hand 30 days or less): red after 24.
+function sewLateLevel(l){ if (l.status !== 'Pending Sew Out' || photoIn(l) || !sewSentAt(l)) return ''; const h = bizHoursSince(sewSentAt(l)), t = turnaround(l), rush = (t && t.tier.name === 'RUSH') || urg(off(l.inHand)) === 'red';
+  return rush ? (h >= 24 ? 'red' : '') : h >= 48 ? 'red' : h >= 24 ? 'yellow' : ''; }
+const sewLate = l => !!sewLateLevel(l);
 const sentText = l => { const s = sentStamp(l); return !s ? '' : fmt(s) + (l.sewSentDate && !sentTime(l) ? '' : ' ' + time12(s)); };
 
 // ---------------- Excel (SheetJS) ----------------
@@ -1045,8 +1048,8 @@ function columns(tab, section){
     const pickD = l => l.status === 'Upload / Send' || l.status === 'Send Invoice' ? l.approvedDate : l.sentDate;
     cols.push({k:'sentOrApproved', h:extra.h, v:l => pickD(l) || '', td:l => dateOnly(pickD(l))});
   } else if (extra && extra.f === 'photo'){
-    cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLate(l) ? 'red' : 'plain') + '">' + sentText(l) + '</span>' + (fuAt(l) ? '<div class="td-when">Last follow-up: ' + fmt(fuAt(l)) + '</div>' : '')});   // EP v2.14
-    cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLate(l) ? -1 : 0, td:l => l.status === 'Need to Request Sew Out' ? '<span class="muted">&mdash;</span>' : photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp red">Late</span>' : '<span class="img-pend">Pending</span>'});
+    cols.push({k:'sewSent', h:'Sew-Out Sent', v:l => sentStamp(l), td:l => !sentStamp(l) ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (sewLateLevel(l) || 'plain') + '">' + sentText(l) + '</span>' + (sewLate(l) ? ' <span class="dtp ' + sewLateLevel(l) + '">Late</span>' : '')});   // EP v2.34
+    cols.push({k:'photo', h:extra.h, v:l => photoIn(l) ? 1 : sewLateLevel(l) === 'red' ? -2 : sewLate(l) ? -1 : 0, td:l => l.status === 'Need to Request Sew Out' ? '<span class="muted">&mdash;</span>' : photoIn(l) ? '<span class="img-ok">&#10003; Uploaded</span>' : sewLate(l) ? '<span class="dtp ' + sewLateLevel(l) + '">Late</span>' : '<span class="img-pend">Pending</span>'});
   } else if (extra){
     cols.push({k:extra.f, h:extra.h, v:l => l[extra.f] || '', td:l => dateOnly(l[extra.f])});
   }
@@ -1092,7 +1095,7 @@ function sewBox(l){
   if (l.status === 'Pending Sew Out' && sewSentAt(l)){ const fs = fuAt(l), n = fuList(l).length, due = fuNextDue(l), id = esc(l.id);   // EP v2.14 (Part 9)
     const dueTxt = d => dayName(isoOf(d)) + ' ' + time12('T' + pad(d.getHours()) + ':' + pad(d.getMinutes()));
     inner += '<div class="f fu-box"><label>Follow-ups to Barrett</label><div>' + (fs ? 'Last follow-up ' + fmt(fs) + ' ' + time12(fs) + (n > 1 ? ' (' + n + ' so far)' : '') : 'No follow-ups yet') +
-      (photoIn(l) ? ' &middot; sew-out is in, follow-ups stopped' : snoozed(l) ? ' &middot; <b>snoozed until ' + fmt(l.snoozeUntil) + ' ' + time12(l.snoozeUntil) + '</b>' : due ? ' &middot; next one goes ' + dueTxt(due) + ' (' + (l.waitThreads ? 'weekly, waiting on threads' : urg(off(l.inHand)) === 'red' ? 'every 24 hrs, in hand date is close' : 'every 48 hrs') + ')' : '') + '</div>' +
+      (photoIn(l) ? ' &middot; sew-out is in, follow-ups stopped' : snoozed(l) ? ' &middot; <b>snoozed until ' + fmt(l.snoozeUntil) + ' ' + time12(l.snoozeUntil) + '</b>' : sewLate(l) ? ' &middot; <b style="color:' + (sewLateLevel(l) === 'red' ? '#a61b1b' : '#a88600') + '">Late</b>' : '') + '</div>' +   /* EP v2.34 */
       '<div class="btns"><button class="btn small" data-x="followUp" data-id="' + id + '">Send follow up email</button>' + (fs && fs.slice(0, 10) === todayIso() ? '<button class="btn light small" data-x="followUndo" data-id="' + id + '">Undo</button>' : '') + '</div>' +
       '<div class="snz">' + (snoozed(l) ? '<button class="btn light small" data-x="unsnooze" data-id="' + id + '">Unsnooze</button>' :
         '<span class="emb-dim">Snooze follow-ups:</span><select id="snz-' + id + '"><option value="4h">4 hours</option><option value="1d">1 day</option><option value="2d">2 days</option><option value="1w">1 week</option><option value="date">Until a date&hellip;</option></select>' +
@@ -1573,7 +1576,8 @@ async function submitLogo(hold){
   DB.logos.push(l); log(l, 'Added', 'Submitted (' + l.type + ')' + (W ? ' on behalf of ' + l.rep : ' for ' + l.dept));
   if (sf.files.length) await saveFiles(l, sf.files);
   if (sf.dept === 'Special Projects' && sf.lineFile){ const ln = await saveFiles(l, [sf.lineFile]); if (ln[0]){ l.lineSheet = ln[0]; log(l, 'File', 'Line sheet: ' + ln[0]); } }   // EP v2.22
-  if (hold){ setStatus(l, 'Waiting on Reply', AUTO); log(l, 'Status', 'On hold: start date 26 days or sooner (' + fmt(l.inHand) + ')', AUTO);   // EP v2.19
+  if (hold){ setStatus(l, 'Waiting on Reply', AUTO); log(l, 'Status', 'On hold: start date 26 days or sooner (' + fmt(l.inHand) + ')', AUTO);
+    if (l.logoStatus){ log(l, 'Edit', 'Logo Status: ' + l.logoStatus + ' > Not Started (on hold)', AUTO); l.logoStatus = ''; }   // EP v2.34: on hold = Not Started   // EP v2.19
     const who = l.rep && l.rep !== 'Noelle Thompson' ? l.rep : 'the sales rep';
     (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:AUTO, text:'ON HOLD email to ' + who + ' (cc Ren\u00e9e Sund\u00e9n, Will Lawler, Noelle Thompson): This request is ON HOLD. The in hand date (' + fmt(l.inHand) + ') is 26 days or sooner, so it needs approval from Will Lawler or Ren\u00e9e Sund\u00e9n, or a later in hand date, before we continue.', replies:[], resolved:false});
     log(l, 'Email', 'ON HOLD email to ' + who + ', cc Ren\u00e9e Sund\u00e9n, Will Lawler, Noelle Thompson', AUTO); notify(l, 'ON HOLD (start date 26 days or sooner) \u00b7 ' + reqNo(l) + ' ' + l.logo);
@@ -1598,7 +1602,7 @@ document.addEventListener('click', e => {
   if (k === 'review'){ sf.errs = sfMissing(); if (!sf.errs.length) sf.review = true; renderSubmit(tab); }
   if (k === 'back'){ sf.review = false; renderSubmit(tab); }
   if (k === 'submit'){ if (sfHold()){ const m = document.createElement('div'); m.className = 'rp-modal'; m.id = 'holdAsk';   // EP v2.19: a chance to change the date first
-      m.innerHTML = '<div class="rp-modal-in" style="max-width:520px"><div class="rp-h" style="color:#a61b1b">&#9888; This request will be ON HOLD</div><p>This in hand date is 26 days or sooner, so this request will be <b>ON HOLD</b> and needs approval from Will Lawler or Ren&eacute;e Sund&eacute;n before we continue.</p><p>Change the date, or submit anyway?</p>' +
+      m.innerHTML = '<div class="rp-modal-in" style="max-width:520px"><div class="rp-h" style="color:#a61b1b">&#9888; This request will be ON HOLD</div><p>This in hand date is 26 days or sooner, and will be placed <b>ON HOLD</b> if submitted. It will need approval from Will Lawler or Ren&eacute;e Sund&eacute;n before we continue.</p><p>Change the date, or submit anyway?</p>' +
         '<div class="btns" style="justify-content:flex-end"><button class="btn light" data-sf="hold-change">Change the date</button><button class="btn" data-sf="hold-submit">Submit anyway</button></div></div>';
       document.getElementById('page').appendChild(m); return; }
     submitLogo(); }
