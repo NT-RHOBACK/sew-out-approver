@@ -502,7 +502,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.25</span>
+    <span class="vbadge">EP v2.26</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -521,7 +521,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.25';
+const VERSION = 'EP v2.26';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -603,13 +603,13 @@ function clockStart(l){   // the latest move back into the queue, or when it was
 }
 function turnaround(l){   // {tier, due, late} while the clock runs, else null
   if (!CLOCK_RUN.includes(l.status)) return null; const s = clockStart(l); if (!s) return null;
-  const ih = parseIso(l.inHand), n = ih ? Math.round((ih - parseIso(s)) / 86400000) : null, tier = l.rush ? TIERS[0] : n === null ? TIERS[2] : TIERS.find(t => n <= t.max);   // EP v2.13: marked Rush = RUSH
+  const ih = parseIso(l.inHand), n = ih ? Math.round((ih - parseIso(s)) / 86400000) : null, tier = n === null ? TIERS[2] : TIERS.find(t => n <= t.max);   // EP v2.13: marked Rush = RUSH
   const due = bizAdd(new Date(s), tier.hrs); return {tier, due, late:new Date() > due};
 }
 function subUrg(l){ const t = turnaround(l); return t && t.late ? 'red' : ''; }   // Submitted: red once it's past due
 function noDate(l){ const t = turnaround(l), c = !t ? 'plain' : t.late ? 'red' : isoOf(t.due) === todayIso() ? 'yellow' : 'plain';   // EP v1.30: no In Hand Date: yellow on the day its 5 days are up, red once past
   return '<span class="dtp ' + c + '">No date</span>'; }
-const rushR = l => { const t = turnaround(l); return (t && t.tier.name === 'RUSH') || (!DONE.includes(l.status) && (l.rush || (l.sewUrgent && ['Pending Sew Out','Review Sew Out'].includes(l.status)))) ? '<span class="rush-r" title="RUSH">R</span>' : ''; };
+const rushR = l => { const t = turnaround(l); return (t && t.tier.name === 'RUSH') || (!DONE.includes(l.status) && l.sewUrgent && ['Pending Sew Out','Review Sew Out'].includes(l.status)) ? '<span class="rush-r" title="RUSH">R</span>' : ''; };
 function priTag(l){ const t = turnaround(l); if (!t) return '';
   const when = (t.due.getMonth() + 1) + '/' + t.due.getDate() + ' ' + time12('T' + pad(t.due.getHours()) + ':' + pad(t.due.getMinutes()));
   return '<div class="pri ' + t.tier.cls + '">' + t.tier.name + '</div><div class="pri-due' + (t.late ? ' late' : '') + '">' + (t.late ? 'Late &middot; due ' : 'Due ') + when + '</div>'; }
@@ -1048,7 +1048,7 @@ const f = (label, input, full) => '<div class="f' + (full ? ' full' : '') + '"><
 const sel = (field, l, opts) => '<select data-edit="' + field + '" data-id="' + esc(l.id) + '"><option value=""></option>' + opts.map(o => '<option' + (o === l[field] ? ' selected' : '') + '>' + esc(o) + '</option>').join('') +
   (l[field] && !opts.includes(l[field]) ? '<option selected>' + esc(l[field]) + '</option>' : '') + '</select>';
 const inp = (field, l, extra) => '<input data-edit="' + field + '" data-id="' + esc(l.id) + '" value="' + esc(l[field]) + '"' + (extra || '') + '>';
-function requestLink(l){ const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id)}); if (l.inHand) p.set('inhand', l.inHand); if (l.rush) p.set('urgency', 'urgent'); return REQUEST_URL + '#' + p.toString().replace(/\+/g, '%20'); }
+function requestLink(l){ const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id)}); if (l.inHand) p.set('inhand', l.inHand); return REQUEST_URL + '#' + p.toString().replace(/\+/g, '%20'); }
 function approverLink(l){
   const p = new URLSearchParams({customer:l.account, logo:l.logo, id:String(l.id), ver:String(l.ver)});
   if (l.count) p.set('count', l.count); if (l.colorType) p.set('colortype', l.colorType); if (l.threadNotes) p.set('thread', l.threadNotes);
@@ -1189,7 +1189,6 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     ef('Number of Thread Colors', sel('count', l, SF_COUNTS)) + ef('Color Type', sel('colorType', l, Object.keys(SF_DESC))) +
     ef('Thread Color Notes', ta('threadNotes'), true) +
     ef('Placement', inp('placement', l)) + ef('In Hand Date', '<input type="date" data-edit="inHand" data-id="' + id + '" value="' + esc(l.inHand) + '">' + (priTag(l) ? '<div class="emb-tierline">' + priTag(l) + '</div>' : '')) +
-    ef('Rush', '<label class="emb-fee-chk"><input type="checkbox" data-x="rush-tog" data-id="' + id + '"' + (l.rush ? ' checked' : '') + '> Mark as rush <span class="emb-dim">(24-hour goal)</span></label>') +
     ef('File Version', '<div class="emb-stepper"><button class="sbtn" data-act="ver-" data-id="' + id + '">&minus;</button><span class="emb-step-val">v' + l.ver + '</span><button class="sbtn" data-act="ver+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="ver-edit" data-id="' + id + '">Edit</button></div>') +
     ef('Revisions', '<div class="emb-stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="emb-step-val rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
     ef('Rep Notes', ta('submitNotes'), true) +
@@ -1606,7 +1605,7 @@ const matchQ = (l, q) => { if (!q) return true; const n = q.trim().replace(/^#/,
 // Sorts (EP v1.46): sort by several things, like Asana. A column header click sorts by just that column; Reset filters brings back the defaults.
 let sortsOpen = false, srtDrag = null;   // which tab's Sorts box is open; the row being dragged
 const sortKeyNow = () => msearch.trim() ? 'search' : state.tab;
-const ihRank = l => { if (l && l.rush && !DONE.includes(l.status)) return 0;   // EP v2.13: Rush sorts with the reds
+const ihRank = l => {   // EP v2.26: rush comes only from the In Hand Date (no Rush checkbox)
   if (!l || !l.inHand || DONE.includes(l.status)) return 2; const u = urg(off(l.inHand)); return u === 'red' ? 0 : u === 'yellow' ? 1 : 2; };   // In Hand Date color: red, yellow, none
 const reqNum = l => parseInt(String(l.nsId || l.id || '').replace(/\D/g, ''), 10) || 0;
 function defaultSorts(key, kind){ if (key !== 'todo') return [{k:'ihc', dir:1}, {k:'sub', dir:1}];   // red In Hand Dates first, then first come, first served
@@ -2502,7 +2501,7 @@ document.addEventListener('click', e => {
   const ca = e.target.closest('[data-collapse]'); if (ca){ const c = collapseState(); c.heads.forEach(h => { state.collapsed[h.dataset.sec] = c.open; }); c.days.forEach(x => { auditOpen[x.dataset.day] = !c.open; }); save(); render(); return; }
   const sh = e.target.closest('.sec-head'); if (sh){ const k = sh.dataset.sec; state.collapsed[k] = !state.collapsed[k]; save(); render(); return; }
   if (e.target.id === 'msclear'){ msearch = ''; document.getElementById('msearch').value = ''; render(); return; }
-  const r = e.target.closest('.row'); if (r && !e.target.closest('select')){ const id = r.dataset.id; state.open[id] = !state.open[id]; delete stripOpen[id]; render(); }
+  const r = e.target.closest('.row'); if (r && !e.target.closest('select')){ const id = r.dataset.id, was = !!state.open[id]; state.open = {}; if (!was) state.open[id] = true; delete stripOpen[id]; render(); }   // EP v2.26: only one logo card open at a time
 });
 document.addEventListener('change', e => { const d = e.target.dataset || {}, isF = 'srtF' in d; if (!isF && !('srtD' in d)) return;   // EP v1.46: a Sorts row's field or direction
   const key = sortKeyNow(), act = activeSorts(key).map(x => ({k:x.k, dir:x.dir})), i = +(isF ? d.srtF : d.srtD); if (!act[i]) return;
