@@ -518,7 +518,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.37</span>
+    <span class="vbadge">EP v2.38</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -537,7 +537,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.37';
+const VERSION = 'EP v2.38';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -584,7 +584,6 @@ const TABS = [
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
   {key:'reports',   title:'Reports', sub:'', reports:true},   // EP v2.17 (updates doc Part 18)
   {key:'today',     title:'To Do', sub:'', today:true},   // EP v2.23: built from the portal; Copy list
-  {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
   // EP v2.10: To Do tab removed (Noelle 11/11). Its old data stays in the Excel, untouched.
 ];
 const KIND_COLOR = {Added:['#5b3a8e','#efe8f8'], Status:['#1f5fbf','#e8f0fb'], Email:['#7b2fb5','#f2e8fb'], Edit:['#49516C','#eef0f6'], File:['#a35a1f','#fdeee2'], Note:['#2e7d32','#e2f5dc'], Deleted:['#a61b1b','#f8d7d7']};
@@ -1028,7 +1027,12 @@ async function downloadAll(l){
 let state = {tab:'dashboard', open:{}, collapsed:{}, sort:{}, sorts:{}, group:{}, search:{}, dept:{}, stat:{}, audit:{q:'', type:'', from:'', to:''}};
 try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){} state.stat = state.stat || {};   // EP v2.04
 state.open = {};
-state.tab = sessionStorage.getItem(SS_TAB) || 'dashboard';   // opening the portal starts on the Dashboard; a refresh keeps the tab
+state.tab = sessionStorage.getItem(SS_TAB) || 'dashboard';
+let rpView = 'reports';   /* EP v2.38: Reports tab sub-tabs (Reports / Audit) */
+if (state.tab === 'audit'){ state.tab = 'reports'; rpView = 'audit'; }
+const AUDIT_TAB = {key:'audit', title:'Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true};
+const rpTabs = () => '<div class="td-subtabs">' + [['reports', 'Reports'], ['audit', 'Audit']].map(([v, l]) => '<button class="td-subtab' + (rpView === v ? ' on' : '') + '" data-rpv="' + v + '">' + l + '</button>').join('') + '</div>';
+document.addEventListener('click', e => { const b = e.target.closest('[data-rpv]'); if (!b || state.tab !== 'reports') return; rpView = b.dataset.rpv; if (rpView === 'audit') auditOpen = {}; render(); });   // opening the portal starts on the Dashboard; a refresh keeps the tab
 if (!TABS.some(t => t.key === state.tab)) state.tab = 'dashboard';
 let msearch = '', auditOpen = {};
 const save = () => { try { sessionStorage.setItem(SS_TAB, state.tab); localStorage.setItem(LS_UI, JSON.stringify(Object.assign({}, state, {open:{}, tab:''}))); } catch(e){} };
@@ -1435,7 +1439,7 @@ function renderAudit(tab){
     (!af.from || e.ts.slice(0, 10) >= af.from) && (!af.to || e.ts.slice(0, 10) <= af.to));
   const days = [...new Set(rows.map(e => e.ts.slice(0, 10)))].sort().reverse();   // newest first: Today on top
   const label = d => { const n = off(d); return n === 0 ? 'Today' : n === -1 ? 'Yesterday' : parseIso(d).toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'}); };
-  let html = '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open that logo.</div>' +
+  let html = '<h1>Reports</h1>' + rpTabs() + '<div class="sub">' + tab.sub + ' Click a row to open that logo.</div>' +
     '<div class="bar"><input id="aSearch" placeholder="Search logo, account, change, or person&hellip;" value="' + esc(af.q) + '">' +
     '<select id="aType"><option value="">All activity</option>' + Object.keys(KIND_COLOR).map(k => '<option' + (af.type === k ? ' selected' : '') + '>' + k + '</option>').join('') + '</select>' +
     '<label class="muted" style="font-size:12px">From <input type="date" id="aFrom" value="' + esc(af.from) + '" style="flex:none;min-width:0"></label>' +
@@ -2388,7 +2392,7 @@ function renderReports(tab){
   const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '&mdash;';
   const people = [...new Set(RP_TEAM.concat(rpAll().map(l => l.rep).filter(Boolean)))].sort();
   const btn = (k, label) => '<button class="btn' + (rpt.mode === k ? '' : ' light') + '" data-rp="mode" data-v="' + k + '">' + label + '</button>';
-  let h = '<h1>Reports</h1><div class="sub">Only in your portal. Times count business hours (weekends don&rsquo;t count). Numbers come from the status changes and dates saved in History, so past logos count too.</div>' +
+  let h = '<h1>Reports</h1>' + rpTabs() + '<div class="sub">Only in your portal. Times count business hours (weekends don&rsquo;t count). Numbers come from the status changes and dates saved in History, so past logos count too.</div>' +
     '<div class="bar">' + btn('month', 'Monthly') + btn('year', 'Yearly') + btn('all', 'All time') +
     (rpt.mode === 'month' ? '<input type="month" id="rpMonth" value="' + esc(rpt.month || todayIso().slice(0, 7)) + '" style="flex:none;min-width:0">' : '') +
     '<label class="muted" style="font-size:12px">From <input type="date" id="rpFrom" value="' + esc(rpt.from) + '" style="flex:none;min-width:0"></label><label class="muted" style="font-size:12px">To <input type="date" id="rpTo" value="' + esc(rpt.to) + '" style="flex:none;min-width:0"></label>' +
@@ -2674,7 +2678,7 @@ function renderMain(){
   if (tab.todo){ renderTodo(tab); return; }
   if (tab.submit){ renderSubmit(tab); return; }
   if (tab.accounts){ renderAccounts(tab); return; }
-  if (tab.reports){ renderReports(tab); return; }   // EP v2.17
+  if (tab.reports){ if (rpView === 'audit') renderAudit(AUDIT_TAB); else renderReports(tab); return; }   // EP v2.17; v2.38 Audit sub-tab
   if (tab.today){ if (td2View === 'planner') renderPlanner(tab); else renderToday2(tab); return; }   // EP v2.37: Planner is a sub-tab of To Do   // EP v2.23
   const group = state.group[tab.key] || 'status';
   let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div><div class="bar" style="margin:-6px 0 12px">' + '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' + sortsCtl(tab.key) + '</div>'
@@ -2736,7 +2740,7 @@ document.addEventListener('click', e => {
     if (l.ver !== ov) log(l, 'Edit', 'File Version: v' + ov + ' > v' + l.ver);
     if ((l.rev || 0) !== orv) log(l, 'Edit', 'Revisions: ' + orv + ' > ' + l.rev);
     touch(); render(); return; }
-  const t = e.target.closest('.tab'); if (t){ bulkSel.clear(); msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoOpen = null; todoQ = ''; } state.open = {}; save(); render(); return; }
+  const t = e.target.closest('.tab'); if (t){ bulkSel.clear(); msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'reports') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoOpen = null; todoQ = ''; } state.open = {}; save(); render(); return; }
   const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
   const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
   if (e.target.closest('.bsel, .bsel-all, #bulkBar')) return;   // EP v2.24
