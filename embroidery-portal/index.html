@@ -271,6 +271,10 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .t2-ol li{margin:2px 0;font-size:14px}
 .t2-ol a{color:inherit;text-decoration:none}
 .t2-ol a:hover{text-decoration:underline}
+.bsel,.bsel-all{width:15px;height:15px;margin:0 6px 0 0;vertical-align:middle;cursor:pointer;accent-color:#1b2a4a}
+#bulkBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:10px;background:#1b2a4a;color:#fff;padding:10px 16px;border-radius:10px;box-shadow:0 6px 24px rgba(15,23,42,.3);font-size:14px}
+#bulkBar select{font:inherit;padding:4px 6px;border-radius:6px}
+#bulkBar .btn.light{background:transparent;color:#fff;border-color:#8b93ad}
 .q-mail{border:1px solid #d6dbe4;border-radius:8px;margin-top:8px;background:#fff}
 .sf-warn{margin-top:8px;font-size:13px;font-weight:600;color:#8a1c1c;background:#fdecec;border:1px solid #f3c4c4;border-radius:6px;padding:8px 12px}
 .sf-upload{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;font-size:14px;color:#49516C}
@@ -498,7 +502,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.23</span>
+    <span class="vbadge">EP v2.24</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -517,7 +521,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.23';
+const VERSION = 'EP v2.24';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1012,7 +1016,7 @@ const acctShown = l => l.account || l.school || l.project || l.dept || '';   // 
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
-    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + (barNew(l) || commNew(l) ? '<span class="new-reply">New reply</span>' : '') + claimTag(l) + '</span></div>'},
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><input type="checkbox" class="bsel" data-bid="' + esc(l.id) + '"' + (bulkSel.has(l.id) ? ' checked' : '') + ' title="Select for bulk status change"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + (barNew(l) || commNew(l) ? '<span class="new-reply">New reply</span>' : '') + claimTag(l) + '</span></div>'},
     {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="acct dabbr" title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
     {k:'account', h:'Account', v:l => acctShown(l).toLowerCase(), td:l => '<span class="acct">' + esc(acctShown(l)) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
@@ -1639,13 +1643,33 @@ function rowsParts(list, tab, cols){   // EP v2.04: the column-heading row + row
   const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' || c.k === 'today' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
   return {head, body};
 }
+// EP v2.24: bulk status change. Tick logos, pick a status, Apply (each move is logged in History like a normal status change)
+let bulkSel = new Set();
+function bulkBar(){ let b = document.getElementById('bulkBar'); const n = [...bulkSel].filter(id => byId(id)).length;
+  if (!n || !['dashboard','queue','barrett','approvals','completed'].includes(state.tab) && !msearch.trim()){ if (b) b.remove(); return; }
+  if (!b){ b = document.createElement('div'); b.id = 'bulkBar'; document.body.appendChild(b); }
+  const keep = b.querySelector('select') ? b.querySelector('select').value : '';
+  b.innerHTML = '<b>' + n + ' selected</b><span>Move to</span><select id="bulkSt"><option value="">Pick a status&hellip;</option>' + STATUSES.map(s => '<option' + (s === keep ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select>' +
+    '<button class="btn small" data-bulk="apply" style="background:#fff;color:#1b2a4a">Apply</button><button class="btn light small" data-bulk="clear">Clear</button>'; }
+document.addEventListener('change', e => {
+  if (e.target.classList.contains('bsel')){ const id = e.target.dataset.bid; if (e.target.checked) bulkSel.add(id); else bulkSel.delete(id); render(); return; }
+  if (e.target.classList.contains('bsel-all')){ const ids = (e.target.dataset.ids || '').split(',').filter(Boolean); ids.forEach(id => e.target.checked ? bulkSel.add(id) : bulkSel.delete(id)); render(); return; }
+});
+document.addEventListener('click', e => { const b = e.target.closest('[data-bulk]'); if (!b) return; e.preventDefault();
+  if (b.dataset.bulk === 'clear'){ bulkSel.clear(); render(); return; }
+  const st = (document.getElementById('bulkSt') || {}).value; if (!st){ toast('Pick a status first.'); return; }
+  const ls = [...bulkSel].map(byId).filter(Boolean), move = ls.filter(l => l.status !== st);
+  if (!move.length){ toast('They&rsquo;re all in ' + esc(st) + ' already.'); return; }
+  if (!confirm('Move ' + move.length + ' logo' + (move.length > 1 ? 's' : '') + ' to ' + st + '?\n\n' + move.map(l => l.logo).slice(0, 15).join('\n') + (move.length > 15 ? '\n\u2026and ' + (move.length - 15) + ' more' : ''))) return;
+  move.forEach(l => setStatus(l, st, ME)); bulkSel.clear(); touch(); render(); toast('Moved ' + move.length + ' logo' + (move.length > 1 ? 's' : '') + ' to ' + esc(st) + '.'); });
 function rowsHtml(list, tab, cols, limit){
   const act = activeSorts(tab.key), prim = act.find(x => cols.some(c => c.k === x.k));   // EP v1.46: Sorts (replaces RUSH first)
   list = multiSort(list, act, k => k === 'ihc' ? ihRank : k === 'req' ? reqNum : (cols.find(c => c.k === k) || {}).v);
   if (limit) list = list.slice(0, limit);
   const W = colWidths(tab, cols);
   const colgroup = '<colgroup>' + cols.map(c => '<col style="width:' + (W[c.k] || 10) + '%">').join('') + '</colgroup>';
-  const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (prim && c.k === prim.k ? ' class="sorted"' : '') + '>' + c.h + '<span class="arr">' + (prim && c.k === prim.k ? (prim.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
+  const allIn = list.length && list.every(l => bulkSel.has(l.id));   // EP v2.24: select all in this table
+  const head = '<tr>' + cols.map(c => '<th data-sort="' + c.k + '"' + (prim && c.k === prim.k ? ' class="sorted"' : '') + '>' + (c.k === 'logo' ? '<input type="checkbox" class="bsel-all" data-ids="' + esc(list.map(l => l.id).join(',')) + '"' + (allIn ? ' checked' : '') + ' title="Select all in this section">' : '') + c.h + '<span class="arr">' + (prim && c.k === prim.k ? (prim.dir > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr>';
   const body = list.map(l => '<tr class="row' + (state.open[l.id] ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(c => '<td' + (c.k === 'account' || c.k === 'logo' || c.k === 'today' ? ' class="wrap"' : '') + '>' + c.td(l) + '</td>').join('') + '</tr>' + (state.open[l.id] ? card(l, cols.length) : '')).join('');
   return '<div class="tblwrap"><table class="tbl">' + colgroup + '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
 }
@@ -2387,7 +2411,8 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
     try { await navigator.clipboard.writeText(txt); toast('&#10003; Copied. Paste it anywhere.'); } catch(err){ toast('Couldn&rsquo;t copy. Try again.'); } return; }
 });
 
-function render(){
+function render(){ renderMain(); bulkBar(); }   // EP v2.24
+function renderMain(){
   refreshToday(); { const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2) touch(); } renderNotifs();   // EP v2.14 / v2.15
   if (!TODO_OFF && tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
@@ -2468,9 +2493,10 @@ document.addEventListener('click', e => {
     if (l.ver !== ov) log(l, 'Edit', 'File Version: v' + ov + ' > v' + l.ver);
     if ((l.rev || 0) !== orv) log(l, 'Edit', 'Revisions: ' + orv + ' > ' + l.rev);
     touch(); render(); return; }
-  const t = e.target.closest('.tab'); if (t){ msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoOpen = null; todoQ = ''; } state.open = {}; save(); render(); return; }
+  const t = e.target.closest('.tab'); if (t){ bulkSel.clear(); msearch = ''; document.getElementById('msearch').value = ''; state.tab = t.dataset.tab; if (state.tab === 'audit') auditOpen = {}; if (state.tab === 'todo'){ todoDay = null; todoOpen = null; todoQ = ''; } state.open = {}; save(); render(); return; }
   const ad = e.target.closest('.aud-day'); if (ad){ const d = ad.dataset.day; auditOpen[d] = !(d in auditOpen ? auditOpen[d] : off(d) === 0); render(); return; }
   const ar = e.target.closest('.aud-row'); if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo was deleted.'); return; }
+  if (e.target.closest('.bsel, .bsel-all, #bulkBar')) return;   // EP v2.24
   const th = e.target.closest('th[data-sort]'); if (th){ const sk = msearch.trim() ? 'search' : state.tab, k = th.dataset.sort, cur = state.sort[sk] || (th.classList.contains('sorted') ? {k, dir: th.querySelector('.arr').textContent === '\u25b2' ? 1 : -1} : null); state.sort[sk] = {k, dir: cur && cur.k === k ? -cur.dir : 1}; save(); render(); return; }
   const ca = e.target.closest('[data-collapse]'); if (ca){ const c = collapseState(); c.heads.forEach(h => { state.collapsed[h.dataset.sec] = c.open; }); c.days.forEach(x => { auditOpen[x.dataset.day] = !c.open; }); save(); render(); return; }
   const sh = e.target.closest('.sec-head'); if (sh){ const k = sh.dataset.sec; state.collapsed[k] = !state.collapsed[k]; save(); render(); return; }
