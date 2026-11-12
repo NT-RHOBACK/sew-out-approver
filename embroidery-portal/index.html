@@ -525,7 +525,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.41</span>
+    <span class="vbadge">EP v2.42</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -544,7 +544,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.41';
+const VERSION = 'EP v2.42';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -793,12 +793,15 @@ function buildWorkbook(){
   const tn = XLSX.utils.aoa_to_sheet([['Date','Time','Task','Note','By','Chain']].concat((DB.tdNotes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.task, n.text, n.by, n.chain])));
   tn['!cols'] = [12, 10, 40, 70, 14, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, tn, 'To Do Notes');
-  const pls = XLSX.utils.aoa_to_sheet([['Task','To-do date','Priority','Done','Done at','Sub-tasks','Rolled over from','Created','ID','Section','Status']].concat((DB.planner || []).map(x => [x.text, x.date || '(backlog)', x.pri || '', x.done ? 'Yes' : '', x.doneAt || '',
-    JSON.stringify((x.subs || []).map(s => typeof s === 'string' ? {t:s, done:false} : s)), x.rolledFrom || '', x.created || '', x.id, x.sec || '', plStatus(x)])));   // EP v2.36; v2.39 Section
-  pls['!cols'] = [60, 12, 9, 6, 20, 60, 14, 20, 16, 20, 12].map(w => ({wch:w}));
+  const pls = XLSX.utils.aoa_to_sheet([['Task','To-do date','Priority','Done','Done at','Sub-tasks','Rolled over from','Created','ID','Section','Status','Due date']].concat((DB.planner || []).map(x => [x.text, x.date || '(backlog)', x.pri || '', x.done ? 'Yes' : '', x.doneAt || '',
+    JSON.stringify((x.subs || []).map(s => typeof s === 'string' ? {t:s, done:false} : s)), x.rolledFrom || '', x.created || '', x.id, x.sec || '', plStatus(x), x.due || ''])));   // EP v2.36; v2.39 Section
+  pls['!cols'] = [60, 12, 9, 6, 20, 60, 14, 20, 16, 20, 12, 12].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, pls, 'Planner');
-  const dts = XLSX.utils.aoa_to_sheet([['Day','Locked list (please don’t edit)','What I did lines (please don’t edit)']].concat(Object.keys(DB.todayNotes || {}).sort().map(d => { const n = DB.todayNotes[d] || {}; return [d, n.locked ? JSON.stringify(n.locked) : '', (n.did || []).length ? JSON.stringify(n.did) : '']; }).filter(r => r[1] || r[2])));
-  dts['!cols'] = [12, 80, 60].map(w => ({wch:w}));
+  const plh = XLSX.utils.aoa_to_sheet([['When','Task','What happened','By','Task ID']].concat((DB.plHist || []).map(h => [h.ts, h.task, h.what, h.by || '', h.id])));   // EP v2.42
+  plh['!cols'] = [20, 50, 60, 8, 16].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, plh, 'Planner History');
+  const dts = XLSX.utils.aoa_to_sheet([['Day','Locked list (please don’t edit)','What I did lines (please don’t edit)','What I did edited copy (please don’t edit)']].concat(Object.keys(DB.todayNotes || {}).sort().map(d => { const n = DB.todayNotes[d] || {}; return [d, n.locked ? JSON.stringify(n.locked) : '', (n.did || []).length ? JSON.stringify(n.did) : '', n.didEdit ? JSON.stringify(n.didEdit) : '']; }).filter(r => r[1] || r[2] || r[3])));
+  dts['!cols'] = [12, 80, 60, 60].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, dts, 'Daily To Do');
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || new Date().toISOString()], ['Saved by', VERSION], ['To Do days', (DB.todoDays || []).join(', ')], ['Goals', JSON.stringify(DB.goals || [])], ['Planner sections', JSON.stringify(DB.plSecs || [])], ['To Do notes', 'Now in the Planner and Daily To Do sheets'],
     ['Note', 'Keep this file closed in Excel while the Embroidery Portal is open. You can edit the Logos columns here when the portal is closed. Please don’t edit the "Extra" column.']]);
@@ -833,9 +836,10 @@ function readWorkbook(buf){
   const inf = rows('Info'); const s = inf.find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
   const tn = inf.find(r => r[0] === 'To Do notes'); try { db.todayNotes = tn && tn[1] && String(tn[1]).trim().startsWith('{') ? JSON.parse(String(tn[1])) : {}; } catch(e){ db.todayNotes = {}; }   // EP v2.23 (older files)
   rows('Daily To Do').slice(1).filter(r => r[0]).forEach(r => { const d = normDate(r[0]), n = db.todayNotes[d] = db.todayNotes[d] || {todo:[], did:[]}; n.todo = n.todo || [];
-    try { if (r[1]) n.locked = JSON.parse(String(r[1])); } catch(e){} try { if (r[2]) n.did = JSON.parse(String(r[2])); } catch(e){} });   // EP v2.36
+    try { if (r[1]) n.locked = JSON.parse(String(r[1])); } catch(e){} try { if (r[2]) n.did = JSON.parse(String(r[2])); } catch(e){} try { if (r[3]) n.didEdit = JSON.parse(String(r[3])); } catch(e){} });   // EP v2.36
   db.planner = rows('Planner').slice(1).filter(r => r[0] || r[8]).map(r => { let subs = []; try { subs = r[5] ? JSON.parse(String(r[5])) : []; } catch(e){}
-    const dd = String(r[1] || ''); return {id:String(r[8] || ('T' + Math.random().toString(36).slice(2, 9))), text:String(r[0]), date:/backlog/i.test(dd) ? '' : normDate(dd), pri:String(r[2] || ''), done:/^y/i.test(String(r[3])), doneAt:String(r[4] || ''), subs, rolledFrom:normDate(String(r[6] || '')), created:String(r[7] || ''), sec:String(r[9] || ''), status:String(r[10] || '')}; });
+    const dd = String(r[1] || ''); return {id:String(r[8] || ('T' + Math.random().toString(36).slice(2, 9))), text:String(r[0]), date:/backlog/i.test(dd) ? '' : normDate(dd), pri:String(r[2] || ''), done:/^y/i.test(String(r[3])), doneAt:String(r[4] || ''), subs, rolledFrom:normDate(String(r[6] || '')), created:String(r[7] || ''), sec:String(r[9] || ''), status:String(r[10] || ''), due:normDate(String(r[11] || ''))}; });
+  db.plHist = rows('Planner History').slice(1).filter(r => r[0] || r[2]).map(r => ({ts:String(r[0]), task:String(r[1] || ''), what:String(r[2] || ''), by:String(r[3] || ''), id:String(r[4] || '')}));   // EP v2.42
   const psx = inf.find(r => r[0] === 'Planner sections'); try { db.plSecs = psx && psx[1] ? JSON.parse(String(psx[1])) : []; } catch(e){ db.plSecs = []; }   // EP v2.39
   const gl = inf.find(r => r[0] === 'Goals'); try { db.goals = gl && gl[1] ? JSON.parse(String(gl[1])) : []; } catch(e){ db.goals = []; }   // EP v2.17
   const tdays = inf.find(r => r[0] === 'To Do days'); db.todoDays = tdays && tdays[1] ? String(tdays[1]).split(/,\s*/).filter(Boolean) : [];
@@ -2514,44 +2518,69 @@ function plMigrate(){   // lines typed in To Do Other before v2.36 become planne
   return ch; }
 function plRollover(){   // anything not done from an earlier day moves to today
   const today = todayIso(); let ch = false;
-  PL().forEach(t => { if (!t.done && t.date && t.date < today){ t.rolledFrom = t.rolledFrom || t.date; t.date = today; ch = true; } });
+  PL().forEach(t => { if (!t.done && t.date && t.date < today){ const was = t.date; t.rolledFrom = t.rolledFrom || t.date; t.date = today; ch = true; if (typeof plLog === 'function') plLog(t, 'Rolled over: Scheduled ' + dayShort(was) + ' > ' + dayShort(today), 'Auto'); } });
   return ch; }
 const dayShort = iso => parseIso(iso).toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'});
 // EP v2.39: Planner works like the queue tabs: sections you name (collapsible, with counts), one row per task with a drop-down arrow that opens it to edit
 const plSecs = () => (DB.plSecs = DB.plSecs || []);
 const PL_ST = ['Not started', 'In progress', 'Waiting', 'Done'];   /* EP v2.40: task Status, colored like the logo Status dropdown */
 const PL_ST_C = {'Not started':{bg:'#e3e6ec', fg:'#3a4256'}, 'In progress':{bg:'#bcd9f5', fg:'#0b4f80'}, 'Waiting':{bg:'#fbe08a', fg:'#5c4a00'}, 'Done':{bg:'#bfe3c0', fg:'#1b5e20'}};
-const plDateCls = t => { if (t.done || !t.date) return 'plain'; const b = bizDaysTo(t.date); return b === null ? 'plain' : b <= 5 ? 'red' : b <= 14 ? 'yellow' : 'plain'; };   /* EP v2.41 */
+const plDateCls = t => { if (t.done || !t.due) return 'plain'; const b = bizDaysTo(t.due); return b === null ? 'plain' : b <= 5 ? 'red' : b <= 14 ? 'yellow' : 'plain'; };   /* EP v2.41 */
 const plStatus = t => t.done ? 'Done' : (PL_ST.includes(t.status) && t.status !== 'Done' ? t.status : 'Not started');
 const plStSel = t => { const s = plStatus(t), c = PL_ST_C[s]; return '<select class="pl-st" data-pl="status" data-id="' + esc(t.id) + '" style="background:' + c.bg + ';color:' + c.fg + ';border-color:' + c.bg + '">' + PL_ST.map(x => '<option' + (x === s ? ' selected' : '') + '>' + x + '</option>').join('') + '</select>'; };
 let plOpen = null, plSecPanel = false;
 const plSecOpts = cur => '<option value="">(No section)</option>' + plSecs().concat(cur && !plSecs().includes(cur) ? [cur] : []).map(s => '<option' + (cur === s ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '<option value="__new">+ New section&hellip;</option>';
 function plNewSecName(){ const v = (prompt('New section name:') || '').trim(); if (!v) return ''; if (!plSecs().includes(v)){ plSecs().push(v); touch(); } return v; }
+// EP v2.42: Planner task History (like the requests): Added, and every change after
+let plHistOpen = null;
+function plLog(t, what, by){ (DB.plHist = DB.plHist || []).push({ts:nowStamp(), id:t.id, task:t.text, what, by:by || 'Me'}); }
+const plHistOf = id => (DB.plHist || []).map((h, i) => [h, i]).filter(x => x[0].id === id).sort((a, b) => b[0].ts.localeCompare(a[0].ts) || b[1] - a[1]).map(x => x[0]);   // newest first
+function plHistFix(){ const H = DB.plHist = DB.plHist || [], has = new Set(H.filter(h => /^Added/.test(h.what)).map(h => h.id)); let ch = false;   // every task gets its Added line (older tasks: the day they were made)
+  PL().forEach(t => { if (!has.has(t.id)){ H.push({ts:t.created || nowStamp(), id:t.id, task:t.text, what:'Added', by:'Me'}); ch = true; } }); return ch; }
+const plShot = t => ({text:t.text, date:t.date || '', due:t.due || '', pri:t.pri || '', sec:t.sec || '', st:plStatus(t), subs:(t.subs || []).map(plSub).map(s => ({t:s.t, done:s.done}))});
+function plDiffLog(t, a){
+  if (!PL().includes(t)){ plLog(t, 'Removed'); return true; }
+  const b = plShot(t), L = [], dn = d => d ? dayShort(d) : '(none)';
+  if (a.text !== b.text) L.push('Task: "' + a.text + '" > "' + b.text + '"');
+  if (a.date !== b.date) L.push('Scheduled: ' + (a.date ? dayShort(a.date) : 'Backlog') + ' > ' + (b.date ? dayShort(b.date) : 'Backlog'));
+  if (a.due !== b.due) L.push('Due: ' + dn(a.due) + ' > ' + dn(b.due));
+  if (a.pri !== b.pri) L.push('Priority: ' + (a.pri || '(none)') + ' > ' + (b.pri || '(none)'));
+  if (a.sec !== b.sec) L.push('Section: ' + (a.sec || '(none)') + ' > ' + (b.sec || '(none)'));
+  if (a.st !== b.st) L.push('Status: ' + a.st + ' > ' + b.st);
+  const x = a.subs, y = b.subs;
+  if (y.length > x.length) y.slice(x.length).forEach(s => L.push('Sub-task added: ' + s.t));
+  else if (y.length < x.length){ const i = x.findIndex((s, j) => !y[j] || y[j].t !== s.t); L.push('Sub-task removed: ' + x[i < 0 ? x.length - 1 : i].t); }
+  else x.forEach((s, j) => { if (s.t !== y[j].t) L.push('Sub-task: "' + s.t + '" > "' + y[j].t + '"'); if (s.done !== y[j].done) L.push('Sub-task ' + (y[j].done ? 'done' : 'not done') + ': ' + y[j].t); });
+  L.forEach(w => plLog(t, w)); return L.length > 0; }
+function plWatch(t){ if (!t) return; const pre = plShot(t); queueMicrotask(() => { if (plDiffLog(t, pre)){ touch(); render(); } }); }
+document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.plh) plHistOpen = d.open ? d.dataset.plh : (plHistOpen === d.dataset.plh ? null : plHistOpen); }, true);
 function plTaskRow(t, today){
   const id = esc(t.id), subs = (t.subs || []).map(plSub), sd = subs.filter(s => s.done).length, open = plOpen === t.id;
   return '<tr class="pl-row' + (open ? ' open' : '') + (t.done ? ' done' : '') + '" data-id="' + id + '">' +
     '<td class="wrap"><span class="chev">' + (open ? '&#9662;' : '&#9656;') + '</span><label class="pl-chk"><input type="checkbox" data-pl="done" data-id="' + id + '"' + (t.done ? ' checked' : '') + ' title="Done"></label><span class="pl-tx">' + esc(t.text) + '</span>' +
       (subs.length ? ' <span class="pl-tag">' + sd + '/' + subs.length + ' sub-tasks</span>' : '') + (t.rolledFrom && !t.done ? ' <span class="pl-tag">rolled over from ' + esc(dayShort(t.rolledFrom)) + '</span>' : '') + '</td>' +
-    '<td>' + (t.date ? '<span class="dtp ' + plDateCls(t) + '">' + esc(dayShort(t.date)) + '</span>' + (t.date === today ? ' <span class="muted">(today)</span>' : '') : '<span class="muted">Backlog</span>') + '</td>' +
+    '<td>' + (t.date ? esc(dayShort(t.date)) + (t.date === today ? ' <span class="muted">(today)</span>' : '') : '<span class="muted">Backlog</span>') + '</td>' +
+    '<td>' + (t.due ? '<span class="dtp ' + plDateCls(t) + '">' + esc(dayShort(t.due)) + '</span>' : '<span class="muted">&mdash;</span>') + '</td>' +
     '<td>' + (t.pri ? '<span class="pl-pri pl-' + esc(t.pri.toLowerCase()) + '">' + esc(t.pri) + '</span>' : '<span class="muted">&mdash;</span>') + '</td>' +
     '<td class="wrap">' + (t.sec ? esc(t.sec) : '<span class="muted">&mdash;</span>') + '</td><td>' + plStSel(t) + '</td></tr>' + (open ? plBox(t) : '');
 }
 function plBox(t){
-  const id = esc(t.id), subs = (t.subs || []).map(plSub), sd = subs.filter(s => s.done).length;
+  const id = esc(t.id), subs = (t.subs || []).map(plSub), sd = subs.filter(s => s.done).length, hist = plHistOf(t.id);
   const fld = (lbl, html, full) => '<div class="emb-fld' + (full ? ' full' : '') + '"><label>' + lbl + '</label>' + html + '</div>';
-  const info = ['Added ' + (t.created ? dayShort(t.created.slice(0, 10)) : '')].concat(t.rolledFrom && !t.done ? ['rolled over from ' + dayShort(t.rolledFrom)] : [], t.done && t.doneAt ? ['done ' + dayShort(t.doneAt.slice(0, 10)) + ' ' + time12(t.doneAt)] : []).join(' &middot; ');
   const details = '<div class="emb-grid">' + fld('Task', '<input data-pl="text" data-id="' + id + '" value="' + esc(t.text) + '">', true) +
-    fld('To-do date (blank = backlog)', '<input type="date" data-pl="date" data-id="' + id + '" value="' + esc(t.date || '') + '">') +
+    fld('Scheduled (the day it shows; blank = backlog)', '<input type="date" data-pl="date" data-id="' + id + '" value="' + esc(t.date || '') + '">') +
+    fld('Due date', '<input type="date" data-pl="due" data-id="' + id + '" value="' + esc(t.due || '') + '">') +
     fld('Priority', '<select data-pl="pri" data-id="' + id + '"><option value="">(none)</option>' + PL_PRI.map(p => '<option' + (t.pri === p ? ' selected' : '') + '>' + p + '</option>').join('') + '</select>') +
     fld('Section', '<select data-pl="sec" data-id="' + id + '">' + plSecOpts(t.sec || '') + '</select>') +
-    fld('Status', plStSel(t)) +
-    '<div class="emb-fld full emb-dim">' + info + '</div></div>';
+    fld('Status', plStSel(t), true) + '</div>';
   const subH = subs.map((s, j) => '<div class="pl-subrow"><label class="pl-chk"><input type="checkbox" data-pl="subdone" data-id="' + id + '" data-j="' + j + '"' + (s.done ? ' checked' : '') + '></label><input class="emb-in' + (s.done ? ' pl-sdone' : '') + '" data-pl="subtext" data-id="' + id + '" data-j="' + j + '" value="' + esc(s.t) + '"><button class="emb-btn-del" data-pl="subrm" data-id="' + id + '" data-j="' + j + '">Remove</button></div>').join('') +
     '<div class="pl-subrow"><input id="plSubNew" class="emb-in" placeholder="Add a sub-task&hellip;"><button class="btn light small" data-pl="subadd2" data-id="' + id + '">Add</button></div>';
+  const histH = '<details class="emb-hist" data-plh="' + id + '"' + (plHistOpen === t.id ? ' open' : '') + '><summary>Show history (' + hist.length + ' entr' + (hist.length === 1 ? 'y' : 'ies') + ')</summary>' +
+    (hist.length ? hist.map(h => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmt(h.ts) + ' ' + time12(h.ts) + '</span><span>' + esc(h.what) + '</span><span class="emb-hist-by">' + esc(h.by || '') + '</span></div>').join('') : '<div class="emb-dim">No history yet.</div>') + '</details>';
   const foot = '<div class="emb-card-foot">' + (t.date ? '<button class="btn light small" data-pl="backlog" data-id="' + id + '">&rarr; Backlog</button>' : '<button class="btn light small" data-pl="today" data-id="' + id + '">&rarr; Today</button>') +
     '<button class="emb-btn-del" data-pl="rm" data-id="' + id + '">Remove</button></div>';
-  return '<tr class="card-row"><td class="card-cell" colspan="5"><div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + ebox(0, 'Task', '', details) + '</div><div class="emb-col">' +
-    ebox(0, 'Sub-tasks', subs.length ? sd + ' of ' + subs.length + ' done' : '', subH) + foot + '</div></div></div></td></tr>';
+  return '<tr class="card-row"><td class="card-cell" colspan="6"><div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + ebox(0, 'Task', '', details) + '</div><div class="emb-col">' +
+    ebox(0, 'Sub-tasks', subs.length ? sd + ' of ' + subs.length + ' done' : '', subH) + ebox(0, 'History', '', histH) + foot + '</div></div></div></td></tr>';
 }
 
 function td2Live(day){
@@ -2570,9 +2599,9 @@ function td2InSec(l, sec){ if (!l) return false; const s = l.status;
 function td2Lock(day){ const live = td2Live(day), secs = {}; TD2_SECS.forEach(s => { secs[s] = live[s].filter(x => !x.pl).map(x => ({id:x.l ? x.l.id : '', text:x.text})); });
   td2Notes(day).locked = {at:nowStamp(), secs}; }
 function td2Todo(day){ const n = td2Notes(day); if (!n.locked) return td2Live(day); const out = {};
-  TD2_SECS.forEach(s => { out[s] = (n.locked.secs[s] || []).map(x => { const l = x.id ? byId(x.id) : null; return {l, text:x.text, done:!!x.id && !td2InSec(l, s)}; }); });
+  TD2_SECS.forEach(s => { out[s] = (n.locked.secs[s] || []).map(x => { const l = x.id ? byId(x.id) : null; return {l, text:x.text, subs:x.subs || [], done:!!x.id && !td2InSec(l, x.chk || s)}; }); });   // EP v2.42: x.chk = the section a moved logo came from
   plFor(day).forEach(t => out['Other'].push({pl:t, text:t.text, subs:(t.subs || []).map(plSub).map(s => s.t)})); return out; }
-function td2Did(day){   // from that day's History (things I did, not System (auto) or Barrett) + planner tasks done that day
+function td2DidLive(day){   // from that day's History (things I did, not System (auto) or Barrett) + planner tasks done that day
   const out = {}; DID2_SECS.forEach(s => out[s] = []); const seen = new Set();
   const add = (sec, id, text) => { const k = sec + '|' + id; if (seen.has(k)) return; seen.add(k); const l = byId(id); out[sec].push({l, text}); };
   DB.history.filter(h => h.ts.slice(0, 10) === day && h.by !== AUTO && h.by !== 'Barrett').sort((a, b) => a.ts.localeCompare(b.ts)).forEach(h => {
@@ -2590,52 +2619,101 @@ function td2Did(day){   // from that day's History (things I did, not System (au
   return out;
 }
 function td2Text(secs, data){ return secs.map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text + (x.subs && x.subs.length ? '\n' + x.subs.map((sb, j) => '   ' + String.fromCharCode(97 + j) + '. ' + (typeof sb === 'string' ? sb : sb.t)).join('\n') : '')).join('\n') : '1. ')).join('\n\n'); }
+// EP v2.42: Edit list. Fix or move any line on the To do / What I did list. The day's list saves as an edited copy (To do: inside the locked copy; What I did: didEdit). Planner tasks in Other stay live.
+let td2Editing = false;
+function td2Snap(day, view, make){ const n = td2Notes(day);
+  if (view === 'did'){
+    if (!n.didEdit && make){ const live = td2DidLive(day), secs = {};
+      DID2_SECS.forEach(s => { secs[s] = live[s].filter(x => !x.pl).map(x => ({id:x.l ? x.l.id : '', text:x.text, subs:(x.subs || []).map(sb => typeof sb === 'string' ? sb : sb.t)})); });
+      n.didEdit = {at:nowStamp(), secs}; }
+    return n.didEdit ? n.didEdit.secs : null; }
+  if (!n.locked && make) td2Lock(day); if (n.locked && make) n.locked.edited = true;
+  return n.locked ? n.locked.secs : null; }
+function td2Did(day){ const n = td2Notes(day); if (!n.didEdit) return td2DidLive(day);
+  const out = {}; DID2_SECS.forEach(s => { out[s] = (n.didEdit.secs[s] || []).map(x => ({l:x.id ? byId(x.id) : null, text:x.text, subs:x.subs || []})); });
+  PL().filter(t => t.done && (t.doneAt || '').slice(0, 10) === day).sort((a, b) => a.doneAt.localeCompare(b.doneAt)).forEach(t => out['Other'].push({pl:t, text:t.text, subs:(t.subs || []).map(plSub).map(s => s.t)}));
+  return out; }
+function td2EditHtml(secs, snap, data){
+  return secs.map(s => { const arr = snap[s] = snap[s] || [];
+    return '<div class="t2-sec"><div class="t2-h">' + esc(s) + ':</div>' + arr.map((x, i) => '<div class="pl-subrow"><span class="muted" style="width:20px;text-align:right">' + (i + 1) + '.</span>' +
+      '<input class="emb-in" data-t2e="text" data-s="' + esc(s) + '" data-i="' + i + '" value="' + esc(x.text) + '">' +
+      '<button class="btn light small" data-t2e="up" data-s="' + esc(s) + '" data-i="' + i + '"' + (i ? '' : ' disabled') + ' title="Move up">&#9650;</button>' +
+      '<button class="btn light small" data-t2e="down" data-s="' + esc(s) + '" data-i="' + i + '"' + (i < arr.length - 1 ? '' : ' disabled') + ' title="Move down">&#9660;</button>' +
+      '<select class="pl-date" data-t2e="move" data-s="' + esc(s) + '" data-i="' + i + '" title="Move to another section"><option value="">Move to&hellip;</option>' + secs.filter(o => o !== s).map(o => '<option>' + esc(o) + '</option>').join('') + '</select>' +
+      '<button class="emb-btn-del" data-t2e="rm" data-s="' + esc(s) + '" data-i="' + i + '">Remove</button></div>').join('') +
+      (s === 'Other' ? data['Other'].filter(x => x.pl).map(x => '<div class="pl-subrow" style="padding-left:26px"><span>' + esc(x.text) + '</span> <span class="pl-tag">Planner task: change it in the Planner</span></div>').join('') : '') +
+      '<div class="pl-subrow"><span style="width:20px"></span><input class="emb-in" data-t2e="new" data-s="' + esc(s) + '" placeholder="Add a line&hellip;"><button class="btn light small" data-t2e="add" data-s="' + esc(s) + '">Add</button></div></div>'; }).join(''); }
 function renderToday2(tab){
-  const day = td2Day || todayIso(), isToday = day === todayIso(), view = td2View, secs = view === 'did' ? DID2_SECS : TD2_SECS, data = view === 'did' ? td2Did(day) : td2Todo(day);
+  const day = td2Day || todayIso(), isToday = day === todayIso(), view = td2View, secs = view === 'did' ? DID2_SECS : TD2_SECS, data = view === 'did' ? td2Did(day) : td2Todo(day), n = td2Notes(day);
   const nice = parseIso(day).toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'});
-  let h = '<h1>To Do</h1>' + td2Tabs() + '<div class="sub">' + (view === 'did' ? 'What you did, pulled from History, plus planner tasks you marked done.' : 'Built from the portal: each logo shows under its next step, sorted by In Hand Date, then submitted. Other also shows that day&rsquo;s Planner tasks (click one to open it in the Planner).') + ' Click a logo to open it. <b>Copy list</b> copies it as text to paste anywhere.</div>' +
+  const edited = view === 'did' ? !!n.didEdit : !!(n.locked && n.locked.edited), snap = td2Editing ? td2Snap(day, view, true) : null;
+  let h = '<h1>To Do</h1>' + td2Tabs() + '<div class="sub">' + (view === 'did' ? 'What you did, pulled from History, plus planner tasks you marked done.' : 'Built from the portal: each logo shows under its next step, sorted by In Hand Date, then submitted. Other also shows that day&rsquo;s Planner tasks (click one to open it in the Planner).') + ' Click a logo to open it. <b>Copy list</b> copies it as text to paste anywhere. Something not right? <b>Edit list</b> lets you fix or move any line.</div>' +
     '<div class="bar">' +
     '<input type="date" id="t2Day" value="' + day + '" style="flex:none;min-width:0"><span class="muted" style="font-size:12px">' + esc(nice) + (isToday ? ' (today)' : '') + '</span>' +
-    (view === 'todo' ? (td2Notes(day).locked ? '<span class="muted" style="font-size:12px;margin-left:8px">&#128274; Locked at ' + time12(td2Notes(day).locked.at) + '</span><button class="btn light" data-t2="unlock">Unlock</button>'
-       : '<button class="btn light" data-t2="lock" title="Save the list as it is now, so it doesn&rsquo;t change as you move logos">&#128274; Lock list</button>') : '') +
+    (td2Editing ? '<button class="btn" data-t2="editdone">Done editing</button>' :
+      (view === 'todo' ? (n.locked ? '<span class="muted" style="font-size:12px;margin-left:8px">&#128274; Locked at ' + time12(n.locked.at) + (edited ? ' (edited)' : '') + '</span><button class="btn light" data-t2="unlock">Unlock</button>'
+         : '<button class="btn light" data-t2="lock" title="Save the list as it is now, so it doesn&rsquo;t change as you move logos">&#128274; Lock list</button>') : '') +
+      '<button class="btn light" data-t2="edit" title="Fix or move any line on this list">&#9998; Edit list</button>' +
+      (view === 'did' && edited ? '<button class="btn light" data-t2="reset">Reset to live list</button>' : '')) +
     '<button class="btn" data-t2="copy" style="margin-left:auto">&#128203; Copy list</button></div>' +
-    (view === 'todo' && td2Notes(day).locked ? '<div class="note" style="margin-bottom:8px">This is the list as it was when you locked it. Logos that have moved on since are crossed off. Your Planner tasks in Other stay live. Unlock to see the live list again.</div>' : '') +
-    (view === 'todo' && !isToday && !td2Notes(day).locked ? '<div class="note" style="margin-bottom:8px">The list shows where logos are right now (this day wasn&rsquo;t locked).</div>' : '') +
-    '<div class="lcard">' + secs.map(s => '<div class="t2-sec"><div class="t2-h">' + esc(s) + ':</div><ol class="t2-ol">' +
+    (td2Editing ? '<div class="note" style="margin-bottom:8px">Editing. Type over a line to fix it, use the arrows to move it up or down, or Move to&hellip; another section. Changes save as you go. Click Done editing when you&rsquo;re finished.</div>' : '') +
+    (!td2Editing && view === 'todo' && n.locked ? '<div class="note" style="margin-bottom:8px">This is the list as it was when you locked it' + (edited ? ', with your edits' : '') + '. Logos that have moved on since are crossed off. Your Planner tasks in Other stay live. Unlock to see the live list again.</div>' : '') +
+    (!td2Editing && view === 'did' && edited ? '<div class="note" style="margin-bottom:8px">You edited this list, so it doesn&rsquo;t update on its own anymore. Planner tasks you finish still show in Other. Reset to live list to undo your edits.</div>' : '') +
+    (!td2Editing && view === 'todo' && !isToday && !n.locked ? '<div class="note" style="margin-bottom:8px">The list shows where logos are right now (this day wasn&rsquo;t locked).</div>' : '') +
+    '<div class="lcard">' + (td2Editing ? td2EditHtml(secs, snap, data) : secs.map(s => '<div class="t2-sec"><div class="t2-h">' + esc(s) + ':</div><ol class="t2-ol">' +
       (data[s].length ? data[s].map(x => '<li' + (x.done || (view === 'todo' && x.pl && x.pl.done) ? ' class="t2-done"' : '') + '>' + (x.l ? '<a href="#" data-t2="open" data-id="' + esc(x.l.id) + '">' + esc(x.text) + '</a>' : x.pl ? '<a href="#" data-t2="plopen" data-id="' + esc(x.pl.id) + '" title="Open it in the Planner">' + esc(x.text) + '</a>' : esc(x.text)) + (x.done || (view === 'todo' && x.pl && x.pl.done) ? ' <span class="t2-check">&#10003;</span>' : '') +
-        (x.subs && x.subs.length && !x.mine ? '<ol type="a" class="t2-sub">' + x.subs.map(sb => '<li>' + esc(sb) + '</li>').join('') + '</ol>' : '') +
+        (x.subs && x.subs.length && !x.mine ? '<ol type="a" class="t2-sub">' + x.subs.map(sb => '<li>' + esc(typeof sb === 'string' ? sb : sb.t) + '</li>').join('') + '</ol>' : '') +
         (x.mine ? ' <button class="emb-btn-del" style="padding:0 6px;font-size:11px" data-t2="rm" data-i="' + x.idx + '">Remove</button>' : '') + '</li>').join('') : '<li class="muted">&nbsp;</li>') + '</ol>' +
-      (s === 'Other' ? '<div class="snz"><input id="t2Add" class="emb-in" placeholder="' + (view === 'did' ? 'Add something you did&hellip;' : 'Add a task for this day (it goes in your Planner)&hellip;') + '" style="flex:1"><button class="btn light small" data-t2="add">Add</button></div>' : '') + '</div>').join('') + '</div>';
+      (s === 'Other' ? '<div class="snz"><input id="t2Add" class="emb-in" placeholder="' + (view === 'did' ? 'Add something you did&hellip;' : 'Add a task for this day (it goes in your Planner)&hellip;') + '" style="flex:1"><button class="btn light small" data-t2="add">Add</button></div>' : '') + '</div>').join('')) + '</div>';
   document.getElementById('page').innerHTML = h;
-  const di = document.getElementById('t2Day'); di.onchange = () => { td2Day = di.value || todayIso(); render(); };
+  const di = document.getElementById('t2Day'); di.onchange = () => { td2Day = di.value || todayIso(); td2Editing = false; render(); };
   plKeys();
   const ai = document.getElementById('t2Add'); if (ai) ai.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-t2="add"]').click(); } };
 }
+document.addEventListener('click', e => { const b = e.target.closest('[data-t2e]'); if (!b || state.tab !== 'today' || ['INPUT', 'SELECT'].includes(b.tagName)) return; e.preventDefault();
+  const day = td2Day || todayIso(), snap = td2Snap(day, td2View, true), s = b.dataset.s, arr = snap[s] = snap[s] || [], i = +b.dataset.i, k = b.dataset.t2e;
+  if (k === 'add'){ const inp = [...document.querySelectorAll('[data-t2e="new"]')].find(x => x.dataset.s === s), v = inp ? inp.value.trim() : ''; if (!v) return;
+    arr.push({id:'', text:v}); touch(); render(); const n2 = [...document.querySelectorAll('[data-t2e="new"]')].find(x => x.dataset.s === s); if (n2) n2.focus(); return; }
+  if (k === 'up' && i > 0) [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
+  else if (k === 'down' && i < arr.length - 1) [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]];
+  else if (k === 'rm') arr.splice(i, 1);
+  else return;
+  touch(); render(); });
+document.addEventListener('change', e => { const b = e.target; if (!b.dataset || !b.dataset.t2e || state.tab !== 'today') return;
+  const day = td2Day || todayIso(), snap = td2Snap(day, td2View, true), s = b.dataset.s, arr = snap[s] = snap[s] || [], i = +b.dataset.i, x = arr[i];
+  if (b.dataset.t2e === 'text'){ const v = b.value.trim(); if (x && v){ x.text = v; touch(); } else if (x) b.value = x.text; return; }
+  if (b.dataset.t2e === 'move' && b.value && x){ arr.splice(i, 1); if (x.id && !x.chk) x.chk = s; (snap[b.value] = snap[b.value] || []).push(x); touch(); render(); } });
+document.addEventListener('keydown', e => { const b = e.target; if (!b.dataset || b.dataset.t2e !== 'new' || e.key !== 'Enter') return; e.preventDefault();
+  const btn = [...document.querySelectorAll('[data-t2e="add"]')].find(x => x.dataset.s === b.dataset.s); if (btn) btn.click(); });
 function plKeys(){ const sn = document.getElementById('plSubNew'); if (sn) sn.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-pl="subadd2"]').click(); } };   // EP v2.39
   const sc = document.getElementById('plSecNew'); if (sc) sc.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-pls="add"]').click(); } };
   const ei = document.getElementById('plEditIn'); if (ei){ ei.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-pl="editsave"]').click(); } if (e.key === 'Escape'){ plEditOpen = null; render(); } }; }
   const si = document.getElementById('plSubIn'); if (si){ si.focus(); si.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-pl="subadd"]').click(); } if (e.key === 'Escape'){ plSubOpen = null; render(); } }; } }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-t2]'); if (!b || state.tab !== 'today') return; e.preventDefault(); const k = b.dataset.t2, day = td2Day || todayIso();
-  if (k === 'view'){ td2View = b.dataset.v; render(); return; }
+  if (k === 'view'){ td2View = b.dataset.v; td2Editing = false; render(); return; }
+  if (k === 'edit'){ td2Snap(day, td2View, true); td2Editing = true; touch(); render(); return; }   // EP v2.42
+  if (k === 'editdone'){ td2Editing = false; render(); toast('&#10003; Saved. Copy list copies your edited list.'); return; }
+  if (k === 'reset'){ if (!confirm('Reset to the live list? Your edits to this day\'s What I did list are cleared.')) return; delete td2Notes(day).didEdit; touch(); render(); return; }
   if (k === 'lock'){ td2Lock(day); touch(); render(); toast('&#128274; List locked. It stays as it is while you work.'); return; }   // EP v2.33
-  if (k === 'unlock'){ if (!confirm('Unlock the list? It goes back to the live list (the locked copy is cleared).')) return; delete td2Notes(day).locked; touch(); render(); return; }
+  if (k === 'unlock'){ if (!confirm('Unlock the list? It goes back to the live list (the locked copy' + (td2Notes(day).locked && td2Notes(day).locked.edited ? ' and your edits are' : ' is') + ' cleared).')) return; delete td2Notes(day).locked; touch(); render(); return; }
   if (k === 'open'){ const l = byId(b.dataset.id); if (l) openLogo(l); return; }
   if (k === 'plopen'){ const t = plGet(b.dataset.id); if (!t) return; td2View = 'planner'; plOpen = t.id; plV.q = ''; plV.pri = ''; if (!plList().includes(t)) plV.show = 'all';   // EP v2.39
     delete state.collapsed['planner|' + plV.group + '|' + plGroupOf(t)]; render(); const r = document.querySelector('.pl-row[data-id="' + t.id + '"]'); if (r) r.scrollIntoView({block:'center'}); return; }
   if (k === 'add'){ const ai = document.getElementById('t2Add'), v = ai ? ai.value.trim() : ''; if (!v) return;
-    if (td2View === 'did') td2Notes(day).did.push(v); else PL().push({id:plId(), text:v, subs:[], date:day, done:false, doneAt:'', created:nowStamp()});
+    if (td2View === 'did'){ td2Notes(day).did.push(v); const nd = td2Notes(day).didEdit; if (nd) (nd.secs['Other'] = nd.secs['Other'] || []).push({id:'', text:v}); }
+    else { const nt = {id:plId(), text:v, subs:[], date:day, done:false, doneAt:'', created:nowStamp()}; PL().push(nt); plLog(nt, 'Added (from the To Do list)'); }
     touch(); render(); const n = document.getElementById('t2Add'); if (n) n.focus(); return; }
   if (k === 'rm'){ const arr = td2Notes(day).did, i = +b.dataset.i; if (i >= 0) arr.splice(i, 1); touch(); render(); return; }
   if (k === 'copy'){ const txt = td2View === 'did' ? td2Text(DID2_SECS, td2Did(day)) : td2Text(TD2_SECS, td2Todo(day));
     try { await navigator.clipboard.writeText(txt); toast('&#10003; Copied. Paste it anywhere.'); } catch(err){ toast('Couldn&rsquo;t copy. Try again.'); } return; }
 });
 // Planner task actions (same buttons on the To Do tab and the Planner tab)
-document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (!b || ['INPUT', 'SELECT', 'TEXTAREA'].includes(b.tagName)) return; e.preventDefault(); const k = b.dataset.pl, t = plGet(b.dataset.id);
+document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (!b || ['INPUT', 'SELECT', 'TEXTAREA'].includes(b.tagName)) return; e.preventDefault(); const k = b.dataset.pl, t = plGet(b.dataset.id); plWatch(t);
   if (k === 'subx'){ plSubOpen = null; render(); return; }
   if (k === 'editx'){ plEditOpen = null; render(); return; }
   if (k === 'nav'){ const d = parseIso(plV.day || todayIso()); d.setDate(d.getDate() + (+b.dataset.v)); plV.day = isoOf(d); plV.show = 'day'; render(); return; }
   if (k === 'add' || k === 'addBacklog'){ const ti = document.getElementById('plNew'), di = document.getElementById('plNewDate'), v = ti ? ti.value.trim() : ''; if (!v) return;
-    const pi = document.getElementById('plNewPri'), si = document.getElementById('plNewSec'); PL().push({id:plId(), text:v, subs:[], date:k === 'addBacklog' ? '' : (di && di.value) || todayIso(), done:false, doneAt:'', created:nowStamp(), pri:pi ? pi.value : '', sec:si && si.value !== '__new' ? si.value : ''}); touch(); render(); const n = document.getElementById('plNew'); if (n) n.focus(); return; }
+    const pi = document.getElementById('plNewPri'), si = document.getElementById('plNewSec'), ui = document.getElementById('plNewDue'); const nt = {id:plId(), text:v, subs:[], date:k === 'addBacklog' ? '' : (di && di.value) || todayIso(), due:ui ? ui.value : '', done:false, doneAt:'', created:nowStamp(), pri:pi ? pi.value : '', sec:si && si.value !== '__new' ? si.value : ''}; PL().push(nt); plLog(nt, 'Added'); touch(); render(); const n = document.getElementById('plNew'); if (n) n.focus(); return; }
   if (k === 'showdone'){ plShowDone = !plShowDone; render(); return; }
   if (!t) return;
   if (k === 'subopen'){ plSubOpen = t.id; render(); return; }
@@ -2649,7 +2727,8 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'
   if (k === 'subedit'){ t.subs = (t.subs || []).map(plSub); const s = t.subs[+b.dataset.j]; if (!s) return; const v = prompt('Edit the sub-task:', s.t); if (v && v.trim()){ s.t = v.trim(); touch(); render(); } return; }
   if (k === 'rm'){ if (!confirm('Remove "' + t.text + '"?')) return; DB.planner = PL().filter(x => x !== t); touch(); render(); return; }
 });
-document.addEventListener('change', e => { const b = e.target.closest && e.target.closest('[data-pl]'); if (!b) return; const t = plGet(b.dataset.id); if (!t) return;
+document.addEventListener('change', e => { const b = e.target.closest && e.target.closest('[data-pl]'); if (!b) return; const t = plGet(b.dataset.id); if (!t) return; plWatch(t);
+  if (b.dataset.pl === 'due'){ t.due = b.value || ''; touch(); render(); return; }   // EP v2.42
   if (b.dataset.pl === 'status'){ const v = b.value, was = t.done; t.status = v; t.done = v === 'Done'; t.doneAt = t.done ? (was ? t.doneAt : nowStamp()) : ''; touch(); render(); if (t.done && !was) toast('&#10003; Done. It&rsquo;s in today&rsquo;s What I did.'); return; }   // EP v2.40
   if (b.dataset.pl === 'done'){ t.done = b.checked; t.doneAt = b.checked ? nowStamp() : ''; t.status = b.checked ? 'Done' : (t.status === 'Done' ? 'Not started' : t.status); touch(); render(); if (b.checked) toast('&#10003; Done. It&rsquo;s in today&rsquo;s What I did.'); return; }
   if (b.dataset.pl === 'subdone'){ t.subs = (t.subs || []).map(plSub); const s = t.subs[+b.dataset.j]; if (s){ s.done = b.checked; touch(); render(); } return; }
@@ -2660,11 +2739,11 @@ document.addEventListener('change', e => { const b = e.target.closest && e.targe
   if (b.dataset.pl === 'date'){ t.date = b.value || ''; if (t.date && t.date >= todayIso()) delete t.rolledFrom; touch(); render(); return; }
 });
 let plV = {show:'upcoming', day:'', q:'', pri:'', sort:'pri', group:'section', lastSec:''};
-const PL_SHOW = [['upcoming', 'Today + upcoming'], ['today', 'Today'], ['week', 'This week (through Sunday)'], ['soon', 'Due soon (5 business days or less)'], ['two', 'Next 2 weeks (14 business days)'], ['day', 'One day (past or future)'], ['backlog', 'Backlog'], ['done', 'Done'], ['all', 'Everything']];   // EP v2.41: Today, This week, Due soon, Next 2 weeks
-const PL_SORT = [['pri', 'Priority'], ['date', 'Date'], ['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A to Z']];
-const PL_GROUP = [['section', 'Section'], ['status', 'Status'], ['date', 'Date'], ['priority', 'Priority'], ['none', 'No grouping']];
+const PL_SHOW = [['upcoming', 'Today + upcoming'], ['today', 'Today'], ['week', 'This week (through Sunday)'], ['soon', 'Due soon (due in 5 business days or less)'], ['two', 'Due in the next 2 weeks (14 business days)'], ['day', 'One day (past or future)'], ['backlog', 'Backlog'], ['done', 'Done'], ['all', 'Everything']];   // EP v2.41: Today, This week, Due soon, Next 2 weeks
+const PL_SORT = [['pri', 'Priority'], ['due', 'Due date'], ['date', 'Scheduled date'], ['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A to Z']];
+const PL_GROUP = [['section', 'Section'], ['status', 'Status'], ['date', 'Scheduled date'], ['due', 'Due date'], ['priority', 'Priority'], ['none', 'No grouping']];
 function plSorted(list){ const s = plV.sort;
-  return list.slice().sort(s === 'date' ? (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || plOrder(a, b) : s === 'new' ? (a, b) => (b.created || '').localeCompare(a.created || '')
+  return list.slice().sort(s === 'due' ? (a, b) => (a.due || '9999').localeCompare(b.due || '9999') || plOrder(a, b) : s === 'date' ? (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || plOrder(a, b) : s === 'new' ? (a, b) => (b.created || '').localeCompare(a.created || '')
     : s === 'old' ? (a, b) => (a.created || '').localeCompare(b.created || '') : s === 'az' ? (a, b) => a.text.localeCompare(b.text) : plOrder); }
 function plMatch(t){ const q = plV.q.toLowerCase();
   return (!plV.pri || (plV.pri === 'none' ? !t.pri : t.pri === plV.pri)) && (!q || (t.text + ' ' + (t.sec || '') + ' ' + (t.subs || []).map(s => plSub(s).t).join(' ')).toLowerCase().includes(q)); }
@@ -2673,22 +2752,24 @@ function plList(){ const today = todayIso(), all = PL().filter(plMatch), s = plV
   if (s === 'day'){ const d = plV.day || today; return all.filter(t => t.date === d || (t.done && (t.doneAt || '').slice(0, 10) === d) || t.rolledFrom === d); }
   if (s === 'today') return all.filter(t => t.date === today);
   if (s === 'week'){ const d = parseIso(today); d.setDate(d.getDate() + (7 - d.getDay()) % 7); const end = isoOf(d); return all.filter(t => t.date && t.date >= today && t.date <= end); }
-  if (s === 'soon' || s === 'two'){ const max = s === 'soon' ? 5 : 14; return all.filter(t => !t.done && t.date && bizDaysTo(t.date) <= max); }
+  if (s === 'soon' || s === 'two'){ const max = s === 'soon' ? 5 : 14; return all.filter(t => !t.done && t.due && bizDaysTo(t.due) <= max); }   // EP v2.42: by Due date
   if (s === 'backlog') return all.filter(t => !t.done && !t.date);
   if (s === 'done') return all.filter(t => t.done);
   return all; }
+const plDueName = d => d ? 'Due ' + dayShort(d) : 'No due date';
 const plDateName = d => !d ? 'Backlog' : d === todayIso() ? 'Today · ' + dayShort(d) : dayShort(d);
-function plGroupOf(t){ const g = plV.group; return g === 'status' ? plStatus(t) : g === 'section' ? (t.sec || '(No section)') : g === 'priority' ? (t.pri || 'No priority') : g === 'date' ? plDateName(t.date) : null; }
+function plGroupOf(t){ const g = plV.group; return g === 'status' ? plStatus(t) : g === 'section' ? (t.sec || '(No section)') : g === 'priority' ? (t.pri || 'No priority') : g === 'date' ? plDateName(t.date) : g === 'due' ? plDueName(t.due) : null; }
 function plGroups(list){ const g = plV.group;
   if (g === 'none') return [[null, list]];
   if (g === 'section'){ const names = plSecs().slice(); list.forEach(t => { if (t.sec && !names.includes(t.sec)) names.push(t.sec); });
     const out = names.map(n => [n, list.filter(t => t.sec === n)]), ns = list.filter(t => !t.sec); if (ns.length || !names.length) out.push(['(No section)', ns]); return out; }
+  if (g === 'due') return [...new Set(list.map(t => t.due || ''))].sort((a, b) => (a || '9999').localeCompare(b || '9999')).map(d => [plDueName(d), list.filter(t => (t.due || '') === d)]);
   if (g === 'status') return PL_ST.map(s => [s, list.filter(t => plStatus(t) === s)]);
   if (g === 'priority') return PL_PRI.concat(['No priority']).map(p => [p, list.filter(t => (t.pri || 'No priority') === p)]).filter(x => x[1].length);
   return [...new Set(list.map(t => t.date || ''))].sort((a, b) => (a || '9999').localeCompare(b || '9999')).map(d => [plDateName(d), list.filter(t => (t.date || '') === d)]); }
 function plTable(items){ const today = todayIso();
-  return '<div class="tblwrap"><table class="tbl pl-tbl"><colgroup><col style="width:44%"><col style="width:14%"><col style="width:10%"><col style="width:15%"><col style="width:17%"></colgroup><thead><tr><th>Task</th><th>To-do date</th><th>Priority</th><th>Section</th><th>Status</th></tr></thead><tbody>' +
-    (items.length ? plSorted(items).map(t => plTaskRow(t, today)).join('') : '<tr><td colspan="5" class="muted" style="padding:12px">Nothing here.</td></tr>') + '</tbody></table></div>'; }
+  return '<div class="tblwrap"><table class="tbl pl-tbl"><colgroup><col style="width:34%"><col style="width:13%"><col style="width:12%"><col style="width:9%"><col style="width:14%"><col style="width:18%"></colgroup><thead><tr><th>Task</th><th>Scheduled</th><th>Due</th><th>Priority</th><th>Section</th><th>Status</th></tr></thead><tbody>' +
+    (items.length ? plSorted(items).map(t => plTaskRow(t, today)).join('') : '<tr><td colspan="6" class="muted" style="padding:12px">Nothing here.</td></tr>') + '</tbody></table></div>'; }
 function renderPlanner(tab){
   const today = todayIso(), list = plList(), groups = plGroups(list);
   let body = plV.show === 'day' ? '<div class="bar" style="margin-bottom:10px"><button class="btn light small" data-pl="nav" data-v="-1">&#9664; Previous day</button><input type="date" id="plDay" value="' + (plV.day || today) + '" style="flex:none;min-width:0"><button class="btn light small" data-pl="nav" data-v="1">Next day &#9654;</button>' +
@@ -2701,8 +2782,8 @@ function renderPlanner(tab){
   const secPanel = plSecPanel ? '<div class="lcard pl-secs"><div class="t2-h">Sections</div><div class="note" style="margin:0 0 8px">Type over a name to rename it. Use the arrows to change the order. Removing a section keeps its tasks (they move to No section).</div>' +
     S.map((s, i) => '<div class="pl-subrow"><input class="emb-in" data-pls="ren" data-i="' + i + '" value="' + esc(s) + '"><button class="btn light small" data-pls="up" data-i="' + i + '"' + (i ? '' : ' disabled') + ' title="Move up">&#9650;</button><button class="btn light small" data-pls="down" data-i="' + i + '"' + (i < S.length - 1 ? '' : ' disabled') + ' title="Move down">&#9660;</button><button class="emb-btn-del" data-pls="rm" data-i="' + i + '">Remove</button></div>').join('') +
     '<div class="pl-subrow"><input id="plSecNew" class="emb-in" placeholder="New section name&hellip;"><button class="btn light small" data-pls="add">Add section</button><button class="btn light small" data-pls="close">Done</button></div></div>' : '';
-  document.getElementById('page').innerHTML = '<h1>To Do</h1>' + td2Tabs() + '<div class="sub">Your own tasks, grouped like the other tabs. Click a task to open it and edit it. Tick it when it&rsquo;s done and it goes in What I did. Each day&rsquo;s tasks show in that day&rsquo;s To do list under Other. Anything not done rolls over to the next day. Tasks with no date are your backlog.</div>' +
-    '<div class="bar"><input id="plNew" placeholder="New task&hellip;" style="flex:1"><input type="date" id="plNewDate" value="' + today + '" style="flex:none;min-width:0" title="To-do date"><select id="plNewPri" title="Priority"><option value="">Priority</option>' + PL_PRI.map(p => '<option>' + p + '</option>').join('') + '</select>' +
+  document.getElementById('page').innerHTML = '<h1>To Do</h1>' + td2Tabs() + '<div class="sub">Your own tasks, grouped like the other tabs. Click a task to open it and edit it (its History is in there too). <b>Scheduled</b> is the day it shows on your To do list (under Other); anything not done rolls over to the next day, and no scheduled date = backlog. <b>Due</b> turns red at 5 business days or less and yellow at 6&ndash;14. Tick a task when it&rsquo;s done and it goes in What I did.</div>' +
+    '<div class="bar"><input id="plNew" placeholder="New task&hellip;" style="flex:1"><label class="muted" style="font-size:12px">Scheduled <input type="date" id="plNewDate" value="' + today + '" style="flex:none;min-width:0" title="The day it shows on your To do list"></label><label class="muted" style="font-size:12px">Due <input type="date" id="plNewDue" value="" style="flex:none;min-width:0" title="Due date (turns red/yellow as it gets close)"></label><select id="plNewPri" title="Priority"><option value="">Priority</option>' + PL_PRI.map(p => '<option>' + p + '</option>').join('') + '</select>' +
       '<select id="plNewSec" title="Section">' + plSecOpts(plV.lastSec || '') + '</select><button class="btn" data-pl="add">Add</button><button class="btn light" data-pl="addBacklog">Add to backlog</button></div>' +
     '<div class="bar"><select id="plShow">' + PL_SHOW.map(([v, l]) => '<option value="' + v + '"' + (plV.show === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
       '<input type="date" id="plPick" value="' + (plV.show === 'day' ? (plV.day || today) : '') + '" style="flex:none;min-width:0" title="Pick a day to see its tasks">' +
@@ -2717,8 +2798,8 @@ function renderPlanner(tab){
   const on = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); render(); }; };
   on('plShow', v => { plV.show = v; if (v === 'day' && !plV.day) plV.day = today; }); on('plPri', v => { plV.pri = v; }); on('plSort', v => { plV.sort = v; }); on('plDay', v => { plV.day = v || today; }); on('plPick', v => { plV.day = v || today; plV.show = v ? 'day' : 'upcoming'; }); on('plGroup', v => { plV.group = v; });
   const ns = document.getElementById('plNewSec'); if (ns) ns.onchange = () => { if (ns.value !== '__new'){ plV.lastSec = ns.value; return; }
-    const keep = ['plNew', 'plNewDate', 'plNewPri'].map(id => document.getElementById(id).value); plV.lastSec = plNewSecName() || plV.lastSec; render();
-    ['plNew', 'plNewDate', 'plNewPri'].forEach((id, i) => { document.getElementById(id).value = keep[i]; }); document.getElementById('plNew').focus(); };
+    const keep = ['plNew', 'plNewDate', 'plNewDue', 'plNewPri'].map(id => document.getElementById(id).value); plV.lastSec = plNewSecName() || plV.lastSec; render();
+    ['plNew', 'plNewDate', 'plNewDue', 'plNewPri'].forEach((id, i) => { document.getElementById(id).value = keep[i]; }); document.getElementById('plNew').focus(); };
   const qi = document.getElementById('plQ'); if (qi) qi.oninput = () => { plV.q = qi.value; const pos = qi.selectionStart; render(); const n = document.getElementById('plQ'); n.focus(); n.setSelectionRange(pos, pos); };
   const rs = document.getElementById('plReset'); if (rs) rs.onclick = () => { plV = {show:'upcoming', day:'', q:'', pri:'', sort:'pri', group:'section', lastSec:plV.lastSec}; render(); };
 }
@@ -2733,15 +2814,15 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-pls]
   if (k === 'down' && i < S.length - 1){ [S[i + 1], S[i]] = [S[i], S[i + 1]]; touch(); render(); return; }
   if (k === 'rm'){ const name = S[i], n = PL().filter(t => t.sec === name).length;
     if (!confirm('Remove the section "' + name + '"?' + (n ? '\n\nIts ' + n + ' task' + (n === 1 ? '' : 's') + ' will move to No section.' : ''))) return;
-    S.splice(i, 1); PL().forEach(t => { if (t.sec === name) t.sec = ''; }); touch(); render(); return; }
+    S.splice(i, 1); PL().forEach(t => { if (t.sec === name){ t.sec = ''; plLog(t, 'Section: ' + name + ' > (none) (section removed)'); } }); touch(); render(); return; }
 });
 document.addEventListener('change', e => { const b = e.target; if (!b.dataset || b.dataset.pls !== 'ren') return; const S = plSecs(), i = +b.dataset.i, old = S[i], v = b.value.trim();
   if (!v || v === old){ b.value = old; return; } if (S.includes(v)){ toast('There&rsquo;s already a section called that.'); b.value = old; return; }
-  S[i] = v; PL().forEach(t => { if (t.sec === old) t.sec = v; }); touch(); render(); });
+  S[i] = v; PL().forEach(t => { if (t.sec === old){ t.sec = v; plLog(t, 'Section renamed: ' + old + ' > ' + v); } }); touch(); render(); });
 
 function render(){ renderMain(); bulkBar(); }   // EP v2.24
 function renderMain(){
-  refreshToday(); { const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2) touch(); } if (tdReady() && (plMigrate() | plRollover())) touch(); renderNotifs();   // EP v2.36: planner   // EP v2.14 / v2.15
+  refreshToday(); { const n1 = barAutoFollow(), n2 = apprAutoRemind(); if (n1 || n2) touch(); } if (tdReady() && (plMigrate() | plRollover() | plHistFix())) touch(); renderNotifs();   // EP v2.36: planner   // EP v2.14 / v2.15
   if (!TODO_OFF && tdApprovalCheck()) touch();
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (t.key === state.tab && !msearch.trim() ? ' on' : '') + (t.right ? ' tab-right' : '') + '" data-tab="' + t.key + '">' + (t.label || t.title) + '</button>').join('');
   let dl = document.getElementById('acctList'); if (!dl){ dl = document.createElement('datalist'); dl.id = 'acctList'; document.body.appendChild(dl); }
