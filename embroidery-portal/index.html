@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.49</span>
+    <span class="vbadge">EP v2.50</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.49';
+const VERSION = 'EP v2.50';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2782,7 +2782,10 @@ function plSorted(list){ const s = plV.sort;
     : s === 'old' ? (a, b) => (a.created || '').localeCompare(b.created || '') : s === 'az' ? (a, b) => a.text.localeCompare(b.text) : plOrder); }
 function plMatch(t){ const q = plV.q.toLowerCase();
   return (!plV.pri || (plV.pri === 'none' ? !t.pri : t.pri === plV.pri)) && (!q || (t.text + ' ' + (t.sec || '') + ' ' + (t.subs || []).map(s => plSub(s).t).join(' ')).toLowerCase().includes(q)); }
-function plList(){ const today = todayIso(), all = PL().filter(plMatch), s = plV.show;
+const plDoneName = () => plV.show === 'all' ? 'Completed' : plV.show === 'day' && (plV.day || todayIso()) !== todayIso() ? 'Completed ' + dayShort(plV.day) : 'Completed today';   // EP v2.50
+function plList(){ const s = plV.show, base = plListBase(); if (s === 'done' || s === 'all' || s === 'day') return base;   // EP v2.50: keep tasks finished today
+  const today = todayIso(); return base.filter(t => !t.done).concat(PL().filter(t => plMatch(t) && t.done && (t.doneAt || '').slice(0, 10) === today)); }
+function plListBase(){ const today = todayIso(), all = PL().filter(plMatch), s = plV.show;
   if (s === 'upcoming') return all.filter(t => t.date === today || (!t.done && (!t.date || t.date > today)));
   if (s === 'day'){ const d = plV.day || today; return all.filter(t => t.date === d || (t.done && (t.doneAt || '').slice(0, 10) === d) || t.rolledFrom === d); }
   if (s === 'today') return all.filter(t => t.date === today);
@@ -2794,7 +2797,10 @@ function plList(){ const today = todayIso(), all = PL().filter(plMatch), s = plV
 const plDueName = d => d ? 'Due ' + dayShort(d) : 'No due date';
 const plDateName = d => !d ? 'Backlog' : d === todayIso() ? 'Today · ' + dayShort(d) : dayShort(d);
 function plGroupOf(t){ const g = plV.group; return g === 'status' ? plStatus(t) : g === 'section' ? (t.sec || '(No section)') : g === 'priority' ? (t.pri || 'No priority') : g === 'date' ? plDateName(t.date) : g === 'due' ? plDueName(t.due) : null; }
-function plGroups(list){ const g = plV.group;
+function plGroups(list){ if (plV.show === 'done') return plGroupsBase(list);   // EP v2.50: done tasks go in their own Completed section
+  const done = list.filter(t => t.done), g = plGroupsBase(list.filter(t => !t.done)).filter(x => !(plV.group === 'status' && x[0] === 'Done'));
+  return done.length ? g.concat([[plDoneName(), done]]) : g; }
+function plGroupsBase(list){ const g = plV.group;
   if (g === 'none') return [[null, list]];
   if (g === 'section'){ const names = plSecs().slice(); list.forEach(t => { if (t.sec && !names.includes(t.sec)) names.push(t.sec); });
     const out = names.map(n => [n, list.filter(t => t.sec === n)]), ns = list.filter(t => !t.sec); if (ns.length || !names.length) out.push(['(No section)', ns]); return out; }
@@ -2812,7 +2818,8 @@ function renderPlanner(tab){
   body += groups.map(([name, items]) => { if (name === null) return plTable(items);
     const ck = 'planner|' + plV.group + '|' + name, closed = !!state.collapsed[ck];
     return '<div class="sec"><div class="sec-head" data-sec="' + esc(ck) + '"><span class="chev">' + (closed ? '&#9656;' : '&#9662;') + '</span><span class="name">' + esc(name) + '</span><span class="cnt">' + items.length + '</span>' +
-      (name === 'Backlog' ? '<span class="note">No date yet. Open a task to give it a date, or use &rarr; Today.</span>' : '') + '</div>' + (closed ? '' : plTable(items)) + '</div>'; }).join('');
+      (name === 'Backlog' ? '<span class="note">No date yet. Open a task to give it a date, or use &rarr; Today.</span>' : '') +
+      (name === 'Completed today' && items.every(t => t.done) ? '<span class="note">Finished today. Untick to move it back. They drop off tomorrow (still under Show: Done).</span>' : '') + '</div>' + (closed ? '' : plTable(items)) + '</div>'; }).join('');
   const S = plSecs();
   const secPanel = plSecPanel ? '<div class="lcard pl-secs"><div class="t2-h">Sections</div><div class="note" style="margin:0 0 8px">Type over a name to rename it. Use the arrows to change the order. Removing a section keeps its tasks (they move to No section).</div>' +
     S.map((s, i) => '<div class="pl-subrow"><input class="emb-in" data-pls="ren" data-i="' + i + '" value="' + esc(s) + '"><button class="btn light small" data-pls="up" data-i="' + i + '"' + (i ? '' : ' disabled') + ' title="Move up">&#9650;</button><button class="btn light small" data-pls="down" data-i="' + i + '"' + (i < S.length - 1 ? '' : ' disabled') + ' title="Move down">&#9660;</button><button class="emb-btn-del" data-pls="rm" data-i="' + i + '">Remove</button></div>').join('') +
