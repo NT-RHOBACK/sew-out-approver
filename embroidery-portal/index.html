@@ -272,6 +272,8 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:16px}
 .t2-ol a{color:inherit;text-decoration:none}
 .t2-ol a:hover{text-decoration:underline}
 .t2-done,.t2-done a{color:#9ca3af;text-decoration:line-through}
+.t2-sub{margin:2px 0 4px 20px;padding:0}
+.t2-sub li{font-size:13px;margin:1px 0}
 .t2-check{color:#2e7d32;font-weight:700;text-decoration:none;display:inline-block}
 .bsel,.bsel-all{width:15px;height:15px;margin:0 6px 0 0;vertical-align:middle;cursor:pointer;accent-color:#1b2a4a}
 #bulkBar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:10px;background:#1b2a4a;color:#fff;padding:10px 16px;border-radius:10px;box-shadow:0 6px 24px rgba(15,23,42,.3);font-size:14px}
@@ -505,7 +507,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.34</span>
+    <span class="vbadge">EP v2.35</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -524,7 +526,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.34';
+const VERSION = 'EP v2.35';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2454,12 +2456,14 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
 const TD2_SECS = ['Request digitization', 'Request sew out', 'Review Barrett Sew Out', 'Add to ES/FTP', 'Other', 'Check on digitization', 'Check on Sew out requests'];
 const DID2_SECS = ['Submitted for digitization', 'Requested sew out', 'Sent for approval', 'Added to ES/FTP', 'Followed up on', 'Completed', 'Other'];
 let td2Day = '', td2View = 'todo';
+const t2It = x => typeof x === 'string' ? {text:x, subs:[]} : {text:x.text, subs:x.subs || []};   // EP v2.35: Other lines can have sub-tasks
+let t2SubOpen = null;
 const td2Notes = day => { DB.todayNotes = DB.todayNotes || {}; return DB.todayNotes[day] = DB.todayNotes[day] || {todo:[], did:[]}; };
 const td2Sort = (a, b) => (a.inHand || '9999').localeCompare(b.inHand || '9999') || (a.submitted || '').localeCompare(b.submitted || '');
 function td2Line(l){ return {l, text:l.logo}; }   // just the logo name (Noelle: no due dates, rush, or IDs)
 function td2Live(day){
   const of = st => DB.logos.filter(l => l.status === st).sort(td2Sort).map(td2Line);
-  const notes = td2Notes(day).todo.map(text => ({text, mine:true}));
+  const notes = td2Notes(day).todo.map((x, i) => Object.assign(t2It(x), {mine:true, idx:i}));
   return {'Request digitization': DB.logos.filter(l => l.status === 'New Request' && l.type === 'Digitize').sort(td2Sort).map(td2Line),
     'Request sew out': DB.logos.filter(l => (l.status === 'New Request' && l.type !== 'Digitize') || l.status === 'Need to Request Sew Out').sort(td2Sort).map(td2Line),   // EP v2.25
     'Review Barrett Sew Out': of('Review Sew Out'), 'Add to ES/FTP': of('Upload / Send'),
@@ -2475,7 +2479,7 @@ function td2Lock(day){ const live = td2Live(day), secs = {}; TD2_SECS.forEach(s 
   td2Notes(day).locked = {at:nowStamp(), secs}; }
 function td2Todo(day){ const n = td2Notes(day); if (!n.locked) return td2Live(day); const out = {};
   TD2_SECS.forEach(s => { out[s] = (n.locked.secs[s] || []).map(x => { const l = x.id ? byId(x.id) : null; return {l, text:x.text, done:!!x.id && !td2InSec(l, s)}; }); });
-  n.todo.forEach(text => out['Other'].push({text, mine:true})); return out; }
+  n.todo.forEach((x, i) => out['Other'].push(Object.assign(t2It(x), {mine:true, idx:i}))); return out; }
 function td2Did(day){   // from that day's History (things I did, not System (auto) or Barrett)
   const out = {}; DID2_SECS.forEach(s => out[s] = []); const seen = new Set();
   const add = (sec, id, text) => { const k = sec + '|' + id; if (seen.has(k)) return; seen.add(k); const l = byId(id); out[sec].push({l, text}); };
@@ -2489,10 +2493,10 @@ function td2Did(day){   // from that day's History (things I did, not System (au
     else if (/^Followed up|^Follow-up sent to Barrett \(by hand\)/.test(h.what)) add('Followed up on', h.id, name);
     else if (/^Approved by /.test(h.what)) add('Other', h.id, name + ': ' + h.what.replace(/ \(marked by .*\)$/, ''));
   });
-  td2Notes(day).did.forEach(text => out['Other'].push({text, mine:true}));
+  td2Notes(day).did.forEach((x, i) => out['Other'].push(Object.assign(t2It(x), {mine:true, idx:i})));
   return out;
 }
-function td2Text(secs, data){ return secs.map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text).join('\n') : '1. ')).join('\n\n'); }
+function td2Text(secs, data){ return secs.map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text + (x.subs && x.subs.length ? '\n' + x.subs.map((sb, j) => '   ' + String.fromCharCode(97 + j) + '. ' + sb).join('\n') : '')).join('\n') : '1. ')).join('\n\n'); }
 function renderToday2(tab){
   const day = td2Day || todayIso(), isToday = day === todayIso(), view = td2View, secs = view === 'did' ? DID2_SECS : TD2_SECS, data = view === 'did' ? td2Did(day) : td2Todo(day);
   const nice = parseIso(day).toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'});
@@ -2506,10 +2510,13 @@ function renderToday2(tab){
     (view === 'todo' && !isToday && !td2Notes(day).locked ? '<div class="note" style="margin-bottom:8px">The list shows where things are right now (this day wasn&rsquo;t locked); only the Other lines you typed are saved per day.</div>' : '') +
     '<div class="lcard">' + secs.map(s => '<div class="t2-sec"><div class="t2-h">' + esc(s) + ':</div><ol class="t2-ol">' +
       (data[s].length ? data[s].map((x, i) => '<li' + (x.done ? ' class="t2-done"' : '') + '>' + (x.l ? '<a href="#" data-t2="open" data-id="' + esc(x.l.id) + '">' + esc(x.text) + '</a>' : esc(x.text)) + (x.done ? ' <span class="t2-check">&#10003;</span>' : '') +
-        (x.mine ? ' <button class="emb-btn-del" style="padding:0 6px;font-size:11px" data-t2="rm" data-i="' + (view === 'did' ? td2Notes(day).did : td2Notes(day).todo).indexOf(x.text) + '">Remove</button>' : '') + '</li>').join('') : '<li class="muted">&nbsp;</li>') + '</ol>' +
+        (x.mine ? ' <button class="btn light small" style="padding:0 6px;font-size:11px" data-t2="subopen" data-i="' + x.idx + '">+ Sub-task</button> <button class="emb-btn-del" style="padding:0 6px;font-size:11px" data-t2="rm" data-i="' + x.idx + '">Remove</button>' +
+          ((x.subs.length || t2SubOpen === x.idx) ? '<ol type="a" class="t2-sub">' + x.subs.map((sb, j) => '<li>' + esc(sb) + ' <button class="emb-btn-del" style="padding:0 6px;font-size:11px" data-t2="subrm" data-i="' + x.idx + '" data-j="' + j + '">Remove</button></li>').join('') +
+            (t2SubOpen === x.idx ? '<li style="list-style:none"><span class="snz" style="margin:2px 0"><input id="t2SubIn" class="emb-in" placeholder="Sub-task&hellip;" style="flex:1;min-width:200px"><button class="btn light small" data-t2="subadd" data-i="' + x.idx + '">Add</button><button class="btn light small" data-t2="subx">Done</button></span></li>' : '') + '</ol>' : '') : '') + '</li>').join('') : '<li class="muted">&nbsp;</li>') + '</ol>' +
       (s === 'Other' ? '<div class="snz"><input id="t2Add" class="emb-in" placeholder="Add a line to Other&hellip;" style="flex:1"><button class="btn light small" data-t2="add">Add</button></div>' : '') + '</div>').join('') + '</div>';
   document.getElementById('page').innerHTML = h;
   const di = document.getElementById('t2Day'); di.onchange = () => { td2Day = di.value || todayIso(); render(); };
+  const si = document.getElementById('t2SubIn'); if (si) si.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-t2="subadd"]').click(); } if (e.key === 'Escape'){ t2SubOpen = null; render(); } };
   const ai = document.getElementById('t2Add'); if (ai) ai.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-t2="add"]').click(); } };
 }
 document.addEventListener('click', async e => { const b = e.target.closest('[data-t2]'); if (!b || state.tab !== 'today') return; e.preventDefault(); const k = b.dataset.t2, day = td2Day || todayIso();
@@ -2518,7 +2525,14 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
   if (k === 'unlock'){ if (!confirm('Unlock the list? It goes back to the live list (the locked copy is cleared).')) return; delete td2Notes(day).locked; touch(); render(); return; }
   if (k === 'open'){ const l = byId(b.dataset.id); if (l) openLogo(l); return; }
   if (k === 'add'){ const ai = document.getElementById('t2Add'), v = ai ? ai.value.trim() : ''; if (!v) return; td2Notes(day)[td2View === 'did' ? 'did' : 'todo'].push(v); touch(); render(); const n = document.getElementById('t2Add'); if (n) n.focus(); return; }
-  if (k === 'rm'){ const arr = td2Notes(day)[td2View === 'did' ? 'did' : 'todo'], i = +b.dataset.i; if (i >= 0) arr.splice(i, 1); touch(); render(); return; }
+  if (k === 'rm'){ const arr = td2Notes(day)[td2View === 'did' ? 'did' : 'todo'], i = +b.dataset.i; if (i >= 0) arr.splice(i, 1); t2SubOpen = null; touch(); render(); return; }
+  // EP v2.35: sub-tasks under a typed Other line
+  if (k === 'subopen'){ t2SubOpen = +b.dataset.i; render(); const s = document.getElementById('t2SubIn'); if (s) s.focus(); return; }
+  if (k === 'subx'){ t2SubOpen = null; render(); return; }
+  if (k === 'subadd' || k === 'subrm'){ const arr = td2Notes(day)[td2View === 'did' ? 'did' : 'todo'], i = +b.dataset.i; if (!(i >= 0) || i >= arr.length) return; const it = t2It(arr[i]);
+    if (k === 'subadd'){ const s = document.getElementById('t2SubIn'), v = s ? s.value.trim() : ''; if (!v) return; it.subs.push(v); }
+    else it.subs.splice(+b.dataset.j, 1);
+    arr[i] = it; touch(); render(); const s2 = document.getElementById('t2SubIn'); if (s2) s2.focus(); return; }
   if (k === 'copy'){ const txt = td2View === 'did' ? td2Text(DID2_SECS, td2Did(day)) : td2Text(TD2_SECS, td2Todo(day));
     try { await navigator.clipboard.writeText(txt); toast('&#10003; Copied. Paste it anywhere.'); } catch(err){ toast('Couldn&rsquo;t copy. Try again.'); } return; }
 });
