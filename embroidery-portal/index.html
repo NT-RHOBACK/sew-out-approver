@@ -518,7 +518,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.36</span>
+    <span class="vbadge">EP v2.37</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -537,7 +537,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.36';
+const VERSION = 'EP v2.37';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -583,7 +583,6 @@ const TABS = [
   {key:'submit',    title:'Submit Request', sub:'Add a logo request. It starts as New Request in the Queue.', submit:true},
   {key:'completed', title:'Completed',      sub:'Completed and archived logos.', sections:['Completed','Archive'], extra:{h:'Completed', f:'completedDate'}},
   {key:'reports',   title:'Reports', sub:'', reports:true},   // EP v2.17 (updates doc Part 18)
-  {key:'planner',   title:'Planner', sub:'', planner:true},   // EP v2.36
   {key:'today',     title:'To Do', sub:'', today:true},   // EP v2.23: built from the portal; Copy list
   {key:'audit',     title:'Audit', label:'&#128269; Audit', sub:'Every change to every logo, newest first. Today is open; earlier days start closed.', audit:true},
   // EP v2.10: To Do tab removed (Noelle 11/11). Its old data stays in the Excel, untouched.
@@ -2483,6 +2482,7 @@ let td2Day = '', td2View = 'todo';
 const t2It = x => typeof x === 'string' ? {text:x, subs:[]} : {text:x.text, subs:x.subs || []};
 const td2Notes = day => { DB.todayNotes = DB.todayNotes || {}; return DB.todayNotes[day] = DB.todayNotes[day] || {todo:[], did:[]}; };
 const td2Sort = (a, b) => (a.inHand || '9999').localeCompare(b.inHand || '9999') || (a.submitted || '').localeCompare(b.submitted || '');
+const td2Tabs = () => '<div class="td-subtabs">' + [['todo', 'To do'], ['did', 'What I did'], ['planner', 'Planner']].map(([v, l]) => '<button class="td-subtab' + (td2View === v ? ' on' : '') + '" data-t2="view" data-v="' + v + '">' + l + '</button>').join('') + '</div>';   // EP v2.37
 function td2Line(l){ return {l, text:l.logo}; }   // just the logo name (Noelle: no due dates, rush, or IDs)
 
 // ---- Planner (EP v2.36) ----
@@ -2559,8 +2559,8 @@ function td2Text(secs, data){ return secs.map(s => s + ':\n\n' + (data[s].length
 function renderToday2(tab){
   const day = td2Day || todayIso(), isToday = day === todayIso(), view = td2View, secs = view === 'did' ? DID2_SECS : TD2_SECS, data = view === 'did' ? td2Did(day) : td2Todo(day);
   const nice = parseIso(day).toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'});
-  let h = '<h1>To Do</h1><div class="sub">' + (view === 'did' ? 'What you did, pulled from History, plus planner tasks you marked done.' : 'Built from the portal: each logo shows under its next step, sorted by In Hand Date, then submitted. Other also shows that day&rsquo;s Planner tasks.') + ' Click a logo to open it. <b>Copy list</b> copies it as text to paste anywhere.</div>' +
-    '<div class="bar"><button class="btn' + (view === 'todo' ? '' : ' light') + '" data-t2="view" data-v="todo">To do</button><button class="btn' + (view === 'did' ? '' : ' light') + '" data-t2="view" data-v="did">What I did</button>' +
+  let h = '<h1>To Do</h1>' + td2Tabs() + '<div class="sub">' + (view === 'did' ? 'What you did, pulled from History, plus planner tasks you marked done.' : 'Built from the portal: each logo shows under its next step, sorted by In Hand Date, then submitted. Other also shows that day&rsquo;s Planner tasks.') + ' Click a logo to open it. <b>Copy list</b> copies it as text to paste anywhere.</div>' +
+    '<div class="bar">' +
     '<input type="date" id="t2Day" value="' + day + '" style="flex:none;min-width:0"><span class="muted" style="font-size:12px">' + esc(nice) + (isToday ? ' (today)' : '') + '</span>' +
     (view === 'todo' ? (td2Notes(day).locked ? '<span class="muted" style="font-size:12px;margin-left:8px">&#128274; Locked at ' + time12(td2Notes(day).locked.at) + '</span><button class="btn light" data-t2="unlock">Unlock</button>'
        : '<button class="btn light" data-t2="lock" title="Save the list as it is now, so it doesn&rsquo;t change as you move logos">&#128274; Lock list</button>') : '') +
@@ -2638,7 +2638,7 @@ function renderPlanner(tab){
   else if (plV.show === 'backlog') body = sec('Backlog', open.filter(t => !t.date));
   else if (plV.show === 'done') body = sec('Done', all.filter(t => t.done));
   else body = sec('Everything', all);
-  document.getElementById('page').innerHTML = '<h1>Planner</h1><div class="sub">Your own tasks. Each day&rsquo;s tasks show in that day&rsquo;s To Do list under Other (so they&rsquo;re in Copy list). Tick a task when it&rsquo;s done and it goes in What I did. Anything not done rolls over to the next day. Tasks with no date are your backlog. Click a task to edit it.</div>' +
+  document.getElementById('page').innerHTML = '<h1>To Do</h1>' + td2Tabs() + '<div class="sub">Your own tasks. Each day&rsquo;s tasks show in that day&rsquo;s To Do list under Other (so they&rsquo;re in Copy list). Tick a task when it&rsquo;s done and it goes in What I did. Anything not done rolls over to the next day. Tasks with no date are your backlog. Click a task to edit it.</div>' +
     '<div class="bar"><input id="plNew" placeholder="New task&hellip;" style="flex:1"><input type="date" id="plNewDate" value="' + today + '" style="flex:none;min-width:0" title="To-do date"><select id="plNewPri"><option value="">Priority</option>' + PL_PRI.map(p => '<option>' + p + '</option>').join('') + '</select><button class="btn" data-pl="add">Add</button><button class="btn light" data-pl="addBacklog">Add to backlog</button></div>' +
     '<div class="bar"><select id="plShow">' + PL_SHOW.map(([v, l]) => '<option value="' + v + '"' + (plV.show === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
       '<input id="plQ" placeholder="Search tasks&hellip;" value="' + esc(plV.q) + '" style="flex:1">' +
@@ -2675,8 +2675,7 @@ function renderMain(){
   if (tab.submit){ renderSubmit(tab); return; }
   if (tab.accounts){ renderAccounts(tab); return; }
   if (tab.reports){ renderReports(tab); return; }   // EP v2.17
-  if (tab.today){ renderToday2(tab); return; }
-  if (tab.planner){ renderPlanner(tab); return; }   // EP v2.36   // EP v2.23
+  if (tab.today){ if (td2View === 'planner') renderPlanner(tab); else renderToday2(tab); return; }   // EP v2.37: Planner is a sub-tab of To Do   // EP v2.23
   const group = state.group[tab.key] || 'status';
   let html = (tab.focus ? pipelineHtml() + '<div class="lcard">' + cardHead('Today&rsquo;s Focus') + '<div class="sub" style="margin:-8px 0 16px">' + tab.sub + ' Click a row to open it.</div><div class="bar" style="margin:-6px 0 12px">' + '<select id="deptF"><option value="">All departments</option>' + DEPTS.map(x => '<option' + (state.dept[tab.key] === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' + sortsCtl(tab.key) + '</div>'
                         : '<h1>' + tab.title + '</h1><div class="sub">' + tab.sub + ' Click a row to open it. Red In Hand Dates show first, then the oldest. Change it with Sorts, or click a column name.</div>') +
