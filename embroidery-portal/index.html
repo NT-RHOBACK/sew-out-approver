@@ -433,7 +433,10 @@ h1{font-size:20px;margin-bottom:14px}
 .tbl tr.sec-head .cnt{display:inline-block;min-width:22px;padding:1px 8px;border-radius:10px;background:var(--bg);color:var(--grey);font-size:12px;font-weight:600;text-align:center;border:none}
 .tbl tr.sec-head .note{font-size:12px;color:#49516C;margin-left:10px}
 .tbl td.empty-row{color:var(--grey);font-size:13px;padding:12px 8px 12px 30px}
-.dabbr{cursor:default;white-space:nowrap}   /* EP v2.18: 3-letter codes (COL, MNL, CUS) stay on one line */
+.dabbr{cursor:default;white-space:nowrap}
+.dtag .claimed{display:inline;margin:0;font-size:11px}
+.claim-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.dpill{display:inline-block;border-radius:5px;padding:1px 7px;font-size:12px;font-weight:600}   /* EP v2.18: 3-letter codes (COL, MNL, CUS) stay on one line */
 /* Dashboard pipeline strip */
 .pipe{display:flex;gap:0;margin:4px 0;overflow-x:auto;padding:4px 0}
 .pipe .stage{flex:1 1 0;min-width:130px;text-align:center;padding:10px 8px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);background:var(--bg);border:1px solid var(--line);border-radius:0;margin:0;box-shadow:none}
@@ -525,7 +528,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.42</span>
+    <span class="vbadge">EP v2.43</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -544,7 +547,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.42';
+const VERSION = 'EP v2.43';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -553,7 +556,9 @@ const APPROVER_URL = new URL('../netsuite/', location.href).href;   // the NetSu
 const BARRETT_TO = ['Rhobackembroideryteam@barrettdistribution.com', 'carla.gotera@barrettdistribution.com'];
 const BARRETT_CC = ['rosemarie.lincoln@barrettdistribution.com', 'paulina.rivas@barrettdistribution.com'];
 const DEPTS = ['Wholesale','Special Projects','Collegiate','Mainline','Custom'];
-const DEPT_ABBR = {'Wholesale':'WH', 'Special Projects':'SP', 'Collegiate':'COL', 'Mainline':'MNL', 'Custom':'CUS'};   // EP v2.04; EP v2.18 (Noelle 11/11): WH, SP, COL, MNL, CUS
+const DEPT_ABBR = {'Wholesale':'WH', 'Special Projects':'SP', 'Collegiate':'COL', 'Mainline':'MNL', 'Custom':'CUS'};
+const DEPT_COLOR = {'Special Projects':['#dbeafe', '#1e4fa8'], 'Collegiate':['#ffd2bf', '#b8390b'], 'Wholesale':['#e6d4fb', '#6a2aa8'], 'Custom':['#fbdcec', '#b0256a'], 'Mainline':['#f1eafd', '#7b5fc0']};   // EP v2.43: SP blue, COL orange (not the sew-out orange), WH purple, CUS pink, MNL lighter purple
+const deptStyle = d => { const c = DEPT_COLOR[d]; return c ? ' style="background:' + c[0] + ';color:' + c[1] + '"' : ''; };   // EP v2.04; EP v2.18 (Noelle 11/11): WH, SP, COL, MNL, CUS
 // EP v2.06: Collegiate schools and their embroidery abbreviations (from Collegiate Embroidery Codes by School.xlsx). NFL teams will be added here too.
 const SCHOOLS = [["AIR FORCE", "UAF"], ["ALABAMA", "BAMA"], ["APP STATE", "APP"], ["ARIZONA", "AZU"], ["ARIZONA STATE", "ASU"], ["ARKANSAS", "AK"], ["ARMY", "ARMY"], ["AUBURN", "AU"], ["BAYLOR", "BU"], ["BOISE STATE", "BOISE"], ["BOSTON COLLEGE", "BSTN"], ["BYU", "BYU"], ["CALIFORNIA", "CAL"], ["CINCINNATI", "CINCI"], ["CLEMSON", "CLM"], ["COASTAL CAROLINA", "CSTLC"], ["COLORADO", "COL"], ["COLORADO STATE", "CLST"], ["CREIGHTON", "CRU"], ["DAVIDSON", "DVSN"], ["DAYTON", "DTYN"], ["DUKE", "DUKE"], ["EAST CAROLINA", "ECU"], ["FLORIDA", "UF"], ["FLORIDA ATLANTIC", "FAU"], ["FLORIDA STATE", "FSU"], ["GEORGETOWN", "GTWN"], ["GEORGIA", "GA"], ["GEORGIA SOUTHERN", "GAS"], ["GEORGIA TECH", "GTCH"], ["GONZAGA", "GNZ"], ["HOUSTON", "UH"], ["ILLINOIS", "IL"], ["INDIANA", "IU"], ["IOWA", "IOWA"], ["IOWA STATE", "ISU"], ["JAMES MADISON", "JMU"], ["KANSAS", "KU"], ["KANSAS STATE", "KST"], ["KENTUCKY", "UK"], ["LIBERTY", "LBRTY"], ["LOUISIANA LAFAYETTE", "LSLF"], ["LOUISIANA TECH", "LSTCH"], ["LOUISVILLE", "UL"], ["LSU", "LSU"], ["MARQUETTE", "MRQT"], ["MARSHALL", "MRSL"], ["MARYLAND", "MRLND"], ["MEMPHIS", "MEM"], ["MIAMI", "MIA"], ["MIAMI UNIVERSITY", "MIAOH"], ["MICHIGAN", "MICH"], ["MICHIGAN STATE", "MSU"], ["MINNESOTA", "MIN"], ["MISSISSIPPI STATE", "MST"], ["MIZZOU", "MZ"], ["NAVY", "USN"], ["NC STATE", "NCST"], ["NEBRASKA", "NE"], ["NOTRE DAME", "ND"], ["OHIO STATE", "OSU"], ["OKLAHOMA", "OU"], ["OKLAHOMA STATE", "OKST"], ["OLD DOMINION", "ODU"], ["OLE MISS", "OLM"], ["OREGON", "ORGN"], ["OREGON STATE", "OGST"], ["PENN STATE", "PSU"], ["PITT", "PITT"], ["PURDUE", "PRDU"], ["RUTGERS", "RTGRS"], ["SAN DIEGO STATE", "SDSU"], ["SMU", "SMU"], ["SOUTH CAROLINA", "USC"], ["ST. JOHN'S", "STJN"], ["STANFORD", "STNFD"], ["SYRACUSE", "CUSE"], ["TCU", "TCU"], ["TENNESSEE", "TEN"], ["TEXAS", "UT"], ["TEXAS A&M", "TAM"], ["TEXAS TECH", "TTU"], ["TULANE", "TULN"], ["UCF", "UCF"], ["UCLA", "UCLA"], ["UCONN", "UCONN"], ["UNC", "UNC"], ["USC", "SCAL"], ["USF", "USF"], ["UTAH", "UTAH"], ["UTSA", "UTSA"], ["UVA", "UVA"], ["VANDERBILT", "VAN"], ["VILLANOVA", "VIL"], ["VIRGINIA TECH", "VT"], ["WAKE FOREST", "WF"], ["WASHINGTON", "WASH"], ["WASHINGTON STATE", "WSHST"], ["WEST VIRGINIA", "WVU"], ["WESTERN KENTUCKY", "WKU"], ["WESTERN MICHIGAN", "WMU"], ["WISCONSIN", "WISC"], ["XAVIER", "XAV"]];
 const schoolLabel = (n, a) => n + ' (' + a + ')';
@@ -1060,7 +1065,9 @@ function stSelect(l){ const c = STATUS_COLORS[l.status] || STATUS_COLORS['New Re
 // EP v2.27: claiming. Every request is claimed to me automatically. While it's a New Request and not locked, someone else can claim it.
 // It locks when I click Lock, or as soon as it moves out of New Request; then only I can change it.
 const claimLocked = l => !!l.claimLocked || (l.status !== 'New Request' && !!l.claimedBy);
-const claimTag = l => l.claimedBy ? '<span class="claimed">' + (claimLocked(l) ? '&#128274; ' : '') + 'Claimed by ' + esc(l.claimedBy) + '</span>' : DONE.includes(l.status) ? '' : '<button class="claim-mini" data-x="claim" data-id="' + esc(l.id) + '">Claim</button>';
+const firstName = n => String(n || '').trim().split(/\s+/)[0];   // EP v2.43: claimed by shows the first name
+const subLine = l => { const d = esc(reqNo(l)), c = claimTag(l); return d || c ? '<span class="dtag">' + d + (d && c ? ' &middot; ' : '') + c + '</span>' : ''; };   // EP v2.43: request # and Claimed by on one line
+const claimTag = l => l.claimedBy ? '<span class="claimed" title="' + esc(l.claimedBy) + '">' + (claimLocked(l) ? '&#128274; ' : '') + 'Claimed by ' + esc(firstName(l.claimedBy)) + '</span>' : DONE.includes(l.status) ? '' : '<button class="claim-mini" data-x="claim" data-id="' + esc(l.id) + '">Claim</button>';
 function claimBar(l){ const id = esc(l.id), lk = claimLocked(l), mine = l.claimedBy === CLAIMER;
   if (!l.claimedBy) return '<div class="claim-bar"><span class="emb-dim">Not claimed</span><button class="btn small" data-x="claim" data-id="' + id + '">Claim</button></div>';
   return '<div class="claim-bar">' + (lk ? '&#128274; ' : '') + 'Claimed by <b>' + esc(l.claimedBy) + '</b>' +
@@ -1074,8 +1081,8 @@ const acctShown = l => l.account || l.school || l.project || l.dept || '';   // 
 function columns(tab, section){
   const dateOnly = (s, u) => !s ? '<span class="muted">&mdash;</span>' : '<span class="dtp ' + (u || 'plain') + '">' + fmt(s) + '</span>';
   const cols = [
-    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><input type="checkbox" class="bsel" data-bid="' + esc(l.id) + '"' + (bulkSel.has(l.id) ? ' checked' : '') + ' title="Select for bulk status change"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + deptTag(l) + (barNew(l) || commNew(l) ? '<span class="new-reply">New reply</span>' : '') + claimTag(l) + '</span></div>'},
-    {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="acct dabbr" title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
+    {k:'logo', h:'Logo', v:l => l.logo.toLowerCase(), td:l => '<div class="logo-cell"><input type="checkbox" class="bsel" data-bid="' + esc(l.id) + '"' + (bulkSel.has(l.id) ? ' checked' : '') + ' title="Select for bulk status change"><span class="chev">' + (state.open[l.id] ? '&#9662;' : '&#9656;') + '</span>&nbsp;' + rushR(l) + '<span><span class="logo">' + esc(l.logo) + '</span><span class="ver">v' + l.ver + '</span>' + subLine(l) + (barNew(l) || commNew(l) ? '<span class="new-reply">New reply</span>' : '') + '</span></div>'},
+    {k:'dept', h:'Dept', v:l => l.dept || '~', td:l => l.dept ? '<span class="acct dabbr dpill"' + deptStyle(l.dept) + ' title="' + esc(l.dept) + '">' + (DEPT_ABBR[l.dept] || esc(l.dept)) + '</span>' : '<span class="muted">&mdash;</span>'},
     {k:'account', h:'Account', v:l => acctShown(l).toLowerCase(), td:l => '<span class="acct">' + esc(acctShown(l)) + '</span>'},
     {k:'rep', h:'Sales Rep', v:l => l.rep.toLowerCase(), td:l => esc(l.rep)},
     {k:'sub', h:'Submitted', v:l => l.submitted || '', td:l => dateOnly(l.submitted, subUrg(l))},
@@ -1249,6 +1256,16 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
     ef('File Version', '<div class="emb-stepper"><button class="sbtn" data-act="ver-" data-id="' + id + '">&minus;</button><span class="emb-step-val">v' + l.ver + '</span><button class="sbtn" data-act="ver+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="ver-edit" data-id="' + id + '">Edit</button></div>') +
     ef('Revisions', '<div class="emb-stepper"><button class="sbtn" data-act="rev-" data-id="' + id + '">&minus;</button><span class="emb-step-val rev-num">' + (l.rev || 0) + '</span><button class="sbtn" data-act="rev+" data-id="' + id + '">+</button><button class="sbtn txt" data-act="rev-edit" data-id="' + id + '">Edit</button></div>') +
     ef('Rep Notes', ta('submitNotes'), true) +
+    '</div>');
+  const lk = claimLocked(l), mine = l.claimedBy === CLAIMER, cOpts = PEOPLE.concat(l.claimedBy && !PEOPLE.includes(l.claimedBy) ? [l.claimedBy] : []);   // EP v2.43: Status & claim section
+  const claimF = '<select class="claim-to" data-id="' + id + '" title="Change who has it"><option value="(none)"' + (l.claimedBy ? '' : ' selected') + '>Not claimed</option>' + cOpts.map(n => '<option' + (n === l.claimedBy ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select>' +
+    '<div class="emb-dim" style="font-size:11px;margin-top:3px">' + (!l.claimedBy ? 'No one has it yet.' : (lk ? '&#128274; ' + (l.status !== 'New Request' && !l.claimLocked ? 'Locked (out of New Request), only you can change it.' : 'Locked, only you can change it.') : 'Others can still claim it while it&rsquo;s a New Request.')) + '</div>' +
+    '<div class="claim-acts">' + (!l.claimedBy || !mine ? '<button class="btn small" data-x="claim" data-id="' + id + '">' + (l.claimedBy ? 'Take it back' : 'Claim') + '</button>' : '') +
+      (l.claimedBy && !lk && mine ? '<button class="btn light small" data-x="claim-lock" data-id="' + id + '">&#128274; Lock to me</button>' : '') +
+      (l.claimLocked && l.status === 'New Request' ? '<button class="btn light small" data-x="claim-unlock" data-id="' + id + '">Unlock</button>' : '') +
+      (l.claimedBy && !lk && mine ? '<span class="emb-dim" style="font-size:11px">Test only: <a href="#" data-x="claim-test" data-id="' + id + '">Jette claims it</a></span>' : '') + '</div>';
+  const statusBox = ebox(0, 'Status &amp; claim', '', '<div class="emb-grid">' +
+    ef('Claimed by', claimF) +
     ef('Status', stSelect(l)) + ef('Sales Rep', inp('rep', l, ' list="repAll"')) +
     ef('Approval contact', '<input data-edit="apprContact" data-id="' + id + '" list="peopleList" value="' + esc(apprContactOf(l)) + '">' + (l.apprContact ? '' : '<div class="emb-dim" style="font-size:11px">' + (l.dept === 'Special Projects' ? 'Elizabeth for Special Projects' : 'The sales rep') + ' unless you change it</div>')) +   // EP v2.22
     ef('Assigned To', '<select data-edit="assigned" data-id="' + id + '"><option value="">Unassigned</option>' + assignOpts.map(o => '<option' + (o === l.assigned ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + (l.assigned && !assignOpts.includes(l.assigned) ? '<option selected>' + esc(l.assigned) + '</option>' : '') + '</select>') +
@@ -1270,11 +1287,11 @@ function cardBody(l, top){   // the logo card's boxes; top = the To Do strip (qu
       : dig ? '<button class="btn light small" style="margin-top:6px" data-x="fee-sent" data-id="' + id + '">Mark invoice sent</button>' : ''));
   const histBox = ebox(7, 'History', '', '<details class="emb-hist"><summary>Show history (' + hist.length + ' entr' + (hist.length === 1 ? 'y' : 'ies') + ')</summary>' +
     (hist.length ? hist.map(h => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmt(h.ts) + ' ' + time12(h.ts) + '</span><span>' + esc(h.what) + '</span><span class="emb-hist-by">' + esc(h.by || '') + '</span></div>').join('') : '<div class="emb-dim">No history yet.</div>') + '</details>');
-  return '<div class="emb-card">' + top + '<div class="emb-card-cols"><div class="emb-col">' + details + notesBox + commBox(l) + '</div>' +
+  return '<div class="emb-card">' + top + '<div class="emb-card-cols"><div class="emb-col">' + statusBox + details + notesBox + commBox(l) + '</div>' +
     '<div class="emb-col">' + files + sewBox(l) + sheetBox(l) + fee + histBox +
     '<div class="emb-card-foot"><button class="btn light small" data-x="archive" data-id="' + id + '">Archive</button><button class="emb-btn-del" data-x="delete" data-id="' + id + '">Delete</button></div></div></div></div>';
 }
-function card(l, ncols){ return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '">' + cardBody(l, TODO_OFF ? claimBar(l) : todoStrip(l)) + '</td></tr>'; }
+function card(l, ncols){ return '<tr class="card-row"><td class="card-cell" colspan="' + ncols + '">' + cardBody(l, TODO_OFF ? '' : todoStrip(l)) + '</td></tr>'; }
 
 // Answers coming back from the Sew-Out Request page (same site)
 window.addEventListener('message', e => {
