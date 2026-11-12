@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.48</span>
+    <span class="vbadge">EP v2.49</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.48';
+const VERSION = 'EP v2.49';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2651,7 +2651,7 @@ function td2DidLive(day){   // from that day's History (things I did, not System
   out['Other'] = out['Other'].map((x, i) => [x, i]).sort((a, b) => (a[0].at || '~').localeCompare(b[0].at || '~') || a[1] - b[1]).map(x => x[0]);   // in time order
   return out;
 }
-function td2Text(secs, data){ return secs.map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text + (x.subs && x.subs.length ? '\n' + x.subs.map((sb, j) => '   ' + String.fromCharCode(97 + j) + '. ' + (typeof sb === 'string' ? sb : sb.t)).join('\n') : '')).join('\n') : '1. ')).join('\n\n'); }
+function td2Text(secs, data){ return secs.filter(s => data[s].length).map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text + (x.subs && x.subs.length ? '\n' + x.subs.map((sb, j) => '   ' + String.fromCharCode(97 + j) + '. ' + (typeof sb === 'string' ? sb : sb.t)).join('\n') : '')).join('\n') : '1. ')).join('\n\n'); }
 // EP v2.42: Edit list. Fix or move any line on the To do / What I did list. The day's list saves as an edited copy (To do: inside the locked copy; What I did: didEdit). Planner tasks in Other stay live.
 let td2Editing = false;
 function td2Snap(day, view, make){ const n = td2Notes(day); td2DidKeyFix(n);
@@ -2739,6 +2739,7 @@ document.addEventListener('click', async e => { const b = e.target.closest('[dat
     touch(); render(); const n = document.getElementById('t2Add'); if (n) n.focus(); return; }
   if (k === 'rm'){ const arr = td2Notes(day).did, i = +b.dataset.i; if (i >= 0) arr.splice(i, 1); touch(); render(); return; }
   if (k === 'copy'){ const txt = td2View === 'did' ? td2Text(DID2_SECS, td2Did(day)) : td2Text(TD2_SECS, td2Todo(day));
+    if (!txt){ toast('Nothing on this list to copy yet.'); return; }   // EP v2.49
     try { await navigator.clipboard.writeText(txt); toast('&#10003; Copied. Paste it anywhere.'); } catch(err){ toast('Couldn&rsquo;t copy. Try again.'); } return; }
 });
 // Planner task actions (same buttons on the To Do tab and the Planner tab)
