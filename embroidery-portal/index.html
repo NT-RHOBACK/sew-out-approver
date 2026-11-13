@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.53</span>
+    <span class="vbadge">EP v2.54</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.53';
+const VERSION = 'EP v2.54';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -640,9 +640,9 @@ function turnaround(l){   // {tier, due, late} while the clock runs, else null
   const due = bizAdd(new Date(s), tier.hrs); return {tier, due, late:new Date() > due};
 }
 function bizSince(iso){ const d = parseIso(iso); if (!d) return null; let c = 0; const x = new Date(d); while (x < today){ x.setDate(x.getDate() + 1); const w = x.getDay(); if (w && w !== 6) c++; } return c; }   // EP v2.53: business days from that date to today
-const AGE_RED = 7, AGE_YELLOW = 5;   // EP v2.53: non-Wholesale requests, business days since Submitted
+const AGE_RULE = l => l.dept === 'Wholesale' ? {yellow:12, red:14} : {yellow:5, red:7};   // EP v2.54: business days since Submitted, only when there's no In Hand / Due date
 function subUrg(l){ const t = turnaround(l); if (t && t.late) return 'red';   // Submitted: red once it's past due
-  if (l.dept !== 'Wholesale' && !DONE.includes(l.status) && l.submitted){ const b = bizSince(l.submitted); if (b >= AGE_RED) return 'red'; if (b >= AGE_YELLOW) return 'yellow'; }   // EP v2.53
+  if (!l.inHand && !DONE.includes(l.status) && l.submitted){ const a = AGE_RULE(l), b = bizSince(l.submitted); if (b >= a.red) return 'red'; if (b >= a.yellow) return 'yellow'; }   // EP v2.53 / v2.54: no In Hand date only
   return ''; }
 function noDate(l){ const t = turnaround(l), c = !t ? 'plain' : t.late ? 'red' : isoOf(t.due) === todayIso() ? 'yellow' : 'plain';   // EP v1.30: no In Hand Date: yellow on the day its 5 days are up, red once past
   return '<span class="dtp ' + c + '">No date</span>'; }
