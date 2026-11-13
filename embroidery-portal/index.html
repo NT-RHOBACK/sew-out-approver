@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.50</span>
+    <span class="vbadge">EP v2.51</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.50';
+const VERSION = 'EP v2.51';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2641,7 +2641,7 @@ function td2DidLive(day){   // from that day's History (things I did, not System
     if (to === 'Digitizing') add('Submitted for digitization', h.id, name);
     else if (to === 'Pending Sew Out') add('Requested Sew Out', h.id, name);
     else if (to === 'Sent for Approval') add('Sent for approval', h.id, name);
-    else if (to === 'Completed') add(/^Status: (Upload \/ Send|Need to Upload) >/.test(h.what) ? 'Added to ES/FTP' : 'Completed', h.id, name);
+    else if (to === 'Completed'){ const lg = byId(h.id); add(lg && lg.dept === 'Wholesale' && /^Status: (Upload \/ Send|Need to Upload) >/.test(h.what) ? 'Added to ES/FTP' : 'Completed', h.id, name); }   // EP v2.51: non-Wholesale goes under Completed
     else if (to === 'Archive') add('Other', h.id, 'Archived: ' + name);
     else if (/^Followed up|^Follow-up sent to Barrett \(by hand\)/.test(h.what)) add('Followed up on', h.id, name);
     else if (/^Approved by /.test(h.what)) add('Other', h.id, name + ': ' + h.what.replace(/ \(marked by .*\)$/, ''));
