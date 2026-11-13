@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.55</span>
+    <span class="vbadge">EP v2.56</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.55';
+const VERSION = 'EP v2.56';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2655,8 +2655,15 @@ function td2DidLive(day){   // from that day's History (things I did, not System
 function td2Text(secs, data){ return secs.filter(s => data[s].length).map(s => s + ':\n\n' + (data[s].length ? data[s].map((x, i) => (i + 1) + '. ' + x.text + (x.subs && x.subs.length ? '\n' + x.subs.map((sb, j) => '   ' + String.fromCharCode(97 + j) + '. ' + (typeof sb === 'string' ? sb : sb.t)).join('\n') : '')).join('\n') : '1. ')).join('\n\n'); }
 // EP v2.42: Edit list. Fix or move any line on the To do / What I did list. The day's list saves as an edited copy (To do: inside the locked copy; What I did: didEdit). Planner tasks in Other stay live.
 let td2Editing = false;
+function td2DidNew(day, n){   // EP v2.56: live lines that happened after the list was edited and aren't on the edited copy yet
+  const live = td2DidLive(day), since = n.didEdit.at || '', out = {};
+  DID2_SECS.forEach(s => { const have = n.didEdit.secs[s] || []; out[s] = live[s].filter(x => !x.pl && !x.mine && (x.at || '') > since && !have.some(y => x.l ? y.id === x.l.id : y.text === x.text)); });
+  return out; }
 function td2Snap(day, view, make){ const n = td2Notes(day); td2DidKeyFix(n);
   if (view === 'did'){
+    if (n.didEdit && make){ const nw = td2DidNew(day, n); let any = false;   // EP v2.56: pull new moves into the edited copy so they can be edited too
+      DID2_SECS.forEach(s => nw[s].forEach(x => { any = true; (n.didEdit.secs[s] = n.didEdit.secs[s] || []).push({id:x.l ? x.l.id : '', text:x.text, at:x.at || '', subs:(x.subs || []).map(sb => typeof sb === 'string' ? sb : sb.t)}); }));
+      if (any) n.didEdit.at = nowStamp(); }
     if (!n.didEdit && make){ const live = td2DidLive(day), secs = {};
       DID2_SECS.forEach(s => { secs[s] = live[s].filter(x => !x.pl).map(x => ({id:x.l ? x.l.id : '', text:x.text, at:x.at || '', subs:(x.subs || []).map(sb => typeof sb === 'string' ? sb : sb.t)})); });
       n.didEdit = {at:nowStamp(), secs}; }
@@ -2666,6 +2673,7 @@ function td2Snap(day, view, make){ const n = td2Notes(day); td2DidKeyFix(n);
 function td2DidKeyFix(n){ const s = n.didEdit && n.didEdit.secs; if (s && s['Requested sew out']){ s['Requested Sew Out'] = (s['Requested Sew Out'] || []).concat(s['Requested sew out']); delete s['Requested sew out']; } }
 function td2Did(day){ const n = td2Notes(day); td2DidKeyFix(n); if (!n.didEdit) return td2DidLive(day);
   const out = {}; DID2_SECS.forEach(s => { out[s] = (n.didEdit.secs[s] || []).map(x => ({l:x.id ? byId(x.id) : null, text:x.text, at:x.at || '', subs:x.subs || []})); });
+  const nw = td2DidNew(day, n); DID2_SECS.forEach(s => { out[s] = out[s].concat(nw[s]); });   // EP v2.56: moves made after the edit still show
   PL().filter(t => t.done && (t.doneAt || '').slice(0, 10) === day).sort((a, b) => a.doneAt.localeCompare(b.doneAt)).forEach(t => { const it = {pl:t, text:t.text, at:t.doneAt, subs:(t.subs || []).map(plSub).map(s => s.t)}, O = out['Other'], i = O.findIndex(x => x.at && x.at > it.at); if (i < 0) O.push(it); else O.splice(i, 0, it); });   // EP v2.46: in time order among your lines
   return out; }
 function td2EditHtml(secs, snap, data){
