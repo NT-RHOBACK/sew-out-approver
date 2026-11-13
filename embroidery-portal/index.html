@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.51</span>
+    <span class="vbadge">EP v2.52</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.51';
+const VERSION = 'EP v2.52';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2538,7 +2538,7 @@ const PL = () => (DB.planner = DB.planner || []);
 const plId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const plSub = s => typeof s === 'string' ? {t:s, done:false} : {t:s.t, done:!!s.done};
 const plGet = id => PL().find(t => t.id === id);
-const plFor = day => PL().filter(t => t.date === day).sort(plOrder);
+const plFor = day => PL().filter(t => t.date === day && !(t.done && (t.doneAt || '').slice(0, 10) < day)).sort(plOrder);   // EP v2.52: not tasks finished on an earlier day
 let plSubOpen = null, plShowDone = false, plEditOpen = null;
 const PL_PRI = ['High', 'Medium', 'Low'], plPriRank = t => ({High:0, Medium:1, Low:3}[t.pri] ?? 2);
 const plOrder = (a, b) => plPriRank(a) - plPriRank(b) || (a.created || '').localeCompare(b.created || '');
