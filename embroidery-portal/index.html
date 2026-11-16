@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.56</span>
+    <span class="vbadge">EP v2.57</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.56';
+const VERSION = 'EP v2.57';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -2696,18 +2696,18 @@ function renderToday2(tab){
     (td2Editing ? '<button class="btn" data-t2="editdone">Done editing</button>' :
       (view === 'todo' ? (n.locked ? '<span class="muted" style="font-size:12px;margin-left:8px">&#128274; Locked at ' + time12(n.locked.at) + (edited ? ' (edited)' : '') + '</span><button class="btn light" data-t2="unlock">Unlock</button>'
          : '<button class="btn light" data-t2="lock" title="Save the list as it is now, so it doesn&rsquo;t change as you move logos">&#128274; Lock list</button>') : '') +
-      '<button class="btn light" data-t2="edit" title="Fix or move any line on this list">&#9998; Edit list</button>' +
-      (view === 'did' && edited ? '<button class="btn light" data-t2="reset">Reset to live list</button>' : '')) +
+      '<button class="btn light" data-t2="edit" title="Fix or move any line on this list">&#9998; Edit list</button>') +
     '<button class="btn" data-t2="copy" style="margin-left:auto">&#128203; Copy list</button></div>' +
     (td2Editing ? '<div class="note" style="margin-bottom:8px">Editing. Type over a line to fix it, use the arrows to move it up or down, or Move to&hellip; another section. Changes save as you go. Click Done editing when you&rsquo;re finished.</div>' : '') +
     (!td2Editing && view === 'todo' && n.locked ? '<div class="note" style="margin-bottom:8px">This is the list as it was when you locked it' + (edited ? ', with your edits' : '') + '. Logos that have moved on since are crossed off. Your Planner tasks in Other stay live. Unlock to see the live list again.</div>' : '') +
-    (!td2Editing && view === 'did' && edited ? '<div class="note" style="margin-bottom:8px">You edited this list, so it doesn&rsquo;t update on its own anymore. Planner tasks you finish still show in Other. Reset to live list to undo your edits.</div>' : '') +
+    (!td2Editing && view === 'did' && edited ? '<div class="note" style="margin-bottom:8px">You edited this list, so it doesn&rsquo;t update on its own anymore. Planner tasks you finish still show in Other. To undo your edits, use Reset to live list at the bottom of the page.</div>' : '') +
     (!td2Editing && view === 'todo' && !isToday && !n.locked ? '<div class="note" style="margin-bottom:8px">The list shows where logos are right now (this day wasn&rsquo;t locked).</div>' : '') +
     '<div class="lcard">' + (td2Editing ? td2EditHtml(secs, snap, data) : secs.map(s => '<div class="t2-sec"><div class="t2-h">' + esc(s) + ':</div><ol class="t2-ol">' +
       (data[s].length ? data[s].map(x => '<li' + (x.done || (view === 'todo' && x.pl && x.pl.done) ? ' class="t2-done"' : '') + '>' + (view === 'did' ? '<span class="t2-time">' + (x.at ? time12(x.at) : '') + '</span>' : '') + (x.l ? '<a href="#" data-t2="open" data-id="' + esc(x.l.id) + '">' + esc(x.text) + '</a>' : x.pl ? '<a href="#" data-t2="plopen" data-id="' + esc(x.pl.id) + '" title="Open it in the Planner">' + esc(x.text) + '</a>' : esc(x.text)) + (x.done || (view === 'todo' && x.pl && x.pl.done) ? ' <span class="t2-check">&#10003;</span>' : '') +
         (x.subs && x.subs.length && !x.mine ? '<ol type="a" class="t2-sub">' + x.subs.map(sb => '<li>' + esc(typeof sb === 'string' ? sb : sb.t) + '</li>').join('') + '</ol>' : '') +
         (x.mine ? ' <button class="emb-btn-del" style="padding:0 6px;font-size:11px" data-t2="rm" data-i="' + x.idx + '">Remove</button>' : '') + '</li>').join('') : '<li class="muted">&nbsp;</li>') + '</ol>' +
-      (s === 'Other' ? '<div class="snz"><input id="t2Add" class="emb-in" placeholder="' + (view === 'did' ? 'Add something you did&hellip;' : 'Add a task for this day (it goes in your Planner)&hellip;') + '" style="flex:1"><button class="btn light small" data-t2="add">Add</button></div>' : '') + '</div>').join('')) + '</div>';
+      (s === 'Other' ? '<div class="snz"><input id="t2Add" class="emb-in" placeholder="' + (view === 'did' ? 'Add something you did&hellip;' : 'Add a task for this day (it goes in your Planner)&hellip;') + '" style="flex:1"><button class="btn light small" data-t2="add">Add</button></div>' : '') + '</div>').join('')) + '</div>' +
+    (!td2Editing && view === 'did' && edited ? '<div style="margin-top:48px;padding-top:12px;border-top:1px solid #e3e6ea;text-align:right"><button class="btn light small" data-t2="reset" title="Clears your edits to this day&rsquo;s What I did list">Reset to live list</button></div>' : '');   // EP v2.57: moved down here so it isn't clicked by accident
   document.getElementById('page').innerHTML = h;
   const di = document.getElementById('t2Day'); di.onchange = () => { td2Day = di.value || todayIso(); td2Editing = false; render(); };
   plKeys();
