@@ -150,6 +150,9 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
 .pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px}
 .pathrow{display:flex;gap:6px;align-items:center}
+/* LL v1.07: Copy button never squished */
+.pathrow input{flex:1;min-width:0}
+.pathrow .btn{flex:none;white-space:nowrap}
 .note{font-size:12px;color:var(--grey);margin-top:6px;line-height:1.45}
 /* add logo */
 .addbox{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:14px}
@@ -173,7 +176,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.06</span>
+    <span class="vbadge">LL v1.07</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -185,7 +188,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.06';
+const VERSION = 'LL v1.07';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
