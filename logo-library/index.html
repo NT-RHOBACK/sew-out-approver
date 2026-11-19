@@ -104,6 +104,17 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .pic .lbl{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:4px}
 .pic .big{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:#F7F8FB;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#B5BCC8;font-size:12px}
 .pic .big img{width:100%;height:100%;object-fit:contain;background:#fff}
+[data-pop]{cursor:zoom-in}
+/* LL v1.01: click a picture to see it bigger */
+.lb{position:fixed;inset:0;z-index:60;background:rgba(20,24,40,.72);display:flex;align-items:center;justify-content:center;padding:24px}
+.lb[hidden]{display:none}
+.lb-box{background:#fff;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:14px 16px 16px;max-width:min(92vw,900px);max-height:92vh;display:flex;flex-direction:column;gap:10px}
+.lb-hd{display:flex;align-items:center;gap:10px}
+.lb-t{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic",sans-serif;font-size:15px;font-weight:700;color:var(--navy)}
+.lb-s{font-size:12px;color:var(--grey)}
+.lb-x{margin-left:auto;border:none;background:none;font-size:26px;line-height:1;color:var(--grey);cursor:pointer;padding:0 4px}.lb-x:hover{color:var(--navy)}
+.lb-img{display:flex;align-items:center;justify-content:center;min-width:min(80vw,600px);min-height:min(60vh,600px);background:#fff}
+.lb-img img{width:min(80vw,600px);height:min(70vh,600px);object-fit:contain}
 .pic .big.over{border:2px dashed var(--red);background:var(--bg)}
 .pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
 .pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px}
@@ -131,18 +142,19 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.00</span>
+    <span class="vbadge">LL v1.01</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
 <div class="tabs" id="tabs"></div>
 <div class="page" id="page"></div>
 <div class="toast" id="toast"></div>
+<div class="lb" id="lb" hidden><div class="lb-box" role="dialog" aria-modal="true"><div class="lb-hd"><span class="lb-t" id="lbT"></span><span class="lb-s" id="lbS"></span><button class="lb-x" id="lbX" title="Close (Esc)">&times;</button></div><div class="lb-img" id="lbImg"></div></div></div>
 <input type="file" id="picFile" accept="image/*" hidden>
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.00';
+const VERSION = 'LL v1.01';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -352,6 +364,20 @@ async function removePicture(l, slot){
   l.img[slot] = ''; logEdit(l, s[1] + ' picture', old, '(removed, moved to Images\\DELETE)'); touch(); render();
 }
 
+// LL v1.01: click the spec art, logo, or sew-out picture to see it bigger in a pop-up
+const popAttr = (l, k) => l.img[k] ? ' data-pop="' + k + '" data-id="' + esc(l.id) + '" title="Click to see it bigger"' : '';
+async function openPop(l, k){
+  const s = SLOTS.find(x => x[0] === k), name = l.img[k]; if (!s || !name) return;
+  document.getElementById('lbT').textContent = l.emb || l.id; document.getElementById('lbS').textContent = s[1];
+  const box = document.getElementById('lbImg'); box.innerHTML = '<span class="muted">Loading&hellip;</span>';
+  document.getElementById('lb').hidden = false;
+  const u = dirHandle ? await loadImg(name) : '';
+  box.innerHTML = u ? '<img src="' + u + '" alt="' + esc(s[1]) + '">' : '<span class="muted">Couldn&rsquo;t open ' + esc(name) + '. Reconnect Excel (top right).</span>';
+}
+const closePop = () => { document.getElementById('lb').hidden = true; document.getElementById('lbImg').innerHTML = ''; };
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb' || e.target.closest('#lbX')) closePop(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('lb').hidden) closePop(); });
+
 // ---------------- Edits ----------------
 function logEdit(l, what, from, to){ DB.edits.push({ts:nowStamp(), id:l.id, emb:l.emb, what, from:String(from == null ? '' : from), to:String(to == null ? '' : to), by:BY}); }
 const showVal = v => v === true ? '✓' : v === false ? '—' : v;
@@ -388,9 +414,9 @@ function matches(l){
 // ---------------- Columns ----------------
 const C = {
   chev: {h:'', w:'22px', nos:true, v:l => '<span class="chev">' + (state.open === l.id ? '&#9660;' : '&#9654;') + '</span>'},
-  spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th">' + imgTag(l.img.spec) + '</div>'},
-  logo: {h:'Logo', w:'76px', nos:true, v:l => '<div class="th">' + imgTag(l.img.logo) + '</div>'},
-  sew:  {h:'Sew-Out', w:'76px', nos:true, v:l => '<div class="th">' + imgTag(l.img.sew) + '</div>'},
+  spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th"' + popAttr(l, 'spec') + '>' + imgTag(l.img.spec) + '</div>'},
+  logo: {h:'Logo', w:'76px', nos:true, v:l => '<div class="th"' + popAttr(l, 'logo') + '>' + imgTag(l.img.logo) + '</div>'},
+  sew:  {h:'Sew-Out', w:'76px', nos:true, v:l => '<div class="th"' + popAttr(l, 'sew') + '>' + imgTag(l.img.sew) + '</div>'},
   emb:  {h:'EMB ID', w:'17%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span>'},
   embS: {h:'EMB ID', w:'19%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span><span class="sch">' + esc(l.school) + '</span>'},
   school:{h:'School / Account', w:'12%', s:l => l.school, v:l => esc(l.school)},
@@ -455,7 +481,7 @@ function cardHtml(l){
     '<div class="note" id="ms-' + id + '">' + msText(l) + '</div>';
   const b4 = '<textarea data-f="notes" data-id="' + id + '" style="min-height:80px">' + esc(l.notes) + '</textarea>';
   const b5 = '<div class="cbs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t) + '</label>').join('') + '</div>';
-  const b6 = '<div class="pics">' + SLOTS.map(([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '" title="Drop a picture here">' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
+  const b6 = '<div class="pics">' + SLOTS.map(([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '"' + (l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger (or drop a new picture here)"' : ' title="Drop a picture here"') + '>' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
     '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts"><button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">' + (l.img[k] ? 'Replace' : 'Add') + '</button>' + (l.img[k] ? '<button class="btn light small" data-act="unpic" data-slot="' + k + '" data-id="' + id + '">Remove</button>' : '') + '</div></div>').join('') + '</div>' +
     '<div class="note">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
   return '<div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + box(1, 'Logo', esc(l.id), b1) + box(2, 'Size &amp; Thread Colors', '', b2) + box(3, 'Files on Hand', '', b3) + box(4, 'Notes', '', b4) +
@@ -566,6 +592,8 @@ page.addEventListener('click', async e => {
   if (th){ const k = th.dataset.sort, s = state.sort[state.tab]; state.sort[state.tab] = s && s.k === k ? {k, d:-s.d} : {k, d:1}; saveUi(); render(); return; }
   const sh = e.target.closest('.sec-head[data-sec]');
   if (sh){ const k = sh.dataset.sec, open = sh.querySelector('.chev').innerHTML.charCodeAt(0) === 9660; state.secOpen[k] = !open; saveUi(); render(); return; }
+  const pop = e.target.closest('[data-pop]');
+  if (pop){ const l = byId(pop.dataset.id); if (l) openPop(l, pop.dataset.pop); return; }
   if (e.target.closest('.card-cell')) return;
   const row = e.target.closest('tr.row');
   if (row){ state.open = state.open === row.dataset.id ? '' : row.dataset.id; render(); }
