@@ -159,6 +159,11 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .inote-add textarea{flex:1;min-width:0;min-height:54px}
 .inote-add .btn{flex:none;white-space:nowrap}
 .todo-tc{margin-top:10px}
+/* LL v1.09: Box drive uploads (version + date) */
+.boxsec{margin-top:12px;padding-top:10px;border-top:1px solid #EEF0F4}
+.boxsec-h{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:6px}
+.ctbl input[type=date]{padding:5px 7px}
+.ft.box{background:#e8f0fb;color:#1d4f91}
 /* LL v1.07: Copy button never squished */
 .pathrow input{flex:1;min-width:0}
 .pathrow .btn{flex:none;white-space:nowrap}
@@ -185,7 +190,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.08</span>
+    <span class="vbadge">LL v1.09</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -197,7 +202,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.08';
+const VERSION = 'LL v1.09';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -212,18 +217,18 @@ const FILES = [['fEmb', 'EMB'], ['fDst', 'DST'], ['fPng', 'PNG'], ['fSpec', 'Spe
 // Logos sheet: [header, field, kind]
 const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Type','type'],['Ver','ver'],['Spec H','specH','num'],['Spec W','specW','num'],['DST H','dstH','num'],['DST W','dstW','num'],
   ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Clrs','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
-  ['Approved (Box)','box','box'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
+  ['Approved (Box)','box','box'],['Box Drive','boxes','boxes'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
   ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew']];
 const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Clrs',
   fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
-const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Deleted Logos', 'Info'];
+const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
 function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], deleted:[], schools:{}, other:[], savedAt:''}; }
 const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived and retired logos only show in their school (Accounts tab) or at the bottom of Mainline
 const inactive = l => l.status === ARCH || l.status === RETIRED;
 const activeLogos = () => DB.logos.filter(l => !inactive(l));
 function ensureLists(db){ [ARCH, RETIRED].forEach(v => { if (!db.lists.status.includes(v)) db.lists.status.push(v); }); return db; }
-function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:''}}; }
+function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:''}}; }
 const byId = id => DB.logos.find(l => l.id === id);
 function sizeCheck(l){ const n = [l.specH, l.specW, l.dstH, l.dstW].map(v => parseFloat(v));
   if (String(l.specH).trim() === '' || String(l.dstH).trim() === '' || n.some(isNaN)) return '';
@@ -240,6 +245,12 @@ function migrateNotes(db){   // the old single Notes box becomes the first note 
 }
 // LL v1.08: To Do = one dropdown (the step) + its own Check Thread Colors checkbox
 const TC = 'Check Thread Colors';
+// LL v1.09: Box drive uploads, newest first: [{ver, date:'YYYY-MM-DD'}]
+const bx = l => l.boxes || (l.boxes = []);
+const isoDay = v => { v = String(v || '').trim(); let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]);
+  m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if (m) return (m[3].length === 2 ? '20' + m[3] : m[3]) + '-' + pad(+m[1]) + '-' + pad(+m[2]); return v; };
+const boxText = b => [b.ver ? 'Ver ' + b.ver : 'no version', b.date ? fmtDate(b.date) : 'no date'].join(' · ');
+const sortBoxes = l => bx(l).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 const stepOf = l => l.todo.find(t => t !== TC) || '';
 const isApproved = l => l.status === 'Approved' || !!l.box;
 const apPill = l => isApproved(l) ? '<span class="apill" title="' + (l.status === 'Approved' && l.box ? 'Status Approved + Approved (Box)' : l.box ? 'Approved (Box)' : 'Status Approved') + '">APPROVED</span>' : '';
@@ -253,6 +264,7 @@ function cellOut(l, f, kind){
   if (kind === 'box') return l[f] ? '✓' : '';
   if (kind === 'list') return (l[f] || []).join('; ');
   if (kind === 'notes') return notesText(l.id);
+  if (kind === 'boxes') return bx(l).map(b => (b.ver || '-') + ' ' + (b.date ? fmtDate(b.date) : '')).join('; ');
   if (kind === 'num'){ const s = String(l[f] == null ? '' : l[f]).trim(); return s !== '' && isFinite(+s) ? +s : s; }
   if (f.startsWith('img_')) return l.img[f.slice(4)] || '';
   return l[f] == null ? '' : l[f];
@@ -260,7 +272,7 @@ function cellOut(l, f, kind){
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(DB.logos.map(l => COLS.map(([, f, k]) => cellOut(l, f, k)))));
-  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 16, 40, 8, 14, 40, 40, 28, 28, 28].map(w => ({wch:w}));
+  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, 'Logos');
   DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
   // LL v1.06: school info + colors (current set and past sets, newest first)
@@ -284,9 +296,12 @@ function buildWorkbook(){
   const ns = XLSX.utils.aoa_to_sheet([['Date','Time','LL ID / School','EMB ID / School','Note','By']].concat((DB.notes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.id, nm(n.id), n.text, n.by])));
   ns['!cols'] = [12, 10, 14, 24, 80, 12].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, ns, 'Internal Notes');
+  const bxr = []; DB.logos.forEach(l => bx(l).forEach(b => bxr.push([l.id, l.emb, b.ver, b.date])));
+  const bs = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID', 'Version', 'Date added']].concat(bxr)); bs['!cols'] = [10, 24, 9, 12].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, bs, 'Box Drive');
   if (DB.deleted.length){ const ds = XLSX.utils.aoa_to_sheet([['Deleted at'].concat(COLS.map(c => c[0]))].concat(DB.deleted)); ds['!cols'] = [18].concat(COLS.map(() => 14)).map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ds, 'Deleted Logos'); }
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || nowStamp()], ['Saved by', VERSION],
-    ['Note', 'Keep this file closed in Excel while the Logo Library page is open. Pictures live in the Images folder; the image columns hold their file names. To Do = items separated by "; ". Internal notes live in the Internal Notes sheet; the Notes columns on Logos and Schools are a copy for reading (edit notes on the page).']]);
+    ['Note', 'Keep this file closed in Excel while the Logo Library page is open. Pictures live in the Images folder; the image columns hold their file names. To Do = items separated by "; ". Box drive uploads live in the Box Drive sheet (the Box Drive column on Logos is a copy). Internal notes live in the Internal Notes sheet; the Notes columns on Logos and Schools are a copy for reading (edit notes on the page).']]);
   info['!cols'] = [{wch:12}, {wch:110}];
   XLSX.utils.book_append_sheet(wb, info, 'Info');
   return XLSX.write(wb, {bookType:'xlsx', type:'array'});
@@ -301,6 +316,7 @@ function readWorkbook(buf){
     COLS.forEach(([h, f, k]) => { const v = get(h);
       if (k === 'calc') return;
       if (k === 'notes'){ l.notes = v; return; }
+      if (k === 'boxes') return;
       if (k === 'check' || k === 'box') l[f] = /✓|^y/i.test(v);
       else if (k === 'list') l[f] = v.split(/\s*;\s*/).filter(Boolean);
       else if (f.startsWith('img_')) l.img[f.slice(4)] = v;
@@ -320,6 +336,8 @@ function readWorkbook(buf){
   rows('School Colors').slice(1).filter(r => String(r[0]).trim()).forEach(r => {
     const k = String(r[0]).trim(), x = db.schools[k] || (db.schools[k] = {name:'', code:'', notes:'', colors:[], past:[]}), c = {name:String(r[3] || ''), pms:String(r[4] || ''), mad:String(r[5] || '')};
     if (/^past/i.test(r[1])){ const u = String(r[2] || ''); let pz = x.past.find(z => z.until === u); if (!pz) x.past.push(pz = {until:u, colors:[]}); pz.colors.push(c); } else x.colors.push(c); });
+  rows('Box Drive').slice(1).filter(r => String(r[0]).trim()).forEach(r => { const l = db.logos.find(x => x.id === String(r[0]).trim()); if (l) l.boxes.push({ver:String(r[2] || ''), date:isoDay(r[3])}); });
+  db.logos.forEach(l => l.boxes.sort((a, b) => String(b.date).localeCompare(String(a.date))));
   const nr = rows('Internal Notes');
   if (wb.Sheets['Internal Notes']){ nr.slice(1).filter(r => r[0] && String(r[4]).trim()).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5] || '')}));
     db.logos.forEach(l => { l.notes = ''; }); Object.values(db.schools).forEach(x => { x.notes = ''; }); }
@@ -526,7 +544,7 @@ const C = {
   ver:  {h:'Ver', w:'5%', s:l => l.ver, v:l => esc(l.ver) || '<span class="muted">&mdash;</span>'},
   size: {h:'Size (H × W)', w:'11%', s:l => parseFloat(l.specH) || 0, v:l => (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : '<span class="muted">&mdash;</span>') + (sizeCheck(l) === 'CHECK' ? '<span class="chk-bad" title="Spec and DST sizes differ by more than 0.05&quot;">CHECK</span>' : '')},
   clrs: {h:'# Clrs', w:'6%', s:l => parseFloat(l.clrs) || 0, v:l => esc(l.clrs) || '<span class="muted">&mdash;</span>'},
-  files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length, v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('')},
+  files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (bx(l).length ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (bx(l).length ? '<span class="ft box" title="In Box: ' + esc(bx(l).map(boxText).join(', ')) + '">Box' + (bx(l)[0].ver ? ' ' + esc(bx(l)[0].ver) : '') + '</span>' : '')},
   status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
   todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
   flag: {h:'Flag', w:'10%', s:l => (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
@@ -581,7 +599,7 @@ function cardHtml(l){
   const b3 = '<div class="cbs c4">' + FILES.map(([k, n]) => '<label class="cb"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '> ' + n + '</label>').join('') + '</div>' +
     '<div class="emb-fld" style="margin-top:10px"><label>Folder</label><div class="pathrow"><input data-f="folder" data-id="' + id + '" value="' + esc(l.folder) + '"><button class="btn light small" data-act="copyFolder" data-id="' + id + '"' + (l.folder ? '' : ' disabled') + '>Copy</button></div>' +
     '<div class="note">Copy the path, then paste it into File Explorer&rsquo;s address bar (browsers can&rsquo;t open folders from a web page).</div></div>' +
-    '<div class="note" id="ms-' + id + '">' + msText(l) + '</div>';
+    '<div class="note" id="ms-' + id + '">' + msText(l) + '</div>' + boxSec(l);
   const b4 = notesBox(l.id);
   const b5 = '<div class="emb-fld"><label>To Do</label><select data-step="1" data-id="' + id + '">' + opt(L.todo.filter(t => t !== TC), stepOf(l), 'Nothing to do') + '</select></div>' +
     '<label class="cb todo-tc"><input type="checkbox" data-todo="' + esc(TC) + '" data-id="' + id + '"' + (l.todo.includes(TC) ? ' checked' : '') + '> ' + esc(TC) + '</label>';
@@ -590,6 +608,13 @@ function cardHtml(l){
     '<div class="note">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
   return '<div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + box(1, 'Logo', esc(l.id), b1) + box(2, 'Size &amp; Thread Colors', '', b2) + box(3, 'Files on Hand', '', b3) + box(4, 'Internal notes', '<span id="nc-' + id + '">' + notesFor(l.id).length + '</span>', b4) +
     '</div><div class="emb-col">' + box(5, 'To Do', '<span id="tc-' + id + '">' + tcText(l) + '</span>', b5) + box(6, 'Pictures', '', b6) + box(7, 'History', '', '<details class="emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></details>') + '</div></div>' + footHtml(l) + '</div>';
+}
+function boxSec(l){   // LL v1.09: each time it goes to the Box drive (version + date), newest first
+  const id = esc(l.id), B = bx(l);
+  return '<div class="boxsec"><div class="boxsec-h">Box drive</div>' + (B.length ? '<table class="ctbl"><thead><tr><th>Version</th><th>Date added</th><th></th></tr></thead><tbody>' +
+    B.map((b, i) => '<tr><td><input data-bx="ver" data-i="' + i + '" data-id="' + id + '" value="' + esc(b.ver) + '"></td><td><input type="date" data-bx="date" data-i="' + i + '" data-id="' + id + '" value="' + esc(b.date) + '"></td><td class="x"><button class="xbtn" data-act="boxDel" data-i="' + i + '" data-id="' + id + '" title="Remove this Box entry">&times;</button></td></tr>').join('') + '</tbody></table>'
+    : '<div class="emb-val muted">Not added to Box yet.</div>') +
+    '<div style="margin-top:8px"><button class="btn light small" data-act="boxAdd" data-id="' + id + '">+ Added to Box</button></div><div class="note">Fills in this logo&rsquo;s Ver and today&rsquo;s date; change either one if needed.</div></div>';
 }
 function scText(l){ const sc = sizeCheck(l); return 'Size Check: ' + (sc === 'CHECK' ? '<span class="chk-bad" style="margin:0">CHECK</span> spec and DST differ by more than 0.05&quot;' : sc === 'OK' ? '<b style="color:#256b31">OK</b>' : 'needs Spec H and DST H'); }
 const msText = l => 'Missing: ' + (missing(l) ? '<b>' + esc(missing(l)) + '</b>' : 'nothing');
@@ -813,6 +838,9 @@ page.addEventListener('click', async e => {
     if (a === 'delete' && l){ deleteLogo(l); return; }
     if (a === 'aClear'){ state.audit = {q:'', what:'', from:'', to:''}; saveUi(); render(); return; }
     if (a === 'done' && l){ setTodo(l, act.dataset.todo, false); render(); toast(esc(l.emb) + ': ' + esc(act.dataset.todo) + ' done.'); return; }
+    if (a === 'boxAdd' && l){ const b = {ver:l.ver || '', date:nowStamp().slice(0, 10)}; bx(l).unshift(b); sortBoxes(l); logEdit(l, 'Added to Box', '', boxText(b)); touch(); render(); toast(esc(l.emb) + ' marked as added to Box.'); return; }
+    if (a === 'boxDel' && l){ const b = bx(l)[+act.dataset.i]; if (!b || !confirm('Remove the Box entry ' + boxText(b) + ' from ' + (l.emb || l.id) + '?')) return;
+      bx(l).splice(+act.dataset.i, 1); logEdit(l, 'Removed Box entry', boxText(b), ''); touch(); render(); return; }
     if (a === 'noteAdd'){ const nid = act.dataset.nid, t = document.querySelector('.note-in[data-nid="' + CSS.escape(nid) + '"]'); if (t && addNote(nid, t.value)){ render(); toast('Note added.'); } return; }
     if (a === 'copyFolder' && l){ try { await navigator.clipboard.writeText(l.folder); toast('Folder path copied.'); } catch(err){ toast('Couldn&rsquo;t copy.'); } return; }
     if (a === 'pic' && l){ pickFor = [l.id, act.dataset.slot]; const fi = document.getElementById('picFile'); fi.value = ''; fi.click(); return; }
@@ -847,6 +875,9 @@ page.addEventListener('change', e => {
   const l = t.dataset.id ? byId(t.dataset.id) : null; if (!l) return;
   if (t.dataset.todo){ setTodo(l, t.dataset.todo, t.checked); refreshRow(l); return; }
   if (t.dataset.step){ setStep(l, t.value); refreshRow(l); return; }
+  if (t.dataset.bx){ const b = bx(l)[+t.dataset.i], k = t.dataset.bx, v = k === 'date' ? t.value : t.value.trim(); if (!b || b[k] === v) return;
+    const was = boxText(b); b[k] = v; logEdit(l, 'Box ' + (k === 'ver' ? 'version' : 'date'), was, boxText(b)); touch();
+    if (k === 'date'){ sortBoxes(l); render(); } else refreshRow(l); return; }
   const f = t.dataset.f; if (!f) return;
   if (t.type === 'checkbox') setField(l, f, t.checked); else setField(l, f, t.value.trim());
   refreshRow(l);
