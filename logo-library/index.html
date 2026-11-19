@@ -92,8 +92,8 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .emb-grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .emb-fld{min-width:0}.emb-fld.full{grid-column:1 / -1}
 .emb-fld>label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:3px}
-.emb-card input:not([type=checkbox]):not([type=file]),.emb-card select,.emb-card textarea,.af input,.af select{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
-.emb-card textarea{min-height:56px;resize:vertical}
+.emb-card input:not([type=checkbox]):not([type=file]),.emb-card select,.emb-card textarea,.af input,.af select,.school-top input,.school-top textarea{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.emb-card textarea,.school-top textarea{min-height:56px;resize:vertical}
 .emb-val{font-size:13px;color:var(--navy);padding:6px 0}
 .cb{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;cursor:pointer;color:var(--navy)}
 .cb input{width:16px;height:16px;accent-color:var(--navy);cursor:pointer}
@@ -105,6 +105,17 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .pic .big{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:#F7F8FB;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#B5BCC8;font-size:12px}
 .pic .big img{width:100%;height:100%;object-fit:contain;background:#fff}
 [data-pop]{cursor:zoom-in}
+/* LL v1.06: school page (info, colors, past colors) */
+.school-top{margin-bottom:22px}
+.ctbl{width:100%;border-collapse:collapse;font-size:13px}
+.ctbl th{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);text-align:left;padding:0 6px 6px 0}
+.ctbl td{padding:3px 6px 3px 0;vertical-align:middle}
+.ctbl td.x{width:28px;text-align:right}
+.ctbl input{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.xbtn{border:none;background:none;color:var(--grey);font-size:17px;cursor:pointer;padding:0 4px}.xbtn:hover{color:var(--red)}
+.past{border-top:1px solid #EEF0F4;padding:8px 0}.past:first-child{border-top:none;padding-top:0}
+.past-h{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.past-c{font-size:12.5px;color:#49516C;line-height:1.6}
 /* LL v1.04: Accounts tab, Archive / Retire / Restore / Delete */
 .back{background:none;border:none;color:var(--navy);font:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;padding:0}
 .tbl tr.acct-row{cursor:pointer}.tbl tr.acct-row:hover td{background:#F8F9FC}
@@ -162,7 +173,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.05</span>
+    <span class="vbadge">LL v1.06</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -174,7 +185,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.05';
+const VERSION = 'LL v1.06';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -193,9 +204,9 @@ const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Ty
   ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew']];
 const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Clrs',
   fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
-const KNOWN_SHEETS = ['Logos', 'Lists', 'Page Edits', 'Deleted Logos', 'Info'];
+const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
-function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], deleted:[], other:[], savedAt:''}; }
+function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], deleted:[], schools:{}, other:[], savedAt:''}; }
 const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived and retired logos only show in their school (Accounts tab) or at the bottom of Mainline
 const inactive = l => l.status === ARCH || l.status === RETIRED;
 const activeLogos = () => DB.logos.filter(l => !inactive(l));
@@ -226,6 +237,15 @@ function buildWorkbook(){
   ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 16, 40, 8, 14, 40, 40, 28, 28, 28].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, 'Logos');
   DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
+  // LL v1.06: school info + colors (current set and past sets, newest first)
+  const sch = Object.keys(DB.schools).sort(coll.compare);
+  const ss = XLSX.utils.aoa_to_sheet([['Account', 'Full name', 'EMB code', 'Notes']].concat(sch.map(k => { const x = DB.schools[k]; return [k, x.name, x.code, x.notes]; })));
+  ss['!cols'] = [22, 34, 12, 60].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ss, 'Schools');
+  const cr = [];
+  sch.forEach(k => { const x = DB.schools[k]; x.colors.forEach(c => cr.push([k, 'Current', '', c.name, c.pms, c.mad]));
+    x.past.forEach(pz => pz.colors.forEach(c => cr.push([k, 'Past', pz.until, c.name, c.pms, c.mad]))); });
+  const cs = XLSX.utils.aoa_to_sheet([['Account', 'Set', 'Used until', 'Color', 'PMS', 'Madeira']].concat(cr));
+  cs['!cols'] = [22, 9, 12, 20, 14, 12].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, cs, 'School Colors');
   const L = DB.lists, n = Math.max(L.status.length, L.todo.length, L.type.length, L.flag.length);
   const lr = [['STATUS', 'TO DO', 'TYPE', 'FLAG', '', DB.listsNote || 'Edit these lists - the Logo Library page reads its dropdowns and To Do checkboxes from here.']];
   for (let i = 0; i < n; i++) lr.push([L.status[i] || '', L.todo[i] || '', L.type[i] || '', L.flag[i] || '']);
@@ -265,6 +285,10 @@ function readWorkbook(buf){
     db.listsNote = String(li[0][5] || '');
   }
   rows('Page Edits').slice(1).filter(r => r[0]).forEach(r => db.edits.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), emb:String(r[3]), what:String(r[4]), from:String(r[5]), to:String(r[6]), by:String(r[7])}));
+  rows('Schools').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.schools[String(r[0]).trim()] = {name:String(r[1] || ''), code:String(r[2] || ''), notes:String(r[3] || ''), colors:[], past:[]}; });
+  rows('School Colors').slice(1).filter(r => String(r[0]).trim()).forEach(r => {
+    const k = String(r[0]).trim(), x = db.schools[k] || (db.schools[k] = {name:'', code:'', notes:'', colors:[], past:[]}), c = {name:String(r[3] || ''), pms:String(r[4] || ''), mad:String(r[5] || '')};
+    if (/^past/i.test(r[1])){ const u = String(r[2] || ''); let pz = x.past.find(z => z.until === u); if (!pz) x.past.push(pz = {until:u, colors:[]}); pz.colors.push(c); } else x.colors.push(c); });
   db.deleted = rows('Deleted Logos').slice(1).filter(r => r.some(v => String(v).trim()));
   ensureLists(db);
   wb.SheetNames.filter(n => !KNOWN_SHEETS.includes(n)).forEach(n => db.other.push({name:n, rows:rows(n), cols:wb.Sheets[n]['!cols']}));   // Approved - No Sew-Out, Logo Change Log, anything you add: kept as-is
@@ -525,13 +549,13 @@ const tcText = l => l.todo.length ? l.todo.length + ' open' : 'nothing open';
 const fmtDate = ts => { const [y, m, d] = ts.slice(0, 10).split('-'); return m + '/' + d + '/' + y.slice(2); };
 const time12 = ts => { const h = +ts.slice(11, 13), m = ts.slice(14, 16); return (h % 12 || 12) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM'); };
 const change = e => esc(e.what) + ': ' + (e.from ? '<span class="ch-from">' + esc(e.from) + '</span><span class="ch-arr">&rarr;</span>' : '') + esc(e.to);
-const logoEdits = l => DB.edits.filter(e => e.id === l.id).sort((a, b) => b.ts.localeCompare(a.ts));
+const logoEdits = l => DB.edits.filter(e => e.id === l.id).reverse().sort((a, b) => b.ts.localeCompare(a.ts));
 const histSum = l => { const n = logoEdits(l).length; return 'Show history (' + n + ' entr' + (n === 1 ? 'y' : 'ies') + ')'; };
 const histRows = l => { const h = logoEdits(l); return h.length ? h.map(e => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmtDate(e.ts) + ' ' + time12(e.ts) + '</span><span>' + change(e) + '</span><span class="emb-hist-by">' + esc(e.by) + '</span></div>').join('') : '<div class="emb-val muted">No changes yet.</div>'; };
 function renderAudit(){
   const af = state.audit, aq = af.q.toLowerCase().trim();
   const rows = DB.edits.filter(e => (!af.what || e.what === af.what) && (!af.from || e.ts.slice(0, 10) >= af.from) && (!af.to || e.ts.slice(0, 10) <= af.to) &&
-    (!aq || [e.id, e.emb, (byId(e.id) || {}).school, e.what, e.from, e.to, e.by].join(' ').toLowerCase().includes(aq)));
+    (!aq || [e.id, e.emb, (byId(e.id) || {}).school, e.what, e.from, e.to, e.by].join(' ').toLowerCase().includes(aq))).reverse();
   const today = nowStamp().slice(0, 10), yest = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })();
   const label = d => d === today ? 'Today' : d === yest ? 'Yesterday' : new Date(d + 'T12:00:00').toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
   const days = [...new Set(rows.map(e => e.ts.slice(0, 10)))].sort().reverse();
@@ -547,7 +571,7 @@ function renderAudit(){
     return '<div class="sec"><div class="sec-head" data-sec="' + key + '"><span class="chev">' + (open ? '&#9660;' : '&#9654;') + '</span><span class="name">' + label(d) + '</span><span class="cnt">' + items.length + '</span></div>' +
       (open ? '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:9%"><col style="width:18%"><col style="width:13%"><col style="width:16%"><col style="width:16%"><col style="width:18%"><col style="width:10%"></colgroup>' +
         '<thead><tr><th class="nos">Time</th><th class="nos">Logo</th><th class="nos">School / Account</th><th class="nos">What changed</th><th class="nos">From</th><th class="nos">To</th><th class="nos">By</th></tr></thead><tbody>' +
-        items.map(e => { const l = byId(e.id); return '<tr class="aud-row" data-id="' + esc(e.id) + '" title="' + (l ? 'Open this logo' : 'This logo isn&rsquo;t in the library anymore') + '"><td>' + time12(e.ts) + '</td><td><span class="emb">' + esc(e.emb) + '</span></td><td>' + esc(l ? l.school : '') + '</td><td>' + esc(e.what) + '</td><td>' + (e.from ? '<span class="ch-from">' + esc(e.from) + '</span>' : '<span class="muted">&mdash;</span>') + '</td><td>' + (esc(e.to) || '<span class="muted">(blank)</span>') + '</td><td>' + esc(e.by) + '</td></tr>'; }).join('') +
+        items.map(e => { const l = byId(e.id), isS = e.id.startsWith('S:'); return '<tr class="aud-row" data-id="' + esc(e.id) + '" title="' + (isS ? 'Open this school' : l ? 'Open this logo' : 'This logo isn&rsquo;t in the library anymore') + '"><td>' + time12(e.ts) + '</td><td><span class="emb">' + esc(e.emb) + '</span></td><td>' + esc(l ? l.school : isS ? e.id.slice(2) : '') + '</td><td>' + esc(e.what) + '</td><td>' + (e.from ? '<span class="ch-from">' + esc(e.from) + '</span>' : '<span class="muted">&mdash;</span>') + '</td><td>' + (esc(e.to) || '<span class="muted">(blank)</span>') + '</td><td>' + esc(e.by) + '</td></tr>'; }).join('') +
         '</tbody></table></div>' : '') + '</div>';
   }).join('');
 }
@@ -590,7 +614,7 @@ function renderAccounts(){   // LL v1.04: schools; click one to see its logos, a
   if (state.acct){
     const name = state.acct, mine = g[name] || [];
     const a = mine.filter(l => !inactive(l)), ar = mine.filter(l => l.status === ARCH), re = mine.filter(l => l.status === RETIRED);
-    return '<button class="back" data-act="acctBack">&larr; All accounts</button><h1>' + esc(name) + '</h1><div class="bar"><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
+    return '<button class="back" data-act="acctBack">&larr; All accounts</button><h1>' + esc(name) + '</h1>' + schoolTop(name) + '<div class="bar"><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
       '<span class="count">' + a.length + ' logos &middot; ' + ar.length + ' archived &middot; ' + re.length + ' retired</span></div>' +
       sectionHtml('accounts', 'Logos', a.filter(matches), true) + sectionHtml('accounts', 'Archived', ar.filter(matches), false) + sectionHtml('accounts', 'Retired', re.filter(matches), false);
   }
@@ -602,6 +626,31 @@ function renderAccounts(){   // LL v1.04: schools; click one to see its logos, a
     '<thead><tr><th class="nos">School / Account</th><th class="nos">Logos</th><th class="nos">Approved</th><th class="nos">Archived</th><th class="nos">Retired</th></tr></thead><tbody>' +
     (names.length ? names.map(k => { const L = g[k]; return '<tr class="acct-row" data-acct="' + esc(k) + '"><td><span class="emb">' + esc(k) + '</span></td><td>' + cnt(n(L, l => !inactive(l))) + '</td><td>' + cnt(n(L, l => !inactive(l) && isApproved(l))) + '</td><td>' + cnt(n(L, l => l.status === ARCH)) + '</td><td>' + cnt(n(L, l => l.status === RETIRED)) + '</td></tr>'; }).join('')
       : '<tr><td colspan="5"><div class="empty">No schools match &ldquo;' + esc(q) + '&rdquo;.</div></td></tr>') + '</tbody></table></div>';
+}
+// ---------------- School page (LL v1.06) ----------------
+const blankSchool = () => ({name:'', code:'', notes:'', colors:[], past:[]});
+const schoolGet = k => DB.schools[k] || blankSchool();
+const schoolSave = (k, x) => { DB.schools[k] = x; return x; };
+const SKEY = k => 'S:' + k;
+const colorText = c => [c.name, c.pms ? 'PMS ' + c.pms : '', c.mad ? 'Madeira ' + c.mad : ''].filter(Boolean).join(' · ');
+function schoolLog(k, what, from, to){ DB.edits.push({ts:nowStamp(), id:SKEY(k), emb:k, what, from:String(from || ''), to:String(to || ''), by:BY}); }
+function schoolHist(k){ const h = DB.edits.filter(e => e.id === SKEY(k)).reverse().sort((a, b) => b.ts.localeCompare(a.ts));
+  return h.length ? h.map(e => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmtDate(e.ts) + ' ' + time12(e.ts) + '</span><span>' + change(e) + '</span><span class="emb-hist-by">' + esc(e.by) + '</span></div>').join('') : '<div class="emb-val muted">No changes yet.</div>'; }
+function schoolTop(k){
+  const x = schoolGet(k), a = ' data-acct="' + esc(k) + '"';
+  const info = '<div class="emb-grid"><div class="emb-fld"><label>Full name</label><input data-sf="name"' + a + ' value="' + esc(x.name) + '" placeholder="e.g. University of Arkansas"></div>' +
+    '<div class="emb-fld"><label>Abbreviation / EMB code</label><input data-sf="code"' + a + ' value="' + esc(x.code) + '" placeholder="e.g. AK"></div>' +
+    '<div class="emb-fld full"><label>Notes</label><textarea data-sf="notes"' + a + ' style="min-height:80px">' + esc(x.notes) + '</textarea></div></div>';
+  const colors = '<table class="ctbl"><thead><tr><th>Color</th><th>PMS</th><th>Madeira thread</th><th></th></tr></thead><tbody>' +
+    (x.colors.length ? x.colors.map((c, i) => '<tr><td><input data-sc="name" data-i="' + i + '"' + a + ' value="' + esc(c.name) + '" placeholder="e.g. Cardinal"></td><td><input data-sc="pms" data-i="' + i + '"' + a + ' value="' + esc(c.pms) + '" placeholder="e.g. 201 C"></td>' +
+      '<td><input data-sc="mad" data-i="' + i + '"' + a + ' value="' + esc(c.mad) + '" placeholder="e.g. 1181"></td><td class="x"><button class="xbtn" data-act="colDel" data-i="' + i + '"' + a + ' title="Remove this color">&times;</button></td></tr>').join('')
+      : '<tr><td colspan="4" class="muted" style="padding:6px 0">No colors yet.</td></tr>') + '</tbody></table>' +
+    '<div class="btns" style="display:flex;gap:8px;margin-top:10px"><button class="btn light small" data-act="colAdd"' + a + '>+ Add color</button>' +
+    (x.colors.length ? '<button class="btn light small" data-act="colUpdate"' + a + ' title="Keeps today&rsquo;s colors in Past colors, then you change them">School colors changed</button>' : '') + '</div>' +
+    '<div class="note">When the school changes its colors, click <b>School colors changed</b>: the current set is saved in Past colors with today&rsquo;s date, then you update them here.</div>';
+  const past = x.past.length ? x.past.map(pz => '<div class="past"><div class="past-h">Used until ' + esc(pz.until ? fmtDate(pz.until) : '?') + '</div><div class="past-c">' + pz.colors.map(c => esc(colorText(c))).join('<br>') + '</div></div>').join('') : '<div class="emb-val muted">No past colors yet.</div>';
+  const hist = '<details class="emb-hist" data-hist="' + esc(SKEY(k)) + '"' + (histOpen[SKEY(k)] ? ' open' : '') + '><summary>Show history (' + DB.edits.filter(e => e.id === SKEY(k)).length + ')</summary><div class="emb-hist-list" id="shl">' + schoolHist(k) + '</div></details>';
+  return '<div class="school-top emb-card-cols"><div class="emb-col">' + box(1, 'School Info', '', info) + box(4, 'History', '', hist) + '</div><div class="emb-col">' + box(2, 'School Colors', x.colors.length + ' color' + (x.colors.length === 1 ? '' : 's'), colors) + box(3, 'Past Colors', x.past.length ? x.past.length + ' set' + (x.past.length === 1 ? '' : 's') : '', past) + '</div></div>';
 }
 function footHtml(l){   // Archive / Retire / Restore / Delete
   const id = esc(l.id);
@@ -698,6 +747,16 @@ page.addEventListener('click', async e => {
       saveUi(); render(); return;
     }
     if (a === 'clearF'){ state.f = {}; saveUi(); render(); return; }
+    if (a === 'colAdd' || a === 'colDel' || a === 'colUpdate'){
+      const k = act.dataset.acct, x = schoolSave(k, schoolGet(k));
+      if (a === 'colAdd'){ x.colors.push({name:'', pms:'', mad:''}); render(); const ins = document.querySelectorAll('input[data-sc="name"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+      if (a === 'colDel'){ const c = x.colors[+act.dataset.i]; if (!c) return; if ((c.name || c.pms || c.mad) && !confirm('Remove ' + (colorText(c) || 'this color') + '?')) return;
+        x.colors.splice(+act.dataset.i, 1); if (c.name || c.pms || c.mad) schoolLog(k, 'Color removed', colorText(c), ''); touch(); render(); return; }
+      if (!confirm('Save the current colors in Past colors (used until today), then update them?')) return;
+      const today = nowStamp().slice(0, 10), keep = x.colors.filter(c => c.name || c.pms || c.mad).map(c => Object.assign({}, c));
+      x.past.unshift({until:today, colors:keep}); schoolLog(k, 'School colors changed', keep.map(colorText).join('; '), '(saved in Past colors, used until ' + fmtDate(today) + ')');
+      touch(); render(); toast('Old colors saved in Past colors. Update the colors now.'); return;
+    }
     if (a === 'acctBack'){ state.acct = ''; state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
     if ((a === 'archive' || a === 'retire') && l){ setInactive(l, a === 'retire' ? RETIRED : ARCH); return; }
     if (a === 'restore' && l){ restoreLogo(l); return; }
@@ -716,6 +775,7 @@ page.addEventListener('click', async e => {
   const acr = e.target.closest('tr.acct-row');
   if (acr){ state.acct = acr.dataset.acct; state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
   const ar = e.target.closest('tr.aud-row');
+  if (ar && ar.dataset.id.startsWith('S:')){ state.tab = 'accounts'; state.acct = ar.dataset.id.slice(2); state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
   if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo isn&rsquo;t in the library anymore.'); return; }
   const pop = e.target.closest('[data-pop]');
   if (pop){ const l = byId(pop.dataset.id); if (l) openPop(l, pop.dataset.pop); return; }
@@ -727,6 +787,12 @@ page.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.filter){ state.f[t.dataset.filter] = t.value; saveUi(); render(); return; }
   if (t.dataset.audit){ state.audit[t.dataset.audit] = t.value; saveUi(); render(); return; }
+  if (t.dataset.sf || t.dataset.sc){   // school page: save without redrawing (so the next click still lands)
+    const k = t.dataset.acct, x = schoolSave(k, schoolGet(k)), v = t.value.trim(), LBL = {name:'Full name', code:'Abbreviation / EMB code', notes:'Notes', pms:'PMS', mad:'Madeira'};
+    if (t.dataset.sf){ if (x[t.dataset.sf] === v) return; schoolLog(k, 'School ' + LBL[t.dataset.sf], x[t.dataset.sf], v); x[t.dataset.sf] = v; }
+    else { const c = x.colors[+t.dataset.i]; if (!c || c[t.dataset.sc] === v) return; schoolLog(k, 'Color ' + (+t.dataset.i + 1) + ' ' + (LBL[t.dataset.sc] || 'name'), c[t.dataset.sc], v); c[t.dataset.sc] = v; }
+    touch(); const hl = document.getElementById('shl'); if (hl) hl.innerHTML = schoolHist(k); return;
+  }
   const l = t.dataset.id ? byId(t.dataset.id) : null; if (!l) return;
   if (t.dataset.todo){ setTodo(l, t.dataset.todo, t.checked); refreshRow(l); return; }
   const f = t.dataset.f; if (!f) return;
