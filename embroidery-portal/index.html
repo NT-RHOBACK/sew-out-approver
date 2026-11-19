@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.58</span>
+    <span class="vbadge">EP v2.59</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.58';
+const VERSION = 'EP v2.59';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1158,6 +1158,7 @@ function sewBox(l){
       '<div class="note">Automatic follow-ups are logged here and in the bell (no emails are sent from this page).</div></div>'; }
   inner += '<div class="emb-grid" style="margin-top:12px">' + ef('Sent to Barrett', '<div class="emb-val emb-dim">' + (sentStamp(l) ? sentText(l) : 'Not sent yet') + '</div>') +
     ef('Sew-out image', '<div class="emb-val emb-dim">' + (photoIn(l) ? '&#10003; Uploaded' : 'Pending') + '</div>') + '</div>';
+  if (l.status === 'Review Sew Out') inner += rejBox(l, 'sew');   // EP v2.59
   inner += barConv(l);   // EP v2.14 (Part 8)
   return ebox(4, 'Sew-out request to Barrett', barNew(l) ? '<span class="new-reply">New reply</span>' : '', inner);
 }
@@ -1180,7 +1181,7 @@ function sheetBox(l){   // EP v2.05: live layout
     '<button class="btn small" data-x="appr-sent" data-id="' + id + '" title="Marks it sent. Email it to the rep from Outlook.">Mark sent</button></div>' +
     (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(apprContactOf(l) || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : '') +
     (l.approvedBy ? '<div class="emb-ok">&#10003; Approved by ' + esc(l.approvedBy) + ' on ' + fmt(l.approvedAt) + ' ' + time12(l.approvedAt) + '</div><button class="btn light small" data-x="appr-undo" data-id="' + id + '">Undo approval</button>'   // EP v2.12
-     : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="peopleList" value="' + esc(apprContactOf(l)) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' : '') + apprExtra(l) + mailPicker(l, 'appr') + uploadSend(l));
+     : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="peopleList" value="' + esc(apprContactOf(l)) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' + (['Sent for Approval','Waiting on Reply'].includes(l.status) ? rejBox(l, 'cust') : '') : '') + apprExtra(l) + mailPicker(l, 'appr') + uploadSend(l));
 }
 // EP v2.22: Upload / Send is the same step for every department; the card says what it means for this one
 const FINAL_STEP = {'Wholesale':['Upload to EpicStitch + FTP (RepSpark).', 'Mark uploaded', 'Uploaded to EpicStitch + FTP'],
@@ -1205,6 +1206,15 @@ function apprExtra(l){ const id = esc(l.id), rs = apprRems(l), due = l.status ==
   return (rs.length || due ? '<div class="appr-rem">' + rs.map(r => '<div>Approval reminder sent &middot; ' + fmt(r) + ' ' + time12(r) + '</div>').join('') + (due ? '<div class="emb-dim">Next reminder to ' + esc(apprContactOf(l) || 'the rep') + ': ' + fmt(isoOf(due)) + ' (every ' + (urg(off(l.inHand)) === 'red' ? '3' : '5') + ' days)</div>' : '') + '</div>' : '') +
     (['Sent for Approval','Waiting on Reply'].includes(l.status) ? '<div class="bar-test"><div class="emb-dim"><b>Test only:</b> what ' + esc(apprContactOf(l) || 'the rep') + ' would do (email button, email reply, or their portal).</div><textarea class="emb-in rep-test-in" data-id="' + id + '" placeholder="What they want changed&hellip;" style="margin-top:4px"></textarea>' +
       '<div class="btns"><button class="btn light small" data-x="rt-approve" data-id="' + id + '">Rep approves</button><button class="btn light small" data-x="rt-changes" data-id="' + id + '">Rep requests changes</button></div></div>' : ''); }
+let rejOpen = {};   // EP v2.59: reject forms (sew = I don't approve the sew-out; cust = the customer rejected the logo)
+function rejBox(l, kind){ const id = esc(l.id), sew = kind === 'sew', who = apprContactOf(l) || l.rep || 'the rep';
+  if (!rejOpen[l.id + '|' + kind]) return '<div class="btns" style="margin-top:8px"><button class="btn light small" data-x="rej-open" data-id="' + id + '" data-k="' + kind + '">&#10007; ' + (sew ? 'Sew-out not approved' : 'Customer rejected') + '&hellip;</button></div>';
+  return '<div class="f fu-box" style="margin-top:8px"><label>' + (sew ? 'Sew-out not approved' : 'Customer rejected') + '</label>' +
+    '<textarea class="emb-in rej-in" data-id="' + id + '" data-k="' + kind + '" placeholder="' + (sew ? 'Why (required)' : 'What they want changed (required)') + '&hellip;"></textarea>' +
+    (sew ? '<div class="snz"><span class="emb-dim">Next:</span><label class="chk" style="display:inline-flex;align-items:center;gap:4px;margin:0 0 0 10px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;color:inherit"><input type="radio" name="rejTo-' + id + '" value="Digitizing" checked> Back to Digitizing</label><label class="chk" style="display:inline-flex;align-items:center;gap:4px;margin:0 0 0 10px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;color:inherit"><input type="radio" name="rejTo-' + id + '" value="Need to Request Sew Out"> New sew-out request</label></div>'
+         : '<div class="snz"><span class="emb-dim">Next: back to New Request.</span><label class="chk" style="display:inline-flex;align-items:center;gap:4px;margin:0 0 0 10px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;color:inherit"><input type="checkbox" class="rej-mail" data-id="' + id + '" checked> Email ' + esc(who) + ' (opens Outlook)</label></div>') +
+    '<div class="btns"><button class="btn light small" data-x="rej-x" data-id="' + id + '">Cancel</button><button class="btn small" data-x="rej-save" data-id="' + id + '" data-k="' + kind + '">' + (sew ? 'Mark not approved' : 'Mark customer rejected') + '</button></div>' +
+    '<div class="note">' + (sew ? 'Saved in History with the date and time. Reps never see sew-outs.' : 'Saved in Communication and History with the date and time.') + ' Revisions doesn&rsquo;t go up on its own (it isn&rsquo;t always a revision); change it by hand if it is one.</div></div>'; }
 // EP v2.05: the logo card, laid out like the live portal's
 const ebox = (num, title, right, body) => '<div class="emb-box"><div class="emb-box-hd">' + (num ? '<span class="emb-box-num">' + num + '</span>' : '') + '<span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
 let boxShut = {};   // EP v2.13 (Part 7.1): Internal notes / Communication closed by clicking the heading
@@ -1414,6 +1424,20 @@ document.addEventListener('click', async e => {
     toast(esc(reqNo(l) + ' ' + l.logo) + ' was approved by ' + esc(who) + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); return; }
   if (act === 'appr-undo'){ if (!confirm('Undo the approval by ' + l.approvedBy + '?\n\nIt goes back to Sent for Approval.')) return;
     log(l, 'Status', 'Approval undone (was approved by ' + l.approvedBy + ')'); l.approvedBy = ''; l.approvedAt = ''; l.approvedDate = ''; setStatus(l, 'Sent for Approval', ME); touch(); openLogo(l); toast('Approval undone. It&rsquo;s back in Sent for Approval.'); return; }
+  if (act === 'rej-open'){ rejOpen = {}; rejOpen[l.id + '|' + x.dataset.k] = true; render(); const ta = document.querySelector('.rej-in[data-id="' + l.id + '"]'); if (ta) ta.focus(); return; }   // EP v2.59
+  if (act === 'rej-x'){ rejOpen = {}; render(); return; }
+  if (act === 'rej-save'){ const kind = x.dataset.k, ta = document.querySelector('.rej-in[data-id="' + l.id + '"][data-k="' + kind + '"]'), why = ta ? ta.value.trim() : '', n = nowStamp();
+    if (!why){ toast(kind === 'sew' ? 'Type why first.' : 'Type what they want changed first.'); return; }
+    if (kind === 'sew'){ const r = document.querySelector('input[name="rejTo-' + l.id + '"]:checked'), to = r ? r.value : 'Digitizing';
+      (l.sewRejects = l.sewRejects || []).push({at:n, by:ME, why, to, sent:sentStamp(l)});
+      log(l, 'Status', 'Sew-out not approved (marked by ' + ME + '): ' + why); setStatus(l, to, ME); rejOpen = {}; touch(); openLogo(l); toast('Sew-out not approved. Moved to ' + esc(to) + '.'); return; }
+    const who = apprContactOf(l) || l.rep || 'the rep', mail = document.querySelector('.rej-mail[data-id="' + l.id + '"]'), send = !!(mail && mail.checked);
+    (l.custRejects = l.custRejects || []).push({at:n, by:ME, from:who, why});
+    (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:n, by:ME, text:'Customer rejected (from ' + who + '): ' + why, replies:[], resolved:false});
+    log(l, 'Status', 'Customer rejected (from ' + who + ', marked by ' + ME + '): ' + why); setStatus(l, 'New Request', ME); rejOpen = {}; touch(); openLogo(l); toast('Marked customer rejected. Back in New Request.');
+    if (send){ log(l, 'Email', 'Customer rejected email opened in Outlook: to ' + who);
+      location.href = 'mailto:' + encodeURIComponent(who) + '?subject=' + encodeURIComponent(chainSubject(l)) + '&body=' + encodeURIComponent('Hi ' + String(who).split(/\s+/)[0] + ',\n\nChanges requested for ' + l.logo + ':\n' + why + '\n\nThank you!'); }
+    return; }
   if (act === 'appr-open'){ const win = window.open(approverLink(l), 'sewOutApprover'); sendDsts(l, win); }   // EP v2.16 (updates doc Part 16)
   if (act === 'appr-upload'){ const fi = document.getElementById('fileIn'); fi.accept = 'application/pdf,.pdf'; fileTarget = {l, sheet:true}; fi.click(); }
   if (act === 'appr-sent'){
