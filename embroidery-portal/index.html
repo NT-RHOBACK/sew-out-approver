@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.59</span>
+    <span class="vbadge">EP v2.60</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.59';
+const VERSION = 'EP v2.60';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -1378,7 +1378,7 @@ document.addEventListener('click', async e => {
     notify(l, reqNo(l) + ' ' + l.logo + ' was approved by ' + who + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); touch(); openLogo(l); toast('Approved by ' + esc(who) + '. Moved to ' + next + '.'); return; }
   if (act === 'rt-changes'){ const ta = document.querySelector('.rep-test-in[data-id="' + l.id + '"]'), text = ta ? ta.value.trim() : ''; if (!text){ toast('Type what they want changed first.'); return; } const who = apprContactOf(l) || 'Sales rep';
     (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:nowStamp(), by:who, text:'Requested changes: ' + text, replies:[], resolved:false, newForMe:true});
-    const r0 = l.rev || 0; l.rev = r0 + 1; log(l, 'Edit', 'Revisions: ' + r0 + ' > ' + l.rev, who); log(l, 'Status', 'Changes requested by ' + who + ' (test: rep): ' + text, who);
+    log(l, 'Status', 'Changes requested by ' + who + ' (test: rep): ' + text, who);   // EP v2.60: Revisions doesn't go up on its own
     setStatus(l, 'New Request', who); notify(l, reqNo(l) + ' ' + l.logo + ': ' + who + ' requested changes'); touch(); openLogo(l); toast(esc(who) + ' requested changes. Back in New Request.'); return; }
   // EP v2.14 (Parts 8-9): Barrett conversation, snooze, threads, test-only Barrett actions
   if (act === 'bar-new'){ barMsgOpen[l.id] = true; render(); const ta = document.querySelector('.bar-in[data-id="' + l.id + '"]'); if (ta) ta.focus(); return; }
