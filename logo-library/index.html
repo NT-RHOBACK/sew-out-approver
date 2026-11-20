@@ -219,7 +219,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.12</span>
+    <span class="vbadge">LL v1.13</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -231,7 +231,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.12';
+const VERSION = 'LL v1.13';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -914,7 +914,7 @@ async function warehouseExcel(btn){
     ws.mergeCells(2, 1, 2, H.length); ws.getCell(2, 1).value = 'Updated ' + today + '  ·  ' + rows.length + ' SKUs  ·  ' + new Set(rows.filter(r => r.l).map(r => r.l.id)).size + ' logos  ·  one row per SKU'; ws.getCell(2, 1).font = {italic:true, size:10, color:{argb:'FF6B7385'}};
     const hr = ws.getRow(3); hr.values = H.map(h => h[0]); hr.height = 22;
     hr.eachCell(c => { c.font = {bold:true, color:{argb:'FFFFFFFF'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:NAVY}}; c.alignment = {vertical:'middle', horizontal:'center', wrapText:true}; });
-    ws.autoFilter = {from:{row:3, column:1}, to:{row:3, column:H.length}};
+    ws.autoFilter = {from:{row:3, column:1}, to:{row:3 + rows.length, column:H.length}};   // LL v1.13: whole table
     const pics = {}, need = [...new Set(rows.filter(r => r.l).map(r => r.l.img.logo || r.l.img.spec).filter(Boolean))];
     let done = 0; for (const n of need){ pics[n] = await thumb(n); if (++done % 25 === 0) btn.innerHTML = 'Pictures ' + done + '/' + need.length + '&hellip;'; }
     const ids = {}, border = {style:'thin', color:{argb:'FFD9DDE5'}};
@@ -931,7 +931,8 @@ async function warehouseExcel(btn){
       const n = l && (l.img.logo || l.img.spec), t = n && pics[n];
       if (t){ if (ids[n] == null) ids[n] = wb.addImage({base64:t.b64, extension:'jpeg'});
         const sc = Math.min(100 / t.w, 76 / t.h), w = t.w * sc, hh = t.h * sc;
-        ws.addImage(ids[n], {tl:{col:(105 - w) / 2 / 105, row:r - 1 + (82 - hh) / 2 / 82}, ext:{width:w, height:hh}, editAs:'oneCell'}); }
+        const cx = (105 - w) / 2 / 105, cy = (82 - hh) / 2 / 82;   // LL v1.13: picture sits inside its own cell + 'move and size with cells', so sorting and filtering carry it with the row
+        ws.addImage(ids[n], {tl:{col:cx, row:r - 1 + cy}, br:{col:1 - cx, row:r - cy}, editAs:'twoCell'}); }
     });
     const buf = await wb.xlsx.writeBuffer();
     const dir = await dirHandle.getDirectoryHandle('Warehouse', {create:true}), name = 'Kit Info_Warehouse ' + nowStamp().slice(0, 10) + '.xlsx';
