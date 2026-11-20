@@ -219,7 +219,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.14</span>
+    <span class="vbadge">LL v1.15</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -231,7 +231,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.14';
+const VERSION = 'LL v1.15';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -288,8 +288,8 @@ const isoDay = v => { v = String(v || '').trim(); let m = v.match(/^(\d{4})-(\d{
 const boxText = b => [b.ver ? 'Ver ' + b.ver : 'no version', b.date ? fmtDate(b.date) : 'no date'].join(' · ');
 const sortBoxes = l => bx(l).sort((a, b) => String(b.date).localeCompare(String(a.date)));
 const stepOf = l => l.todo.find(t => t !== TC) || '';
-const isApproved = l => l.status === 'Approved' || !!l.box;
-const apPill = l => isApproved(l) ? '<span class="apill" title="' + (l.status === 'Approved' && l.box ? 'Status Approved + Approved (Box)' : l.box ? 'Approved (Box)' : 'Status Approved') + '">APPROVED</span>' : '';
+const isApproved = l => l.status === 'Approved';   // LL v1.15: approval = Status only; Approved (Box) = uploaded to the Box drive (separate check, 11/20)
+const apPill = l => isApproved(l) ? '<span class="apill" title="Status Approved' + (l.box ? ' + uploaded to the Box drive' : '') + '">APPROVED</span>' : '';
 function missing(l){ return [!l.fEmb ? 'EMB' : '', !SEWS.some(k => l.img[k]) ? 'Sew-Out' : ''].filter(Boolean).join(' + '); }
 const fmtNum = v => { const n = parseFloat(v); return isNaN(n) ? '' : n.toFixed(2); };
 
