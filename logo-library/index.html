@@ -240,7 +240,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.17</span>
+    <span class="vbadge">LL v1.18</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -252,7 +252,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.17';
+const VERSION = 'LL v1.18';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -278,7 +278,7 @@ function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegia
 const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived and retired logos only show in their school (Accounts tab) or at the bottom of Mainline
 const inactive = l => l.status === ARCH || l.status === RETIRED;
 const activeLogos = () => DB.logos.filter(l => !inactive(l));
-function ensureLists(db){ [ARCH, RETIRED].forEach(v => { if (!db.lists.status.includes(v)) db.lists.status.push(v); }); return db; }
+function ensureLists(db){ [ARCH, RETIRED].forEach(v => { if (!db.lists.status.includes(v)) db.lists.status.push(v); }); if (!db.lists.type.includes('NFL')) db.lists.type.push('NFL'); return db; }   // LL v1.18: NFL type
 function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}}; }
 const byId = id => DB.logos.find(l => l.id === id);
 function sizeCheck(l){ const n = [l.specH, l.specW, l.dstH, l.dstW].map(v => parseFloat(v));
@@ -590,14 +590,14 @@ function addLogo(emb, school, type){
 }
 
 // ---------------- UI state ----------------
-const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'accounts', label:'Accounts'}, {key:'mainline', label:'Mainline'}, {key:'all', label:'All Logos'}, {key:'todo', label:'To Do'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
+const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'accounts', label:'Accounts'}, {key:'mainline', label:'Mainline'}, {key:'nfl', label:'NFL'}, {key:'all', label:'All Logos'}, {key:'todo', label:'To Do'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
 let state = {tab:'collegiate', open:'', sort:{}, secOpen:{}, f:{}, adding:false, acct:'', audit:{q:'', what:'', from:'', to:''}};
 try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
 state.open = ''; state.adding = false; state.audit = Object.assign({q:'', what:'', from:'', to:''}, state.audit); const histOpen = {}; if (!TABS.some(t => t.key === state.tab)) state.tab = 'collegiate';
 let q = '';
 const saveUi = () => { try { localStorage.setItem(LS_UI, JSON.stringify(Object.assign({}, state, {open:'', adding:false}))); } catch(e){} };
 function toast(msg, ms){ const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('on'); clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('on'), ms || 3600); }
-const isCol = l => /^coll/i.test(l.type), isMain = l => /^main/i.test(l.type);
+const isCol = l => /^coll/i.test(l.type), isMain = l => /^main/i.test(l.type), isNFL = l => /^nfl/i.test(l.type);
 function matches(l){
   if (!q) return true;
   const hay = [prodsOf(l.id).map(([p]) => p.sku + ' ' + p.name).join(' '), l.id, l.emb, l.school, l.type, l.ver, l.threads, l.notes, l.status, l.flag, l.todo.join(' '), l.folder, notesFor(l.id).map(n => n.text).join(' ')].join(' ').toLowerCase();
@@ -628,6 +628,7 @@ const TAB_COLS = {
   collegiate: ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   accounts:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   mainline:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
+  nfl:        ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   all:        ['chev','spec','logo','bar','qd','emb','school','type','ver','size','clrs','files','status','todo','flag'],
   todo:       ['chev','spec','logo','bar','qd','embS','type','ver','size','clrs','files','status','flag','done']
 };
@@ -742,6 +743,7 @@ function renderAudit(){
 }
 function openLogo(l){   // from the Audit tab: go to the logo's tab, open its section and card
   if (isCol(l)){ if (inactive(l)){ state.tab = 'accounts'; state.acct = l.school || NO_SCHOOL; state.secOpen['accounts|' + (l.status === RETIRED ? 'Retired' : 'Archived')] = true; } else { state.tab = 'collegiate'; state.secOpen['collegiate|' + (l.school || NO_SCHOOL)] = true; } }
+  else if (isNFL(l)){ state.tab = 'nfl'; state.secOpen['nfl|' + (l.school || NO_SCHOOL)] = true; }
   else if (isMain(l)){ state.tab = 'mainline'; state.secOpen['mainline|' + (inactive(l) ? 'Archived & Retired' : (l.school || NO_SCHOOL))] = true; }
   else { state.tab = 'all'; state.f = {}; }
   if (q && !matches(l)){ q = ''; ms.value = ''; }
@@ -752,7 +754,7 @@ function openLogo(l){   // from the Audit tab: go to the logo's tab, open its se
 // ---------------- Tabs ----------------
 function addBoxHtml(tab){
   if (!state.adding) return '';
-  const t = tab === 'mainline' ? 'Mainline' : tab === 'collegiate' ? 'Collegiate' : '';
+  const t = tab === 'mainline' ? 'Mainline' : tab === 'collegiate' ? 'Collegiate' : tab === 'nfl' ? 'NFL' : '';
   return '<div class="addbox"><div class="af"><div><label>EMB ID</label><input id="addEmb" placeholder="e.g. AK 11 RED"></div><div><label>School / Account</label><input id="addSchool" list="schoolList"></div>' +
     '<div><label>Type</label><select id="addType">' + opt(DB.lists.type, t, '—') + '</select></div><button class="btn" data-act="addSave">Add logo</button><button class="btn light" data-act="addCancel">Cancel</button></div></div>';
 }
@@ -768,12 +770,13 @@ function renderGrouped(tab){   // Mainline: a section per account; archived + re
     '<span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school)).size + ' accounts</span></div>' + addBoxHtml(tab) + groupsHtml(tab, list, true) +
     (gone.length ? sectionHtml(tab, 'Archived & Retired', gone.filter(matches), false) : '');
 }
-function renderCollegiate(){   // LL v1.04: one list of every collegiate logo
-  const all = activeLogos().filter(isCol), list = all.filter(matches), g = {};   // LL v1.17: grouped by school (logo + full name)
+function renderCollegiate(){ return renderBySchool('collegiate', 'Collegiate', isCol, 'schools'); }
+function renderBySchool(tab, title, test, unit){   // LL v1.17/1.18: grouped by school / team (logo + full name)
+  const all = activeLogos().filter(test), list = all.filter(matches), g = {};   // LL v1.17: grouped by school (logo + full name)
   list.forEach(l => { const k = l.school || NO_SCHOOL; (g[k] = g[k] || []).push(l); });
   const names = Object.keys(g).sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));
-  return '<h1>Collegiate</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button><span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school || NO_SCHOOL)).size + ' schools</span></div>' + addBoxHtml('collegiate') +
-    (names.length ? names.map(k => sectionHtml('collegiate', k, g[k], true, undefined, schoolLabel(k))).join('') : '<div class="empty">No logos' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div>');
+  return '<h1>' + title + '</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button><span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school || NO_SCHOOL)).size + ' ' + unit + '</span></div>' + addBoxHtml(tab) +
+    (names.length ? names.map(k => sectionHtml(tab, k, g[k], true, undefined, schoolLabel(k))).join('') : '<div class="empty">No logos' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div>');
 }
 const NO_SCHOOL = '(no school / account)';
 const schoolFull = k => (DB.schools[k] && DB.schools[k].name) || '';
@@ -979,7 +982,7 @@ async function warehouseExcel(btn){
   btn.disabled = false; btn.innerHTML = old;
 }
 function renderTabs(){
-  const A = activeLogos(), counts = {collegiate:A.filter(isCol).length, accounts:new Set(DB.logos.filter(isCol).map(l => l.school || NO_SCHOOL)).size, mainline:A.filter(isMain).length, all:A.length, todo:A.filter(l => l.todo.length).length, check:Object.keys(DB.check || {}).filter(id => byId(id)).length + '/' + DB.logos.length, products:prods().filter(p => !p.arch).length};
+  const A = activeLogos(), counts = {collegiate:A.filter(isCol).length, accounts:new Set(DB.logos.filter(isCol).map(l => l.school || NO_SCHOOL)).size, mainline:A.filter(isMain).length, nfl:A.filter(isNFL).length, all:A.length, todo:A.filter(l => l.todo.length).length, check:Object.keys(DB.check || {}).filter(id => byId(id)).length + '/' + DB.logos.length, products:prods().filter(p => !p.arch).length};
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (state.tab === t.key ? ' on' : '') + '" data-tab="' + t.key + '">' + t.label + (DB.logos.length && counts[t.key] != null ? '<span class="tcnt">' + counts[t.key] + '</span>' : '') + '</button>').join('');
 }
 function render(){
@@ -988,7 +991,7 @@ function render(){
   const p = document.getElementById('page');
   const needConnect = !dirHandle || saveState === 'reconnect' || saveState === 'unsupported';
   p.innerHTML = (needConnect && !DB.logos.length) || saveState === 'unsupported' ? renderConnect()
-    : (needConnect ? renderConnect() : '') + (state.tab === 'all' ? renderAll() : state.tab === 'todo' ? renderTodo() : state.tab === 'audit' ? renderAudit() : state.tab === 'check' ? renderCheck() : state.tab === 'products' ? renderProducts() : state.tab === 'accounts' ? renderAccounts() : state.tab === 'collegiate' ? renderCollegiate() : renderGrouped(state.tab)) +
+    : (needConnect ? renderConnect() : '') + (state.tab === 'all' ? renderAll() : state.tab === 'todo' ? renderTodo() : state.tab === 'audit' ? renderAudit() : state.tab === 'check' ? renderCheck() : state.tab === 'products' ? renderProducts() : state.tab === 'accounts' ? renderAccounts() : state.tab === 'nfl' ? renderBySchool('nfl', 'NFL', isNFL, 'teams') : state.tab === 'collegiate' ? renderCollegiate() : renderGrouped(state.tab)) +
       '<datalist id="placeList">' + [...new Set(['Left Chest', 'Center Chest'].concat(prods().map(p => p.place)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       '<datalist id="colorList">' + [...new Set(prods().map(p => p.color).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       (state.tab === 'products' ? '<datalist id="embList">' + DB.logos.map(l => '<option value="' + esc(l.emb) + '">').join('') + '</datalist>' : '') +
@@ -1017,7 +1020,7 @@ page.addEventListener('click', async e => {
       if (DB.logos.some(x => x.emb.toLowerCase() === emb.toLowerCase()) && !confirm(emb + ' is already in the library. Add it again anyway?')) return;
       const n = addLogo(emb, school, type); state.adding = false; state.open = n.id;
       if (state.tab !== 'all') state.secOpen[state.tab + '|' + (school || '(no school / account)')] = true;
-      if ((state.tab === 'collegiate' && !isCol(n)) || (state.tab === 'mainline' && !isMain(n))) state.tab = 'all';
+      if ((state.tab === 'collegiate' && !isCol(n)) || (state.tab === 'mainline' && !isMain(n)) || (state.tab === 'nfl' && !isNFL(n))) state.tab = 'all';
       saveUi(); render(); toast('Added ' + esc(emb) + '.');
       setTimeout(() => { const r = document.querySelector('.row[data-id="' + n.id + '"]'); if (r) r.scrollIntoView({block:'center'}); }, 30); return;
     }
