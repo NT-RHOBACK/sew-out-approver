@@ -28,7 +28,7 @@ h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .pipe{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:8px 0 18px}
 @media(max-width:800px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pipe .pbox{background:#fff;border:1px solid var(--line);border-top:4px solid var(--navy);border-radius:8px;text-align:center;padding:14px 8px;cursor:pointer}
-.pipe .pbox.late{border-top-color:var(--red)}.pipe .pbox.up{border-top-color:#2E7D32}.pipe .pbox.ap{border-top-color:#6B7B8D}
+.pipe .pbox.late{border-top-color:var(--red)}.pipe .pbox.up{border-top-color:#6B7B8D}.pipe .pbox.ap{border-top-color:#2E7D32}
 .pipe .num{font-size:24px;font-weight:700;color:var(--navy)}
 .pipe .lbl{font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-top:4px}
 .bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
@@ -59,7 +59,7 @@ h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .dtp.plain{font-weight:400;color:var(--grey);padding-left:0}
 .dtp.red{background:#f8d7d7;color:#a61b1b}.dtp.yellow{background:#fdf0c4;color:#7a5800}.dtp.nodate{background:#eef1f6;color:#6B7B8D}
 .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:12px;padding:4px 10px;letter-spacing:.5px}
-.pill.need{background:#fde2cf;color:#9a3412}.pill.up{background:#dcefdc;color:#1f6b2a}.pill.ap{background:#e6eaf2;color:#29304E}
+.pill.need{background:#fde2cf;color:#9a3412}.pill.up{background:#e6eaf2;color:#29304E}.pill.ap{background:#dcefdc;color:#1f6b2a}
 .new-reply{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:8px;padding:2px 7px;margin-left:6px;letter-spacing:.5px}
 .card td{background:#f7f8fb!important;padding:16px;white-space:normal;cursor:default}
 .cgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
@@ -97,7 +97,7 @@ textarea{width:100%;min-height:60px;border:1px solid #d6dbe4;border-radius:6px;p
 <div class="page" id="page"></div>
 <div class="toast" id="toast"></div>
 <script>
-const VERSION = 'BP v1.04';   // Barrett portal demo (sample data only, nothing is saved or sent)
+const VERSION = 'BP v1.05';   // Barrett portal demo (sample data only, nothing is saved or sent)
 document.getElementById('ver').textContent = VERSION;
 const pad = n => String(n).padStart(2, '0');
 const isoOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -153,8 +153,8 @@ const R = [
     files:[{n:'CedarRunCC_Initials_1.00h_v1.DST', dst:true, use:true}], history:[], msgs:[]}, ANS('None, just asap', 'Any, ensure thread colors are visible', 'Yes, can substitute thread colors if unavailable', 'Yes'))
 ];
 R.forEach(r => { r.sub = r.sub || isoOf(new Date(r.sent.getTime() - 86400000)); r.type = r.type || 'Sew-Out'; r.ver = +((r.logo.match(/_v(\d+)$/) || [0, 1])[1]); });   // BP v1.02
-const SECS = [['need', 'Pending Sew Out', 'Needs a sew-out photo.'], ['up', 'Review Sew Out', 'Photo uploaded. Noelle is reviewing it.'], ['ap', 'Approved', 'Recent sew-outs Noelle approved.']];
-const STAGE_PILL = {need:'<span class="pill need">PENDING SEW OUT</span>', up:'<span class="pill up">REVIEW SEW OUT</span>', ap:'<span class="pill ap">APPROVED</span>'};
+const SECS = [['need', 'Pending Sew Out', 'Needs a sew-out photo.'], ['up', 'Pending Review', 'Photo uploaded. Noelle is reviewing it, nothing for you to do.'], ['ap', 'Approved', 'Recent sew-outs Noelle approved.']];
+const STAGE_PILL = {need:'<span class="pill need">PENDING SEW OUT</span>', up:'<span class="pill up">PENDING REVIEW</span>', ap:'<span class="pill ap">APPROVED</span>'};
 let tab = 'req', q = '', openId = null, shut = {}, histOpen = {}, fStatus = '', group = 'status', sortOpen = false;
 // BP v1.02: same filter bar as the Barrett Queue (search, status, Group, Sorts, Reset filters, Collapse all)
 const SORT_KEYS = {logo:['Logo', r => r.logo.toLowerCase()], account:['Account', r => r.acct.toLowerCase()], rep:['Sales Rep', r => r.rep], submitted:['Submitted', r => r.sub], inhand:['In Hand Date', r => r.start || '9999'], type:['Type', r => r.type],
@@ -208,7 +208,7 @@ function render(){
     '<button class="srt-link" data-srt="add">+ Add sort</button><div class="note">RUSH logos always stay at the top.</div></div>';
   P.innerHTML = '<h1>Barrett Queue</h1><div class="sub">Sew-outs Noelle sent you. Click a row to see the request, thread colors, files, upload the photo, or message Noelle.</div>' +
     '<div class="pipe"><div class="pbox" data-jump="need"><div class="num">' + n('need') + '</div><div class="lbl">Pending Sew Out</div></div><div class="pbox late" data-jump="need"><div class="num" style="color:var(--red)">' + late + '</div><div class="lbl">Late</div></div>' +
-    '<div class="pbox up" data-jump="up"><div class="num">' + n('up') + '</div><div class="lbl">Review Sew Out</div></div><div class="pbox ap" data-jump="ap"><div class="num">' + n('ap') + '</div><div class="lbl">Approved</div></div></div>' +
+    '<div class="pbox up" data-jump="up"><div class="num">' + n('up') + '</div><div class="lbl">Pending Review</div></div><div class="pbox ap" data-jump="ap"><div class="num">' + n('ap') + '</div><div class="lbl">Approved</div></div></div>' +
     '<div class="bar"><input id="q" placeholder="Search account, logo, sales rep or #&hellip;" value="' + esc(q) + '">' +
     '<select id="fStatus"><option value="">All statuses</option>' + SECS.map(s => '<option value="' + s[0] + '"' + (fStatus === s[0] ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select>' +
     '<select id="fGroup">' + Object.entries(GROUPS).map(([k, v]) => '<option value="' + k + '"' + (group === k ? ' selected' : '') + '>Group: ' + v + '</option>').join('') + '</select>' +
@@ -226,7 +226,7 @@ function render(){
   document.querySelectorAll('[data-srtk]').forEach(s => s.onchange = () => { sorts[+s.dataset.srtk].k = s.value; render(); });
   document.querySelectorAll('[data-srtd]').forEach(s => s.onchange = () => { sorts[+s.dataset.srtd].d = s.value; render(); });
   document.querySelectorAll('[data-up]').forEach(inp => inp.onchange = () => { const r = R.find(x => x.id === inp.dataset.up), f = inp.files[0]; if (!f) return;
-    if (r.photo){ (r.replaced = r.replaced || []).push(r.photo); } r.photoUrl = URL.createObjectURL(f); r.photo = new Date(); r.stage = 'up'; render(); toast('Sew-out photo uploaded. Moved to Review Sew Out.'); });
+    if (r.photo){ (r.replaced = r.replaced || []).push(r.photo); } r.photoUrl = URL.createObjectURL(f); r.photo = new Date(); r.stage = 'up'; render(); toast('Sew-out photo uploaded. Moved to Pending Review.'); });
 }
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-tab]'); if (t){ tab = t.dataset.tab; render(); return; }
