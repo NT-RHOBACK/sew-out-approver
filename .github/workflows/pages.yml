@@ -1,8 +1,7 @@
 name: Deploy to GitHub Pages
 
+# Pages now deploys from the main branch (Settings > Pages), since 2026-11-20. This workflow only runs if started by hand.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
