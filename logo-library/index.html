@@ -185,6 +185,14 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .sewmv .lbl2{font-size:10.5px;color:var(--grey);width:100%}
 .sewmv button{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:2px 9px;cursor:pointer;color:var(--navy)}
 .sewmv button.on{background:var(--navy);color:#fff;border-color:var(--navy);cursor:default}
+/* LL v1.12: Products (kit info) */
+.prod-tbl td input{padding:5px 7px;font-size:12.5px}
+.prod-tbl td.pn{width:38%}.prod-tbl td.pc{width:16%}.prod-tbl td.ps{width:22%}.prod-tbl td.pp{width:12%}.prod-tbl td.pd{width:12%}
+.knote{font-size:11px;color:var(--grey);margin-top:2px}
+.nolink{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 6px;background:#fff4e0;color:#8a5a00;white-space:nowrap}
+.plink{width:100%;margin-top:4px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px}
+.tbl tr.prow{cursor:pointer}.tbl tr.prow:hover td{background:#F8F9FC}
+.tbl td.sm{font-size:12.5px}
 /* LL v1.07: Copy button never squished */
 .pathrow input{flex:1;min-width:0}
 .pathrow .btn{flex:none;white-space:nowrap}
@@ -211,7 +219,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.11</span>
+    <span class="vbadge">LL v1.12</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -223,7 +231,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.11';
+const VERSION = 'LL v1.12';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -243,9 +251,9 @@ const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Ty
   ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd']];
 const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Clrs',
   fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
-const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Deleted Logos', 'Info'];
+const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
-function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, deleted:[], schools:{}, other:[], savedAt:''}; }
+function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, products:[], deleted:[], schools:{}, other:[], savedAt:''}; }
 const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived and retired logos only show in their school (Accounts tab) or at the bottom of Mainline
 const inactive = l => l.status === ARCH || l.status === RETIRED;
 const activeLogos = () => DB.logos.filter(l => !inactive(l));
@@ -267,6 +275,12 @@ function migrateNotes(db){   // the old single Notes box becomes the first note 
 }
 // LL v1.08: To Do = one dropdown (the step) + its own Check Thread Colors checkbox
 const TC = 'Check Thread Colors';
+// LL v1.12: Products (kit info: one row per SKU). id = LL ID ('' = no logo yet), dst = Insignia URL (the DST file name)
+const PF = [['name', 'Display Name'], ['color', 'Product Color'], ['sku', 'SKU'], ['place', 'Insignia Placement'], ['dst', 'Insignia URL']];
+const prods = () => DB.products || (DB.products = []);
+const prodsOf = id => prods().map((p, i) => [p, i]).filter(([p]) => p.id === id);
+const embOf = p => { const l = p.id && byId(p.id); return l ? l.emb : String(p.dst || '').replace(/\.dst$/i, ''); };
+function sewStatus(l){ if (!l) return 'No logo yet'; if (isApproved(l)) return 'Approved'; if (inactive(l)) return l.status; return SEWS.some(k => l.img[k]) ? 'Sew-out on file' : 'Needs sew-out'; }
 // LL v1.09: Box drive uploads, newest first: [{ver, date:'YYYY-MM-DD'}]
 const bx = l => l.boxes || (l.boxes = []);
 const isoDay = v => { v = String(v || '').trim(); let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]);
@@ -324,6 +338,8 @@ function buildWorkbook(){
   const ck = DB.check || {}, cr2 = Object.keys(ck).map(id => [id, (byId(id) || {}).emb || '', ck[id].res === 'ok' ? 'Verified' : 'Flagged', ck[id].note || '', ck[id].ts || '']);
   const cs2 = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID', 'Result', 'Note for Claude', 'Checked at']].concat(cr2)); cs2['!cols'] = [10, 24, 10, 70, 20].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, cs2, 'Setup Check');   // LL v1.11 (temporary)
+  const ps = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID'].concat(PF.map(f => f[1]), 'Kit Notes')].concat(prods().map(p => [p.id, p.id ? embOf(p) : ''].concat(PF.map(([k]) => p[k] || ''), p.note || ''))));
+  ps['!cols'] = [10, 24, 70, 26, 38, 18, 28, 40].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ps, 'Products');   // LL v1.12
   if (DB.deleted.length){ const ds = XLSX.utils.aoa_to_sheet([['Deleted at'].concat(COLS.map(c => c[0]))].concat(DB.deleted)); ds['!cols'] = [18].concat(COLS.map(() => 14)).map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ds, 'Deleted Logos'); }
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || nowStamp()], ['Saved by', VERSION],
     ['Note', 'Keep this file closed in Excel while the Logo Library page is open. Pictures live in the Images folder; the image columns hold their file names. To Do = items separated by "; ". Box drive uploads live in the Box Drive sheet (the Box Drive column on Logos is a copy). Internal notes live in the Internal Notes sheet; the Notes columns on Logos and Schools are a copy for reading (edit notes on the page).']]);
@@ -364,6 +380,8 @@ function readWorkbook(buf){
   rows('Box Drive').slice(1).filter(r => String(r[0]).trim()).forEach(r => { const l = db.logos.find(x => x.id === String(r[0]).trim()); if (l) l.boxes.push({ver:String(r[2] || ''), date:isoDay(r[3])}); });
   db.logos.forEach(l => l.boxes.sort((a, b) => String(b.date).localeCompare(String(a.date))));
   rows('Setup Check').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.check[String(r[0]).trim()] = {res:/^flag/i.test(r[2]) ? 'flag' : 'ok', note:String(r[3] || ''), ts:String(r[4] || '')}; });
+  rows('Products').slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => { const g = i => String(r[i] == null ? '' : r[i]).trim();
+    db.products.push({id:g(0), name:g(2), color:g(3), sku:g(4), place:g(5), dst:g(6), note:g(7)}); });
   const nr = rows('Internal Notes');
   if (wb.Sheets['Internal Notes']){ nr.slice(1).filter(r => r[0] && String(r[4]).trim()).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5] || '')}));
     db.logos.forEach(l => { l.notes = ''; }); Object.values(db.schools).forEach(x => { x.notes = ''; }); }
@@ -437,7 +455,7 @@ async function afterConnect(){
     if (e.name === 'NotFoundError'){ toast('No "' + esc(XLSX_NAME) + '" in that folder. Pick the Logo Library folder.', 6000); dirHandle = null; setSave('local'); render(); return; }
     toast('Couldn&rsquo;t read ' + esc(XLSX_NAME) + ' (' + esc(e.name) + '). Is it open in Excel?', 6000); setSave('error'); return;
   }
-  const browserNewer = DB.logos.length && DB.savedAt && file.savedAt && DB.savedAt > file.savedAt && JSON.stringify([DB.logos, DB.notes]) !== JSON.stringify([file.logos, file.notes]);
+  const browserNewer = DB.logos.length && DB.savedAt && file.savedAt && DB.savedAt > file.savedAt && JSON.stringify([DB.logos, DB.notes, DB.products]) !== JSON.stringify([file.logos, file.notes, file.products]);
   if (browserNewer && confirm('This browser has changes from ' + new Date(DB.savedAt).toLocaleString() + ' that aren’t in the Excel file yet (saved ' + new Date(file.savedAt).toLocaleString() + ').\n\nOK = keep this browser’s version and save it to Excel\nCancel = use the Excel file')){
     touch();
   } else {
@@ -551,7 +569,7 @@ function addLogo(emb, school, type){
 }
 
 // ---------------- UI state ----------------
-const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'accounts', label:'Accounts'}, {key:'mainline', label:'Mainline'}, {key:'all', label:'All Logos'}, {key:'todo', label:'To Do'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
+const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'accounts', label:'Accounts'}, {key:'mainline', label:'Mainline'}, {key:'all', label:'All Logos'}, {key:'todo', label:'To Do'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
 let state = {tab:'collegiate', open:'', sort:{}, secOpen:{}, f:{}, adding:false, acct:'', audit:{q:'', what:'', from:'', to:''}};
 try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
 state.open = ''; state.adding = false; state.audit = Object.assign({q:'', what:'', from:'', to:''}, state.audit); const histOpen = {}; if (!TABS.some(t => t.key === state.tab)) state.tab = 'collegiate';
@@ -561,7 +579,7 @@ function toast(msg, ms){ const t = document.getElementById('toast'); t.innerHTML
 const isCol = l => /^coll/i.test(l.type), isMain = l => /^main/i.test(l.type);
 function matches(l){
   if (!q) return true;
-  const hay = [l.id, l.emb, l.school, l.type, l.ver, l.threads, l.notes, l.status, l.flag, l.todo.join(' '), l.folder, notesFor(l.id).map(n => n.text).join(' ')].join(' ').toLowerCase();
+  const hay = [prodsOf(l.id).map(([p]) => p.sku + ' ' + p.name).join(' '), l.id, l.emb, l.school, l.type, l.ver, l.threads, l.notes, l.status, l.flag, l.todo.join(' '), l.folder, notesFor(l.id).map(n => n.text).join(' ')].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
 }
 
@@ -644,7 +662,15 @@ function cardHtml(l){
   const b6 = '<div class="pics p2" style="margin-top:0">' + SLOTS.slice(0, 2).map(pic).join('') + '</div><div class="pics ' + (l.img.sew ? '' : 'p2') + '" style="margin-top:10px">' + SLOTS.slice(2).filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div>' +
     '<div class="note">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
   return '<div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + box(1, 'Logo', esc(l.id), b1) + box(2, 'Size &amp; Thread Colors', '', b2) + box(3, 'Files on Hand', '', b3) + box(4, 'Internal notes', '<span id="nc-' + id + '">' + notesFor(l.id).length + '</span>', b4) +
-    '</div><div class="emb-col">' + box(5, 'To Do', '<span id="tc-' + id + '">' + tcText(l) + '</span>', b5) + box(6, 'Pictures', '', b6) + box(7, 'History', '', '<details class="emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></details>') + '</div></div>' + footHtml(l) + '</div>';
+    '</div><div class="emb-col">' + box(5, 'To Do', '<span id="tc-' + id + '">' + tcText(l) + '</span>', b5) + box(6, 'Pictures', '', b6) + box(7, 'History', '', '<details class="emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></details>') + '</div></div>' + '<div style="margin-top:14px">' + box(8, 'Products (kit info)', prodsOf(l.id).length + ' SKU' + (prodsOf(l.id).length === 1 ? '' : 's'), prodSec(l)) + '</div>' + footHtml(l) + '</div>';
+}
+function prodSec(l){   // LL v1.12: one row per SKU
+  const P = prodsOf(l.id), inp = (p, i, k) => '<input data-pf="' + k + '" data-pi="' + i + '" value="' + esc(p[k]) + '"' + (k === 'place' ? ' list="placeList"' : k === 'color' ? ' list="colorList"' : '') + '>';
+  return (P.length ? '<table class="ctbl prod-tbl"><thead><tr><th>Display Name</th><th>Product Color</th><th>SKU</th><th>Placement</th><th>Insignia URL</th><th></th></tr></thead><tbody>' +
+    P.map(([p, i]) => '<tr><td class="pn">' + inp(p, i, 'name') + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + '</td><td class="pc">' + inp(p, i, 'color') + '</td><td class="ps">' + inp(p, i, 'sku') + '</td><td class="pp">' + inp(p, i, 'place') + '</td><td class="pd">' + inp(p, i, 'dst') + '</td>' +
+      '<td class="x"><button class="xbtn" data-act="prodDel" data-pi="' + i + '" title="Remove this product">&times;</button></td></tr>').join('') + '</tbody></table>'
+    : '<div class="emb-val muted">No products yet.</div>') +
+    '<div style="margin-top:8px"><button class="btn light small" data-act="prodAdd" data-id="' + esc(l.id) + '">+ Add product</button></div><div class="note">One row per SKU. These go into the Warehouse Excel (Products tab).</div>';
 }
 function boxSec(l){   // LL v1.09: each time it goes to the Box drive (version + date), newest first
   const id = esc(l.id), B = bx(l);
@@ -837,8 +863,85 @@ function renderCheck(){
     '<div class="chk-note"><textarea id="chkNote" placeholder="What&rsquo;s wrong? (for Claude)">' + esc(c && c.res === 'flag' ? c.note : '') + '</textarea><button class="btn light small" data-act="chkFlag" data-id="' + esc(l.id) + '">⚑ Flag for Claude, next</button>' + (c ? '<button class="lnk" data-act="chkClear" data-id="' + esc(l.id) + '">Clear</button>' : '') + '</div></div>' +
     cardHtml(l);
 }
+// ---------------- Products tab (LL v1.12) ----------------
+const lineOf = p => String(p.name || '').split(' - ')[0].split(' | ')[0].trim();
+const PFILT = [['line', 'All products', () => [...new Set(prods().map(lineOf).filter(Boolean))].sort(coll.compare), (p, l, v) => lineOf(p) === v],
+  ['place', 'All placements', () => [...new Set(prods().map(p => p.place).filter(Boolean))].sort(coll.compare), (p, l, v) => p.place === v],
+  ['link', 'Linked + not linked', () => ['Linked to a logo', 'No logo yet'], (p, l, v) => v === 'No logo yet' ? !l : !!l]];
+function prodSort(a, b){ return (a.l ? 0 : 1) - (b.l ? 0 : 1) || coll.compare(a.l ? a.l.school : '', b.l ? b.l.school : '') || coll.compare(embOf(a.p), embOf(b.p)) || coll.compare(a.p.name, b.p.name); }
+function renderProducts(){
+  const f = state.pf || (state.pf = {}), all = prods().map((p, i) => ({p, i, l:p.id ? byId(p.id) : null}));
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const list = all.filter(x => PFILT.every(([k, , , t]) => !f[k] || t(x.p, x.l, f[k])) && (!words.length || (h => words.every(w => h.includes(w)))([x.p.name, x.p.color, x.p.sku, x.p.place, x.p.dst, x.p.note, x.l ? x.l.emb + ' ' + x.l.school : ''].join(' ').toLowerCase()))).sort(prodSort);
+  const nol = all.filter(x => !x.l).length, any = PFILT.some(([k]) => f[k]);
+  let h = '<h1>Products</h1><div class="bar"><button class="btn" data-act="whXlsx" title="Builds a fresh Excel for the warehouse from this data">&#11015; Warehouse Excel</button>' +
+    PFILT.map(([k, label, o]) => '<select data-pfilter="' + k + '">' + opt(o(), f[k] || '', label) + '</select>').join('') + (any ? '<button class="lnk" data-act="pClear">Clear filters</button>' : '') +
+    '<span class="count">' + (list.length !== all.length ? list.length + ' of ' : '') + all.length + ' SKUs &middot; ' + new Set(all.filter(x => x.l).map(x => x.l.id)).size + ' logos' + (nol ? ' &middot; <b style="color:#8a5a00">' + nol + ' no logo yet</b>' : '') + '</span></div>' +
+    '<div class="note" style="margin:-4px 0 10px">One row per SKU. Click a row to open its logo. Edit products on the logo&rsquo;s card (box 8). <b>Warehouse Excel</b> saves a fresh file in the Logo Library\\Warehouse folder.</div>';
+  if (!all.length) return h + '<div class="empty">No products yet. Add them on a logo&rsquo;s card (box 8).</div>';
+  h += '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:62px"><col style="width:15%"><col style="width:31%"><col style="width:13%"><col style="width:19%"><col style="width:10%"><col style="width:12%"></colgroup>' +
+    '<thead><tr><th class="nos">Logo</th><th class="nos">EMB ID</th><th class="nos">Display Name</th><th class="nos">Product Color</th><th class="nos">SKU</th><th class="nos">Placement</th><th class="nos">Insignia URL</th></tr></thead><tbody>';
+  if (!list.length) h += '<tr><td colspan="7"><div class="empty">No products match.</div></td></tr>';
+  list.forEach(({p, i, l}) => {
+    h += '<tr class="prow"' + (l ? ' data-pid="' + esc(l.id) + '" title="Open ' + esc(l.emb) + '"' : '') + '><td><div class="th">' + imgTag(l ? (l.img.logo || l.img.spec) : '') + '</div></td>' +
+      '<td>' + (l ? '<span class="emb">' + esc(l.emb) + '</span><span class="sch">' + esc(l.school) + '</span>' : '<span class="emb">' + esc(embOf(p)) + '</span><br><span class="nolink">No logo yet</span><input class="plink" data-plink="' + i + '" list="embList" placeholder="Link to EMB ID&hellip;">') + '</td>' +
+      '<td class="sm">' + esc(p.name) + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + '</td><td class="sm">' + esc(p.color) + '</td><td class="sm">' + esc(p.sku) + '</td><td class="sm">' + esc(p.place) + '</td><td class="sm">' + esc(p.dst) + '</td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+// ---------------- Warehouse Excel (LL v1.12): ExcelJS (only loaded when the button is clicked), pictures from the Images folder ----------------
+const EXCELJS = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Couldn’t load ' + src)); document.head.appendChild(s); });
+async function thumb(name){   // small JPEG for the Excel (keeps the file light)
+  try { const f = await (await (await getImgDir()).getFileHandle(name)).getFile(), bm = await createImageBitmap(f);
+    const sc = Math.min(1, 200 / bm.width, 150 / bm.height), w = Math.max(1, Math.round(bm.width * sc)), h = Math.max(1, Math.round(bm.height * sc));
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(bm, 0, 0, w, h);
+    return {b64:c.toDataURL('image/jpeg', 0.85).split(',')[1], w, h}; } catch(e){ return null; }
+}
+async function warehouseExcel(btn){
+  if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
+  const rows = prods().map(p => ({p, l:p.id ? byId(p.id) : null})).sort(prodSort);
+  if (!rows.length){ toast('No products yet.'); return; }
+  const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'Building&hellip;';
+  try {
+    if (!window.ExcelJS) await loadScript(EXCELJS);
+    const wb = new ExcelJS.Workbook(); wb.creator = 'Rhoback Logo Library ' + VERSION;
+    const ws = wb.addWorksheet('Kit Info', {views:[{state:'frozen', ySplit:3}], pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, printTitlesRow:'3:3'}});
+    const H = [['Logo', 15], ['School / Account', 18], ['Display Name', 58], ['Product Color', 24], ['SKU', 36], ['Insignia Placement', 15], ['Insignia URL', 24], ['EMB ID', 20], ['Ver', 6], ['Thread Colors (Madeira)', 40], ['# Clrs', 7], ['Size H × W (in)', 13], ['Sew-Out Status', 16]];
+    ws.columns = H.map(([, w]) => ({width:w}));
+    const NAVY = 'FF1B2A4A', d = new Date(), today = pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2);
+    ws.mergeCells(1, 1, 1, H.length); ws.getCell(1, 1).value = 'Rhoback Embroidery: Kit Info for the Warehouse'; ws.getCell(1, 1).font = {bold:true, size:16, color:{argb:NAVY}}; ws.getRow(1).height = 26;
+    ws.mergeCells(2, 1, 2, H.length); ws.getCell(2, 1).value = 'Updated ' + today + '  ·  ' + rows.length + ' SKUs  ·  ' + new Set(rows.filter(r => r.l).map(r => r.l.id)).size + ' logos  ·  one row per SKU'; ws.getCell(2, 1).font = {italic:true, size:10, color:{argb:'FF6B7385'}};
+    const hr = ws.getRow(3); hr.values = H.map(h => h[0]); hr.height = 22;
+    hr.eachCell(c => { c.font = {bold:true, color:{argb:'FFFFFFFF'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:NAVY}}; c.alignment = {vertical:'middle', horizontal:'center', wrapText:true}; });
+    ws.autoFilter = {from:{row:3, column:1}, to:{row:3, column:H.length}};
+    const pics = {}, need = [...new Set(rows.filter(r => r.l).map(r => r.l.img.logo || r.l.img.spec).filter(Boolean))];
+    let done = 0; for (const n of need){ pics[n] = await thumb(n); if (++done % 25 === 0) btn.innerHTML = 'Pictures ' + done + '/' + need.length + '&hellip;'; }
+    const ids = {}, border = {style:'thin', color:{argb:'FFD9DDE5'}};
+    let band = false, last = null;
+    rows.forEach(({p, l}, k) => {
+      const r = 4 + k, key = l ? l.id : 'x' + embOf(p); if (key !== last){ band = !band; last = key; }
+      const size = l ? (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : l.dstH || l.dstW ? fmtNum(l.dstH) + ' × ' + fmtNum(l.dstW) : '') : '';
+      const row = ws.getRow(r);
+      row.values = ['', l ? l.school : '', p.name, p.color, p.sku, p.place, p.dst, l ? l.emb : embOf(p) + ' (no logo yet)', l ? l.ver : '', l ? l.threads : '', l && l.clrs !== '' ? (isFinite(+l.clrs) ? +l.clrs : l.clrs) : '', size, sewStatus(l)];
+      row.height = 62;
+      row.eachCell({includeEmpty:true}, (c, ci) => { c.alignment = {vertical:'middle', wrapText:ci === 3 || ci === 10 || ci === 2, horizontal:[1, 6, 9, 11, 12].includes(ci) ? 'center' : 'left'}; c.border = {bottom:border};
+        if (band) c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF3F5FA'}}; });
+      const st = row.getCell(13); st.font = {bold:true, color:{argb:st.value === 'Approved' ? 'FF256B31' : st.value === 'Needs sew-out' || st.value === 'No logo yet' ? 'FFB3261E' : 'FF1B2A4A'}};
+      const n = l && (l.img.logo || l.img.spec), t = n && pics[n];
+      if (t){ if (ids[n] == null) ids[n] = wb.addImage({base64:t.b64, extension:'jpeg'});
+        const sc = Math.min(100 / t.w, 76 / t.h), w = t.w * sc, hh = t.h * sc;
+        ws.addImage(ids[n], {tl:{col:(105 - w) / 2 / 105, row:r - 1 + (82 - hh) / 2 / 82}, ext:{width:w, height:hh}, editAs:'oneCell'}); }
+    });
+    const buf = await wb.xlsx.writeBuffer();
+    const dir = await dirHandle.getDirectoryHandle('Warehouse', {create:true}), name = 'Kit Info_Warehouse ' + nowStamp().slice(0, 10) + '.xlsx';
+    const fh = await dir.getFileHandle(name, {create:true}), w = await fh.createWritable(); await w.write(new Blob([buf])); await w.close();
+    toast('Saved <b>' + esc(name) + '</b> in Logo Library\\Warehouse (' + rows.length + ' SKUs).', 7000);
+  } catch(e){ toast('Couldn&rsquo;t build it (' + esc(e.name === 'NoModificationAllowedError' ? 'close that file in Excel first' : e.message || e.name) + ').', 7000); }
+  btn.disabled = false; btn.innerHTML = old;
+}
 function renderTabs(){
-  const A = activeLogos(), counts = {collegiate:A.filter(isCol).length, accounts:new Set(DB.logos.filter(isCol).map(l => l.school || NO_SCHOOL)).size, mainline:A.filter(isMain).length, all:A.length, todo:A.filter(l => l.todo.length).length, check:Object.keys(DB.check || {}).filter(id => byId(id)).length + '/' + DB.logos.length};
+  const A = activeLogos(), counts = {collegiate:A.filter(isCol).length, accounts:new Set(DB.logos.filter(isCol).map(l => l.school || NO_SCHOOL)).size, mainline:A.filter(isMain).length, all:A.length, todo:A.filter(l => l.todo.length).length, check:Object.keys(DB.check || {}).filter(id => byId(id)).length + '/' + DB.logos.length, products:prods().length};
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (state.tab === t.key ? ' on' : '') + '" data-tab="' + t.key + '">' + t.label + (DB.logos.length && counts[t.key] != null ? '<span class="tcnt">' + counts[t.key] + '</span>' : '') + '</button>').join('');
 }
 function render(){
@@ -847,7 +950,10 @@ function render(){
   const p = document.getElementById('page');
   const needConnect = !dirHandle || saveState === 'reconnect' || saveState === 'unsupported';
   p.innerHTML = (needConnect && !DB.logos.length) || saveState === 'unsupported' ? renderConnect()
-    : (needConnect ? renderConnect() : '') + (state.tab === 'all' ? renderAll() : state.tab === 'todo' ? renderTodo() : state.tab === 'audit' ? renderAudit() : state.tab === 'check' ? renderCheck() : state.tab === 'accounts' ? renderAccounts() : state.tab === 'collegiate' ? renderCollegiate() : renderGrouped(state.tab)) +
+    : (needConnect ? renderConnect() : '') + (state.tab === 'all' ? renderAll() : state.tab === 'todo' ? renderTodo() : state.tab === 'audit' ? renderAudit() : state.tab === 'check' ? renderCheck() : state.tab === 'products' ? renderProducts() : state.tab === 'accounts' ? renderAccounts() : state.tab === 'collegiate' ? renderCollegiate() : renderGrouped(state.tab)) +
+      '<datalist id="placeList">' + [...new Set(['Left Chest', 'Center Chest'].concat(prods().map(p => p.place)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
+      '<datalist id="colorList">' + [...new Set(prods().map(p => p.color).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
+      (state.tab === 'products' ? '<datalist id="embList">' + DB.logos.map(l => '<option value="' + esc(l.emb) + '">').join('') + '</datalist>' : '') +
       '<datalist id="schoolList">' + [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>';
   hookImgs(); window.scrollTo(0, y);
 }
@@ -909,6 +1015,12 @@ page.addEventListener('click', async e => {
     if (a === 'chkClear' && l){ delete DB.check[l.id]; touch(); render(); return; }
     if (a === 'sewMove' && l){ const f = act.dataset.slot, t = act.dataset.to, L = k => SLOTS.find(z => z[0] === k)[1], a1 = l.img[f], b1 = l.img[t];
       l.img[t] = a1; l.img[f] = b1 || ''; logEdit(l, 'Sew-out moved', L(f) + ': ' + a1, L(t) + (b1 ? ' (swapped with ' + b1 + ')' : '')); touch(); render(); toast('Moved to ' + L(t) + '.'); return; }
+    if (a === 'whXlsx'){ warehouseExcel(act); return; }
+    if (a === 'pClear'){ state.pf = {}; saveUi(); render(); return; }
+    if (a === 'prodAdd' && l){ prods().push({id:l.id, name:'', color:'', sku:'', place:'', dst:l.emb ? l.emb + '.DST' : '', note:''}); logEdit(l, 'Added product', '', '(new SKU row)'); touch(); render();
+      const ins = document.querySelectorAll('input[data-pf="name"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+    if (a === 'prodDel'){ const i = +act.dataset.pi, p = prods()[i]; if (!p) return; if ((p.sku || p.name) && !confirm('Remove ' + (p.sku || p.name) + ' from this logo?')) return;
+      prods().splice(i, 1); const pl = byId(p.id); if (pl) logEdit(pl, 'Removed product', p.sku || p.name || '(blank row)', ''); touch(); render(); return; }
     if (a === 'boxAdd' && l){ const b = {ver:l.ver || '', date:nowStamp().slice(0, 10)}; bx(l).unshift(b); sortBoxes(l); logEdit(l, 'Added to Box', '', boxText(b)); touch(); render(); toast(esc(l.emb) + ' marked as added to Box.'); return; }
     if (a === 'boxDel' && l){ const b = bx(l)[+act.dataset.i]; if (!b || !confirm('Remove the Box entry ' + boxText(b) + ' from ' + (l.emb || l.id) + '?')) return;
       bx(l).splice(+act.dataset.i, 1); logEdit(l, 'Removed Box entry', boxText(b), ''); touch(); render(); return; }
@@ -927,6 +1039,8 @@ page.addEventListener('click', async e => {
   const ar = e.target.closest('tr.aud-row');
   if (ar && ar.dataset.id.startsWith('S:')){ state.tab = 'accounts'; state.acct = ar.dataset.id.slice(2); state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
   if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo isn&rsquo;t in the library anymore.'); return; }
+  const pr = e.target.closest('tr.prow');
+  if (pr && !e.target.closest('input')){ const l = pr.dataset.pid && byId(pr.dataset.pid); if (l) openLogo(l); return; }
   const pop = e.target.closest('[data-pop]');
   if (pop){ const l = byId(pop.dataset.id); if (l) openPop(l, pop.dataset.pop); return; }
   if (e.target.closest('.card-cell')) return;
@@ -937,6 +1051,12 @@ page.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.filter){ state.f[t.dataset.filter] = t.value; saveUi(); render(); return; }
   if (t.dataset.audit){ state.audit[t.dataset.audit] = t.value; saveUi(); render(); return; }
+  if (t.dataset.pfilter){ (state.pf = state.pf || {})[t.dataset.pfilter] = t.value; saveUi(); render(); return; }
+  if (t.dataset.pf){ const p = prods()[+t.dataset.pi], k = t.dataset.pf, v = t.value.trim(); if (!p || (p[k] || '') === v) return;
+    const was = p[k] || ''; p[k] = v; const pl = byId(p.id); if (pl) logEdit(pl, {name:'Product name', color:'Product color', sku:'SKU', place:'Placement', dst:'Insignia URL'}[k], (p.sku && k !== 'sku' ? p.sku + ': ' : '') + was, v); touch(); if (pl) refreshRow(pl); return; }
+  if (t.dataset.plink){ const p = prods()[+t.dataset.plink], v = t.value.trim().toLowerCase(), l = DB.logos.find(x => x.emb.toLowerCase() === v); if (!p || !v) return;
+    if (!l){ toast('No logo with EMB ID &ldquo;' + esc(t.value) + '&rdquo;.'); return; }
+    p.id = l.id; logEdit(l, 'Linked product', p.dst || '', p.sku || p.name); touch(); render(); toast('Linked ' + esc(p.sku || p.name) + ' to ' + esc(l.emb) + '.'); return; }
   if (t.dataset.sf || t.dataset.sc){   // school page: save without redrawing (so the next click still lands)
     const k = t.dataset.acct, x = schoolSave(k, schoolGet(k)), v = t.value.trim(), LBL = {name:'Full name', code:'Abbreviation / EMB code', notes:'Notes', pms:'PMS', mad:'Madeira'};
     if (t.dataset.sf){ if (x[t.dataset.sf] === v) return; schoolLog(k, 'School ' + LBL[t.dataset.sf], x[t.dataset.sf], v); x[t.dataset.sf] = v; }
