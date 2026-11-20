@@ -191,6 +191,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .knote{font-size:11px;color:var(--grey);margin-top:2px}
 .nolink{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 6px;background:#fff4e0;color:#8a5a00;white-space:nowrap}
 .plink{width:100%;margin-top:4px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px}
+.tbl tr.prow.arch td{opacity:.55}.parch{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:2px 9px;cursor:pointer;color:var(--navy);white-space:nowrap}
 .tbl tr.prow{cursor:pointer}.tbl tr.prow:hover td{background:#F8F9FC}
 .tbl td.sm{font-size:12.5px}
 /* LL v1.07: Copy button never squished */
@@ -219,7 +220,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.15</span>
+    <span class="vbadge">LL v1.16</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -231,7 +232,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.15';
+const VERSION = 'LL v1.16';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -338,8 +339,8 @@ function buildWorkbook(){
   const ck = DB.check || {}, cr2 = Object.keys(ck).map(id => [id, (byId(id) || {}).emb || '', ck[id].res === 'ok' ? 'Verified' : 'Flagged', ck[id].note || '', ck[id].ts || '']);
   const cs2 = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID', 'Result', 'Note for Claude', 'Checked at']].concat(cr2)); cs2['!cols'] = [10, 24, 10, 70, 20].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, cs2, 'Setup Check');   // LL v1.11 (temporary)
-  const ps = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID'].concat(PF.map(f => f[1]), 'Kit Notes')].concat(prods().map(p => [p.id, p.id ? embOf(p) : ''].concat(PF.map(([k]) => p[k] || ''), p.note || ''))));
-  ps['!cols'] = [10, 24, 70, 26, 38, 18, 28, 40].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ps, 'Products');   // LL v1.12
+  const ps = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID'].concat(PF.map(f => f[1]), 'Kit Notes', 'Archived')].concat(prods().map(p => [p.id, p.id ? embOf(p) : ''].concat(PF.map(([k]) => p[k] || ''), p.note || '', p.arch ? '✓' : ''))));
+  ps['!cols'] = [10, 24, 70, 26, 38, 18, 28, 40, 9].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ps, 'Products');   // LL v1.12
   if (DB.deleted.length){ const ds = XLSX.utils.aoa_to_sheet([['Deleted at'].concat(COLS.map(c => c[0]))].concat(DB.deleted)); ds['!cols'] = [18].concat(COLS.map(() => 14)).map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ds, 'Deleted Logos'); }
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || nowStamp()], ['Saved by', VERSION],
     ['Note', 'Keep this file closed in Excel while the Logo Library page is open. Pictures live in the Images folder; the image columns hold their file names. To Do = items separated by "; ". Box drive uploads live in the Box Drive sheet (the Box Drive column on Logos is a copy). Internal notes live in the Internal Notes sheet; the Notes columns on Logos and Schools are a copy for reading (edit notes on the page).']]);
@@ -381,7 +382,7 @@ function readWorkbook(buf){
   db.logos.forEach(l => l.boxes.sort((a, b) => String(b.date).localeCompare(String(a.date))));
   rows('Setup Check').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.check[String(r[0]).trim()] = {res:/^flag/i.test(r[2]) ? 'flag' : 'ok', note:String(r[3] || ''), ts:String(r[4] || '')}; });
   rows('Products').slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => { const g = i => String(r[i] == null ? '' : r[i]).trim();
-    db.products.push({id:g(0), name:g(2), color:g(3), sku:g(4), place:g(5), dst:g(6), note:g(7)}); });
+    db.products.push({id:g(0), name:g(2), color:g(3), sku:g(4), place:g(5), dst:g(6), note:g(7), arch:/✓|^y|^true/i.test(g(8))}); });   // LL v1.16: Archived
   const nr = rows('Internal Notes');
   if (wb.Sheets['Internal Notes']){ nr.slice(1).filter(r => r[0] && String(r[4]).trim()).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5] || '')}));
     db.logos.forEach(l => { l.notes = ''; }); Object.values(db.schools).forEach(x => { x.notes = ''; }); }
@@ -667,7 +668,7 @@ function cardHtml(l){
 function prodSec(l){   // LL v1.12: one row per SKU
   const P = prodsOf(l.id), inp = (p, i, k) => '<input data-pf="' + k + '" data-pi="' + i + '" value="' + esc(p[k]) + '"' + (k === 'place' ? ' list="placeList"' : k === 'color' ? ' list="colorList"' : '') + '>';
   return (P.length ? '<table class="ctbl prod-tbl"><thead><tr><th>Display Name</th><th>Product Color</th><th>SKU</th><th>Placement</th><th>Insignia URL</th><th></th></tr></thead><tbody>' +
-    P.map(([p, i]) => '<tr><td class="pn">' + inp(p, i, 'name') + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + '</td><td class="pc">' + inp(p, i, 'color') + '</td><td class="ps">' + inp(p, i, 'sku') + '</td><td class="pp">' + inp(p, i, 'place') + '</td><td class="pd">' + inp(p, i, 'dst') + '</td>' +
+    P.map(([p, i]) => '<tr><td class="pn">' + inp(p, i, 'name') + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + (p.arch ? '<div class="knote"><span class="nolink">Archived</span> (not in the Warehouse Excel)</div>' : '') + '</td><td class="pc">' + inp(p, i, 'color') + '</td><td class="ps">' + inp(p, i, 'sku') + '</td><td class="pp">' + inp(p, i, 'place') + '</td><td class="pd">' + inp(p, i, 'dst') + '</td>' +
       '<td class="x"><button class="xbtn" data-act="prodDel" data-pi="' + i + '" title="Remove this product">&times;</button></td></tr>').join('') + '</tbody></table>'
     : '<div class="emb-val muted">No products yet.</div>') +
     '<div style="margin-top:8px"><button class="btn light small" data-act="prodAdd" data-id="' + esc(l.id) + '">+ Add product</button></div><div class="note">One row per SKU. These go into the Warehouse Excel (Products tab).</div>';
@@ -867,25 +868,26 @@ function renderCheck(){
 const lineOf = p => String(p.name || '').split(' - ')[0].split(' | ')[0].trim();
 const PFILT = [['line', 'All products', () => [...new Set(prods().map(lineOf).filter(Boolean))].sort(coll.compare), (p, l, v) => lineOf(p) === v],
   ['place', 'All placements', () => [...new Set(prods().map(p => p.place).filter(Boolean))].sort(coll.compare), (p, l, v) => p.place === v],
-  ['link', 'Linked + not linked', () => ['Linked to a logo', 'No logo yet'], (p, l, v) => v === 'No logo yet' ? !l : !!l]];
+  ['link', 'All', () => ['Linked to a logo', 'No logo yet'], (p, l, v) => v === 'No logo yet' ? !l : !!l],
+  ['arch', 'Hide archived', () => ['Show archived too', 'Only archived'], (p, l, v) => v === 'Only archived' ? !!p.arch : true]];   // LL v1.16
 function prodSort(a, b){ return (a.l ? 0 : 1) - (b.l ? 0 : 1) || coll.compare(a.l ? a.l.school : '', b.l ? b.l.school : '') || coll.compare(embOf(a.p), embOf(b.p)) || coll.compare(a.p.name, b.p.name); }
 function renderProducts(){
   const f = state.pf || (state.pf = {}), all = prods().map((p, i) => ({p, i, l:p.id ? byId(p.id) : null}));
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-  const list = all.filter(x => PFILT.every(([k, , , t]) => !f[k] || t(x.p, x.l, f[k])) && (!words.length || (h => words.every(w => h.includes(w)))([x.p.name, x.p.color, x.p.sku, x.p.place, x.p.dst, x.p.note, x.l ? x.l.emb + ' ' + x.l.school : ''].join(' ').toLowerCase()))).sort(prodSort);
-  const nol = all.filter(x => !x.l).length, any = PFILT.some(([k]) => f[k]);
+  const list = all.filter(x => (f.arch || !x.p.arch) && PFILT.every(([k, , , t]) => !f[k] || t(x.p, x.l, f[k])) && (!words.length || (h => words.every(w => h.includes(w)))([x.p.name, x.p.color, x.p.sku, x.p.place, x.p.dst, x.p.note, x.l ? x.l.emb + ' ' + x.l.school : ''].join(' ').toLowerCase()))).sort(prodSort);
+  const act = all.filter(x => !x.p.arch), narch = all.length - act.length, nol = act.filter(x => !x.l).length, any = PFILT.some(([k]) => f[k]);
   let h = '<h1>Products</h1><div class="bar"><button class="btn" data-act="whXlsx" title="Builds a fresh Excel for the warehouse from this data">&#11015; Warehouse Excel</button>' +
     PFILT.map(([k, label, o]) => '<select data-pfilter="' + k + '">' + opt(o(), f[k] || '', label) + '</select>').join('') + (any ? '<button class="lnk" data-act="pClear">Clear filters</button>' : '') +
-    '<span class="count">' + (list.length !== all.length ? list.length + ' of ' : '') + all.length + ' SKUs &middot; ' + new Set(all.filter(x => x.l).map(x => x.l.id)).size + ' logos' + (nol ? ' &middot; <b style="color:#8a5a00">' + nol + ' no logo yet</b>' : '') + '</span></div>' +
+    '<span class="count">' + (list.length !== act.length ? list.length + ' of ' : '') + act.length + ' SKUs &middot; ' + new Set(act.filter(x => x.l).map(x => x.l.id)).size + ' logos' + (nol ? ' &middot; <b style="color:#8a5a00">' + nol + ' no logo yet</b>' : '') + (narch ? ' &middot; ' + narch + ' archived' : '') + '</span></div>' +
     '<div class="note" style="margin:-4px 0 10px">One row per SKU. Click a row to open its logo. Edit products on the logo&rsquo;s card (box 8). <b>Warehouse Excel</b> saves a fresh file in the Logo Library\\Warehouse folder.</div>';
   if (!all.length) return h + '<div class="empty">No products yet. Add them on a logo&rsquo;s card (box 8).</div>';
-  h += '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:62px"><col style="width:15%"><col style="width:31%"><col style="width:13%"><col style="width:19%"><col style="width:10%"><col style="width:12%"></colgroup>' +
-    '<thead><tr><th class="nos">Logo</th><th class="nos">EMB ID</th><th class="nos">Display Name</th><th class="nos">Product Color</th><th class="nos">SKU</th><th class="nos">Placement</th><th class="nos">Insignia URL</th></tr></thead><tbody>';
-  if (!list.length) h += '<tr><td colspan="7"><div class="empty">No products match.</div></td></tr>';
+  h += '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:62px"><col style="width:15%"><col style="width:31%"><col style="width:13%"><col style="width:18%"><col style="width:9%"><col style="width:11%"><col style="width:80px"></colgroup>' +
+    '<thead><tr><th class="nos">Logo</th><th class="nos">EMB ID</th><th class="nos">Display Name</th><th class="nos">Product Color</th><th class="nos">SKU</th><th class="nos">Placement</th><th class="nos">Insignia URL</th><th class="nos"></th></tr></thead><tbody>';
+  if (!list.length) h += '<tr><td colspan="8"><div class="empty">No products match.</div></td></tr>';
   list.forEach(({p, i, l}) => {
-    h += '<tr class="prow"' + (l ? ' data-pid="' + esc(l.id) + '" title="Open ' + esc(l.emb) + '"' : '') + '><td><div class="th">' + imgTag(l ? (l.img.logo || l.img.spec) : '') + '</div></td>' +
-      '<td>' + (l ? '<span class="emb">' + esc(l.emb) + '</span><span class="sch">' + esc(l.school) + '</span>' : '<span class="emb">' + esc(embOf(p)) + '</span><br><span class="nolink">No logo yet</span><input class="plink" data-plink="' + i + '" list="embList" placeholder="Link to EMB ID&hellip;">') + '</td>' +
-      '<td class="sm">' + esc(p.name) + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + '</td><td class="sm">' + esc(p.color) + '</td><td class="sm">' + esc(p.sku) + '</td><td class="sm">' + esc(p.place) + '</td><td class="sm">' + esc(p.dst) + '</td></tr>';
+    h += '<tr class="prow' + (p.arch ? ' arch' : '') + '"' + (l ? ' data-pid="' + esc(l.id) + '" title="Open ' + esc(l.emb) + '"' : '') + '><td><div class="th">' + imgTag(l ? (l.img.logo || l.img.spec) : '') + '</div></td>' +
+      '<td>' + (l ? '<span class="emb">' + esc(l.emb) + '</span><span class="sch">' + esc(l.school) + '</span>' : '<span class="emb">' + esc(embOf(p)) + '</span><br><span class="nolink">' + (p.arch ? 'Archived' : 'No logo yet') + '</span><input class="plink" data-plink="' + i + '" list="embList" placeholder="Link to EMB ID&hellip;">') + '</td>' +
+      '<td class="sm">' + esc(p.name) + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + '</td><td class="sm">' + esc(p.color) + '</td><td class="sm">' + esc(p.sku) + '</td><td class="sm">' + esc(p.place) + '</td><td class="sm">' + esc(p.dst) + '</td><td><button class="parch" data-act="prodArch" data-pi="' + i + '" title="' + (p.arch ? 'Show it again (and in the Warehouse Excel)' : 'Hide it from this tab and the Warehouse Excel (stays in the Excel)') + '">' + (p.arch ? 'Restore' : 'Archive') + '</button></td></tr>';
   });
   return h + '</tbody></table></div>';
 }
@@ -902,7 +904,7 @@ async function thumb(name){   // small JPEG for the Excel (keeps the file light)
 }
 async function warehouseExcel(btn){
   if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
-  const rows = prods().map(p => ({p, l:p.id ? byId(p.id) : null})).sort(prodSort);
+  const rows = prods().filter(p => !p.arch).map(p => ({p, l:p.id ? byId(p.id) : null})).sort(prodSort);   // LL v1.16: archived products left out
   if (!rows.length){ toast('No products yet.'); return; }
   const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'Building&hellip;';
   try {
@@ -943,7 +945,7 @@ async function warehouseExcel(btn){
   btn.disabled = false; btn.innerHTML = old;
 }
 function renderTabs(){
-  const A = activeLogos(), counts = {collegiate:A.filter(isCol).length, accounts:new Set(DB.logos.filter(isCol).map(l => l.school || NO_SCHOOL)).size, mainline:A.filter(isMain).length, all:A.length, todo:A.filter(l => l.todo.length).length, check:Object.keys(DB.check || {}).filter(id => byId(id)).length + '/' + DB.logos.length, products:prods().length};
+  const A = activeLogos(), counts = {collegiate:A.filter(isCol).length, accounts:new Set(DB.logos.filter(isCol).map(l => l.school || NO_SCHOOL)).size, mainline:A.filter(isMain).length, all:A.length, todo:A.filter(l => l.todo.length).length, check:Object.keys(DB.check || {}).filter(id => byId(id)).length + '/' + DB.logos.length, products:prods().filter(p => !p.arch).length};
   document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (state.tab === t.key ? ' on' : '') + '" data-tab="' + t.key + '">' + t.label + (DB.logos.length && counts[t.key] != null ? '<span class="tcnt">' + counts[t.key] + '</span>' : '') + '</button>').join('');
 }
 function render(){
@@ -1018,6 +1020,8 @@ page.addEventListener('click', async e => {
     if (a === 'sewMove' && l){ const f = act.dataset.slot, t = act.dataset.to, L = k => SLOTS.find(z => z[0] === k)[1], a1 = l.img[f], b1 = l.img[t];
       l.img[t] = a1; l.img[f] = b1 || ''; logEdit(l, 'Sew-out moved', L(f) + ': ' + a1, L(t) + (b1 ? ' (swapped with ' + b1 + ')' : '')); touch(); render(); toast('Moved to ' + L(t) + '.'); return; }
     if (a === 'whXlsx'){ warehouseExcel(act); return; }
+    if (a === 'prodArch'){ const p = prods()[+act.dataset.pi]; if (!p) return; p.arch = !p.arch; const pl = byId(p.id); if (pl) logEdit(pl, p.arch ? 'Archived product' : 'Restored product', '', p.sku || p.name);
+      touch(); render(); toast((p.arch ? 'Archived ' : 'Restored ') + esc(p.sku || p.name) + '.'); return; }
     if (a === 'pClear'){ state.pf = {}; saveUi(); render(); return; }
     if (a === 'prodAdd' && l){ prods().push({id:l.id, name:'', color:'', sku:'', place:'', dst:l.emb ? l.emb + '.DST' : '', note:''}); logEdit(l, 'Added product', '', '(new SKU row)'); touch(); render();
       const ins = document.querySelectorAll('input[data-pf="name"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
