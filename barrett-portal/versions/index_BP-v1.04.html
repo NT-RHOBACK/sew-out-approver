@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Barrett Sew-Out Portal (demo)</title>
+<style>
+/* BP demo: same look as the Embroidery Portal (Admiral Navy, Old Glory Red, Futura PT headings, Aptos body). Sample data only. */
+:root{--navy:#29304E;--red:#BF2033;--line:#E8ECF0;--bg:#FAFAFA;--text:#29304E;--grey:#6B7B8D;--lgrey:#9399A6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Aptos','Segoe UI',sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+h1,.h2,.tab,.sec-head .name,.brand,.brand-sub,.box-hd,.pipe .lbl{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic","Futura",sans-serif}
+.header{background:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.brand{font-size:22px;font-weight:700;letter-spacing:3px;color:var(--navy)}
+.ridge{display:flex;height:26px}.ridge span{width:4px}.ridge .r{background:var(--red)}.ridge .n{background:var(--navy)}
+.brand-sub{font-size:14px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--navy)}
+.demo-tag{margin-left:auto;font-size:11px;font-weight:700;background:#fff4d6;border:1px solid #f0d58a;color:#7a5800;border-radius:6px;padding:3px 9px}
+.vbadge{font-size:11px;color:var(--grey);border:1px solid var(--line);border-radius:6px;padding:2px 8px;background:#fff}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.tabs{background:#fff;border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+.tab{padding:14px 18px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--navy)}.tab.on{color:var(--navy);border-bottom-color:var(--red)}
+.tab .cnt{font-size:11px;background:#eef1f6;border-radius:10px;padding:1px 7px;margin-left:6px;letter-spacing:0}
+.page{max-width:1400px;margin:0 auto;padding:24px 24px 60px}
+h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.sub{color:var(--grey);font-size:13px;margin-bottom:14px}
+.pipe{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:8px 0 18px}
+@media(max-width:800px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pipe .pbox{background:#fff;border:1px solid var(--line);border-top:4px solid var(--navy);border-radius:8px;text-align:center;padding:14px 8px;cursor:pointer}
+.pipe .pbox.late{border-top-color:var(--red)}.pipe .pbox.up{border-top-color:#2E7D32}.pipe .pbox.ap{border-top-color:#6B7B8D}
+.pipe .num{font-size:24px;font-weight:700;color:var(--navy)}
+.pipe .lbl{font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-top:4px}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.bar input{flex:1;min-width:220px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;color:var(--text)}
+.bar select{padding:10px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;color:var(--text)}
+.srt-w{position:relative;display:inline-flex}.srt-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:14px 16px;min-width:440px}
+.srt-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.srt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}.srt-row select{padding:7px 8px;font-size:13px}.srt-row select:first-of-type{flex:1}
+.srt-x{border:none;background:none;font-size:18px;color:var(--grey);cursor:pointer}.srt-link{border:none;background:none;color:var(--navy);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:2px 0}
+.chv{color:var(--grey);font-size:11px}
+.tbl th{cursor:pointer;user-select:none}.tbl th:hover,.tbl th.sorted{color:var(--navy)}.tbl th .arr{color:var(--lgrey);font-size:10px;margin-left:3px}.tbl th.sorted .arr{color:var(--navy)}
+.btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.btn.light{background:#fff;color:var(--navy);border:1px solid #cfd5df}.btn.small{padding:6px 10px;font-size:12px}
+.sec{margin-bottom:16px}
+.sec-head{display:flex;align-items:center;gap:8px;padding:8px 4px;cursor:pointer;user-select:none}
+.sec-head .chev{width:14px;color:var(--grey);font-size:11px}
+.sec-head .name{font-size:18px;font-weight:700;color:var(--navy)}
+.sec-head .cnt{font-size:11px;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:10px;padding:1px 8px;color:var(--grey)}
+.sec-head .hint{font-size:12px;color:var(--grey)}
+.tblwrap{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-x:auto;margin:4px 0 6px}
+.tbl{width:100%;border-collapse:collapse;background:#fff}
+.tbl th{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);text-align:left;padding:14px 12px;border-bottom:2px solid var(--navy);white-space:nowrap}
+.tbl td{padding:12px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle;white-space:nowrap}
+.tbl tr.row{cursor:pointer}.tbl tr.row:hover td{background:#f6f8fb}.tbl tr.row.open td{background:#eef1f8}
+.tbl .empty td{color:var(--grey);text-align:center;padding:18px}
+.logo-n{font-weight:600}.rush{color:var(--red);font-weight:800;margin-right:4px}
+.reqno{color:var(--grey);font-size:12px}
+.dtp{display:inline-block;font-size:13px;font-weight:600;border-radius:5px;padding:3px 8px}
+.dtp.plain{font-weight:400;color:var(--grey);padding-left:0}
+.dtp.red{background:#f8d7d7;color:#a61b1b}.dtp.yellow{background:#fdf0c4;color:#7a5800}.dtp.nodate{background:#eef1f6;color:#6B7B8D}
+.pill{display:inline-block;font-size:11px;font-weight:700;border-radius:12px;padding:4px 10px;letter-spacing:.5px}
+.pill.need{background:#fde2cf;color:#9a3412}.pill.up{background:#dcefdc;color:#1f6b2a}.pill.ap{background:#e6eaf2;color:#29304E}
+.new-reply{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:8px;padding:2px 7px;margin-left:6px;letter-spacing:.5px}
+.card td{background:#f7f8fb!important;padding:16px;white-space:normal;cursor:default}
+.cgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media(max-width:900px){.cgrid{grid-template-columns:1fr}}
+.box{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.box-hd{font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy);padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.box-hd .num{width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center;letter-spacing:0}
+.box-bd{padding:12px 14px}
+.kv{display:grid;grid-template-columns:170px 1fr;gap:6px 10px;font-size:13px}.kv .k{color:var(--grey)}
+.urgent{color:var(--red);font-weight:700}
+.hl{font-weight:700;border-radius:3px;padding:1px 5px;color:#1b2033}.nosub{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;color:#c62828}
+.fab{display:inline-block;font-size:12px;font-weight:700;border:1px solid #cfd5df;border-radius:6px;padding:3px 8px;background:#fff}.fab i{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid #9399A6;margin-right:5px;vertical-align:-1px}
+.sewon{display:flex;align-items:center;gap:12px;background:#eef1f8;color:var(--navy);border:1px solid #cfd5df;border-left:6px solid var(--navy);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px}.sewon b{font-size:20px;letter-spacing:.5px}.sewon i{width:30px;height:30px;border-radius:6px;border:1px solid #9399A6;display:inline-block;flex:none}
+.files div{padding:5px 0;border-bottom:1px dashed var(--line);font-size:13px;display:flex;align-items:center;gap:8px}.files div:last-child{border-bottom:none}
+.sew-this{background:#dcefdc;color:#1f6b2a;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px}
+.old{color:var(--lgrey)}
+.note{font-size:12px;color:var(--grey);margin-top:6px}
+.photo{display:inline-flex;align-items:center;justify-content:center;width:120px;height:90px;border-radius:8px;background:#2a2f45;color:#fff;font-size:11px;text-align:center;margin:6px 8px 0 0;vertical-align:top;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover}
+.hist{border:1px solid var(--line);border-radius:8px;margin-top:8px}
+.hist-h{padding:8px 10px;cursor:pointer;font-size:13px;display:flex;gap:8px;align-items:center}
+.hist-b{padding:4px 10px 10px;font-size:13px;border-top:1px solid var(--line)}
+.msg{border-left:3px solid var(--navy);background:#f7f8fb;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:13px}
+.msg.b{border-left-color:#2E7D32}.msg .who{font-size:12px;color:var(--grey)}
+textarea{width:100%;min-height:60px;border:1px solid #d6dbe4;border-radius:6px;padding:8px;font:inherit;font-size:13px;margin-top:8px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.same{background:#fff;border:1px dashed #cfd5df;border-radius:10px;padding:30px;text-align:center;color:var(--grey)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;display:none;z-index:50}
+</style>
+</head>
+<body>
+<div class="header"><span class="brand">RHOBACK</span><span class="ridge"><span class="r"></span><span class="n"></span></span><span class="brand-sub">Barrett Sew-Out Portal</span>
+  <span class="demo-tag">DEMO with sample data</span><span class="vbadge" id="ver"></span><span class="avatar">B</span></div>
+<div class="tabs" id="tabs"></div>
+<div class="page" id="page"></div>
+<div class="toast" id="toast"></div>
+<script>
+const VERSION = 'BP v1.04';   // Barrett portal demo (sample data only, nothing is saved or sent)
+document.getElementById('ver').textContent = VERSION;
+const pad = n => String(n).padStart(2, '0');
+const isoOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// business hours back from now (weekdays only), so the sample Late tags always look right
+function bizAgo(h){ const t = new Date(); let left = h * 3600000; while (left > 0){ const w = t.getDay(), dayStart = new Date(t); dayStart.setHours(0, 0, 0, 0);
+  if (w === 0 || w === 6){ t.setTime(dayStart.getTime() - 1); continue; } const can = t - dayStart; if (can >= left){ t.setTime(t.getTime() - left); left = 0; } else { left -= can; t.setTime(dayStart.getTime() - 1); } }
+  if (t.getHours() < 8) t.setHours(9, 15); else if (t.getHours() > 17) t.setHours(16, 40); return t; }   // sample times during the work day
+function bizHoursSince(d){ let ms = 0; const t = new Date(d), now = new Date(); while (t < now){ const end = new Date(t); end.setHours(24, 0, 0, 0); const stop = end < now ? end : now; const w = t.getDay(); if (w && w !== 6) ms += stop - t; t.setTime(stop); } return ms / 3600000; }
+const daysOut = n => { const d = new Date(); d.setDate(d.getDate() + n); return isoOf(d); };
+const fmtD = iso => { if (!iso) return ''; const [y, m, d] = iso.slice(0, 10).split('-'); return +m + '/' + +d + '/' + y.slice(2); };
+const fmtDT = d => { const h = d.getHours(), ap = h < 12 ? 'AM' : 'PM'; return fmtD(isoOf(d)) + ' ' + (h % 12 || 12) + ':' + pad(d.getMinutes()) + ' ' + ap; };
+const dayDiff = iso => { const a = new Date(iso + 'T00:00'), b = new Date(); b.setHours(0, 0, 0, 0); return Math.round((a - b) / 86400000); };
+const startCls = iso => { if (!iso) return ''; const n = dayDiff(iso); return n <= 30 ? 'red' : n <= 45 ? 'yellow' : 'plain'; };
+const isRush = r => r.urgency.startsWith('URGENT') || (!!r.start && dayDiff(r.start) <= 30);
+function lateLvl(r){ if (r.stage !== 'need') return ''; const h = bizHoursSince(r.sent); return isRush(r) ? (h >= 24 ? 'red' : '') : h >= 48 ? 'red' : h >= 24 ? 'yellow' : ''; }
+
+// ---- sample data (made-up clubs and people) ----
+const ANS = (urg, fab, sub, ord) => ({urgency:urg, fabric:fab, subs:sub, order:ord});
+// BP v1.03: the same options + highlight colors as Noelle's sew-out request form
+const FAB_HL = {'White or light fabric':'#ffff80', 'Navy or dark fabric':'#f8cbad'}, URG_HL = {'URGENT, Please prioritize':'#ff7c80', 'Important, in hand date soon':'#ffc57a'};
+const SWATCH = {'White or light fabric':'#ffffff', 'Navy or dark fabric':'#1f2a4d'};
+const swatch = f => SWATCH[f] ? 'background:' + SWATCH[f] : 'background:repeating-linear-gradient(45deg,#fff 0 4px,#cfd5df 4px 8px)';
+const fabShort = f => /^Any/.test(f) ? 'Any color' : f.replace(' fabric', '');
+const hl = (txt, bg) => bg ? '<span class="hl" style="background:' + bg + '">' + esc(txt) + '</span>' : esc(txt);
+const subsHtml = s => '<span style="font-weight:600;color:' + (/^No/.test(s) ? '#c62828' : '#1f8a3a') + '">' + esc(s) + '</span>';
+const urgShort = u => u.startsWith('URGENT') ? 'URGENT' : u.startsWith('Important') ? 'Important' : 'None';
+const R = [
+  Object.assign({id:'101', logo:'SampleHillsGC_TreeOnly_1.34w_v1', acct:'Sample Hills Golf Club', rep:'Rep A', start:'', sent:bizAgo(52), stage:'need',
+    threads:'Tree: Madeira 1751 (green). Trunk: 1055 (brown).', notes:'Please sew out the logo with the new color card attached.',
+    files:[{n:'SampleHillsGC_TreeOnly_1.34w_v1.DST', dst:true, use:true}, {n:'SampleHillsGC_TreeOnly_1.34w_v1.pdf'}, {n:'SOA_SampleHillsGC_TreeOnly_1.34w_v1.pdf', att:false}],
+    history:[{n:1, sent:bizAgo(120), photo:bizAgo(100), status:'Approved by Noelle Thompson', at:bizAgo(96), what:'All-white logo'}],
+    msgs:[{by:'Noelle', at:bizAgo(52), t:'Sew-out request sent (sew-out 2): three colors this time, see the new color card.'}]}, ANS('None, just asap', 'Any, ensure thread colors are visible', 'Yes, can substitute thread colors if unavailable', 'Yes')),
+  Object.assign({id:'126', logo:'MapleRidgeCC_Crest_2.30w_v1', acct:'Maple Ridge Country Club', rep:'Rep B', start:daysOut(18), sent:bizAgo(30), stage:'need',
+    threads:'Shield: 1000 (black). Text: 1001 (white).', notes:'Rush: they need these for an event.',
+    files:[{n:'MapleRidgeCC_Crest_2.30w_v1.DST', dst:true, use:true}, {n:'MapleRidgeCC_Crest_2.30w_v1.pdf'}],
+    history:[], msgs:[]}, ANS('URGENT, Please prioritize', 'Navy or dark fabric', 'No, do NOT substitute thread colors, please order ASAP', 'Yes')),
+  Object.assign({id:'153', logo:'LakeviewCC_Script_1.80w_v2', acct:'Lakeview Country Club', rep:'Rep C', start:daysOut(60), sent:bizAgo(26), stage:'need',
+    threads:'Script: 1147 (gold).', notes:'Use v2. The v1 DST had the wrong size.',
+    files:[{n:'LakeviewCC_Script_1.80w_v1.DST', dst:true, att:false}, {n:'LakeviewCC_Script_1.80w_v2.DST', dst:true, use:true}, {n:'LakeviewCC_Script_1.80w_v2.pdf'}, {n:'Lakeview logo.jpg', att:false}],
+    history:[], msgs:[{by:'Barrett', at:bizAgo(20), t:'Do you want this on white or navy?', reply:true}]}, ANS('None, just asap', 'White or light fabric', 'Yes, can substitute thread colors if unavailable', 'Yes')),
+  Object.assign({id:'160', logo:'OakBendGC_Flag_1.13w_v1', acct:'Oak Bend Golf Club', rep:'Rep A', start:daysOut(40), sent:bizAgo(6), stage:'need',
+    threads:'Flag: 1747 (red). Pole: 1000 (black).', notes:'',
+    files:[{n:'OakBendGC_Flag_1.13w_v1.DST', dst:true, use:true}, {n:'OakBendGC_Flag_1.13w_v1.pdf'}], history:[], msgs:[]}, ANS('Important, in hand date soon', 'Any, ensure thread colors are visible', 'Yes, can substitute thread colors if unavailable', 'Yes')),
+  Object.assign({id:'163', logo:'PineValleyCC_Pinecones_1.50w_v1', acct:'Pine Valley Country Club', rep:'Rep B', start:'', sent:bizAgo(40), stage:'up', photo:bizAgo(8),
+    threads:'Pinecones: 1059 (brown). Needles: 1751 (green).', notes:'',
+    files:[{n:'PineValleyCC_Pinecones_1.50w_v1.DST', dst:true, use:true}, {n:'PineValleyCC_Pinecones_1.50w_v1.pdf'}], history:[], msgs:[]}, ANS('None, just asap', 'White or light fabric', 'Yes, can substitute thread colors if unavailable', 'Yes')),
+  Object.assign({id:'165', logo:'HarborPointGC_Anchor_1.25h_v1', acct:'Harbor Point Golf Club', rep:'Rep C', start:daysOut(35), sent:bizAgo(60), stage:'up', photo:bizAgo(30),
+    threads:'Anchor: 1043 (navy).', notes:'One color only.',
+    files:[{n:'HarborPointGC_Anchor_1.25h_v1.DST', dst:true, use:true}], history:[], msgs:[]}, ANS('None, just asap', 'White or light fabric', 'No, do NOT substitute thread colors, please order ASAP', 'Yes')),
+  Object.assign({id:'140', logo:'CedarRunCC_Initials_1.00h_v1', acct:'Cedar Run Country Club', rep:'Rep A', start:daysOut(90), sent:bizAgo(90), stage:'ap', photo:bizAgo(70), approved:bizAgo(50),
+    threads:'Initials: 1000 (black).', notes:'',
+    files:[{n:'CedarRunCC_Initials_1.00h_v1.DST', dst:true, use:true}], history:[], msgs:[]}, ANS('None, just asap', 'Any, ensure thread colors are visible', 'Yes, can substitute thread colors if unavailable', 'Yes'))
+];
+R.forEach(r => { r.sub = r.sub || isoOf(new Date(r.sent.getTime() - 86400000)); r.type = r.type || 'Sew-Out'; r.ver = +((r.logo.match(/_v(\d+)$/) || [0, 1])[1]); });   // BP v1.02
+const SECS = [['need', 'Pending Sew Out', 'Needs a sew-out photo.'], ['up', 'Review Sew Out', 'Photo uploaded. Noelle is reviewing it.'], ['ap', 'Approved', 'Recent sew-outs Noelle approved.']];
+const STAGE_PILL = {need:'<span class="pill need">PENDING SEW OUT</span>', up:'<span class="pill up">REVIEW SEW OUT</span>', ap:'<span class="pill ap">APPROVED</span>'};
+let tab = 'req', q = '', openId = null, shut = {}, histOpen = {}, fStatus = '', group = 'status', sortOpen = false;
+// BP v1.02: same filter bar as the Barrett Queue (search, status, Group, Sorts, Reset filters, Collapse all)
+const SORT_KEYS = {logo:['Logo', r => r.logo.toLowerCase()], account:['Account', r => r.acct.toLowerCase()], rep:['Sales Rep', r => r.rep], submitted:['Submitted', r => r.sub], inhand:['In Hand Date', r => r.start || '9999'], type:['Type', r => r.type],
+  urgency:['Urgency', r => r.urgency.startsWith('URGENT') ? 0 : r.urgency.startsWith('Important') ? 1 : 2], fabric:['Fabric', r => r.fabric], received:['Request Received', r => r.sent.getTime()], status:['Status', r => ['need', 'up', 'ap'].indexOf(r.stage)]};
+const COLS = ['logo', 'account', 'rep', 'submitted', 'inhand', 'type', 'urgency', 'fabric', 'received', 'status'];   // BP v1.04: click a column heading to sort by it (click again to flip)
+const thHtml = () => '<tr>' + COLS.map(k => { const s = sorts[0] && sorts[0].k === k && sorts.length === 1 ? sorts[0] : null; return '<th data-th="' + k + '"' + (s ? ' class="sorted"' : '') + '>' + SORT_KEYS[k][0] + ' <span class="arr">' + (s ? (s.d === 'asc' ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>'; }).join('') + '</tr>';
+const DEF_SORTS = () => [{k:'received', d:'asc'}];
+let sorts = DEF_SORTS();
+const GROUPS = {status:'Status', account:'Account', rep:'Sales Rep', type:'Type', none:'None'};
+const TABS = [['ifs', 'Unshipped IFs'], ['req', 'Embroidery Requests'], ['err', 'Errors'], ['cost', 'Cost Analysis']];
+function toast(t){ const el = document.getElementById('toast'); el.innerHTML = t; el.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => el.style.display = 'none', 2600); }
+function order(a, b){ if (isRush(b) !== isRush(a)) return isRush(b) - isRush(a);   // RUSH always first
+  for (const s of sorts){ const f = SORT_KEYS[s.k][1], x = f(a), y = f(b); if (x < y) return s.d === 'asc' ? -1 : 1; if (x > y) return s.d === 'asc' ? 1 : -1; } return 0; }
+function rowHtml(r){
+  const lv = lateLvl(r), sc = startCls(r.start), newReply = r.msgs.some(m => m.reply && !m.done);
+  return '<tr class="row' + (openId === r.id ? ' open' : '') + '" data-id="' + r.id + '"><td><span class="chv">' + (openId === r.id ? '&#9662;' : '&#9656;') + '</span> <span class="logo-n">' + (isRush(r) ? '<span class="rush" title="RUSH">R</span>' : '') + esc(r.logo) + '</span> <span class="reqno">v' + r.ver + '</span>' + (newReply ? '<span class="new-reply">NEW REPLY</span>' : '') + '<div class="reqno">#' + r.id + '</div></td>' +
+    '<td>' + esc(r.acct) + '</td><td>' + esc(r.rep) + '</td><td><span class="dtp plain">' + fmtD(r.sub) + '</span></td><td>' + (r.start ? '<span class="dtp ' + sc + '">' + fmtD(r.start) + '</span>' : '<span class="dtp nodate">No date</span>') + '</td><td>' + esc(r.type) + '</td>' +
+    '<td>' + (URG_HL[r.urgency] ? hl(urgShort(r.urgency), URG_HL[r.urgency]) : '<span class="dtp plain">None</span>') + '</td>' +
+    '<td><span class="fab" title="' + esc(r.fabric) + '"' + (FAB_HL[r.fabric] ? ' style="background:' + FAB_HL[r.fabric] + ';border-color:transparent"' : '') + '><i style="' + swatch(r.fabric) + '"></i>' + esc(fabShort(r.fabric)) + '</span>' + (/^No/.test(r.subs) ? '<div class="nosub">No substitutions</div>' : '') + '</td>' +
+    '<td>' + fmtDT(r.sent) + (lv ? ' <span class="dtp ' + lv + '">Late</span>' : '') + '</td>' +
+    '<td>' + STAGE_PILL[r.stage] + (r.photo && r.stage !== 'need' ? '<div class="reqno">Photo ' + fmtDT(r.photo) + '</div>' : '') + '</td></tr>' +   // BP v1.02: no Sew-out photo column; Status shows it
+    (openId === r.id ? '<tr class="card"><td colspan="10">' + cardHtml(r) + '</td></tr>' : ''); }
+function cardHtml(r){
+  const a = '<div class="sewon"><i style="' + swatch(r.fabric) + '"></i><div>Sew on<br><b>' + esc(/^Any/.test(r.fabric) ? 'ANY COLOR' : r.fabric.toUpperCase()) + '</b>' + (/^Any/.test(r.fabric) ? '<div style="font-size:12px;opacity:.85">' + esc(r.fabric) + '</div>' : '') + '</div></div><div class="kv"><div class="k">Urgency</div><div>' + hl(r.urgency, URG_HL[r.urgency]) + '</div>' +
+    '<div class="k">Fabric color</div><div>' + hl(r.fabric, FAB_HL[r.fabric]) + '</div><div class="k">Thread color substitutions allowed?</div><div>' + subsHtml(r.subs) + '</div><div class="k">Order thread colors?</div><div><span style="font-weight:600;color:#1f8a3a">' + esc(r.order) + '</span></div>' +
+    '<div class="k">Notes for Barrett</div><div>' + (r.notes ? esc(r.notes) : '<span class="old">None</span>') + '</div><div class="k">Sent by</div><div>Noelle Thompson &middot; ' + fmtDT(r.sent) + '</div></div>';
+  const th = '<div>' + esc(r.threads) + '</div><div class="note">From the logo&rsquo;s thread color notes. The color card is in the files too.</div>';
+  const fl = '<div class="note" style="margin:0 0 6px">The files Noelle attached to this request.</div><div class="files">' + r.files.filter(f => f.att !== false).map(f => '<div>' + (f.dst ? '&#11088;' : '&#128196;') + ' <span' + (f.dst && !f.use ? ' class="old"' : '') + '>' + esc(f.n) + '</span>' + (f.use && r.files.filter(z => z.dst && z.att !== false).length > 1 ? '<span class="sew-this">Sew this one</span>' : '') + '</div>').join('') + '</div>';
+  const up = r.stage === 'need' ? '<div>No sew-out photo yet.</div><div class="btns"><label class="btn">&#8679; Upload sew-out photo<input type="file" accept="image/*" data-up="' + r.id + '" style="display:none"></label></div><div class="note">Demo: the photo stays in this page only. In the real portal it goes to Noelle for review.</div>'
+    : '<div><span class="photo">' + (r.photoUrl ? '<img src="' + r.photoUrl + '" alt="">' : 'Sew-out photo') + '</span></div><div class="note">Uploaded ' + fmtDT(r.photo) + ' by Barrett' + (r.stage === 'ap' ? ' &middot; Approved ' + fmtDT(r.approved) : ' &middot; waiting on Noelle&rsquo;s review') + '</div>' +
+      (r.stage === 'up' ? '<div class="btns"><label class="btn light small">Re-upload<input type="file" accept="image/*" data-up="' + r.id + '" style="display:none"></label></div><div class="note">A re-upload keeps the first photo, marked &ldquo;Replaced&rdquo;.</div>' : '') +
+      (r.replaced || []).map(p => '<div class="note old">Replaced photo &middot; uploaded ' + fmtDT(p) + '</div>').join('');
+  const hist = r.history.length ? r.history.map(h => { const k = r.id + '|' + h.n, o = histOpen[k];
+    return '<div class="hist"><div class="hist-h" data-hist="' + k + '">' + (o ? '&#9662;' : '&#9656;') + ' <b>Sew-out ' + h.n + '</b> <span class="old">' + esc(h.what) + ' &middot; sent ' + fmtDT(h.sent) + '</span></div>' +
+      (o ? '<div class="hist-b">Sent ' + fmtDT(h.sent) + '<br>Photo uploaded ' + fmtDT(h.photo) + '<br>' + esc(h.status) + ' &middot; ' + fmtDT(h.at) + '<div><span class="photo">Sew-out ' + h.n + ' photo</span></div></div>' : '') + '</div>'; }).join('') : '<div class="old">This is the first sew-out for this logo.</div>';
+  const msgs = (r.msgs.length ? r.msgs.map((m, i) => '<div class="msg' + (m.by === 'Barrett' ? ' b' : '') + '"><div class="who"><b>' + (m.by === 'Barrett' ? 'Barrett' : 'Noelle Thompson') + '</b> &middot; ' + fmtDT(m.at) + '</div>' + esc(m.t) + '</div>').join('') : '<div class="old">No messages yet.</div>') +
+    '<textarea data-msg="' + r.id + '" placeholder="Message to Noelle (questions, waiting on thread colors, etc.)"></textarea><div class="btns"><button class="btn small" data-send="' + r.id + '">Send to Noelle</button></div><div class="note">Sales reps never see these messages.</div>';
+  return '<div class="cgrid"><div>' + box(1, 'Sew-out request #' + r.id, a) + '<div style="height:14px"></div>' + box(2, 'Files', fl) + '</div>' +   // BP v1.03: no Thread colors box (Noelle: so it doesn't get mixed up)
+    '<div>' + box(3, 'Sew-out photo', up) + '<div style="height:14px"></div>' + box(4, 'Earlier sew-outs', hist) + '<div style="height:14px"></div>' + box(5, 'Messages with Noelle', msgs) + '</div></div>'; }
+const box = (n, t, b) => '<div class="box"><div class="box-hd"><span class="num">' + n + '</span>' + esc(t) + '</div><div class="box-bd">' + b + '</div></div>';
+function render(){
+  document.getElementById('tabs').innerHTML = TABS.map(([k, t]) => '<button class="tab' + (tab === k ? ' on' : '') + '" data-tab="' + k + '">' + t + (k === 'req' ? '<span class="cnt">' + R.filter(r => r.stage !== 'ap').length + '</span>' : '') + '</button>').join('');
+  const P = document.getElementById('page');
+  if (tab !== 'req'){ P.innerHTML = '<h1>' + TABS.find(x => x[0] === tab)[1] + '</h1><div class="same">This tab keeps working the same way it does now (only the look changes to match).</div>'; return; }
+  const list = R.filter(r => (!q || (r.logo + ' ' + r.acct + ' ' + r.rep + ' #' + r.id).toLowerCase().includes(q.toLowerCase())) && (!fStatus || r.stage === fStatus));
+  const n = s => R.filter(r => r.stage === s).length, late = R.filter(r => lateLvl(r)).length;
+  const keyOf = r => group === 'status' ? r.stage : group === 'account' ? r.acct : group === 'rep' ? r.rep : group === 'type' ? r.type : 'all';
+  const secs = group === 'status' ? SECS.filter(s => !fStatus || s[0] === fStatus) : group === 'none' ? [['all', 'All requests', '']] : [...new Set(list.map(keyOf))].sort().map(k => [k, k, '']);
+  const allShut = secs.length && secs.every(s => shut[group + '|' + s[0]]);
+  const sortPop = !sortOpen ? '' : '<div class="srt-pop"><div class="srt-h"><b>Sort by</b><button class="srt-x" data-srt="close">&times;</button></div>' + sorts.map((s, i) => '<div class="srt-row"><select data-srtk="' + i + '">' + Object.entries(SORT_KEYS).map(([k, v]) => '<option value="' + k + '"' + (k === s.k ? ' selected' : '') + '>' + v[0] + '</option>').join('') + '</select><select data-srtd="' + i + '"><option value="asc"' + (s.d === 'asc' ? ' selected' : '') + '>Oldest / A to Z first</option><option value="desc"' + (s.d === 'desc' ? ' selected' : '') + '>Newest / Z to A first</option></select><button class="srt-x" data-srt="rm" data-i="' + i + '" title="Remove">&times;</button></div>').join('') +
+    '<button class="srt-link" data-srt="add">+ Add sort</button><div class="note">RUSH logos always stay at the top.</div></div>';
+  P.innerHTML = '<h1>Barrett Queue</h1><div class="sub">Sew-outs Noelle sent you. Click a row to see the request, thread colors, files, upload the photo, or message Noelle.</div>' +
+    '<div class="pipe"><div class="pbox" data-jump="need"><div class="num">' + n('need') + '</div><div class="lbl">Pending Sew Out</div></div><div class="pbox late" data-jump="need"><div class="num" style="color:var(--red)">' + late + '</div><div class="lbl">Late</div></div>' +
+    '<div class="pbox up" data-jump="up"><div class="num">' + n('up') + '</div><div class="lbl">Review Sew Out</div></div><div class="pbox ap" data-jump="ap"><div class="num">' + n('ap') + '</div><div class="lbl">Approved</div></div></div>' +
+    '<div class="bar"><input id="q" placeholder="Search account, logo, sales rep or #&hellip;" value="' + esc(q) + '">' +
+    '<select id="fStatus"><option value="">All statuses</option>' + SECS.map(s => '<option value="' + s[0] + '"' + (fStatus === s[0] ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select>' +
+    '<select id="fGroup">' + Object.entries(GROUPS).map(([k, v]) => '<option value="' + k + '"' + (group === k ? ' selected' : '') + '>Group: ' + v + '</option>').join('') + '</select>' +
+    '<span class="srt-w"><button class="btn light" data-srt="toggle">&#8645; Sorts (' + sorts.length + ')</button>' + sortPop + '</span>' +
+    '<button class="btn light" id="reset">Reset filters</button><button class="btn light" id="collapse">' + (allShut ? 'Expand all' : 'Collapse all') + '</button></div>' +
+    secs.map(([k, name, hint]) => { const rows = list.filter(r => group === 'none' || keyOf(r) === k).sort(order), sk = group + '|' + k;
+      return '<div class="sec" id="sec-' + esc(k) + '"><div class="sec-head" data-sec="' + esc(sk) + '"><span class="chev">' + (shut[sk] ? '&#9656;' : '&#9662;') + '</span><span class="name">' + esc(name) + '</span><span class="cnt">' + rows.length + '</span>' + (hint ? '<span class="hint">' + hint + '</span>' : '') + '</div>' +
+        (shut[sk] ? '' : '<div class="tblwrap"><table class="tbl">' + thHtml() +
+          (rows.length ? rows.map(rowHtml).join('') : '<tr class="empty"><td colspan="10">Nothing here.</td></tr>') + '</table></div>') + '</div>'; }).join('');
+  const qi = document.getElementById('q'); qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; render(); const n2 = document.getElementById('q'); n2.focus(); n2.setSelectionRange(pos, pos); };
+  document.getElementById('fStatus').onchange = e => { fStatus = e.target.value; render(); };
+  document.getElementById('fGroup').onchange = e => { group = e.target.value; render(); };
+  document.getElementById('reset').onclick = () => { q = ''; fStatus = ''; group = 'status'; sorts = DEF_SORTS(); sortOpen = false; shut = {}; render(); };
+  document.getElementById('collapse').onclick = () => { const v = !allShut; secs.forEach(s => shut[group + '|' + s[0]] = v); render(); };
+  document.querySelectorAll('[data-srtk]').forEach(s => s.onchange = () => { sorts[+s.dataset.srtk].k = s.value; render(); });
+  document.querySelectorAll('[data-srtd]').forEach(s => s.onchange = () => { sorts[+s.dataset.srtd].d = s.value; render(); });
+  document.querySelectorAll('[data-up]').forEach(inp => inp.onchange = () => { const r = R.find(x => x.id === inp.dataset.up), f = inp.files[0]; if (!f) return;
+    if (r.photo){ (r.replaced = r.replaced || []).push(r.photo); } r.photoUrl = URL.createObjectURL(f); r.photo = new Date(); r.stage = 'up'; render(); toast('Sew-out photo uploaded. Moved to Review Sew Out.'); });
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]'); if (t){ tab = t.dataset.tab; render(); return; }
+  const s = e.target.closest('[data-sec]'); if (s){ shut[s.dataset.sec] = !shut[s.dataset.sec]; render(); return; }
+  const th = e.target.closest('[data-th]'); if (th){ const k = th.dataset.th, cur = sorts.length === 1 && sorts[0].k === k ? sorts[0].d : ''; sorts = [{k, d:cur === 'asc' ? 'desc' : 'asc'}]; render(); return; }
+  const sr = e.target.closest('[data-srt]'); if (sr){ const a = sr.dataset.srt; if (a === 'toggle') sortOpen = !sortOpen; else if (a === 'close') sortOpen = false; else if (a === 'add') sorts.push({k:'inhand', d:'asc'}); else if (a === 'rm') sorts.splice(+sr.dataset.i, 1); render(); return; }
+  const j = e.target.closest('[data-jump]'); if (j){ group = 'status'; fStatus = ''; shut['status|' + j.dataset.jump] = false; render(); document.getElementById('sec-' + j.dataset.jump).scrollIntoView({behavior:'smooth'}); return; }
+  const h = e.target.closest('[data-hist]'); if (h){ histOpen[h.dataset.hist] = !histOpen[h.dataset.hist]; render(); return; }
+  const sd = e.target.closest('[data-send]'); if (sd){ const r = R.find(x => x.id === sd.dataset.send), ta = document.querySelector('[data-msg="' + r.id + '"]'), v = ta.value.trim(); if (!v) return; r.msgs.push({by:'Barrett', at:new Date(), t:v}); render(); toast('Sent to Noelle (demo: nothing is really sent).'); return; }
+  const row = e.target.closest('tr.row'); if (row){ openId = openId === row.dataset.id ? null : row.dataset.id; render(); }
+});
+render();
+</script>
+</body>
+</html>

@@ -38,6 +38,7 @@ h1{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .srt-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.srt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}.srt-row select{padding:7px 8px;font-size:13px}.srt-row select:first-of-type{flex:1}
 .srt-x{border:none;background:none;font-size:18px;color:var(--grey);cursor:pointer}.srt-link{border:none;background:none;color:var(--navy);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:2px 0}
 .chv{color:var(--grey);font-size:11px}
+.tbl th{cursor:pointer;user-select:none}.tbl th:hover,.tbl th.sorted{color:var(--navy)}.tbl th .arr{color:var(--lgrey);font-size:10px;margin-left:3px}.tbl th.sorted .arr{color:var(--navy)}
 .btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .btn.light{background:#fff;color:var(--navy);border:1px solid #cfd5df}.btn.small{padding:6px 10px;font-size:12px}
 .sec{margin-bottom:16px}
@@ -96,7 +97,7 @@ textarea{width:100%;min-height:60px;border:1px solid #d6dbe4;border-radius:6px;p
 <div class="page" id="page"></div>
 <div class="toast" id="toast"></div>
 <script>
-const VERSION = 'BP v1.03';   // Barrett portal demo (sample data only, nothing is saved or sent)
+const VERSION = 'BP v1.04';   // Barrett portal demo (sample data only, nothing is saved or sent)
 document.getElementById('ver').textContent = VERSION;
 const pad = n => String(n).padStart(2, '0');
 const isoOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -111,7 +112,7 @@ const fmtD = iso => { if (!iso) return ''; const [y, m, d] = iso.slice(0, 10).sp
 const fmtDT = d => { const h = d.getHours(), ap = h < 12 ? 'AM' : 'PM'; return fmtD(isoOf(d)) + ' ' + (h % 12 || 12) + ':' + pad(d.getMinutes()) + ' ' + ap; };
 const dayDiff = iso => { const a = new Date(iso + 'T00:00'), b = new Date(); b.setHours(0, 0, 0, 0); return Math.round((a - b) / 86400000); };
 const startCls = iso => { if (!iso) return ''; const n = dayDiff(iso); return n <= 30 ? 'red' : n <= 45 ? 'yellow' : 'plain'; };
-const isRush = r => r.urgency.startsWith('URGENT') || (r.start && dayDiff(r.start) <= 30);
+const isRush = r => r.urgency.startsWith('URGENT') || (!!r.start && dayDiff(r.start) <= 30);
 function lateLvl(r){ if (r.stage !== 'need') return ''; const h = bizHoursSince(r.sent); return isRush(r) ? (h >= 24 ? 'red' : '') : h >= 48 ? 'red' : h >= 24 ? 'yellow' : ''; }
 
 // ---- sample data (made-up clubs and people) ----
@@ -156,7 +157,10 @@ const SECS = [['need', 'Pending Sew Out', 'Needs a sew-out photo.'], ['up', 'Rev
 const STAGE_PILL = {need:'<span class="pill need">PENDING SEW OUT</span>', up:'<span class="pill up">REVIEW SEW OUT</span>', ap:'<span class="pill ap">APPROVED</span>'};
 let tab = 'req', q = '', openId = null, shut = {}, histOpen = {}, fStatus = '', group = 'status', sortOpen = false;
 // BP v1.02: same filter bar as the Barrett Queue (search, status, Group, Sorts, Reset filters, Collapse all)
-const SORT_KEYS = {received:['Request Received', r => r.sent.getTime()], inhand:['In Hand Date', r => r.start || '9999'], submitted:['Submitted', r => r.sub], logo:['Logo', r => r.logo.toLowerCase()], account:['Account', r => r.acct.toLowerCase()], rep:['Sales Rep', r => r.rep]};
+const SORT_KEYS = {logo:['Logo', r => r.logo.toLowerCase()], account:['Account', r => r.acct.toLowerCase()], rep:['Sales Rep', r => r.rep], submitted:['Submitted', r => r.sub], inhand:['In Hand Date', r => r.start || '9999'], type:['Type', r => r.type],
+  urgency:['Urgency', r => r.urgency.startsWith('URGENT') ? 0 : r.urgency.startsWith('Important') ? 1 : 2], fabric:['Fabric', r => r.fabric], received:['Request Received', r => r.sent.getTime()], status:['Status', r => ['need', 'up', 'ap'].indexOf(r.stage)]};
+const COLS = ['logo', 'account', 'rep', 'submitted', 'inhand', 'type', 'urgency', 'fabric', 'received', 'status'];   // BP v1.04: click a column heading to sort by it (click again to flip)
+const thHtml = () => '<tr>' + COLS.map(k => { const s = sorts[0] && sorts[0].k === k && sorts.length === 1 ? sorts[0] : null; return '<th data-th="' + k + '"' + (s ? ' class="sorted"' : '') + '>' + SORT_KEYS[k][0] + ' <span class="arr">' + (s ? (s.d === 'asc' ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>'; }).join('') + '</tr>';
 const DEF_SORTS = () => [{k:'received', d:'asc'}];
 let sorts = DEF_SORTS();
 const GROUPS = {status:'Status', account:'Account', rep:'Sales Rep', type:'Type', none:'None'};
@@ -212,7 +216,7 @@ function render(){
     '<button class="btn light" id="reset">Reset filters</button><button class="btn light" id="collapse">' + (allShut ? 'Expand all' : 'Collapse all') + '</button></div>' +
     secs.map(([k, name, hint]) => { const rows = list.filter(r => group === 'none' || keyOf(r) === k).sort(order), sk = group + '|' + k;
       return '<div class="sec" id="sec-' + esc(k) + '"><div class="sec-head" data-sec="' + esc(sk) + '"><span class="chev">' + (shut[sk] ? '&#9656;' : '&#9662;') + '</span><span class="name">' + esc(name) + '</span><span class="cnt">' + rows.length + '</span>' + (hint ? '<span class="hint">' + hint + '</span>' : '') + '</div>' +
-        (shut[sk] ? '' : '<div class="tblwrap"><table class="tbl"><tr><th>Logo</th><th>Account</th><th>Sales Rep</th><th>Submitted</th><th>In Hand Date</th><th>Type</th><th>Urgency</th><th>Fabric</th><th>Request Received</th><th>Status</th></tr>' +
+        (shut[sk] ? '' : '<div class="tblwrap"><table class="tbl">' + thHtml() +
           (rows.length ? rows.map(rowHtml).join('') : '<tr class="empty"><td colspan="10">Nothing here.</td></tr>') + '</table></div>') + '</div>'; }).join('');
   const qi = document.getElementById('q'); qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; render(); const n2 = document.getElementById('q'); n2.focus(); n2.setSelectionRange(pos, pos); };
   document.getElementById('fStatus').onchange = e => { fStatus = e.target.value; render(); };
@@ -227,6 +231,7 @@ function render(){
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-tab]'); if (t){ tab = t.dataset.tab; render(); return; }
   const s = e.target.closest('[data-sec]'); if (s){ shut[s.dataset.sec] = !shut[s.dataset.sec]; render(); return; }
+  const th = e.target.closest('[data-th]'); if (th){ const k = th.dataset.th, cur = sorts.length === 1 && sorts[0].k === k ? sorts[0].d : ''; sorts = [{k, d:cur === 'asc' ? 'desc' : 'asc'}]; render(); return; }
   const sr = e.target.closest('[data-srt]'); if (sr){ const a = sr.dataset.srt; if (a === 'toggle') sortOpen = !sortOpen; else if (a === 'close') sortOpen = false; else if (a === 'add') sorts.push({k:'inhand', d:'asc'}); else if (a === 'rm') sorts.splice(+sr.dataset.i, 1); render(); return; }
   const j = e.target.closest('[data-jump]'); if (j){ group = 'status'; fStatus = ''; shut['status|' + j.dataset.jump] = false; render(); document.getElementById('sec-' + j.dataset.jump).scrollIntoView({behavior:'smooth'}); return; }
   const h = e.target.closest('[data-hist]'); if (h){ histOpen[h.dataset.hist] = !histOpen[h.dataset.hist]; render(); return; }
