@@ -194,6 +194,26 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .tbl tr.prow.arch td{opacity:.55}.parch{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:2px 9px;cursor:pointer;color:var(--navy);white-space:nowrap}
 .tbl tr.prow{cursor:pointer}.tbl tr.prow:hover td{background:#F8F9FC}
 .tbl td.sm{font-size:12.5px}
+/* LL v1.17: school logos + full names; Excel-style card */
+.slogo{display:inline-flex;align-items:center;justify-content:center;width:46px;height:34px;flex:none;border-radius:4px;background:#fff;overflow:hidden}
+.slogo img{max-width:100%;max-height:100%;object-fit:contain}.slogo.sm{width:36px;height:26px}.slogo.lg{width:96px;height:70px}
+.sec-head .abbr{font-size:11px;font-weight:700;color:var(--grey);border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+.acc-n{display:flex;align-items:center;gap:10px}
+.school-h{display:flex;align-items:center;gap:16px;margin:4px 0 14px}.school-h h1{margin:0}.school-h .sub{font-size:13px;color:var(--grey);margin-top:2px}
+.xcard{padding:14px 18px 14px 30px}
+.pics.strip{grid-template-columns:repeat(auto-fill,minmax(130px,160px));gap:12px;margin-bottom:4px}
+.xrows{width:100%;max-width:1000px;border-collapse:collapse;margin-top:12px;background:#fff;border:1px solid var(--line)}
+.xrows th{width:170px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--grey);padding:6px 10px;border-bottom:1px solid #EEF0F4;border-right:1px solid #EEF0F4;vertical-align:middle;background:#FBFBFD}
+.xrows td{padding:5px 10px;border-bottom:1px solid #EEF0F4;vertical-align:middle;font-size:13px;color:var(--navy)}
+.xrows tr.xh td{background:#F0F2F7;font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);padding:6px 10px}
+.emb-card .xrows input:not([type=checkbox]),.emb-card .xrows select{width:auto;min-width:0;display:inline-block;vertical-align:middle}
+.emb-card .xrows select{min-width:170px}.emb-card .xrows textarea{min-height:44px}
+.xrows .xs{font-size:12.5px;color:#49516C;margin-left:8px}.xrows .note{display:inline;margin:0 0 0 10px}
+.xrows .cbs{display:inline-flex;gap:14px;flex-wrap:wrap}.xrows .boxsec{margin:0}.xrows .boxsec-h{display:none}
+.xfold{max-width:1000px;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:6px}
+.xfold>summary{cursor:pointer;padding:9px 12px;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);user-select:none}
+.xfold>summary .cnt{font-size:11px;font-weight:600;padding:2px 9px;border-radius:12px;background:#F0F2F7;color:var(--grey);margin-left:6px;letter-spacing:0}
+.xfold-bd{padding:4px 12px 12px}
 /* LL v1.07: Copy button never squished */
 .pathrow input{flex:1;min-width:0}
 .pathrow .btn{flex:none;white-space:nowrap}
@@ -220,7 +240,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.16</span>
+    <span class="vbadge">LL v1.17</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -232,7 +252,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.16';
+const VERSION = 'LL v1.17';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -314,8 +334,8 @@ function buildWorkbook(){
   DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
   // LL v1.06: school info + colors (current set and past sets, newest first)
   const sch = Object.keys(DB.schools).sort(coll.compare);
-  const ss = XLSX.utils.aoa_to_sheet([['Account', 'Full name', 'EMB code', 'Notes']].concat(sch.map(k => { const x = DB.schools[k]; return [k, x.name, x.code, notesText('S:' + k)]; })));
-  ss['!cols'] = [22, 34, 12, 60].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ss, 'Schools');
+  const ss = XLSX.utils.aoa_to_sheet([['Account', 'Full name', 'EMB code', 'Notes', 'Logo image']].concat(sch.map(k => { const x = DB.schools[k]; return [k, x.name, x.code, notesText('S:' + k), x.logo || '']; })));
+  ss['!cols'] = [22, 34, 12, 60, 34].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ss, 'Schools');
   const cr = [];
   sch.forEach(k => { const x = DB.schools[k]; x.colors.forEach(c => cr.push([k, 'Current', '', c.name, c.pms, c.mad]));
     x.past.forEach(pz => pz.colors.forEach(c => cr.push([k, 'Past', pz.until, c.name, c.pms, c.mad]))); });
@@ -374,7 +394,7 @@ function readWorkbook(buf){
     db.listsNote = String(li[0][5] || '');
   }
   rows('Page Edits').slice(1).filter(r => r[0]).forEach(r => db.edits.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), emb:String(r[3]), what:String(r[4]), from:String(r[5]), to:String(r[6]), by:String(r[7])}));
-  rows('Schools').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.schools[String(r[0]).trim()] = {name:String(r[1] || ''), code:String(r[2] || ''), notes:String(r[3] || ''), colors:[], past:[]}; });
+  rows('Schools').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.schools[String(r[0]).trim()] = {name:String(r[1] || ''), code:String(r[2] || ''), notes:String(r[3] || ''), logo:String(r[4] || ''), colors:[], past:[]}; });
   rows('School Colors').slice(1).filter(r => String(r[0]).trim()).forEach(r => {
     const k = String(r[0]).trim(), x = db.schools[k] || (db.schools[k] = {name:'', code:'', notes:'', colors:[], past:[]}), c = {name:String(r[3] || ''), pms:String(r[4] || ''), mad:String(r[5] || '')};
     if (/^past/i.test(r[1])){ const u = String(r[2] || ''); let pz = x.past.find(z => z.until === u); if (!pz) x.past.push(pz = {until:u, colors:[]}); pz.colors.push(c); } else x.colors.push(c); });
@@ -605,7 +625,7 @@ const C = {
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
-  collegiate: ['chev','spec','logo','bar','qd','emb','school','ver','size','clrs','files','status','todo','flag'],
+  collegiate: ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   accounts:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   mainline:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   all:        ['chev','spec','logo','bar','qd','emb','school','type','ver','size','clrs','files','status','todo','flag'],
@@ -629,9 +649,9 @@ function tableHtml(tab, list, sec){
   });
   return h + '</tbody></table></div>';
 }
-function sectionHtml(tab, name, list, defOpen, sec){
+function sectionHtml(tab, name, list, defOpen, sec, label){
   const key = tab + '|' + name, open = q ? list.length > 0 : (state.secOpen[key] == null ? defOpen : state.secOpen[key]);
-  return '<div class="sec"><div class="sec-head" data-sec="' + esc(key) + '"><span class="chev">' + (open ? '&#9660;' : '&#9654;') + '</span><span class="name">' + esc(name) + '</span><span class="cnt">' + list.length + '</span></div>' +
+  return '<div class="sec"><div class="sec-head" data-sec="' + esc(key) + '"><span class="chev">' + (open ? '&#9660;' : '&#9654;') + '</span>' + (label || '<span class="name">' + esc(name) + '</span>') + '<span class="cnt">' + list.length + '</span></div>' +
     (open ? tableHtml(tab, list, sec) : '') + '</div>';
 }
 
@@ -640,31 +660,37 @@ function opt(list, cur, blank){ const all = list.slice(); if (cur && !all.includ
   return (blank ? '<option value="">' + esc(blank) + '</option>' : '') + all.map(v => '<option' + (v === cur ? ' selected' : '') + '>' + esc(v) + '</option>').join(''); }
 const fld = (l, f, label, cls) => '<div class="emb-fld' + (cls ? ' ' + cls : '') + '"><label>' + esc(label) + '</label><input data-f="' + f + '" data-id="' + esc(l.id) + '" value="' + esc(l[f]) + '"' + (f === 'school' ? ' list="schoolList"' : '') + '></div>';
 const box = (n, title, right, body) => '<div class="emb-box"><div class="emb-box-hd"><span class="emb-box-num">' + n + '</span><span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
-function cardHtml(l){
-  const id = esc(l.id), sc = sizeCheck(l), L = DB.lists;
-  const b1 = '<div class="emb-grid">' + fld(l, 'emb', 'EMB ID') + fld(l, 'school', 'School / Account') +
-    '<div class="emb-fld"><label>Type</label><select data-f="type" data-id="' + id + '">' + opt(L.type, l.type, '—') + '</select></div>' + fld(l, 'ver', 'Ver') +
-    '<div class="emb-fld"><label>Status</label><select data-f="status" data-id="' + id + '">' + opt(L.status, l.status, '—') + '</select></div>' +
-    '<div class="emb-fld"><label>Flag</label><select data-f="flag" data-id="' + id + '">' + opt(L.flag, l.flag, '—') + '</select></div>' +
-    '<div class="emb-fld full"><label class="cb" style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;color:var(--navy)"><input type="checkbox" data-f="box" data-id="' + id + '"' + (l.box ? ' checked' : '') + '> Approved (Box)</label></div></div>';
-  const b2 = '<div class="emb-grid g4">' + fld(l, 'specH', 'Spec H') + fld(l, 'specW', 'Spec W') + fld(l, 'dstH', 'DST H') + fld(l, 'dstW', 'DST W') + '</div>' +
-    '<div class="note" id="sc-' + id + '">' + scText(l) + '</div>' +
-    '<div class="emb-grid" style="margin-top:10px"><div class="emb-fld full"><label>Thread Colors (Madeira)</label><textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea></div>' + fld(l, 'clrs', '# Clrs') + '</div>';
-  const b3 = '<div class="cbs c4">' + FILES.map(([k, n]) => '<label class="cb"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '> ' + n + '</label>').join('') + '</div>' +
-    '<div class="emb-fld" style="margin-top:10px"><label>Folder</label><div class="pathrow"><input data-f="folder" data-id="' + id + '" value="' + esc(l.folder) + '"><button class="btn light small" data-act="copyFolder" data-id="' + id + '"' + (l.folder ? '' : ' disabled') + '>Copy</button></div>' +
-    '<div class="note">Copy the path, then paste it into File Explorer&rsquo;s address bar (browsers can&rsquo;t open folders from a web page).</div></div>' +
-    '<div class="note" id="ms-' + id + '">' + msText(l) + '</div>' + boxSec(l);
-  const b4 = notesBox(l.id);
-  const b5 = '<div class="emb-fld"><label>To Do</label><select data-step="1" data-id="' + id + '">' + opt(L.todo.filter(t => t !== TC), stepOf(l), 'Nothing to do') + '</select></div>' +
-    '<label class="cb todo-tc"><input type="checkbox" data-todo="' + esc(TC) + '" data-id="' + id + '"' + (l.todo.includes(TC) ? ' checked' : '') + '> ' + esc(TC) + '</label>';
+function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures on top; Products / Notes / History fold away
+  const id = esc(l.id), L = DB.lists, S = schoolGet(l.school);
+  const inp = (f, w, ph) => '<input data-f="' + f + '" data-id="' + id + '" value="' + esc(l[f]) + '"' + (w ? ' style="width:' + w + '"' : '') + (f === 'school' ? ' list="schoolList"' : '') + (ph ? ' placeholder="' + ph + '"' : '') + '>';
+  const sel = (f, list, blank) => '<select data-f="' + f + '" data-id="' + id + '">' + opt(list, l[f], blank) + '</select>';
+  const row = (label, val) => '<tr><th>' + label + '</th><td>' + val + '</td></tr>', head = t => '<tr class="xh"><td colspan="2">' + t + '</td></tr>';
   const pic = ([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '"' + (l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger (or drop a new picture here)"' : ' title="Drop a picture here"') + '>' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
     '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts"><button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">' + (l.img[k] ? 'Replace' : 'Add') + '</button>' + (l.img[k] ? '<button class="btn light small" data-act="unpic" data-slot="' + k + '" data-id="' + id + '">Remove</button>' : '') + '</div>' +
     (state.tab === 'check' && SEWS.includes(k) && l.img[k] ? '<div class="sewmv"><span class="lbl2">Belongs in:</span>' + [['bar', 'Barrett'], ['qd', 'QD'], ['sew', 'Other']].map(([t, n]) => '<button' + (t === k ? ' class="on" disabled' : ' data-act="sewMove" data-slot="' + k + '" data-to="' + t + '" data-id="' + id + '"') + '>' + n + '</button>').join('') + '</div>' : '') + '</div>';
-  const b6 = '<div class="pics p2" style="margin-top:0">' + SLOTS.slice(0, 2).map(pic).join('') + '</div><div class="pics ' + (l.img.sew ? '' : 'p2') + '" style="margin-top:10px">' + SLOTS.slice(2).filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div>' +
-    '<div class="note">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
-  return '<div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + box(1, 'Logo', esc(l.id), b1) + box(2, 'Size &amp; Thread Colors', '', b2) + box(3, 'Files on Hand', '', b3) + box(4, 'Internal notes', '<span id="nc-' + id + '">' + notesFor(l.id).length + '</span>', b4) +
-    '</div><div class="emb-col">' + box(5, 'To Do', '<span id="tc-' + id + '">' + tcText(l) + '</span>', b5) + box(6, 'Pictures', '', b6) + box(7, 'History', '', '<details class="emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></details>') + '</div></div>' + '<div style="margin-top:14px">' + box(8, 'Products (kit info)', prodsOf(l.id).length + ' SKU' + (prodsOf(l.id).length === 1 ? '' : 's'), prodSec(l)) + '</div>' + footHtml(l) + '</div>';
+  const pics = '<div class="pics strip">' + SLOTS.filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div><div class="note" style="margin-top:0">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
+  const rows = '<table class="xrows">' +
+    head('Logo &middot; ' + id) +
+    row('EMB ID', inp('emb', '260px')) +
+    row('School', inp('school', '150px') + (S.name ? '<span class="xs">' + esc(S.name) + '</span>' : '')) +
+    row('Type / Ver', sel('type', L.type, '—') + ' &nbsp;Ver ' + inp('ver', '70px')) +
+    row('Status / Flag', sel('status', L.status, '—') + ' &nbsp;' + sel('flag', L.flag, 'No flag')) +
+    row('To Do', '<select data-step="1" data-id="' + id + '">' + opt(L.todo.filter(t => t !== TC), stepOf(l), 'Nothing to do') + '</select> &nbsp;<label class="cb" style="display:inline-flex"><input type="checkbox" data-todo="' + esc(TC) + '" data-id="' + id + '"' + (l.todo.includes(TC) ? ' checked' : '') + '> ' + esc(TC) + '</label>') +
+    head('Thread Colors &amp; Size') +
+    row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
+    row('# Clrs', inp('clrs', '70px')) +
+    row('Spec H × W', inp('specH', '80px') + ' × ' + inp('specW', '80px')) +
+    row('DST H × W', inp('dstH', '80px') + ' × ' + inp('dstW', '80px') + '<span class="note" id="sc-' + id + '">' + scText(l) + '</span>') +
+    head('Files &amp; Box') +
+    row('Files on hand', '<span class="cbs">' + FILES.map(([k, n]) => '<label class="cb"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '> ' + n + '</label>').join('') + '</span><span class="note" id="ms-' + id + '">' + msText(l) + '</span>') +
+    row('Folder', '<div class="pathrow"><input data-f="folder" data-id="' + id + '" value="' + esc(l.folder) + '"><button class="btn light small" data-act="copyFolder" data-id="' + id + '"' + (l.folder ? '' : ' disabled') + '>Copy</button></div>') +
+    row('Approved (Box)', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-f="box" data-id="' + id + '"' + (l.box ? ' checked' : '') + '> Uploaded to the Box drive</label>') +
+    row('Box uploads', boxSec(l)) + '</table>';
+  const fold = (key, title, count, body) => '<details class="xfold" data-fold="' + id + '|' + key + '"' + (foldOpen[l.id + '|' + key] ? ' open' : '') + '><summary>' + title + '<span class="cnt"' + (key === 'notes' ? ' id="nc-' + id + '"' : '') + '>' + count + '</span></summary><div class="xfold-bd">' + body + '</div></details>';
+  const hist = '<details class="xfold emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="xfold-bd"><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></div></details>';
+  return '<div class="emb-card xcard">' + pics + rows + fold('prod', 'Products (kit info)', prodsOf(l.id).length, prodSec(l)) + fold('notes', 'Internal notes', notesFor(l.id).length, notesBox(l.id)) + hist + footHtml(l) + '</div>';
 }
+const foldOpen = {};
 function prodSec(l){   // LL v1.12: one row per SKU
   const P = prodsOf(l.id), inp = (p, i, k) => '<input data-pf="' + k + '" data-pi="' + i + '" value="' + esc(p[k]) + '"' + (k === 'place' ? ' list="placeList"' : k === 'color' ? ' list="colorList"' : '') + '>';
   return (P.length ? '<table class="ctbl prod-tbl"><thead><tr><th>Display Name</th><th>Product Color</th><th>SKU</th><th>Placement</th><th>Insignia URL</th><th></th></tr></thead><tbody>' +
@@ -715,7 +741,7 @@ function renderAudit(){
   }).join('');
 }
 function openLogo(l){   // from the Audit tab: go to the logo's tab, open its section and card
-  if (isCol(l)){ if (inactive(l)){ state.tab = 'accounts'; state.acct = l.school || NO_SCHOOL; state.secOpen['accounts|' + (l.status === RETIRED ? 'Retired' : 'Archived')] = true; } else state.tab = 'collegiate'; }
+  if (isCol(l)){ if (inactive(l)){ state.tab = 'accounts'; state.acct = l.school || NO_SCHOOL; state.secOpen['accounts|' + (l.status === RETIRED ? 'Retired' : 'Archived')] = true; } else { state.tab = 'collegiate'; state.secOpen['collegiate|' + (l.school || NO_SCHOOL)] = true; } }
   else if (isMain(l)){ state.tab = 'mainline'; state.secOpen['mainline|' + (inactive(l) ? 'Archived & Retired' : (l.school || NO_SCHOOL))] = true; }
   else { state.tab = 'all'; state.f = {}; }
   if (q && !matches(l)){ q = ''; ms.value = ''; }
@@ -743,31 +769,39 @@ function renderGrouped(tab){   // Mainline: a section per account; archived + re
     (gone.length ? sectionHtml(tab, 'Archived & Retired', gone.filter(matches), false) : '');
 }
 function renderCollegiate(){   // LL v1.04: one list of every collegiate logo
-  const all = activeLogos().filter(isCol), list = all.filter(matches);
-  return '<h1>Collegiate</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos</span></div>' + addBoxHtml('collegiate') + tableHtml('collegiate', list);
+  const all = activeLogos().filter(isCol), list = all.filter(matches), g = {};   // LL v1.17: grouped by school (logo + full name)
+  list.forEach(l => { const k = l.school || NO_SCHOOL; (g[k] = g[k] || []).push(l); });
+  const names = Object.keys(g).sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));
+  return '<h1>Collegiate</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button><span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school || NO_SCHOOL)).size + ' schools</span></div>' + addBoxHtml('collegiate') +
+    (names.length ? names.map(k => sectionHtml('collegiate', k, g[k], true, undefined, schoolLabel(k))).join('') : '<div class="empty">No logos' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div>');
 }
 const NO_SCHOOL = '(no school / account)';
+const schoolFull = k => (DB.schools[k] && DB.schools[k].name) || '';
+const schoolSort = k => (schoolFull(k) || k).replace(/^(the|university of)\s+/i, '');
+const schoolLogo = (k, cls) => { const x = DB.schools[k]; return '<span class="slogo' + (cls ? ' ' + cls : '') + '">' + (x && x.logo ? '<img data-img="' + esc(x.logo) + '" alt="" hidden><span></span>' : '') + '</span>'; };
+const schoolCode = k => (DB.schools[k] && DB.schools[k].code) || k;
+const schoolLabel = k => schoolLogo(k) + '<span class="name">' + esc(schoolFull(k) || k) + '</span>' + (schoolFull(k) && schoolFull(k) !== schoolCode(k) ? '<span class="abbr">' + esc(schoolCode(k)) + '</span>' : '');
 function renderAccounts(){   // LL v1.04: schools; click one to see its logos, archived, and retired
   const col = DB.logos.filter(isCol), g = {};
   col.forEach(l => { const k = l.school || NO_SCHOOL; (g[k] = g[k] || []).push(l); });
   if (state.acct){
     const name = state.acct, mine = g[name] || [];
     const a = mine.filter(l => !inactive(l)), ar = mine.filter(l => l.status === ARCH), re = mine.filter(l => l.status === RETIRED);
-    return '<button class="back" data-act="acctBack">&larr; All accounts</button><h1>' + esc(name) + '</h1>' + schoolTop(name) + '<div class="bar"><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
+    return '<button class="back" data-act="acctBack">&larr; All accounts</button><div class="school-h">' + schoolLogo(name, 'lg') + '<div><h1>' + esc(schoolFull(name) || name) + '</h1><div class="sub">' + esc(schoolCode(name)) + (schoolCode(name) !== name ? ' &middot; ' + esc(name) : '') + '</div></div></div>' + schoolTop(name) + '<div class="bar"><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
       '<span class="count">' + a.length + ' logos &middot; ' + ar.length + ' archived &middot; ' + re.length + ' retired</span></div>' +
       sectionHtml('accounts', 'Logos', a.filter(matches), true) + sectionHtml('accounts', 'Archived', ar.filter(matches), false) + sectionHtml('accounts', 'Retired', re.filter(matches), false);
   }
-  let names = Object.keys(g).sort(coll.compare);
-  if (q) names = names.filter(n => n.toLowerCase().includes(q.toLowerCase()) || g[n].some(matches));
+  let names = Object.keys(g).sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));   // LL v1.17: by full name
+  if (q) names = names.filter(n => (n + ' ' + schoolFull(n)).toLowerCase().includes(q.toLowerCase()) || g[n].some(matches));
   const n = (list, f) => list.filter(f).length, cnt = v => v ? v : '<span class="muted">&mdash;</span>';
   return '<h1>Accounts</h1><div class="bar"><span class="count">' + (q ? names.length + ' of ' : '') + Object.keys(g).length + ' schools</span></div>' +
     '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:40%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>' +
     '<thead><tr><th class="nos">School / Account</th><th class="nos">Logos</th><th class="nos">Approved</th><th class="nos">Archived</th><th class="nos">Retired</th></tr></thead><tbody>' +
-    (names.length ? names.map(k => { const L = g[k]; return '<tr class="acct-row" data-acct="' + esc(k) + '"><td><span class="emb">' + esc(k) + '</span></td><td>' + cnt(n(L, l => !inactive(l))) + '</td><td>' + cnt(n(L, l => !inactive(l) && isApproved(l))) + '</td><td>' + cnt(n(L, l => l.status === ARCH)) + '</td><td>' + cnt(n(L, l => l.status === RETIRED)) + '</td></tr>'; }).join('')
+    (names.length ? names.map(k => { const L = g[k]; return '<tr class="acct-row" data-acct="' + esc(k) + '"><td><div class="acc-n">' + schoolLogo(k, 'sm') + '<span><span class="emb">' + esc(schoolFull(k) || k) + '</span>' + (schoolFull(k) ? '<span class="sch">' + esc(schoolCode(k)) + '</span>' : '') + '</span></div></td><td>' + cnt(n(L, l => !inactive(l))) + '</td><td>' + cnt(n(L, l => !inactive(l) && isApproved(l))) + '</td><td>' + cnt(n(L, l => l.status === ARCH)) + '</td><td>' + cnt(n(L, l => l.status === RETIRED)) + '</td></tr>'; }).join('')
       : '<tr><td colspan="5"><div class="empty">No schools match &ldquo;' + esc(q) + '&rdquo;.</div></td></tr>') + '</tbody></table></div>';
 }
 // ---------------- School page (LL v1.06) ----------------
-const blankSchool = () => ({name:'', code:'', notes:'', colors:[], past:[]});
+const blankSchool = () => ({name:'', code:'', notes:'', logo:'', colors:[], past:[]});
 const schoolGet = k => DB.schools[k] || blankSchool();
 const schoolSave = (k, x) => { DB.schools[k] = x; return x; };
 const SKEY = k => 'S:' + k;
@@ -1091,7 +1125,7 @@ function refreshRow(l){
 page.addEventListener('input', e => { if (e.target.id !== 'aSearch') return; state.audit.q = e.target.value; saveUi(); const pos = e.target.selectionStart; render(); const n = document.getElementById('aSearch'); n.focus(); n.setSelectionRange(pos, pos); });
 page.addEventListener('keydown', e => { const t = e.target; if (!(e.key === 'Enter' && (e.ctrlKey || e.metaKey) && t.classList && t.classList.contains('note-in'))) return;   // LL v1.08: Ctrl+Enter saves the note
   e.preventDefault(); if (addNote(t.dataset.nid, t.value)){ render(); toast('Note added.'); } });
-page.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.hist) histOpen[d.dataset.hist] = d.open; }, true);
+page.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.hist) histOpen[d.dataset.hist] = d.open; if (d.dataset && d.dataset.fold) foldOpen[d.dataset.fold] = d.open; }, true);
 document.getElementById('picFile').onchange = e => { const f = e.target.files[0], l = pickFor && byId(pickFor[0]); if (f && l) putPicture(l, pickFor[1], f); };
 page.addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d){ e.preventDefault(); d.classList.add('over'); } });
 page.addEventListener('dragleave', e => { const d = e.target.closest('[data-drop]'); if (d) d.classList.remove('over'); });
