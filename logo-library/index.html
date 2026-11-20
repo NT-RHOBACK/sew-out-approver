@@ -219,7 +219,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.13</span>
+    <span class="vbadge">LL v1.14</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -231,7 +231,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.13';
+const VERSION = 'LL v1.14';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -892,11 +892,13 @@ function renderProducts(){
 // ---------------- Warehouse Excel (LL v1.12): ExcelJS (only loaded when the button is clicked), pictures from the Images folder ----------------
 const EXCELJS = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
 const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Couldn’t load ' + src)); document.head.appendChild(s); });
+const PIC_BOX = [96, 76], PIC_AT = [4, 3], EMU = 9525;   // LL v1.14: picture spot in the Logo cell, in pixels (column 15 wide is about 105 px, row 62 pt is about 83 px)
 async function thumb(name){   // small JPEG for the Excel (keeps the file light)
   try { const f = await (await (await getImgDir()).getFileHandle(name)).getFile(), bm = await createImageBitmap(f);
-    const sc = Math.min(1, 200 / bm.width, 150 / bm.height), w = Math.max(1, Math.round(bm.width * sc)), h = Math.max(1, Math.round(bm.height * sc));
-    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(bm, 0, 0, w, h);
-    return {b64:c.toDataURL('image/jpeg', 0.85).split(',')[1], w, h}; } catch(e){ return null; }
+    // LL v1.14: the picture is centered on a white box the same shape as its spot in the cell, so Excel never stretches it (same idea as the v13 file)
+    const W = PIC_BOX[0] * 2, H = PIC_BOX[1] * 2, sc = Math.min(W / bm.width, H / bm.height), w = Math.round(bm.width * sc), h = Math.round(bm.height * sc);
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.imageSmoothingQuality = 'high'; g.drawImage(bm, (W - w) / 2, (H - h) / 2, w, h);
+    return {b64:c.toDataURL('image/jpeg', 0.88).split(',')[1]}; } catch(e){ return null; }
 }
 async function warehouseExcel(btn){
   if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
@@ -912,7 +914,7 @@ async function warehouseExcel(btn){
     const NAVY = 'FF1B2A4A', d = new Date(), today = pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2);
     ws.mergeCells(1, 1, 1, H.length); ws.getCell(1, 1).value = 'Rhoback Embroidery: Kit Info for the Warehouse'; ws.getCell(1, 1).font = {bold:true, size:16, color:{argb:NAVY}}; ws.getRow(1).height = 26;
     ws.mergeCells(2, 1, 2, H.length); ws.getCell(2, 1).value = 'Updated ' + today + '  ·  ' + rows.length + ' SKUs  ·  ' + new Set(rows.filter(r => r.l).map(r => r.l.id)).size + ' logos  ·  one row per SKU'; ws.getCell(2, 1).font = {italic:true, size:10, color:{argb:'FF6B7385'}};
-    const hr = ws.getRow(3); hr.values = H.map(h => h[0]); hr.height = 22;
+    const hr = ws.getRow(3); hr.values = H.map(h => h[0]); hr.height = 32;   // LL v1.14: room for two-line headers
     hr.eachCell(c => { c.font = {bold:true, color:{argb:'FFFFFFFF'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:NAVY}}; c.alignment = {vertical:'middle', horizontal:'center', wrapText:true}; });
     ws.autoFilter = {from:{row:3, column:1}, to:{row:3 + rows.length, column:H.length}};   // LL v1.13: whole table
     const pics = {}, need = [...new Set(rows.filter(r => r.l).map(r => r.l.img.logo || r.l.img.spec).filter(Boolean))];
@@ -930,9 +932,8 @@ async function warehouseExcel(btn){
       const st = row.getCell(13); st.font = {bold:true, color:{argb:st.value === 'Approved' ? 'FF256B31' : st.value === 'Needs sew-out' || st.value === 'No logo yet' ? 'FFB3261E' : 'FF1B2A4A'}};
       const n = l && (l.img.logo || l.img.spec), t = n && pics[n];
       if (t){ if (ids[n] == null) ids[n] = wb.addImage({base64:t.b64, extension:'jpeg'});
-        const sc = Math.min(100 / t.w, 76 / t.h), w = t.w * sc, hh = t.h * sc;
-        const cx = (105 - w) / 2 / 105, cy = (82 - hh) / 2 / 82;   // LL v1.13: picture sits inside its own cell + 'move and size with cells', so sorting and filtering carry it with the row
-        ws.addImage(ids[n], {tl:{col:cx, row:r - 1 + cy}, br:{col:1 - cx, row:r - cy}, editAs:'twoCell'}); }
+        // inside its own cell + 'move and size with cells' (sorting and filtering carry it with the row); exact offsets in EMU like the v13 file
+        ws.addImage(ids[n], {tl:{nativeCol:0, nativeColOff:PIC_AT[0] * EMU, nativeRow:r - 1, nativeRowOff:PIC_AT[1] * EMU}, br:{nativeCol:0, nativeColOff:(PIC_AT[0] + PIC_BOX[0]) * EMU, nativeRow:r - 1, nativeRowOff:(PIC_AT[1] + PIC_BOX[1]) * EMU}, editAs:'twoCell'}); }
     });
     const buf = await wb.xlsx.writeBuffer();
     const dir = await dirHandle.getDirectoryHandle('Warehouse', {create:true}), name = 'Kit Info_Warehouse ' + nowStamp().slice(0, 10) + '.xlsx';
