@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.60</span>
+    <span class="vbadge">EP v2.61</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.60';
+const VERSION = 'EP v2.61';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -690,7 +690,9 @@ function setStatus(l, st, by){
   if (st === 'Completed' && !l.completedDate) l.completedDate = todayIso();
 }
 function touch(){ DB.savedAt = new Date().toISOString(); dirty = true; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} scheduleSave(); }
-const photoIn = l => { const d = sentStamp(l).slice(0, 10); return !!d && ((l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') >= d) || (!!l.barPhoto && l.barPhoto.slice(0, 16) >= sentStamp(l))); };
+const photoIn = l => { const d = sentStamp(l).slice(0, 10); if (!d) return false; const rj = ((l.sewRejects || []).filter(x => !x.undone).slice(-1)[0] || {}).at || '';
+  if (rj && rj.slice(0, 16) >= sentStamp(l)) return (!!l.barPhoto && l.barPhoto > rj) || (l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') > rj.slice(0, 10));   // EP v2.61: after Sew-out not approved it's Pending again until a new photo
+  return (l.files || []).some(f => /\.(jpe?g|png|heic|webp|gif)$/i.test(f.name) && (f.added || '') >= d) || (!!l.barPhoto && l.barPhoto.slice(0, 16) >= sentStamp(l)); };
 // Sew-out clock (EP v1.04): Follow Up when it's still Pending Sew Out with no sew-out photo 24 business hours after it was sent to Barrett (weekends don't count)
 const FOLLOW_UP = 'Follow Up';   // EP v2.14: no longer a section (automatic follow-ups instead)
 const BAR_REVIEW = 'Review', BAR_WAIT = 'Waiting on Barrett';
@@ -775,7 +777,7 @@ const COLS = [['ID','id'],['Logo','logo'],['Account','account'],['Sales Rep','re
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const rows = DB.logos.concat(DB.hidden || []).map(l => COLS.map(([, k]) => k === 'scratch' ? (l.scratch ? 'Yes' : 'No') : k === 'filesText' ? (l.files || []).map(f => f.name).join('; ')
-    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || [], apprContact:l.apprContact || '', poDate:l.poDate || '', lineSheet:l.lineSheet || '', mailSel:l.mailSel || null, claimLocked:!!l.claimLocked, feeWaived:!!l.feeWaived, feeWaivedReason:l.feeWaivedReason || ''})
+    : k === 'extra' ? JSON.stringify({files:l.files || [], dir:l.dir || '', sewReq:l.sewReq || null, sheetFile:l.sheetFile || '', emailLink:l.emailLink || '', followUps:l.followUps || [], apprFu:l.apprFu || '', school:l.school || '', project:l.project || '', assigned:l.assigned || '', logoStatus:l.logoStatus || '', comms:l.comms || [], digitized:l.digitized == null ? null : !!l.digitized, rushFee:!!l.rushFee, invoiceSent:l.invoiceSent || '', claimedBy:l.claimedBy || '', approvedBy:l.approvedBy || '', approvedAt:l.approvedAt || '', rush:!!l.rush, sewUrgent:!!l.sewUrgent, bar:l.bar || [], snoozeUntil:l.snoozeUntil || '', waitThreads:!!l.waitThreads, barPhoto:l.barPhoto || '', apprRem:l.apprRem || [], apprContact:l.apprContact || '', poDate:l.poDate || '', lineSheet:l.lineSheet || '', mailSel:l.mailSel || null, claimLocked:!!l.claimLocked, feeWaived:!!l.feeWaived, feeWaivedReason:l.feeWaivedReason || '', sewRejects:l.sewRejects || [], custRejects:l.custRejects || []})
     : k === 'sewSentDate' ? (l.sewSentDate || '') + (l.sewSentDate && l.sewSentTime ? ' ' + l.sewSentTime : '') : (l[k] == null ? '' : l[k])));
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(rows));
   ws['!cols'] = COLS.map(([h, k]) => ({wch: k === 'extra' ? 20 : ['logo','account','threadNotes','submitNotes','filesText'].includes(k) ? 30 : Math.max(12, h.length + 2)}));
@@ -834,7 +836,7 @@ function readWorkbook(buf){
     if (tm){ let h = +tm[1]; if (tm[3]) h = h % 12 + (/p/i.test(tm[3]) ? 12 : 0); l.sewSentTime = pad(h) + ':' + tm[2]; l.sewSentDate = ss.replace(/[ T].*$/, ''); }
     ['submitted','inHand','sewSentDate','sentDate','approvedDate','completedDate'].forEach(k => { l[k] = normDate(l[k]); });
     const st = STATUSES.find(s => s.toLowerCase() === String(l.status).toLowerCase()); if (st) l.status = st;
-    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; l.apprContact = x.apprContact || ''; l.poDate = x.poDate || ''; l.lineSheet = x.lineSheet || ''; l.mailSel = x.mailSel || null; l.claimLocked = !!x.claimLocked; l.feeWaived = !!x.feeWaived; l.feeWaivedReason = x.feeWaivedReason || ''; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
+    try { const x = JSON.parse(get(COLS[COLS.length - 1][0]) || '{}'); l.files = x.files || []; l.dir = x.dir || ''; l.sewReq = x.sewReq || null; l.sheetFile = x.sheetFile || ''; l.school = x.school || ''; l.project = x.project || ''; l.assigned = x.assigned || ''; l.logoStatus = x.logoStatus || ''; l.comms = x.comms || []; l.digitized = x.digitized == null ? null : !!x.digitized; l.rushFee = !!x.rushFee; l.invoiceSent = x.invoiceSent || ''; l.claimedBy = x.claimedBy || ''; l.approvedBy = x.approvedBy || ''; l.approvedAt = x.approvedAt || ''; l.rush = !!x.rush; l.sewUrgent = !!x.sewUrgent; l.bar = x.bar || []; l.snoozeUntil = x.snoozeUntil || ''; l.waitThreads = !!x.waitThreads; l.barPhoto = x.barPhoto || ''; l.apprRem = x.apprRem || []; l.apprContact = x.apprContact || ''; l.poDate = x.poDate || ''; l.lineSheet = x.lineSheet || ''; l.mailSel = x.mailSel || null; l.claimLocked = !!x.claimLocked; l.feeWaived = !!x.feeWaived; l.feeWaivedReason = x.feeWaivedReason || ''; l.sewRejects = x.sewRejects || []; l.custRejects = x.custRejects || []; if (x.emailLink) l.emailLink = x.emailLink; if (x.followUps && x.followUps.length) l.followUps = x.followUps; if (x.apprFu) l.apprFu = x.apprFu; } catch(e){}
     if (!l.id) l.id = 'EP-X' + Math.random().toString(36).slice(2, 7);
     db.logos.push(l);
   });
@@ -1158,7 +1160,9 @@ function sewBox(l){
       '<div class="note">Automatic follow-ups are logged here and in the bell (no emails are sent from this page).</div></div>'; }
   inner += '<div class="emb-grid" style="margin-top:12px">' + ef('Sent to Barrett', '<div class="emb-val emb-dim">' + (sentStamp(l) ? sentText(l) : 'Not sent yet') + '</div>') +
     ef('Sew-out image', '<div class="emb-val emb-dim">' + (photoIn(l) ? '&#10003; Uploaded' : 'Pending') + '</div>') + '</div>';
-  if (l.status === 'Review Sew Out') inner += rejBox(l, 'sew');   // EP v2.59
+  const sr = openRej(l, 'sewRejects');   // EP v2.61
+  if (sr) inner += '<div class="emb-err" style="margin-top:10px;color:#a61b1b;font-weight:600">&#10007; Sew-out not approved by Noelle Thompson on ' + fmt(sr.at) + ' ' + time12(sr.at) + ': ' + esc(sr.why) + '</div><div class="btns"><button class="btn light small" data-x="rej-undo" data-id="' + esc(l.id) + '" data-k="sew">Undo</button></div>';
+  else if (l.status === 'Review Sew Out') inner += rejBox(l, 'sew');   // EP v2.59
   inner += barConv(l);   // EP v2.14 (Part 8)
   return ebox(4, 'Sew-out request to Barrett', barNew(l) ? '<span class="new-reply">New reply</span>' : '', inner);
 }
@@ -1181,6 +1185,7 @@ function sheetBox(l){   // EP v2.05: live layout
     '<button class="btn small" data-x="appr-sent" data-id="' + id + '" title="Marks it sent. Email it to the rep from Outlook.">Mark sent</button></div>' +
     (l.sentDate ? '<div class="emb-ok">&#10003; Sent to ' + esc(apprContactOf(l) || 'the rep') + ' on ' + fmt(l.sentDate) + '</div>' : '') +
     (l.approvedBy ? '<div class="emb-ok">&#10003; Approved by ' + esc(l.approvedBy) + ' on ' + fmt(l.approvedAt) + ' ' + time12(l.approvedAt) + '</div><button class="btn light small" data-x="appr-undo" data-id="' + id + '">Undo approval</button>'   // EP v2.12
+     : openRej(l, 'custRejects') ? (r => '<div style="color:#a61b1b;font-weight:600">&#10007; Rejected by ' + esc(r.from) + ' on ' + fmt(r.at) + ' ' + time12(r.at) + ': ' + esc(r.why) + '</div><div class="emb-dim" style="font-size:12px">Marked by Noelle Thompson</div><button class="btn light small" data-x="rej-undo" data-id="' + id + '" data-k="cust">Undo rejection</button>')(openRej(l, 'custRejects'))   // EP v2.61
      : (l.sentDate || l.status === 'Sent for Approval' || l.status === 'Waiting on Reply') ? '<div class="appr-mark"><label class="emb-dim">Approved by</label><input id="apprBy-' + id + '" list="peopleList" value="' + esc(apprContactOf(l)) + '"><button class="btn small" data-x="appr-mark" data-id="' + id + '">Mark approved</button></div>' + (['Sent for Approval','Waiting on Reply'].includes(l.status) ? rejBox(l, 'cust') : '') : '') + apprExtra(l) + mailPicker(l, 'appr') + uploadSend(l));
 }
 // EP v2.22: Upload / Send is the same step for every department; the card says what it means for this one
@@ -1206,6 +1211,8 @@ function apprExtra(l){ const id = esc(l.id), rs = apprRems(l), due = l.status ==
   return (rs.length || due ? '<div class="appr-rem">' + rs.map(r => '<div>Approval reminder sent &middot; ' + fmt(r) + ' ' + time12(r) + '</div>').join('') + (due ? '<div class="emb-dim">Next reminder to ' + esc(apprContactOf(l) || 'the rep') + ': ' + fmt(isoOf(due)) + ' (every ' + (urg(off(l.inHand)) === 'red' ? '3' : '5') + ' days)</div>' : '') + '</div>' : '') +
     (['Sent for Approval','Waiting on Reply'].includes(l.status) ? '<div class="bar-test"><div class="emb-dim"><b>Test only:</b> what ' + esc(apprContactOf(l) || 'the rep') + ' would do (email button, email reply, or their portal).</div><textarea class="emb-in rep-test-in" data-id="' + id + '" placeholder="What they want changed&hellip;" style="margin-top:4px"></textarea>' +
       '<div class="btns"><button class="btn light small" data-x="rt-approve" data-id="' + id + '">Rep approves</button><button class="btn light small" data-x="rt-changes" data-id="' + id + '">Rep requests changes</button></div></div>' : ''); }
+const openRej = (l, k) => { const a = l[k] || [], x = a[a.length - 1]; return x && x.open ? x : null; };   // EP v2.61: the rejection that's showing now
+const closeRej = (l, k) => { const x = openRej(l, k); if (x) x.open = false; };
 let rejOpen = {};   // EP v2.59: reject forms (sew = I don't approve the sew-out; cust = the customer rejected the logo)
 function rejBox(l, kind){ const id = esc(l.id), sew = kind === 'sew', who = apprContactOf(l) || l.rep || 'the rep';
   if (!rejOpen[l.id + '|' + kind]) return '<div class="btns" style="margin-top:8px"><button class="btn light small" data-x="rej-open" data-id="' + id + '" data-k="' + kind + '">&#10007; ' + (sew ? 'Sew-out not approved' : 'Customer rejected') + '&hellip;</button></div>';
@@ -1365,7 +1372,7 @@ document.addEventListener('click', async e => {
   if (act === 'req-sent'){
     const files = [...document.querySelectorAll('.att[data-id="' + l.id + '"]:checked')].map(c => c.value);
     const rq = l.sewReq || {}; barPush(l, {by:ME, kind:'sent', text:'Sew-out request sent' + (rq.urgency ? '\nUrgency: ' + rq.urgency : '') + (rq.fabricColor ? '\nFabric color: ' + rq.fabricColor : '') + (rq.substitutions ? '\nThread substitutions: ' + rq.substitutions : '') + (rq.notes ? '\nNotes: ' + rq.notes : '') + (files.length ? '\nFiles: ' + files.join(', ') : '')});   // EP v2.14 (Part 8.2)
-    l.waitThreads = false; l.snoozeUntil = '';
+    l.waitThreads = false; l.snoozeUntil = ''; closeRej(l, 'sewRejects');   // EP v2.61
     l.sewSentDate = todayIso(); l.sewSentTime = nowStamp().slice(11, 16); l.sewReq = null; log(l, 'Email', 'Sew-out request sent to Barrett' + (files.length ? ' (' + files.join(', ') + ')' : ''));
     setStatus(l, 'Pending Sew Out', AUTO); touch(); openLogo(l); toast('Moved to Barrett Queue &rarr; Pending Sew Out.');
   }
@@ -1419,20 +1426,25 @@ document.addEventListener('click', async e => {
     if (act === 'claim-test'){ if (claimLocked(l)){ toast('It&rsquo;s locked, so no one else can claim it.'); return; } l.claimedBy = 'Jette Wade'; log(l, 'Edit', 'Claimed by Jette Wade (test)', 'Jette Wade'); }
     autoFollow(l, l.status, l.status); touch(); render(); return; }
   if (act === 'appr-mark'){ const inp = document.getElementById('apprBy-' + l.id), who = (inp && inp.value.trim()) || l.rep || 'the rep', n = nowStamp();   // EP v2.12 (Departments doc Part 6)
-    l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (marked by ' + ME + ')');
+    closeRej(l, 'custRejects'); l.approvedBy = who; l.approvedAt = n; l.approvedDate = n.slice(0, 10); log(l, 'Status', 'Approved by ' + who + ' (marked by ' + ME + ')');
     const next = (digOf(l) || l.feeWaived) && !l.invoiceSent ? 'Send Invoice' : 'Upload / Send';   /* EP v2.45: waived still sends the fee email */ setStatus(l, next, ME); touch(); openLogo(l);
     toast(esc(reqNo(l) + ' ' + l.logo) + ' was approved by ' + esc(who) + '. ' + (next === 'Send Invoice' ? 'Ready to send the invoice.' : 'Ready to upload to ES/FTP.')); return; }
   if (act === 'appr-undo'){ if (!confirm('Undo the approval by ' + l.approvedBy + '?\n\nIt goes back to Sent for Approval.')) return;
     log(l, 'Status', 'Approval undone (was approved by ' + l.approvedBy + ')'); l.approvedBy = ''; l.approvedAt = ''; l.approvedDate = ''; setStatus(l, 'Sent for Approval', ME); touch(); openLogo(l); toast('Approval undone. It&rsquo;s back in Sent for Approval.'); return; }
   if (act === 'rej-open'){ rejOpen = {}; rejOpen[l.id + '|' + x.dataset.k] = true; render(); const ta = document.querySelector('.rej-in[data-id="' + l.id + '"]'); if (ta) ta.focus(); return; }   // EP v2.59
   if (act === 'rej-x'){ rejOpen = {}; render(); return; }
+  if (act === 'rej-undo'){ const sew = x.dataset.k === 'sew', r = openRej(l, sew ? 'sewRejects' : 'custRejects'); if (!r) return;   // EP v2.61
+    const back = sew ? 'Review Sew Out' : (r.was || 'Sent for Approval');
+    if (!confirm('Undo the ' + (sew ? 'sew-out not approved' : 'rejection by ' + r.from) + '?\n\nIt goes back to ' + back + '.')) return;
+    r.open = false; r.undone = true; r.undoneAt = nowStamp();
+    log(l, 'Status', (sew ? 'Sew-out not approved undone' : 'Rejection undone (was rejected by ' + r.from + ')') + ': ' + r.why); setStatus(l, back, ME); touch(); openLogo(l); toast('Undone. It&rsquo;s back in ' + esc(back) + '.'); return; }
   if (act === 'rej-save'){ const kind = x.dataset.k, ta = document.querySelector('.rej-in[data-id="' + l.id + '"][data-k="' + kind + '"]'), why = ta ? ta.value.trim() : '', n = nowStamp();
     if (!why){ toast(kind === 'sew' ? 'Type why first.' : 'Type what they want changed first.'); return; }
     if (kind === 'sew'){ const r = document.querySelector('input[name="rejTo-' + l.id + '"]:checked'), to = r ? r.value : 'Digitizing';
-      (l.sewRejects = l.sewRejects || []).push({at:n, by:ME, why, to, sent:sentStamp(l)});
+      (l.sewRejects = l.sewRejects || []).push({at:n, by:ME, why, to, sent:sentStamp(l), from:l.status, open:true});
       log(l, 'Status', 'Sew-out not approved (marked by ' + ME + '): ' + why); setStatus(l, to, ME); rejOpen = {}; touch(); openLogo(l); toast('Sew-out not approved. Moved to ' + esc(to) + '.'); return; }
     const who = apprContactOf(l) || l.rep || 'the rep', mail = document.querySelector('.rej-mail[data-id="' + l.id + '"]'), send = !!(mail && mail.checked);
-    (l.custRejects = l.custRejects || []).push({at:n, by:ME, from:who, why});
+    (l.custRejects = l.custRejects || []).push({at:n, by:ME, from:who, why, was:l.status, open:true});
     (l.comms = l.comms || []).push({id:'M' + Date.now().toString(36), ts:n, by:ME, text:'Customer rejected (from ' + who + '): ' + why, replies:[], resolved:false});
     log(l, 'Status', 'Customer rejected (from ' + who + ', marked by ' + ME + '): ' + why); setStatus(l, 'New Request', ME); rejOpen = {}; touch(); openLogo(l); toast('Marked customer rejected. Back in New Request.');
     if (send){ log(l, 'Email', 'Customer rejected email opened in Outlook: to ' + who);
@@ -1442,7 +1454,7 @@ document.addEventListener('click', async e => {
   if (act === 'appr-upload'){ const fi = document.getElementById('fileIn'); fi.accept = 'application/pdf,.pdf'; fileTarget = {l, sheet:true}; fi.click(); }
   if (act === 'appr-sent'){
     if (!l.sheetFile){ toast('Upload the approval sheet PDF first.'); return; }
-    l.sentDate = todayIso(); log(l, 'Email', 'Approval sheet sent to ' + (apprContactOf(l) || 'the rep') + ' (' + l.sheetFile + ')');
+    closeRej(l, 'custRejects'); l.sentDate = todayIso(); log(l, 'Email', 'Approval sheet sent to ' + (apprContactOf(l) || 'the rep') + ' (' + l.sheetFile + ')');
     setStatus(l, 'Sent for Approval', AUTO); touch(); openLogo(l); toast('Moved to Approvals &rarr; Sent for Approval.');
   }
   if (act === 'file-add'){ const fi = document.getElementById('fileIn'); fi.accept = ''; fileTarget = {l, sheet:false}; fi.click(); }
