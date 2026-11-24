@@ -532,9 +532,9 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
   </div>
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
-    <button class="savepill" id="savePill" type="button"></button>
+    <button class="savepill warn" id="savePill" type="button">&#9729; Connect Excel</button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.62</span>
+    <span class="vbadge">EP v2.63</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.62';
+const VERSION = 'EP v2.63';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -911,7 +911,7 @@ async function pickFolder(){
 document.getElementById('savePill').onclick = async () => {
   if (saveState === 'unsupported') return;
   if (saveState === 'error'){ saveNow(); return; }
-  if (saveState === 'reconnect' && dirHandle){ if (await permOk(dirHandle, true)) await afterConnect(); return; }
+  if (saveState === 'reconnect' && dirHandle){ try { if (await permOk(dirHandle, true)){ await afterConnect(); return; } } catch(e){ console.warn('reconnect', e); } pickFolder(); return; }   // EP v2.63: if the saved folder doesn't work, pick it again
   if (saveState === 'saved' && !confirm('Saving to the "' + dirHandle.name + '" folder.\n\nPick a different folder?')) return;
   pickFolder();
 };
@@ -937,10 +937,17 @@ async function afterConnect(){
 }
 async function boot(){
   if (!FS_OK){ setSave('unsupported'); return; }
-  const h = await idbGet('dir');
-  if (!h){ setSave('local'); return; }
-  dirHandle = h;
-  if (await permOk(h, false)) await afterConnect(); else setSave('reconnect');
+  setSave('local');   // EP v2.63: the Connect Excel pill always shows, even if reconnecting gets stuck
+  const late = new Promise(r => setTimeout(() => r('timeout'), 6000));
+  try {
+    const h = await Promise.race([idbGet('dir'), late]);
+    if (h === 'timeout'){ toast('Couldn&rsquo;t reconnect to Excel on its own. Click <b>Connect Excel</b> (top right). If the portal is open in another tab, close that one first.', 9000); return; }
+    if (!h){ setSave('local'); return; }
+    dirHandle = h;
+    const ok = await Promise.race([permOk(h, false), late]);
+    if (ok === 'timeout'){ setSave('reconnect'); return; }
+    if (ok) await afterConnect(); else setSave('reconnect');
+  } catch(e){ console.warn('boot', e); setSave(dirHandle ? 'reconnect' : 'local'); toast('Couldn&rsquo;t reconnect to Excel on its own (' + esc(e.name || 'error') + '). Click <b>' + (dirHandle ? 'Reconnect' : 'Connect') + ' Excel</b> (top right).', 9000); }
 }
 window.addEventListener('beforeunload', e => { if (dirHandle && dirty){ e.preventDefault(); e.returnValue = ''; } });   // changes not in Excel yet
 // EP v1.07: look for newly copied live-portal logos (portal-logos.json) every 5 minutes and when you come back to this tab (v1.08: they're added right away)
@@ -1712,7 +1719,7 @@ document.addEventListener('click', e => {
   if (k === 'clear'){ if (confirm('Clear the form?')){ sf = sfBlank(); renderSubmit(tab); } }
   if (k === 'review'){ sf.errs = sfMissing(); if (!sf.errs.length) sf.review = true; renderSubmit(tab); }
   if (k === 'back'){ sf.review = false; renderSubmit(tab); }
-  if (k === 'xl-connect'){ (async () => { if (dirHandle && saveState === 'reconnect'){ if (await permOk(dirHandle, true)) await afterConnect(); } else await pickFolder();   // EP v2.62
+  if (k === 'xl-connect'){ (async () => { let done = false; if (dirHandle && saveState === 'reconnect'){ try { if (await permOk(dirHandle, true)){ await afterConnect(); done = true; } } catch(e){} } if (!done) await pickFolder();   // EP v2.62
       if (state.tab === 'submit') renderSubmit(tab); toast(xlOk() ? '&#10003; Excel connected. You can submit now.' : 'Still not connected. Try again, or use the button at the top right.'); })(); }
   if (k === 'submit'){ if (!xlOk()){ toast('Connect Excel first (the red box above Submit), so the request saves to your OneDrive.', 6000); renderSubmit(tab); return; }   // EP v2.62
     if (sfHold()){ const m = document.createElement('div'); m.className = 'rp-modal'; m.id = 'holdAsk';   // EP v2.19: a chance to change the date first
