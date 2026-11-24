@@ -240,7 +240,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.18</span>
+    <span class="vbadge">LL v1.19</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -252,7 +252,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.18';
+const VERSION = 'LL v1.19';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -614,6 +614,7 @@ const C = {
   emb:  {h:'EMB ID', w:'17%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span>'},
   embS: {h:'EMB ID', w:'19%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span><span class="sch">' + esc(l.school) + '</span>'},
   school:{h:'School / Account', w:'12%', s:l => l.school, v:l => esc(l.school)},
+  schoolF:{h:'School', w:'17%', s:l => schoolSort(l.school || ''), v:l => '<div class="acc-n">' + schoolLogo(l.school, 'sm') + '<span>' + esc(schoolFull(l.school) || l.school) + (schoolFull(l.school) ? '<span class="sch">' + esc(schoolCode(l.school)) + '</span>' : '') + '</span></div>'},   // LL v1.19
   type: {h:'Type', w:'9%', s:l => l.type, v:l => esc(l.type)},
   ver:  {h:'Ver', w:'5%', s:l => l.ver, v:l => esc(l.ver) || '<span class="muted">&mdash;</span>'},
   size: {h:'Size (H × W)', w:'11%', s:l => parseFloat(l.specH) || 0, v:l => (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : '<span class="muted">&mdash;</span>') + (sizeCheck(l) === 'CHECK' ? '<span class="chk-bad" title="Spec and DST sizes differ by more than 0.05&quot;">CHECK</span>' : '')},
@@ -625,7 +626,7 @@ const C = {
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
-  collegiate: ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
+  collegiate: ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','status','todo','flag'],
   accounts:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   mainline:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
   nfl:        ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
@@ -770,7 +771,10 @@ function renderGrouped(tab){   // Mainline: a section per account; archived + re
     '<span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school)).size + ' accounts</span></div>' + addBoxHtml(tab) + groupsHtml(tab, list, true) +
     (gone.length ? sectionHtml(tab, 'Archived & Retired', gone.filter(matches), false) : '');
 }
-function renderCollegiate(){ return renderBySchool('collegiate', 'Collegiate', isCol, 'schools'); }
+function renderCollegiate(){   // LL v1.19: back to one list of every collegiate logo (schools are on the Accounts tab); School column shows logo + full name
+  const all = activeLogos().filter(isCol), list = all.filter(matches);
+  return '<h1>Collegiate</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos</span></div>' + addBoxHtml('collegiate') + tableHtml('collegiate', list);
+}
 function renderBySchool(tab, title, test, unit){   // LL v1.17/1.18: grouped by school / team (logo + full name)
   const all = activeLogos().filter(test), list = all.filter(matches), g = {};   // LL v1.17: grouped by school (logo + full name)
   list.forEach(l => { const k = l.school || NO_SCHOOL; (g[k] = g[k] || []).push(l); });
