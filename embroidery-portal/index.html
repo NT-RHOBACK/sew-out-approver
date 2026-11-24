@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.61</span>
+    <span class="vbadge">EP v2.62</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.61';
+const VERSION = 'EP v2.62';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -900,6 +900,7 @@ function setSave(s){
   p.className = 'savepill ' + cls; p.innerHTML = html;
   p.title = s === 'saved' ? 'Saving to the "' + (dirHandle ? dirHandle.name : '') + '" folder. Click to pick a different folder.' : s === 'error' ? 'Retrying every 10 seconds. Click to try now.' : '';
 }
+const xlOk = () => !!dirHandle && saveState !== 'reconnect' && saveState !== 'unsupported';   // EP v2.62: Excel is connected and can save
 async function permOk(h, ask){ const o = {mode:'readwrite'}; if ((await h.queryPermission(o)) === 'granted') return true; return ask ? (await h.requestPermission(o)) === 'granted' : false; }
 async function pickFolder(){
   try {
@@ -1607,6 +1608,7 @@ function renderSubmit(tab){
       (sf.type === 'digitize' ? row('Creating from scratch ($75)', sf.scratch ? 'Yes' : 'No') : '') +
       row('Number of Thread Colors', sf.color === 'Club Colors' ? 'N/A - Club Colors' : sf.count) + row('Color Type', sf.color) + row('Thread Color Notes', sf.thread) +
       (sfPO() ? row('PO date', fmt(sf.po)) + row('Embroidery due date', fmt(poDue(sf.po))) : sfDue() ? row('Due Date', fmt(sf.date)) : row('Start date', sf.start === 'yes' ? fmt(sf.date) : 'No order yet')) + row('Files', sf.files.map(x => x.name).join(', ')) + (sf.dept === 'Special Projects' && sf.lineFile ? row('Line sheet', sf.lineFile.name) : '') + row('Notes', sf.notes) + '</table>' +
+      (xlOk() ? '' : '<div class="note" style="margin-top:16px;background:#fdecec;border:1px solid #f3b6b6;color:#7a1414;border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span>&#9888; <b>Excel isn&rsquo;t connected</b>, so this request can&rsquo;t be saved yet. Connect it, then click Submit. Your form stays filled in.</span><button class="btn" data-sf="xl-connect">&#9729; ' + (dirHandle ? 'Reconnect Excel' : 'Connect Excel') + '</button></div>') +   // EP v2.62
       '<div class="btns" style="justify-content:flex-end;margin-top:20px"><button class="btn light" data-sf="back">&larr; Back</button><button class="btn" data-sf="submit">Submit</button></div></div>';
     return;
   }
@@ -1710,7 +1712,10 @@ document.addEventListener('click', e => {
   if (k === 'clear'){ if (confirm('Clear the form?')){ sf = sfBlank(); renderSubmit(tab); } }
   if (k === 'review'){ sf.errs = sfMissing(); if (!sf.errs.length) sf.review = true; renderSubmit(tab); }
   if (k === 'back'){ sf.review = false; renderSubmit(tab); }
-  if (k === 'submit'){ if (sfHold()){ const m = document.createElement('div'); m.className = 'rp-modal'; m.id = 'holdAsk';   // EP v2.19: a chance to change the date first
+  if (k === 'xl-connect'){ (async () => { if (dirHandle && saveState === 'reconnect'){ if (await permOk(dirHandle, true)) await afterConnect(); } else await pickFolder();   // EP v2.62
+      if (state.tab === 'submit') renderSubmit(tab); toast(xlOk() ? '&#10003; Excel connected. You can submit now.' : 'Still not connected. Try again, or use the button at the top right.'); })(); }
+  if (k === 'submit'){ if (!xlOk()){ toast('Connect Excel first (the red box above Submit), so the request saves to your OneDrive.', 6000); renderSubmit(tab); return; }   // EP v2.62
+    if (sfHold()){ const m = document.createElement('div'); m.className = 'rp-modal'; m.id = 'holdAsk';   // EP v2.19: a chance to change the date first
       m.innerHTML = '<div class="rp-modal-in" style="max-width:520px"><div class="rp-h" style="color:#a61b1b">&#9888; This request will be ON HOLD</div><p>This in hand date is 26 days or sooner, and will be placed <b>ON HOLD</b> if submitted. It will need approval from Will Lawler or Ren&eacute;e Sund&eacute;n before we continue.</p><p>Change the date, or submit anyway?</p>' +
         '<div class="btns" style="justify-content:flex-end"><button class="btn light" data-sf="hold-change">Change the date</button><button class="btn" data-sf="hold-submit">Submit anyway</button></div></div>';
       document.getElementById('page').appendChild(m); return; }
