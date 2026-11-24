@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill warn" id="savePill" type="button">&#9729; Connect Excel</button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.63</span>
+    <span class="vbadge">EP v2.64</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.63';
+const VERSION = 'EP v2.64';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -926,8 +926,9 @@ async function afterConnect(){
   try { const fh = await dirHandle.getFileHandle(XLSX_NAME); file = splitLive(readWorkbook(await (await fh.getFile()).arrayBuffer())); }
   catch(e){ if (e.name !== 'NotFoundError'){ toast('Couldn&rsquo;t read ' + esc(XLSX_NAME) + ' (' + esc(e.name) + '). Is it open in Excel?'); setSave('error'); return; } }
   if (file){
-    const browserNewer = DB.logos.length && DB.savedAt && file.savedAt && DB.savedAt > file.savedAt && JSON.stringify(DB.logos) !== JSON.stringify(file.logos);
-    if (browserNewer && confirm('This browser has changes from ' + new Date(DB.savedAt).toLocaleString() + ' that aren’t in the Excel file yet (saved ' + new Date(file.savedAt).toLocaleString() + ').\n\nOK = keep this browser’s version and save it to Excel\nCancel = use the Excel file')){
+    const same = x => JSON.stringify(Object.assign({}, x, {savedAt:0}));   // EP v2.64: compare everything (To Do, What I did, Planner...), not just logos
+    const browserNewer = DB.savedAt && file.savedAt && DB.savedAt > file.savedAt && same(DB) !== same(file);
+    if (browserNewer && confirm('This browser has changes from ' + new Date(DB.savedAt).toLocaleString() + ' that aren’t in the Excel file yet (saved ' + new Date(file.savedAt).toLocaleString() + '), like To Do, What I did, Planner, or logo changes.\n\nOK = keep this browser’s version and save it to Excel (recommended)\nCancel = use the Excel file (this browser’s changes are lost)')){
       touch();
     } else {
       DB = file; dirty = false; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} lastSaved = file.savedAt ? new Date(file.savedAt) : null; setSave('saved');
