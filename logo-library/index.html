@@ -173,6 +173,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .lb-box.wide{max-width:min(96vw,1400px)}
 /* LL v1.11 (temporary): Setup Check tab */
 .chk-bar{position:sticky;top:0;z-index:5;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.chk-scope{display:flex;gap:6px;align-items:center;margin:0 0 8px}.chk-scope button{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;color:var(--navy)}.chk-scope button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .chk-bar .who{font-size:18px;font-weight:700;color:var(--navy);margin-right:6px}
 .chk-bar .sub{font-size:12px;color:var(--grey)}
 .chk-bar .sp{flex:1}
@@ -240,7 +241,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.19</span>
+    <span class="vbadge">LL v1.20</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -252,7 +253,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.19';
+const VERSION = 'LL v1.20';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -688,7 +689,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('Folder', '<div class="pathrow"><input data-f="folder" data-id="' + id + '" value="' + esc(l.folder) + '"><button class="btn light small" data-act="copyFolder" data-id="' + id + '"' + (l.folder ? '' : ' disabled') + '>Copy</button></div>') +
     row('Approved (Box)', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-f="box" data-id="' + id + '"' + (l.box ? ' checked' : '') + '> Uploaded to the Box drive</label>') +
     row('Box uploads', boxSec(l)) + '</table>';
-  const fold = (key, title, count, body) => '<details class="xfold" data-fold="' + id + '|' + key + '"' + (foldOpen[l.id + '|' + key] ? ' open' : '') + '><summary>' + title + '<span class="cnt"' + (key === 'notes' ? ' id="nc-' + id + '"' : '') + '>' + count + '</span></summary><div class="xfold-bd">' + body + '</div></details>';
+  const fold = (key, title, count, body) => '<details class="xfold" data-fold="' + id + '|' + key + '"' + (foldOpen[l.id + '|' + key] || (key === 'prod' && state.tab === 'check' && state.chkProd && foldOpen[l.id + '|' + key] !== false) ? ' open' : '') + '><summary>' + title + '<span class="cnt"' + (key === 'notes' ? ' id="nc-' + id + '"' : '') + '>' + count + '</span></summary><div class="xfold-bd">' + body + '</div></details>';
   const hist = '<details class="xfold emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="xfold-bd"><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></div></details>';
   return '<div class="emb-card xcard">' + pics + rows + fold('prod', 'Products (kit info)', prodsOf(l.id).length, prodSec(l)) + fold('notes', 'Internal notes', notesFor(l.id).length, notesBox(l.id)) + hist + footHtml(l) + '</div>';
 }
@@ -882,11 +883,12 @@ function renderConnect(){
   return '<div class="connect"><h2>Connect your Logo Library</h2><p>Pick the <b>Logo Library</b> folder in OneDrive<br><span style="color:var(--grey)">CLAUDE AI &rsaquo; CLAUDE &rsaquo; Logo Library</span><br>It holds <b>' + esc(XLSX_NAME) + '</b> and the <b>Images</b> folder. Nothing is stored on GitHub.</p><button class="btn" data-act="connect">Connect Excel</button></div>';
 }
 // ---------------- Setup Check (LL v1.11, temporary: one logo at a time) ----------------
+const hasProd = l => prods().some(p => p.id === l.id && !p.arch);   // LL v1.20: Setup Check can go through only the logos used by products
 function checkOrder(){
   const g = l => isCol(l) ? 0 : isMain(l) ? 1 : 2;
-  return DB.logos.slice().sort((a, b) => g(a) - g(b) || coll.compare(a.school || '', b.school || '') || coll.compare(a.emb || '', b.emb || ''));
+  return DB.logos.filter(l => !state.chkProd || hasProd(l)).sort((a, b) => g(a) - g(b) || coll.compare(a.school || '', b.school || '') || coll.compare(a.emb || '', b.emb || ''));
 }
-function checkCur(){ const o = checkOrder(); let l = state.chk && byId(state.chk); if (!l){ l = o.find(x => !DB.check[x.id]) || o[0]; state.chk = l ? l.id : ''; } return l; }
+function checkCur(){ const o = checkOrder(); let l = state.chk && byId(state.chk); if (l && !o.includes(l)) l = null; if (!l){ l = o.find(x => !DB.check[x.id]) || o[0]; state.chk = l ? l.id : ''; } return l; }
 function checkStep(dir, onlyOpen){
   const o = checkOrder(), i = o.findIndex(x => x.id === state.chk);
   for (let k = 1; k <= o.length; k++){ const x = o[(i + dir * k + o.length * 2) % o.length]; if (!onlyOpen || !DB.check[x.id]){ state.chk = x.id; break; } }
@@ -896,6 +898,7 @@ function renderCheck(){
   DB.check = DB.check || {}; const o = checkOrder(), l = checkCur(); if (!l) return '<h1>Setup Check</h1><div class="empty">No logos yet.</div>';
   const vals = o.map(x => DB.check[x.id]), ok = vals.filter(v => v && v.res === 'ok').length, fl = vals.filter(v => v && v.res === 'flag').length, c = DB.check[l.id], pos = o.indexOf(l) + 1;
   return '<h1>Setup Check</h1><div class="note" style="margin:-4px 0 10px">Temporary: go through every logo once. Fix anything right on the card, then click Verified. Flag anything you want Claude to fix.</div>' +
+    '<div class="chk-scope"><span class="sub">Go through:</span><button class="' + (state.chkProd ? '' : 'on') + '" data-act="chkScope" data-v="">All logos (' + DB.logos.length + ')</button><button class="' + (state.chkProd ? 'on' : '') + '" data-act="chkScope" data-v="1">Logos with products (' + DB.logos.filter(hasProd).length + ')</button></div>' +
     '<div class="chk-bar"><div class="chk-prog"><span style="width:' + ((ok + fl) / o.length * 100).toFixed(1) + '%"></span></div>' +
     '<span class="who">' + esc(l.emb || '(no EMB ID)') + '</span><span class="sub">' + esc([l.school, l.type, l.status].filter(Boolean).join(' · ')) + ' &middot; ' + pos + ' of ' + o.length + '</span>' +
     '<span class="chk-pill ' + (c ? c.res : 'none') + '">' + (c ? (c.res === 'ok' ? '✓ Verified' : '⚑ Flagged') : 'Not checked') + '</span><span class="sp"></span>' +
@@ -1052,6 +1055,7 @@ page.addEventListener('click', async e => {
     if (a === 'done' && l){ setTodo(l, act.dataset.todo, false); render(); toast(esc(l.emb) + ': ' + esc(act.dataset.todo) + ' done.'); return; }
     if (a === 'chkPrev' || a === 'chkNext'){ checkStep(a === 'chkPrev' ? -1 : 1, false); return; }
     if (a === 'chkOpen'){ checkStep(1, true); return; }
+    if (a === 'chkScope'){ state.chkProd = !!act.dataset.v; state.chk = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
     if ((a === 'chkOk' || a === 'chkFlag') && l){
       const note = (document.getElementById('chkNote') || {}).value || '';
       if (a === 'chkFlag' && !note.trim()){ toast('Type what&rsquo;s wrong first.'); document.getElementById('chkNote').focus(); return; }
