@@ -534,7 +534,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search all logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill warn" id="savePill" type="button">&#9729; Connect Excel</button>
     <div class="notif"><button class="notif-btn" id="notifBtn" type="button" title="Notifications">&#128276;<span class="notif-n" id="notifN" hidden></span></button><div class="notif-panel" id="notifPanel" hidden></div></div>
-    <span class="vbadge">EP v2.64</span>
+    <span class="vbadge">EP v2.65</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -553,7 +553,7 @@ select.st option{background:#fff;color:#1b2033;font-weight:400}
 // EP v1.46: Noelle's own Embroidery Portal, for requests that don't all go through the NetSuite portal.
 // Layout = the approved logo layout draft v21. Data lives only in "Embroidery Portal.xlsx" in a OneDrive folder
 // Noelle picks (File System Access API); attached files go in a "Files" folder beside it. Nothing is sent to GitHub.
-const VERSION = 'EP v2.64';
+const VERSION = 'EP v2.65';
 const ME = 'Noelle';
 const XLSX_NAME = 'Embroidery Portal.xlsx', FILES_DIR = 'Files', DELETE_DIR = 'DELETE', SEED_NAME = 'portal-logos.json', SEWSENT_NAME = 'sew-sent.json', SUBMITTED_NAME = 'submitted-times.json', TODO_IMPORT_NAME = 'todo-import.json';
 const LS_DATA = 'embroideryPortal_data_v1', LS_UI = 'embroideryPortal_ui_v1', SS_TAB = 'embroideryPortal_tab';
@@ -807,9 +807,9 @@ function buildWorkbook(){
   const tn = XLSX.utils.aoa_to_sheet([['Date','Time','Task','Note','By','Chain']].concat((DB.tdNotes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.task, n.text, n.by, n.chain])));
   tn['!cols'] = [12, 10, 40, 70, 14, 16].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, tn, 'To Do Notes');
-  const pls = XLSX.utils.aoa_to_sheet([['Task','To-do date','Priority','Done','Done at','Sub-tasks','Rolled over from','Created','ID','Section','Status','Due date']].concat((DB.planner || []).map(x => [x.text, x.date || '(backlog)', x.pri || '', x.done ? 'Yes' : '', x.doneAt || '',
-    JSON.stringify((x.subs || []).map(s => typeof s === 'string' ? {t:s, done:false} : s)), x.rolledFrom || '', x.created || '', x.id, x.sec || '', plStatus(x), x.due || ''])));   // EP v2.36; v2.39 Section
-  pls['!cols'] = [60, 12, 9, 6, 20, 60, 14, 20, 16, 20, 12, 12].map(w => ({wch:w}));
+  const pls = XLSX.utils.aoa_to_sheet([['Task','To-do date','Priority','Done','Done at','Sub-tasks','Rolled over from','Created','ID','Section','Status','Due date','Archived']].concat((DB.planner || []).map(x => [x.text, x.date || '(backlog)', x.pri || '', x.done ? 'Yes' : '', x.doneAt || '',
+    JSON.stringify((x.subs || []).map(s => typeof s === 'string' ? {t:s, done:false} : s)), x.rolledFrom || '', x.created || '', x.id, x.sec || '', plStatus(x), x.due || '', x.archivedAt || ''])));   // EP v2.36; v2.39 Section
+  pls['!cols'] = [60, 12, 9, 6, 20, 60, 14, 20, 16, 20, 12, 12, 20].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, pls, 'Planner');
   const plh = XLSX.utils.aoa_to_sheet([['When','Task','What happened','By','Task ID']].concat((DB.plHist || []).map(h => [h.ts, h.task, h.what, h.by || '', h.id])));   // EP v2.42
   plh['!cols'] = [20, 50, 60, 8, 16].map(w => ({wch:w}));
@@ -852,7 +852,7 @@ function readWorkbook(buf){
   rows('Daily To Do').slice(1).filter(r => r[0]).forEach(r => { const d = normDate(r[0]), n = db.todayNotes[d] = db.todayNotes[d] || {todo:[], did:[]}; n.todo = n.todo || [];
     try { if (r[1]) n.locked = JSON.parse(String(r[1])); } catch(e){} try { if (r[2]) n.did = JSON.parse(String(r[2])); } catch(e){} try { if (r[3]) n.didEdit = JSON.parse(String(r[3])); } catch(e){} });   // EP v2.36
   db.planner = rows('Planner').slice(1).filter(r => r[0] || r[8]).map(r => { let subs = []; try { subs = r[5] ? JSON.parse(String(r[5])) : []; } catch(e){}
-    const dd = String(r[1] || ''); return {id:String(r[8] || ('T' + Math.random().toString(36).slice(2, 9))), text:String(r[0]), date:/backlog/i.test(dd) ? '' : normDate(dd), pri:String(r[2] || ''), done:/^y/i.test(String(r[3])), doneAt:String(r[4] || ''), subs, rolledFrom:normDate(String(r[6] || '')), created:String(r[7] || ''), sec:String(r[9] || ''), status:String(r[10] || ''), due:normDate(String(r[11] || ''))}; });
+    const dd = String(r[1] || ''); return {id:String(r[8] || ('T' + Math.random().toString(36).slice(2, 9))), text:String(r[0]), date:/backlog/i.test(dd) ? '' : normDate(dd), pri:String(r[2] || ''), done:/^y/i.test(String(r[3])), doneAt:String(r[4] || ''), subs, rolledFrom:normDate(String(r[6] || '')), created:String(r[7] || ''), sec:String(r[9] || ''), status:String(r[10] || ''), due:normDate(String(r[11] || '')), archivedAt:String(r[12] || ''), archived:!!r[12]}; });
   db.plHist = rows('Planner History').slice(1).filter(r => r[0] || r[2]).map(r => ({ts:String(r[0]), task:String(r[1] || ''), what:String(r[2] || ''), by:String(r[3] || ''), id:String(r[4] || '')}));   // EP v2.42
   const psx = inf.find(r => r[0] === 'Planner sections'); try { db.plSecs = psx && psx[1] ? JSON.parse(String(psx[1])) : []; } catch(e){ db.plSecs = []; }   // EP v2.39
   const gl = inf.find(r => r[0] === 'Goals'); try { db.goals = gl && gl[1] ? JSON.parse(String(gl[1])) : []; } catch(e){ db.goals = []; }   // EP v2.17
@@ -2588,7 +2588,7 @@ const PL = () => (DB.planner = DB.planner || []);
 const plId = () => 'T' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const plSub = s => typeof s === 'string' ? {t:s, done:false} : {t:s.t, done:!!s.done};
 const plGet = id => PL().find(t => t.id === id);
-const plFor = day => PL().filter(t => t.date === day && !(t.done && (t.doneAt || '').slice(0, 10) < day)).sort(plOrder);   // EP v2.52: not tasks finished on an earlier day
+const plFor = day => PL().filter(t => !t.archived && t.date === day && !(t.done && (t.doneAt || '').slice(0, 10) < day)).sort(plOrder);   // EP v2.52: not tasks finished on an earlier day
 let plSubOpen = null, plShowDone = false, plEditOpen = null;
 const PL_PRI = ['High', 'Medium', 'Low'], plPriRank = t => ({High:0, Medium:1, Low:3}[t.pri] ?? 2);
 const plOrder = (a, b) => plPriRank(a) - plPriRank(b) || (a.created || '').localeCompare(b.created || '');
@@ -2600,7 +2600,7 @@ function plMigrate(){   // lines typed in To Do Other before v2.36 become planne
   return ch; }
 function plRollover(){   // anything not done from an earlier day moves to today
   const today = todayIso(); let ch = false;
-  PL().forEach(t => { if (!t.done && t.date && t.date < today){ const was = t.date; t.rolledFrom = t.rolledFrom || t.date; t.date = today; ch = true; if (typeof plLog === 'function') plLog(t, 'Rolled over: Scheduled ' + dayShort(was) + ' > ' + dayShort(today), 'Auto'); } });
+  PL().forEach(t => { if (!t.archived && !t.done && t.date && t.date < today){ const was = t.date; t.rolledFrom = t.rolledFrom || t.date; t.date = today; ch = true; if (typeof plLog === 'function') plLog(t, 'Rolled over: Scheduled ' + dayShort(was) + ' > ' + dayShort(today), 'Auto'); } });
   return ch; }
 const dayShort = iso => parseIso(iso).toLocaleDateString('en-US', {weekday:'short', month:'numeric', day:'numeric'});
 // EP v2.39: Planner works like the queue tabs: sections you name (collapsible, with counts), one row per task with a drop-down arrow that opens it to edit
@@ -2660,7 +2660,8 @@ function plBox(t){
   const histH = '<details class="emb-hist" data-plh="' + id + '"' + (plHistOpen === t.id ? ' open' : '') + '><summary>Show history (' + hist.length + ' entr' + (hist.length === 1 ? 'y' : 'ies') + ')</summary>' +
     (hist.length ? hist.map(h => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmt(h.ts) + ' ' + time12(h.ts) + '</span><span>' + esc(h.what) + '</span><span class="emb-hist-by">' + esc(h.by || '') + '</span></div>').join('') : '<div class="emb-dim">No history yet.</div>') + '</details>';
   const foot = '<div class="emb-card-foot">' + (t.date ? '<button class="btn light small" data-pl="backlog" data-id="' + id + '">&rarr; Backlog</button>' : '<button class="btn light small" data-pl="today" data-id="' + id + '">&rarr; Today</button>') +
-    '<button class="emb-btn-del" data-pl="rm" data-id="' + id + '">Remove</button></div>';
+    (t.archived ? '<button class="btn light small" data-pl="unarchive" data-id="' + id + '">Unarchive</button>' : '<button class="btn light small" data-pl="archive" data-id="' + id + '" title="Hide it from your lists. It stays under Show: Archived.">Archive</button>') +   // EP v2.65
+    '<button class="emb-btn-del" data-pl="rm" data-id="' + id + '" title="Delete it for good">Delete</button></div>' + (t.archived ? '<div class="note" style="margin-top:6px">Archived ' + fmt(t.archivedAt) + ' ' + time12(t.archivedAt) + '.</div>' : '');
   return '<tr class="card-row"><td class="card-cell" colspan="6"><div class="emb-card"><div class="emb-card-cols"><div class="emb-col">' + ebox(0, 'Task', '', details) + '</div><div class="emb-col">' +
     ebox(0, 'Sub-tasks', subs.length ? sd + ' of ' + subs.length + ' done' : '', subH) + ebox(0, 'History', '', histH) + foot + '</div></div></div></td></tr>';
 }
@@ -2818,7 +2819,9 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'
   if (k === 'edit'){ plEditOpen = t.id; render(); const ei = document.getElementById('plEditIn'); if (ei){ ei.focus(); ei.select(); } return; }
   if (k === 'editsave'){ const ei = document.getElementById('plEditIn'), v = ei ? ei.value.trim() : ''; if (v){ t.text = v; touch(); } plEditOpen = null; render(); return; }
   if (k === 'subedit'){ t.subs = (t.subs || []).map(plSub); const s = t.subs[+b.dataset.j]; if (!s) return; const v = prompt('Edit the sub-task:', s.t); if (v && v.trim()){ s.t = v.trim(); touch(); render(); } return; }
-  if (k === 'rm'){ if (!confirm('Remove "' + t.text + '"?')) return; DB.planner = PL().filter(x => x !== t); touch(); render(); return; }
+  if (k === 'archive'){ t.archived = true; t.archivedAt = nowStamp(); plLog(t, 'Archived'); plOpen = null; touch(); render(); toast('Archived. It&rsquo;s under Show: Archived if you need it.'); return; }   // EP v2.65
+  if (k === 'unarchive'){ t.archived = false; t.archivedAt = ''; plLog(t, 'Unarchived'); touch(); render(); toast('Unarchived. It&rsquo;s back in your lists.'); return; }
+  if (k === 'rm'){ if (!confirm('Delete "' + t.text + '" for good?\n\nThis can\'t be undone. (Archive hides it but keeps it.)')) return; DB.planner = PL().filter(x => x !== t); plOpen = null; touch(); render(); toast('Deleted.'); return; }
 });
 document.addEventListener('change', e => { const b = e.target.closest && e.target.closest('[data-pl]'); if (!b) return; const t = plGet(b.dataset.id); if (!t) return; plWatch(t);
   if (b.dataset.pl === 'due'){ t.due = b.value || ''; touch(); render(); return; }   // EP v2.42
@@ -2832,7 +2835,7 @@ document.addEventListener('change', e => { const b = e.target.closest && e.targe
   if (b.dataset.pl === 'date'){ t.date = b.value || ''; if (t.date && t.date >= todayIso()) delete t.rolledFrom; touch(); render(); return; }
 });
 let plV = {show:'upcoming', day:'', q:'', pri:'', sort:'pri', group:'section', lastSec:''};
-const PL_SHOW = [['upcoming', 'Today + upcoming'], ['today', 'Today'], ['week', 'This week (through Sunday)'], ['soon', 'Due soon (due in 5 business days or less)'], ['two', 'Due in the next 2 weeks (14 business days)'], ['day', 'One day (past or future)'], ['backlog', 'Backlog'], ['done', 'Done'], ['all', 'Everything']];   // EP v2.41: Today, This week, Due soon, Next 2 weeks
+const PL_SHOW = [['upcoming', 'Today + upcoming'], ['today', 'Today'], ['week', 'This week (through Sunday)'], ['soon', 'Due soon (due in 5 business days or less)'], ['two', 'Due in the next 2 weeks (14 business days)'], ['day', 'One day (past or future)'], ['backlog', 'Backlog'], ['done', 'Done'], ['all', 'Everything'], ['archived', 'Archived']];   // EP v2.41: Today, This week, Due soon, Next 2 weeks
 const PL_SORT = [['pri', 'Priority'], ['due', 'Due date'], ['date', 'Scheduled date'], ['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A to Z']];
 const PL_GROUP = [['section', 'Section'], ['status', 'Status'], ['date', 'Scheduled date'], ['due', 'Due date'], ['priority', 'Priority'], ['none', 'No grouping']];
 function plSorted(list){ const s = plV.sort;
@@ -2841,9 +2844,11 @@ function plSorted(list){ const s = plV.sort;
 function plMatch(t){ const q = plV.q.toLowerCase();
   return (!plV.pri || (plV.pri === 'none' ? !t.pri : t.pri === plV.pri)) && (!q || (t.text + ' ' + (t.sec || '') + ' ' + (t.subs || []).map(s => plSub(s).t).join(' ')).toLowerCase().includes(q)); }
 const plDoneName = () => plV.show === 'all' ? 'Completed' : plV.show === 'day' && (plV.day || todayIso()) !== todayIso() ? 'Completed ' + dayShort(plV.day) : 'Completed today';   // EP v2.50
-function plList(){ const s = plV.show, base = plListBase(); if (s === 'done' || s === 'all' || s === 'day') return base;   // EP v2.50: keep tasks finished today
-  const today = todayIso(); return base.filter(t => !t.done).concat(PL().filter(t => plMatch(t) && t.done && (t.doneAt || '').slice(0, 10) === today)); }
-function plListBase(){ const today = todayIso(), all = PL().filter(plMatch), s = plV.show;
+function plList(){ const s = plV.show, base = plListBase(); if (s === 'done' || s === 'all' || s === 'day' || s === 'archived') return base;   // EP v2.50: keep tasks finished today
+  const today = todayIso(); return base.filter(t => !t.done).concat(PL().filter(t => !t.archived && plMatch(t) && t.done && (t.doneAt || '').slice(0, 10) === today)); }
+function plListBase(){ const today = todayIso(), s = plV.show;
+  if (s === 'archived') return PL().filter(t => t.archived && plMatch(t));   // EP v2.65
+  const all = PL().filter(t => !t.archived && plMatch(t));
   if (s === 'upcoming') return all.filter(t => t.date === today || (!t.done && (!t.date || t.date > today)));
   if (s === 'day'){ const d = plV.day || today; return all.filter(t => t.date === d || (t.done && (t.doneAt || '').slice(0, 10) === d) || t.rolledFrom === d); }
   if (s === 'today') return all.filter(t => t.date === today);
@@ -2855,7 +2860,7 @@ function plListBase(){ const today = todayIso(), all = PL().filter(plMatch), s =
 const plDueName = d => d ? 'Due ' + dayShort(d) : 'No due date';
 const plDateName = d => !d ? 'Backlog' : d === todayIso() ? 'Today · ' + dayShort(d) : dayShort(d);
 function plGroupOf(t){ const g = plV.group; return g === 'status' ? plStatus(t) : g === 'section' ? (t.sec || '(No section)') : g === 'priority' ? (t.pri || 'No priority') : g === 'date' ? plDateName(t.date) : g === 'due' ? plDueName(t.due) : null; }
-function plGroups(list){ if (plV.show === 'done') return plGroupsBase(list);   // EP v2.50: done tasks go in their own Completed section
+function plGroups(list){ if (plV.show === 'done' || plV.show === 'archived') return plGroupsBase(list);   // EP v2.50: done tasks go in their own Completed section
   const done = list.filter(t => t.done), g = plGroupsBase(list.filter(t => !t.done)).filter(x => !(plV.group === 'status' && x[0] === 'Done'));
   return done.length ? g.concat([[plDoneName(), done]]) : g; }
 function plGroupsBase(list){ const g = plV.group;
