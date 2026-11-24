@@ -127,7 +127,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .crop-wrap{display:flex;justify-content:center;background:#F3F4F6;border-radius:6px;padding:8px}
 #cropC{max-width:100%;cursor:crosshair;touch-action:none}
 .crop-acts{display:flex;gap:8px;justify-content:flex-end;align-items:center}.crop-acts .note{margin:0 auto 0 0}
-.sewpill{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#fdecea;color:#b3261e;margin:1px 4px 1px 0;white-space:nowrap}
+.sewpill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:2px 6px;background:#fdecea;color:#b3261e;margin:1px 4px 1px 0;white-space:nowrap;line-height:1.25;text-align:center}
 .tbl tr.row.needsew>td:first-child{box-shadow:inset 4px 0 0 #c62828}   /* LL v1.21: needs a sew-out */
 .apill{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#eaf6ec;color:#256b31;margin:1px 4px 1px 0;white-space:nowrap}
 /* LL v1.02: History on each logo + Audit tab */
@@ -246,7 +246,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.21</span>
+    <span class="vbadge">LL v1.22</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -260,7 +260,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.21';
+const VERSION = 'LL v1.22';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -320,7 +320,7 @@ const stepOf = l => l.todo.find(t => t !== TC) || '';
 const isApproved = l => l.status === 'Approved';   // LL v1.15: approval = Status only; Approved (Box) = uploaded to the Box drive (separate check, 11/20)
 const apPill = l => isApproved(l) ? '<span class="apill" title="Status Approved' + (l.box ? ' + uploaded to the Box drive' : '') + '">APPROVED</span>' : '';
 function missing(l){ return !SEWS.some(k => l.img[k]) ? 'Sew-Out' : ''; }   // LL v1.21: EMB is optional (only ticked when there's a native EMB)
-const needsSew = l => !SEWS.some(k => l.img[k]) && !inactive(l);
+const needsSew = l => (!SEWS.some(k => l.img[k]) || l.todo.some(t => /(need|reorder).*sew/i.test(t))) && !inactive(l);   // LL v1.22: no sew-out picture, OR To Do says it needs a (new) sew-out
 const fmtNum = v => { const n = parseFloat(v); return isNaN(n) ? '' : n.toFixed(2); };
 
 // ---------------- Excel (SheetJS) ----------------
@@ -668,7 +668,7 @@ const C = {
   files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (bx(l).length ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (bx(l).length ? '<span class="ft box" title="In Box: ' + esc(bx(l).map(boxText).join(', ')) + '">Box' + (bx(l)[0].ver ? ' ' + esc(bx(l)[0].ver) : '') + '</span>' : '')},
   status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
   todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
-  flag: {h:'Flag', w:'10%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (needsSew(l) ? '<span class="sewpill" title="No sew-out picture yet">NEEDS SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
+  flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
