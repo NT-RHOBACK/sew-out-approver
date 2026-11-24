@@ -124,6 +124,11 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .emb-btn-del{background:#fff;border:1px solid var(--red);color:var(--red);padding:5px 12px;border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
 .emb-btn-del:hover{background:#fdecec}
 /* LL v1.03: approved logos stand out (Status = Approved, or Approved (Box) checked) */
+.crop-wrap{display:flex;justify-content:center;background:#F3F4F6;border-radius:6px;padding:8px}
+#cropC{max-width:100%;cursor:crosshair;touch-action:none}
+.crop-acts{display:flex;gap:8px;justify-content:flex-end;align-items:center}.crop-acts .note{margin:0 auto 0 0}
+.sewpill{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#fdecea;color:#b3261e;margin:1px 4px 1px 0;white-space:nowrap}
+.tbl tr.row.needsew>td:first-child{box-shadow:inset 4px 0 0 #c62828}   /* LL v1.21: needs a sew-out */
 .apill{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#eaf6ec;color:#256b31;margin:1px 4px 1px 0;white-space:nowrap}
 /* LL v1.02: History on each logo + Audit tab */
 .emb-hist summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);user-select:none}
@@ -241,7 +246,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.20</span>
+    <span class="vbadge">LL v1.21</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -250,10 +255,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <div class="toast" id="toast"></div>
 <div class="lb" id="lb" hidden><div class="lb-box" role="dialog" aria-modal="true"><div class="lb-hd"><span class="lb-t" id="lbT"></span><span class="lb-s" id="lbS"></span><button class="lb-x" id="lbX" title="Close (Esc)">&times;</button></div><div class="lb-img" id="lbImg"></div></div></div>
 <input type="file" id="picFile" accept="image/*" hidden>
+<div class="lb" id="crop" hidden><div class="lb-box"><div class="lb-hd"><span class="lb-t" id="cropT">Crop picture</span><span class="lb-s">Drag a box around the part to keep</span><button class="lb-x" id="cropX" title="Close (Esc)">&times;</button></div>
+<div class="crop-wrap"><canvas id="cropC"></canvas></div><div class="crop-acts"><span class="note">The old picture moves to Images\DELETE.</span><button class="btn light" id="cropReset">Reset</button><button class="btn" id="cropSave">Save crop</button></div></div></div>
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.20';
+const VERSION = 'LL v1.21';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -312,7 +319,8 @@ const sortBoxes = l => bx(l).sort((a, b) => String(b.date).localeCompare(String(
 const stepOf = l => l.todo.find(t => t !== TC) || '';
 const isApproved = l => l.status === 'Approved';   // LL v1.15: approval = Status only; Approved (Box) = uploaded to the Box drive (separate check, 11/20)
 const apPill = l => isApproved(l) ? '<span class="apill" title="Status Approved' + (l.box ? ' + uploaded to the Box drive' : '') + '">APPROVED</span>' : '';
-function missing(l){ return [!l.fEmb ? 'EMB' : '', !SEWS.some(k => l.img[k]) ? 'Sew-Out' : ''].filter(Boolean).join(' + '); }
+function missing(l){ return !SEWS.some(k => l.img[k]) ? 'Sew-Out' : ''; }   // LL v1.21: EMB is optional (only ticked when there's a native EMB)
+const needsSew = l => !SEWS.some(k => l.img[k]) && !inactive(l);
 const fmtNum = v => { const n = parseFloat(v); return isNaN(n) ? '' : n.toFixed(2); };
 
 // ---------------- Excel (SheetJS) ----------------
@@ -516,6 +524,42 @@ async function moveToDelete(name){   // never delete: the old picture moves to I
   const w = await (await del.getFileHandle(to, {create:true})).createWritable(); await w.write(f); await w.close();
   await d.removeEntry(name); imgUrl.delete(name);
 }
+// ---------------- Crop a picture (LL v1.21) ----------------
+const CR = {l:null, k:'', img:null, sc:1, r:null, drag:null};
+async function openCrop(l, k){
+  const name = l.img[k]; if (!name) return;
+  const u = dirHandle ? await loadImg(name) : ''; if (!u){ toast('Couldn&rsquo;t open ' + esc(name) + '. Reconnect Excel (top right).'); return; }
+  const im = new Image(); im.onload = () => {
+    Object.assign(CR, {l, k, img:im, r:null, drag:null}); CR.sc = Math.min(1, 760 / im.naturalWidth, Math.min(560, window.innerHeight * 0.66) / im.naturalHeight);
+    const c = document.getElementById('cropC'); c.width = Math.round(im.naturalWidth * CR.sc); c.height = Math.round(im.naturalHeight * CR.sc);
+    document.getElementById('cropT').textContent = 'Crop: ' + (l.emb || l.id) + ' · ' + SLOTS.find(x => x[0] === k)[1];
+    document.getElementById('crop').hidden = false; drawCrop();
+  }; im.src = u;
+}
+function drawCrop(){
+  const c = document.getElementById('cropC'), g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(CR.img, 0, 0, c.width, c.height);
+  const r = CR.r; if (!r || r.w < 2 || r.h < 2) return;
+  g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, 0, c.width, r.y); g.fillRect(0, r.y + r.h, c.width, c.height - r.y - r.h); g.fillRect(0, r.y, r.x, r.h); g.fillRect(r.x + r.w, r.y, c.width - r.x - r.w, r.h);
+  g.strokeStyle = '#fff'; g.lineWidth = 2; g.setLineDash([6, 4]); g.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2); g.setLineDash([]);
+}
+(function(){
+  const c = document.getElementById('cropC'), pt = e => { const b = c.getBoundingClientRect(); return {x:Math.max(0, Math.min(c.width, (e.clientX - b.left) * c.width / b.width)), y:Math.max(0, Math.min(c.height, (e.clientY - b.top) * c.height / b.height))}; };
+  c.addEventListener('pointerdown', e => { CR.drag = pt(e); CR.r = null; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', e => { if (!CR.drag) return; const p = pt(e), a = CR.drag; CR.r = {x:Math.min(a.x, p.x), y:Math.min(a.y, p.y), w:Math.abs(p.x - a.x), h:Math.abs(p.y - a.y)}; drawCrop(); });
+  c.addEventListener('pointerup', () => { CR.drag = null; });
+  const close = () => { document.getElementById('crop').hidden = true; CR.img = null; };
+  document.getElementById('cropX').onclick = close;
+  document.getElementById('crop').addEventListener('click', e => { if (e.target.id === 'crop') close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('crop').hidden) close(); });
+  document.getElementById('cropReset').onclick = () => { CR.r = null; drawCrop(); };
+  document.getElementById('cropSave').onclick = () => {
+    const r = CR.r; if (!r || r.w < 8 || r.h < 8){ toast('Drag a box on the picture first.'); return; }
+    const sx = Math.round(r.x / CR.sc), sy = Math.round(r.y / CR.sc), sw = Math.round(r.w / CR.sc), sh = Math.round(r.h / CR.sc);
+    const o = document.createElement('canvas'); o.width = sw; o.height = sh; const g = o.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, sw, sh); g.drawImage(CR.img, sx, sy, sw, sh, 0, 0, sw, sh);
+    const png = /\.png$/i.test(CR.l.img[CR.k]), l = CR.l, k = CR.k;
+    o.toBlob(b => { close(); putPicture(l, k, new File([b], 'crop' + (png ? '.png' : '.jpg'), {type:png ? 'image/png' : 'image/jpeg'})).then(() => toast('Cropped. The old picture is in Images\\DELETE.')); }, png ? 'image/png' : 'image/jpeg', 0.92);
+  };
+})();
 async function putPicture(l, slot, file){
   if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
   if (!/^image\//.test(file.type)){ toast('That isn&rsquo;t a picture.'); return; }
@@ -526,6 +570,7 @@ async function putPicture(l, slot, file){
     const ext = (file.name.match(/\.[a-z0-9]+$/i) || ['.jpg'])[0].toLowerCase(), base = safeName(l.emb || l.id) + ' - ' + s[2];
     let name = base + ext, i = 2; while (await fileExists(d, name)) name = base + ' (' + (i++) + ')' + ext;
     const w = await (await d.getFileHandle(name, {create:true})).createWritable(); await w.write(file); await w.close();
+    imgUrl.delete(name); if (old) imgUrl.delete(old);   // LL v1.21: show the new picture, not the cached old one
     l.img[slot] = name; logEdit(l, s[1] + ' picture', old, name + (old ? ' (old one moved to Images\\DELETE)' : '')); touch(); render();
   } catch(e){ toast('Couldn&rsquo;t save the picture (' + esc(e.name) + ').'); }
 }
@@ -623,7 +668,7 @@ const C = {
   files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (bx(l).length ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (bx(l).length ? '<span class="ft box" title="In Box: ' + esc(bx(l).map(boxText).join(', ')) + '">Box' + (bx(l)[0].ver ? ' ' + esc(bx(l)[0].ver) : '') + '</span>' : '')},
   status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
   todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
-  flag: {h:'Flag', w:'10%', s:l => (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
+  flag: {h:'Flag', w:'10%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (needsSew(l) ? '<span class="sewpill" title="No sew-out picture yet">NEEDS SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
@@ -647,7 +692,7 @@ function tableHtml(tab, list, sec){
     cols.map(([k, c]) => c.nos ? '<th class="nos">' + esc(c.h) + '</th>' : '<th data-sort="' + sk(k) + '" class="' + (s.k === sk(k) ? 'sorted' : '') + '">' + esc(c.h) + '<span class="arr">' + (s.k === sk(k) ? (s.d > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr></thead><tbody>';
   if (!list.length) h += '<tr><td colspan="' + cols.length + '"><div class="empty">No logos here' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div></td></tr>';
   sorted(tab, list).forEach(l => {
-    h += '<tr class="row' + (state.open === l.id ? ' open' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(([, c]) => '<td>' + c.v(l, sec) + '</td>').join('') + '</tr>';
+    h += '<tr class="row' + (state.open === l.id ? ' open' : '') + (needsSew(l) ? ' needsew' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(([, c]) => '<td>' + c.v(l, sec) + '</td>').join('') + '</tr>';
     if (state.open === l.id) h += '<tr><td class="card-cell" colspan="' + cols.length + '">' + cardHtml(l) + '</td></tr>';
   });
   return h + '</tbody></table></div>';
@@ -669,7 +714,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
   const sel = (f, list, blank) => '<select data-f="' + f + '" data-id="' + id + '">' + opt(list, l[f], blank) + '</select>';
   const row = (label, val) => '<tr><th>' + label + '</th><td>' + val + '</td></tr>', head = t => '<tr class="xh"><td colspan="2">' + t + '</td></tr>';
   const pic = ([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '"' + (l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger (or drop a new picture here)"' : ' title="Drop a picture here"') + '>' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
-    '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts"><button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">' + (l.img[k] ? 'Replace' : 'Add') + '</button>' + (l.img[k] ? '<button class="btn light small" data-act="unpic" data-slot="' + k + '" data-id="' + id + '">Remove</button>' : '') + '</div>' +
+    '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts"><button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">' + (l.img[k] ? 'Replace' : 'Add') + '</button>' + (l.img[k] ? '<button class="btn light small" data-act="unpic" data-slot="' + k + '" data-id="' + id + '">Remove</button>' : '') + (l.img[k] && SEWS.includes(k) ? '<button class="btn light small" data-act="crop" data-slot="' + k + '" data-id="' + id + '">Crop</button>' : '') + '</div>' +
     (state.tab === 'check' && SEWS.includes(k) && l.img[k] ? '<div class="sewmv"><span class="lbl2">Belongs in:</span>' + [['bar', 'Barrett'], ['qd', 'QD'], ['sew', 'Other']].map(([t, n]) => '<button' + (t === k ? ' class="on" disabled' : ' data-act="sewMove" data-slot="' + k + '" data-to="' + t + '" data-id="' + id + '"') + '>' + n + '</button>').join('') + '</div>' : '') + '</div>';
   const pics = '<div class="pics strip">' + SLOTS.filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div><div class="note" style="margin-top:0">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
   const rows = '<table class="xrows">' +
@@ -767,20 +812,20 @@ function groupsHtml(tab, list, defOpen){
   return names.map(n => sectionHtml(tab, n, g[n], defOpen)).join('');
 }
 function renderGrouped(tab){   // Mainline: a section per account; archived + retired at the bottom
-  const all = activeLogos().filter(isMain), list = all.filter(matches), gone = DB.logos.filter(l => isMain(l) && inactive(l));
-  return '<h1>Mainline</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
-    '<span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school)).size + ' accounts</span></div>' + addBoxHtml(tab) + groupsHtml(tab, list, true) +
+  const all = activeLogos().filter(isMain), list = all.filter(l => matches(l) && passF(tab, l)), gone = DB.logos.filter(l => isMain(l) && inactive(l));
+  return '<h1>Mainline</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' + filterBar(tab, ['type']) +
+    '<span class="count">' + (q || list.length !== all.length ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school)).size + ' accounts</span></div>' + addBoxHtml(tab) + groupsHtml(tab, list, true) +
     (gone.length ? sectionHtml(tab, 'Archived & Retired', gone.filter(matches), false) : '');
 }
 function renderCollegiate(){   // LL v1.19: back to one list of every collegiate logo (schools are on the Accounts tab); School column shows logo + full name
-  const all = activeLogos().filter(isCol), list = all.filter(matches);
-  return '<h1>Collegiate</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos</span></div>' + addBoxHtml('collegiate') + tableHtml('collegiate', list);
+  const all = activeLogos().filter(isCol), list = all.filter(l => matches(l) && passF('collegiate', l));
+  return '<h1>Collegiate</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button>' + filterBar('collegiate', ['type']) + '<span class="count">' + (list.length !== all.length && !q ? list.length + ' of ' : '') + (q ? list.length + ' of ' : '') + all.length + ' logos</span></div>' + addBoxHtml('collegiate') + tableHtml('collegiate', list);
 }
 function renderBySchool(tab, title, test, unit){   // LL v1.17/1.18: grouped by school / team (logo + full name)
-  const all = activeLogos().filter(test), list = all.filter(matches), g = {};   // LL v1.17: grouped by school (logo + full name)
+  const all = activeLogos().filter(test), list = all.filter(l => matches(l) && passF(tab, l)), g = {};   // LL v1.17: grouped by school (logo + full name)
   list.forEach(l => { const k = l.school || NO_SCHOOL; (g[k] = g[k] || []).push(l); });
   const names = Object.keys(g).sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));
-  return '<h1>' + title + '</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button><span class="count">' + (q ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school || NO_SCHOOL)).size + ' ' + unit + '</span></div>' + addBoxHtml(tab) +
+  return '<h1>' + title + '</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' + filterBar(tab, ['type']) + '<span class="count">' + (q || list.length !== all.length ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + new Set(all.map(l => l.school || NO_SCHOOL)).size + ' ' + unit + '</span></div>' + addBoxHtml(tab) +
     (names.length ? names.map(k => sectionHtml(tab, k, g[k], true, undefined, schoolLabel(k))).join('') : '<div class="empty">No logos' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div>');
 }
 const NO_SCHOOL = '(no school / account)';
@@ -861,15 +906,18 @@ const FILTERS = [['type', 'All types', () => DB.lists.type, (l, v) => l.type ===
   ['status', 'All statuses', () => DB.lists.status.concat('(no status)'), (l, v) => v === '(no status)' ? !l.status : l.status === v],
   ['todo', 'All To Do', () => DB.lists.todo.concat('(nothing to do)'), (l, v) => v === '(nothing to do)' ? !l.todo.length : l.todo.includes(v)],
   ['flag', 'Any flag', () => DB.lists.flag.concat('(no flag)'), (l, v) => v === '(no flag)' ? !l.flag : l.flag === v],
-  ['missing', 'Missing: any', () => ['EMB', 'Sew-Out', 'EMB + Sew-Out', 'Nothing missing'], (l, v) => { const m = missing(l); return v === 'Nothing missing' ? !m : v === 'EMB + Sew-Out' ? m === v : m.split(' + ').includes(v); }],
+  ['missing', 'Sew-out: any', () => ['Needs sew-out', 'Has a sew-out'], (l, v) => v === 'Needs sew-out' ? needsSew(l) : !needsSew(l)],
   ['box', 'Approved (Box): any', () => ['Approved (Box)', 'Not approved (Box)'], (l, v) => v === 'Approved (Box)' ? l.box : !l.box],
   ['size', 'Size Check: any', () => ['CHECK', 'OK', '(no DST size)'], (l, v) => v === '(no DST size)' ? !sizeCheck(l) : sizeCheck(l) === v]];
+// LL v1.21: the same filters on Collegiate / Mainline / NFL (each tab keeps its own)
+const fOf = tab => tab === 'all' ? state.f : ((state.fx = state.fx || {})[tab] = state.fx[tab] || {});
+const passF = (tab, l) => { const f = fOf(tab); return FILTERS.every(([k, , , t]) => !f[k] || t(l, f[k])); };
+function filterBar(tab, skip){ const f = fOf(tab), fl = FILTERS.filter(([k]) => !skip.includes(k));
+  return fl.map(([k, label, opts]) => '<select data-filter="' + k + '" data-ftab="' + tab + '">' + opt(opts(), f[k] || '', label) + '</select>').join('') + (fl.some(([k]) => f[k]) ? '<button class="lnk" data-act="clearF" data-ftab="' + tab + '">Clear filters</button>' : ''); }
 function renderAll(){
   const f = state.f, list = activeLogos().filter(l => matches(l) && FILTERS.every(([k, , , test]) => !f[k] || test(l, f[k])));
   const any = FILTERS.some(([k]) => f[k]);
-  return '<h1>All Logos</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button>' +
-    FILTERS.map(([k, label, opts]) => '<select data-filter="' + k + '">' + opt(opts(), f[k] || '', label) + '</select>').join('') +
-    (any ? '<button class="lnk" data-act="clearF">Clear filters</button>' : '') + '<span class="count">' + list.length + ' of ' + activeLogos().length + ' logos</span></div>' + addBoxHtml('all') + tableHtml('all', list);
+  return '<h1>All Logos</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button>' + filterBar('all', []) + '<span class="count">' + list.length + ' of ' + activeLogos().length + ' logos</span></div>' + addBoxHtml('all') + tableHtml('all', list);
 }
 function renderTodo(){
   const items = DB.lists.todo.concat([...new Set(activeLogos().flatMap(l => l.todo))].filter(t => !DB.lists.todo.includes(t)));
@@ -1036,7 +1084,7 @@ page.addEventListener('click', async e => {
       if (state.tab === 'todo') DB.lists.todo.forEach(t => { state.secOpen['todo|' + t] = a === 'expand'; });
       saveUi(); render(); return;
     }
-    if (a === 'clearF'){ state.f = {}; saveUi(); render(); return; }
+    if (a === 'clearF'){ const tb = act.dataset.ftab || 'all'; if (tb === 'all') state.f = {}; else fOf(tb) && (state.fx[tb] = {}); saveUi(); render(); return; }
     if (a === 'colAdd' || a === 'colDel' || a === 'colUpdate'){
       const k = act.dataset.acct, x = schoolSave(k, schoolGet(k));
       if (a === 'colAdd'){ x.colors.push({name:'', pms:'', mad:''}); render(); const ins = document.querySelectorAll('input[data-sc="name"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
@@ -1077,6 +1125,7 @@ page.addEventListener('click', async e => {
       bx(l).splice(+act.dataset.i, 1); logEdit(l, 'Removed Box entry', boxText(b), ''); touch(); render(); return; }
     if (a === 'noteAdd'){ const nid = act.dataset.nid, t = document.querySelector('.note-in[data-nid="' + CSS.escape(nid) + '"]'); if (t && addNote(nid, t.value)){ render(); toast('Note added.'); } return; }
     if (a === 'copyFolder' && l){ try { await navigator.clipboard.writeText(l.folder); toast('Folder path copied.'); } catch(err){ toast('Couldn&rsquo;t copy.'); } return; }
+    if (a === 'crop' && l){ openCrop(l, act.dataset.slot); return; }
     if (a === 'pic' && l){ pickFor = [l.id, act.dataset.slot]; const fi = document.getElementById('picFile'); fi.value = ''; fi.click(); return; }
     if (a === 'unpic' && l){ removePicture(l, act.dataset.slot); return; }
     return;
@@ -1100,7 +1149,7 @@ page.addEventListener('click', async e => {
 });
 page.addEventListener('change', e => {
   const t = e.target;
-  if (t.dataset.filter){ state.f[t.dataset.filter] = t.value; saveUi(); render(); return; }
+  if (t.dataset.filter){ fOf(t.dataset.ftab || 'all')[t.dataset.filter] = t.value; saveUi(); render(); return; }
   if (t.dataset.audit){ state.audit[t.dataset.audit] = t.value; saveUi(); render(); return; }
   if (t.dataset.pfilter){ (state.pf = state.pf || {})[t.dataset.pfilter] = t.value; saveUi(); render(); return; }
   if (t.dataset.pf){ const p = prods()[+t.dataset.pi], k = t.dataset.pf, v = t.value.trim(); if (!p || (p[k] || '') === v) return;
