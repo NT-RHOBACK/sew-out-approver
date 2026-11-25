@@ -168,7 +168,9 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .clist.cgrid td.bad{background:#fdecea}.clist.cgrid td.off{background:#fff}
 .emb-card .cgrid input:not([type=checkbox]),.emb-card .cgrid select,.emb-card .cgrid textarea{width:100%;min-width:0;padding:5px 7px;font-size:12.5px}
 .emb-card .cgrid textarea{min-height:52px}.gsub{font-size:11px;color:#49516C;margin-top:2px}.gcb{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer}.gcb.c{display:flex;justify-content:center}
-.gsz{font-size:12px}.cgrid .ccdrop{padding:6px 8px;font-size:11.5px}.cgrid .pathrow,.cgrid [id^=fr-]{display:flex;flex-wrap:wrap;gap:6px}
+.gsz{font-size:12px}.szr{display:flex;align-items:center;gap:4px;margin:2px 0}.szr span{flex:0 0 30px;white-space:nowrap;font-size:10.5px;font-weight:700;color:var(--grey)}.emb-card .cgrid select[data-f=boxSt]{max-width:220px}.emb-card .cgrid .szr input{flex:1 1 0;width:auto}.szr i{font-style:normal;color:var(--grey)}
+.szt{white-space:nowrap}.szt span{display:inline-block;width:30px;font-size:10.5px;font-weight:700;color:var(--grey)}.cgrid .ccdrop{padding:6px 8px;font-size:11.5px}.ftop{display:flex;align-items:center;gap:10px;margin:0 0 10px}.ftop .gtitle{margin:0}.ftop .pathrow,.ftop [id^=fr-]{display:flex;flex-wrap:wrap;gap:6px}
+.cgrid .pathrow,.cgrid [id^=fr-]{display:flex;flex-wrap:wrap;gap:6px}
 .ckc{font-weight:800;font-size:13px;text-align:center;border-radius:4px;padding:3px 2px}.tbl .ckc select.cksel{min-width:0;font-size:10.5px}.tbl .ckc .ckok{font-size:10px}.ckc.ok{color:#256b31;background:#eaf6ec}.ckc.bad{color:#b3261e;background:#fdecea}.ckc.warn{color:#8a5a00;background:#fff4e0}.ckc.off{color:#9aa3b5}
 .clist{border-collapse:collapse;margin:0 0 12px;background:#fff;font-size:12px}
 .clist th{padding:5px 10px;border:1px solid var(--line);background:#F0F2F7;color:var(--navy);font-weight:700;font-size:11px;white-space:nowrap}
@@ -271,7 +273,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.49</span>
+    <span class="vbadge">LL v1.50</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -285,7 +287,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.49';
+const VERSION = 'LL v1.50';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -304,7 +306,7 @@ const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Ty
   ['Approved (Box)','box','box'],['Box Drive','boxes','boxes'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
   ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate'],['Size OK','sizeOk','check'],['Files Folder','filesDir'],['Box Status','boxSt'],['Color Card','ccSt'],['Color Card Date','ccDate'],['Digitized By','digBy']];   // LL v1.41   // LL v1.40: Wilcom color card tracker   // LL v1.35: Box drive = Needs upload / Uploaded   // LL v1.33: Folder = main folder (spec sheet), Files Folder = version folder (DST / EMB / PNG / sew-outs)   // LL v1.31: size difference OK'd   // LL v1.27: thread color update tracker
 const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Stops',
-  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', filesDir:'Files folder', boxSt:'Box drive', ccSt:'Color card', digBy:'Digitized by', sizeOk:'Size difference OK', status:'Status', flag:'Flag', notes:'Notes', folder:'Main folder (spec sheet)'};
+  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', filesDir:'Files folder', boxSt:'Box drive', ccSt:'Color card', digBy:'Digitized by', sizeOk:'Size difference OK', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder path'};
 const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Settings', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
 function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, products:[], mounts:[], deleted:[], schools:{}, other:[], savedAt:''}; }
@@ -346,7 +348,7 @@ const stepOf = l => l.todo.find(t => t !== TC) || '';
 const isApproved = l => l.status === 'Approved';   // LL v1.15: approval = Status only; Approved (Box) = uploaded to the Box drive (separate check, 11/20)
 const apPill = l => isApproved(l) ? '<span class="apill" title="Status Approved' + (l.box ? ' + uploaded to the Box drive' : '') + '">APPROVED</span>' : '';
 function missing(l){ return !SEWS.some(k => l.img[k]) ? 'Sew-Out' : ''; }   // LL v1.21: EMB is optional (only ticked when there's a native EMB)
-const needsSew = l => (!SEWS.some(k => l.img[k]) || l.todo.some(t => /(need|reorder).*sew/i.test(t))) && !inactive(l);   // LL v1.22: no sew-out picture, OR To Do says it needs a (new) sew-out
+const needsSew = l => (!SEWS.some(k => l.img[k]) || /(need|reorder).*sew/i.test(l.status || '')) && !inactive(l);   // LL v1.50: no sew-out picture, or Status says it needs one (Needs removed)   // LL v1.22: no sew-out picture, OR To Do says it needs a (new) sew-out
 const fmtNum = v => { const n = parseFloat(v); return isNaN(n) ? '' : n.toFixed(2); };
 
 // ---------------- Excel (SheetJS) ----------------
@@ -748,7 +750,7 @@ function addLogo(emb, school, type){
 }
 
 // ---------------- UI state ----------------
-const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'mainline', label:'Mainline'}, {key:'nfl', label:'NFL'}, {key:'all', label:'All Logos'}, {key:'checklist', label:'Checklist'}, {key:'todo', label:'To Do'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
+const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'mainline', label:'Mainline'}, {key:'nfl', label:'NFL'}, {key:'all', label:'All Logos'}, {key:'checklist', label:'Checklist'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
 let state = {tab:'collegiate', open:'', sort:{}, secOpen:{}, f:{}, adding:false, acct:'', audit:{q:'', what:'', from:'', to:''}};
 try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
 state.open = ''; state.adding = false; state.audit = Object.assign({q:'', what:'', from:'', to:''}, state.audit); const histOpen = {}; if (!TABS.some(t => t.key === state.tab)) state.tab = 'collegiate'; state.acct = '';   // LL v1.37: school pages open from the School column
@@ -763,7 +765,7 @@ function matches(l){
 }
 
 // ---------------- Columns ----------------
-const CK_MARK = {ok:'✓', bad:'✗', warn:'!', off:'–'}, CK_NAMES = ['Spec', 'PNG', 'DST', 'EMB', 'Sew-out', 'Thread colors', 'NetSuite', 'Wilcom card', 'Size', 'Box', 'Folders'];
+const CK_MARK = {ok:'✓', bad:'✗', warn:'!', off:'–'}, CK_NAMES = ['Spec', 'PNG', 'DST', 'EMB', 'Sew-out', 'Thread colors', 'NetSuite', 'Wilcom card', 'Size', 'Box', 'Folder'];
 const C = {
   chev: {h:'', w:'22px', nos:true, v:l => '<span class="chev">' + (state.open === l.id ? '&#9660;' : '&#9654;') + '</span>'},
   spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th" data-drop="spec" data-id="' + esc(l.id) + '"' + popAttr(l, 'spec') + '>' + imgTag(l.img.spec) + '</div>'},
@@ -776,7 +778,7 @@ const C = {
   schoolF:{h:'School / Account', w:'17%', s:l => schoolSort(l.school || ''), v:l => '<div class="acc-n sch-link"' + (l.school ? ' data-act="openSchool" data-acct="' + esc(l.school) + '" title="Open the ' + esc(schoolFull(l.school) || l.school) + ' page (colors, notes)"' : '') + '>' + schoolLogo(l.school, 'sm') + '<span>' + esc(schoolFull(l.school) || l.school) + (schoolFull(l.school) ? '<span class="sch">' + esc(schoolCode(l.school)) + '</span>' : '') + '</span></div>'},   // LL v1.19
   type: {h:'Type', w:'9%', s:l => l.type, v:l => esc(l.type)},
   ver:  {h:'Ver', w:'5%', s:l => l.ver, v:l => esc(l.ver) || '<span class="muted">&mdash;</span>'},
-  size: {h:'Size (H × W)', w:'11%', s:l => parseFloat(l.specH) || 0, v:l => (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : '<span class="muted">&mdash;</span>') + (sizeCheck(l) === 'CHECK' ? '<span class="chk-bad" title="Spec and DST sizes differ by more than 0.05&quot;">CHECK</span>' : '')},
+  size: {h:'Size (H × W)', w:'12%', s:l => parseFloat(l.specH) || 0, v:l => '<div class="szt"><span>Spec</span> ' + (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : '&mdash;') + '</div><div class="szt"><span>DST</span> ' + (l.dstH || l.dstW ? fmtNum(l.dstH) + ' × ' + fmtNum(l.dstW) : '&mdash;') + '</div>' + (sizeCheck(l) === 'CHECK' ? '<span class="chk-bad" title="Spec and DST sizes differ by more than 0.05&quot;">CHECK</span>' : '')},   // LL v1.50: Spec over DST
   clrs: {h:'# Stops', w:'6%', s:l => parseFloat(l.clrs) || 0, v:l => esc(l.clrs) || '<span class="muted">&mdash;</span>'},
   files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (l.boxSt === 'Uploaded' ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (l.boxSt === 'Uploaded' ? '<span class="ft box" title="Uploaded to the Box drive">Box</span>' : '')},
   status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
@@ -785,7 +787,7 @@ const C = {
     const st = l.status ? '<span class="stp' + (l.status === 'Approved' ? ' ok' : l.status === 'Not Approved' ? ' no' : inactive(l) ? ' off' : '') + '">' + esc(l.status) + '</span>' : '<span class="muted">No status</span>';
     // LL v1.36: just the status + a flag (needs, threads and Box stay on the card, the filters and the To Do tab; the red side bar still marks a needed sew-out)
     return st + (l.flag ? ' <span class="flag">&#9873; ' + esc(l.flag) + '</span>' : ''); }},
-  flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') + (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
+  flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') + (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'Status: ' + l.status : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
   ...Object.fromEntries(CK_NAMES.map((n, i) => ['ck' + i, {h:n, w:(i === 5 ? '7%' : '5.5%'), s:l => ({bad:0, warn:1, off:2, ok:3})[checkCells(l)[i][1]], v:l => { const c = checkCells(l)[i]; return '<div class="ckc ' + c[1] + '">' + ckControls(l)[i] + '</div>'; }}])),   // LL v1.47: editable in the Checklist tab too   // LL v1.45
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
@@ -852,13 +854,13 @@ function checkCells(l){
   const sc = sizeCheck(l), ns = needsSew(l), th = String(l.threads || '').trim();
   return [
     ['Spec', l.fSpec ? 'ok' : 'bad'], ['PNG', l.fPng ? 'ok' : 'bad'], ['DST', l.fDst ? 'ok' : 'bad'], ['EMB', l.fEmb ? 'ok' : 'off', 'Only needed when there is a native EMB'],
-    ['Sew-out', ns ? 'bad' : 'ok', ns ? (SEWS.some(k => l.img[k]) ? 'Needs a new sew-out (To Do)' : 'No sew-out picture yet') : ''],
+    ['Sew-out', ns ? 'bad' : 'ok', ns ? (SEWS.some(k => l.img[k]) ? 'Status: ' + l.status : 'No sew-out picture yet') : ''],
     ['Thread colors', th ? 'ok' : 'bad'],
     ['NetSuite', l.tcStatus === 'Updated in NetSuite' ? 'ok' : l.tcStatus ? 'warn' : 'off', l.tcStatus || 'Thread Status not set'],
     ['Wilcom card', l.ccSt === 'Wilcom card done' ? 'ok' : l.ccSt ? 'bad' : 'off', l.ccSt || 'Color card not set'],
     ['Size', sc === 'OK' ? 'ok' : sc === 'CHECK' ? 'bad' : 'off', sc ? 'Size Check: ' + sc + (sc === 'OK' && sizeRaw(l) === 'CHECK' ? ' (difference OK’d)' : '') : 'Needs Spec H and DST H'],
     ['Box', l.boxSt === 'Uploaded' ? 'ok' : l.boxSt ? 'bad' : 'off', l.boxSt || 'Box drive not set'],
-    ['Folders', l.folder && l.filesDir ? 'ok' : l.folder || l.filesDir ? 'warn' : 'bad', (l.folder ? 'Spec sheet folder ✓' : 'No spec sheet folder') + ' · ' + (l.filesDir ? 'Files folder ✓' : 'No files folder')]];
+    ['Folder', l.folder ? 'ok' : 'bad', l.folder ? 'Folder path set' : 'No folder path']];
 }
 function ckControls(l){   // LL v1.46/1.47: the controls inside each checklist cell (card grid + Checklist tab)
   const cells = checkCells(l), id = esc(l.id), m = c => '<span class="ckm">' + CK_MARK[c[1]] + '</span>';
@@ -867,13 +869,13 @@ function ckControls(l){   // LL v1.46/1.47: the controls inside each checklist c
   const auto = (c, tip) => '<span class="ckauto" title="' + esc((c[2] ? c[2] + ' - ' : '') + tip) + '">' + m(c) + '</span>';
   const ctl = [
     tog('fSpec', cells[0]), tog('fPng', cells[1]), tog('fDst', cells[2]), tog('fEmb', cells[3]),
-    auto(cells[4], 'add a sew-out picture, or tick Needs: Sew Out / Reorder Sew-Out'),
+    auto(cells[4], 'add a sew-out picture (or change the Status)'),
     auto(cells[5], 'fill in Thread Colors below (or drop the color card)'),
     m(cells[6]) + sel('data-tstat="1"', TSTAT, l.tcStatus || '', ['Check', 'Shared', 'Updated']),
     m(cells[7]) + sel('data-ccst="1"', CCST, l.ccSt || '', ['Needs', 'Done']),
     auto(cells[8], 'fill in Spec / DST sizes below') + (sizeRaw(l) === 'CHECK' ? '<label class="ckok" title="OK to proceed with this size difference"><input type="checkbox" data-f="sizeOk" data-id="' + id + '"' + (l.sizeOk ? ' checked' : '') + '> OK</label>' : ''),
     m(cells[9]) + sel('data-f="boxSt"', BOXST, l.boxSt || '', ['Needs', 'Uploaded']),
-    auto(cells[10], 'set the Spec sheet / Files folders below')];
+    auto(cells[10], 'set the Folder path at the top of the card')];
   return ctl;
 }
 function checklist(l){   // LL v1.46: the checklist is where you fill these in (click a ✓/✗ to switch it, or pick from the little dropdown)
@@ -918,20 +920,21 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
       ['Status', sel('status', L.status, '—'), '14%'],
       ['Flag', '<label class="gcb" title="Flag for review"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> ' + esc(l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? l.flag : 'Review') + '</label>', '7%'],
       ['Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>']]) +
-    '<div id="nd-' + id + '">' + needsGrid(l) + '</div>' +
     grid('Thread colors &amp; size', [
       ['Thread colors (Madeira)', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>', '30%'],
       ['# Stops', inp('clrs'), '6%'],
-      ['Spec H', inp('specH'), '6%'], ['Spec W', inp('specW'), '6%'],
-      ['DST H', inp('dstH'), '6%'], ['DST W', inp('dstW'), '6%'],
+      ['Size (H × W)', '<div class="szr"><span>Spec</span>' + inp('specH') + '<i>×</i>' + inp('specW') + '</div><div class="szr"><span>DST</span>' + inp('dstH') + '<i>×</i>' + inp('dstW') + '</div>', '20%'],   // LL v1.50: stacked
       ['Size check', '<span id="sc-' + id + '" class="gsz">' + scText(l) + '</span>', '14%'],
+      ['NetSuite', '<select data-tstat="1" data-id="' + id + '">' + opt(TSTAT, l.tcStatus || '', '—') + '</select>', '10%'],
+      ['Wilcom card', '<select data-ccst="1" data-id="' + id + '">' + opt(CCST, l.ccSt || '', '—') + '</select>', '10%'],
       ['Color card / DST', '<div class="ccdrop" data-ccdrop="1" data-id="' + id + '">Drop a color card PDF or DST <button class="btn light small" data-act="ccPick" data-id="' + id + '">Choose</button></div>']]) +   // LL v1.43
-    grid('Folders', [
-      ['Spec sheet folder', folderRow(l, 'folder'), '50%'],
-      ['Files folder (DST / EMB / PNG / sew-outs)', folderRow(l, 'filesDir')]]);
+    grid('Files &amp; folders', [
+      ...FILES.map(([k, n]) => [n, '<label class="gcb c"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '></label>', '5%']),
+      ['Box drive', '<select data-f="boxSt" data-id="' + id + '">' + opt(BOXST, l.boxSt || '', '—') + '</select>']]);   // LL v1.50: Folder path moved to the top of the card
   const fold = (key, title, count, body) => '<details class="xfold" data-fold="' + id + '|' + key + '"' + (foldOpen[l.id + '|' + key] || (key === 'prod' && state.tab === 'check' && state.chkProd && foldOpen[l.id + '|' + key] !== false) ? ' open' : '') + '><summary>' + title + '<span class="cnt"' + (key === 'notes' ? ' id="nc-' + id + '"' : '') + '>' + count + '</span></summary><div class="xfold-bd">' + body + '</div></details>';
   const hist = '<details class="xfold emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="xfold-bd"><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></div></details>';
-  return '<div class="emb-card xcard"><div id="cl-' + id + '">' + checklist(l) + '</div>' + pics + rows + fold('prod', 'Products (kit info)', prodsOf(l.id).length, prodSec(l)) + fold('notes', 'Internal notes', notesFor(l.id).length, notesBox(l.id)) + hist + footHtml(l) + '</div>';
+  const ftop = '<div class="ftop"><span class="gtitle">Folder path</span>' + folderRow(l, 'folder') + '</div>';   // LL v1.50: one folder (the spec sheet folder), at the top
+  return '<div class="emb-card xcard">' + ftop + pics + rows + fold('prod', 'Products (kit info)', prodsOf(l.id).length, prodSec(l)) + fold('notes', 'Internal notes', notesFor(l.id).length, notesBox(l.id)) + hist + footHtml(l) + '</div>';
 }
 const foldOpen = {};
 function prodSec(l){   // LL v1.12: one row per SKU
@@ -1098,7 +1101,6 @@ async function deleteLogo(l){
 const FILTERS = [['type', 'All types', () => DB.lists.type, (l, v) => l.type === v],
   ['school', 'All schools / accounts', () => [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare), (l, v) => l.school === v],
   ['status', 'All statuses', () => DB.lists.status.concat('(no status)'), (l, v) => v === '(no status)' ? !l.status : l.status === v],
-  ['todo', 'All To Do', () => DB.lists.todo.concat('(nothing to do)'), (l, v) => v === '(nothing to do)' ? !l.todo.length : l.todo.includes(v)],
   ['flag', 'Any flag', () => DB.lists.flag.concat('(no flag)'), (l, v) => v === '(no flag)' ? !l.flag : l.flag === v],
   ['missing', 'Sew-out: any', () => ['Needs sew-out', 'Has a sew-out'], (l, v) => v === 'Needs sew-out' ? needsSew(l) : !needsSew(l)],
   ['dig', 'Digitized by: any', () => [...new Set(DB.logos.map(l => l.digBy).filter(Boolean))].sort(coll.compare).concat('(not set)'), (l, v) => v === '(not set)' ? !l.digBy : l.digBy === v],
@@ -1336,7 +1338,7 @@ page.addEventListener('click', async e => {
       const v = prompt('Paste the ' + n + ' file path (in File Explorer: right-click the file > Copy as path) or its SharePoint link.\nLeave it empty to remove the link.', l[f] || '');
       if (v === null) return; setField(l, f, v.trim().replace(/^"+|"+$/g, '')); refreshRow(l); toast(v.trim() ? n + ' link saved.' : n + ' link removed.'); return; }
     if (a === 'copyFolder' && l){ const p = l[act.dataset.which || 'folder']; if (!p){ toast('No folder path yet.'); return; } try { await navigator.clipboard.writeText(p); toast('Folder path copied.'); } catch(err){ toast('Couldn&rsquo;t copy.'); } return; }
-    if (a === 'folderEdit' && l){ const f = act.dataset.which || 'folder', n = f === 'folder' ? 'spec sheet folder' : 'files folder';
+    if (a === 'folderEdit' && l){ const f = act.dataset.which || 'folder', n = f === 'folder' ? 'folder' : 'files folder';
       const v = prompt('Paste the ' + n + ' path (in File Explorer: click the address bar, copy it) or its SharePoint link.\nLeave it empty to remove it.', l[f] || ''); if (v === null) return;
       setField(l, f, v.trim().replace(/^"+|"+$/g, '')); render(); toast(v.trim() ? 'Folder saved.' : 'Folder removed.'); return; }
     if (a === 'openFolder' && l){ const p = l[act.dataset.which || 'folder'], u = folderUrl(p); if (!p){ toast('No folder path yet.'); return; } if (!u){ toast('That folder isn&rsquo;t in a synced SharePoint folder, so it can&rsquo;t open here. Use Copy and paste it into File Explorer.', 6000); return; } window.open(u, '_blank', 'noopener'); return; }
