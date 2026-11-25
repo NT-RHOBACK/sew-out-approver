@@ -154,6 +154,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .lb-x{margin-left:auto;border:none;background:none;font-size:26px;line-height:1;color:var(--grey);cursor:pointer;padding:0 4px}.lb-x:hover{color:var(--navy)}
 .lb-img{display:flex;align-items:center;justify-content:center;min-width:min(80vw,600px);min-height:min(60vh,600px);background:#fff}
 .lb-img img{width:min(80vw,600px);height:min(70vh,600px);object-fit:contain}
+.th.over{outline:2px dashed var(--red);outline-offset:1px;background:var(--bg)}
 .pic .big.over{border:2px dashed var(--red);background:var(--bg)}
 .pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
 .pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px;flex-wrap:wrap}.pic .acts .btn{white-space:nowrap}   /* LL v1.24: Replace / Remove / Crop never squished */
@@ -254,7 +255,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.38</span>
+    <span class="vbadge">LL v1.39</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -268,7 +269,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.38';
+const VERSION = 'LL v1.39';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -598,7 +599,7 @@ async function removePicture(l, slot){
 }
 
 // LL v1.01: click the spec art, logo, or sew-out picture to see it bigger in a pop-up
-const popAttr = (l, k) => l.img[k] ? ' data-pop="' + k + '" data-id="' + esc(l.id) + '" title="Click to see it bigger"' : '';
+const popAttr = (l, k) => l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger. Drop a picture here to replace it."' : ' title="Drop a picture here"';   // LL v1.39: table pictures take drops too
 async function openPop(l, k){
   const s = SLOTS.find(x => x[0] === k), name = l.img[k]; if (!s || !name) return;
   document.getElementById('lbT').textContent = l.emb || l.id; document.getElementById('lbS').textContent = s[1];
@@ -685,10 +686,10 @@ function matches(l){
 // ---------------- Columns ----------------
 const C = {
   chev: {h:'', w:'22px', nos:true, v:l => '<span class="chev">' + (state.open === l.id ? '&#9660;' : '&#9654;') + '</span>'},
-  spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th"' + popAttr(l, 'spec') + '>' + imgTag(l.img.spec) + '</div>'},
-  logo: {h:'Logo', w:'76px', nos:true, v:l => '<div class="th"' + popAttr(l, 'logo') + '>' + imgTag(l.img.logo) + '</div>'},
-  bar:  {h:'Barrett', w:'76px', nos:true, v:l => '<div class="th"' + popAttr(l, 'bar') + '>' + imgTag(l.img.bar) + '</div>'},
-  qd:   {h:'QD', w:'76px', nos:true, v:l => '<div class="th"' + popAttr(l, 'qd') + '>' + imgTag(l.img.qd) + '</div>'},
+  spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th" data-drop="spec" data-id="' + esc(l.id) + '"' + popAttr(l, 'spec') + '>' + imgTag(l.img.spec) + '</div>'},
+  logo: {h:'Logo', w:'76px', nos:true, v:l => '<div class="th" data-drop="logo" data-id="' + esc(l.id) + '"' + popAttr(l, 'logo') + '>' + imgTag(l.img.logo) + '</div>'},
+  bar:  {h:'Barrett', w:'76px', nos:true, v:l => '<div class="th" data-drop="bar" data-id="' + esc(l.id) + '"' + popAttr(l, 'bar') + '>' + imgTag(l.img.bar) + '</div>'},
+  qd:   {h:'QD', w:'76px', nos:true, v:l => '<div class="th" data-drop="qd" data-id="' + esc(l.id) + '"' + popAttr(l, 'qd') + '>' + imgTag(l.img.qd) + '</div>'},
   emb:  {h:'EMB ID', w:'17%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span>'},
   embS: {h:'EMB ID', w:'19%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span><span class="sch">' + esc(l.school) + '</span>'},
   school:{h:'School / Account', w:'12%', s:l => l.school, v:l => esc(l.school)},
@@ -1261,7 +1262,11 @@ document.getElementById('picFile').onchange = e => { const f = e.target.files[0]
 page.addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d){ e.preventDefault(); d.classList.add('over'); } });
 page.addEventListener('dragleave', e => { const d = e.target.closest('[data-drop]'); if (d) d.classList.remove('over'); });
 page.addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); if (!d) return; e.preventDefault(); d.classList.remove('over');
-  const f = e.dataTransfer.files[0], l = byId(d.dataset.id); if (f && l) putPicture(l, d.dataset.drop, f); });
+  const f = e.dataTransfer.files[0], l = byId(d.dataset.id), k = d.dataset.drop; if (!f || !l) return;
+  if (d.classList.contains('th') && l.img[k] && !confirm('Replace the ' + SLOTS.find(x => x[0] === k)[1] + ' picture for ' + (l.emb || l.id) + '?\n(The old one moves to Images\\DELETE.)')) return;   // LL v1.39: table drops ask first
+  putPicture(l, k, f); });
+window.addEventListener('dragover', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });   // a picture dropped outside a box does nothing (instead of opening the file)
+window.addEventListener('drop', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });
 
 boot();
 </script>
