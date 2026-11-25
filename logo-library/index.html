@@ -253,7 +253,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.33</span>
+    <span class="vbadge">LL v1.34</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -267,7 +267,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.33';
+const VERSION = 'LL v1.34';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -759,7 +759,8 @@ function fileUrl(p){ p = String(p || '').trim(); if (/^https?:\/\//i.test(p)) re
 function folderUrl(p){ p = String(p || '').trim(); if (/^https?:\/\//i.test(p)) return p; const m = spMap(p); if (!m) return '';
   const u = new URL(encodeURI(m.base)), path = decodeURIComponent(u.pathname), srv = path + m.rel.join('/');
   return /-my\.sharepoint\.com$/i.test(u.hostname) ? u.origin + '/' + path.split('/').filter(Boolean).slice(0, 2).join('/') + '/_layouts/15/onedrive.aspx?id=' + encodeURIComponent(srv) : u.origin + encodeURI(path) + 'Forms/AllItems.aspx?id=' + encodeURIComponent(srv); }
-const folderRow = (l, f) => '<div class="pathrow"><input data-f="' + f + '" data-id="' + esc(l.id) + '" value="' + esc(l[f]) + '" placeholder="Paste the folder path"><button class="btn light small" data-act="copyFolder" data-which="' + f + '" data-id="' + esc(l.id) + '">Copy</button><button class="btn light small" data-act="openFolder" data-which="' + f + '" data-id="' + esc(l.id) + '" title="Open this folder in SharePoint">Open &#8599;</button></div>';   // LL v1.33
+const folderRow = (l, f) => { const a = ' data-which="' + f + '" data-id="' + esc(l.id) + '"';   // LL v1.34: buttons only (no path shown)
+  return '<span id="fr-' + f + '-' + esc(l.id) + '" style="display:inline-flex;gap:6px;flex-wrap:wrap">' + (l[f] ? '<button class="btn small" data-act="openFolder"' + a + ' title="Open this folder in SharePoint">Open &#8599;</button><button class="btn light small" data-act="copyFolder"' + a + ' title="Copy the folder path">Copy path</button><button class="btn light small" data-act="folderEdit"' + a + '>Change</button>' : '<button class="btn light small" data-act="folderEdit"' + a + '>+ Add folder</button>') + '</span>'; };
 const linksCell = l => '<span class="lks">' + LINKS.map(([f, n]) => { const p = l[f], u = fileUrl(p);
   return '<span class="lk">' + (p ? (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(p) + '">' + n + ' &#8599;</a>' : '<span class="muted" title="' + esc(p) + ' (not in a synced SharePoint folder)">' + n + '</span>') : '<span class="muted">' + n + ' &mdash;</span>') +
     '<button class="lkx" data-act="linkEdit" data-lk="' + f + '" data-id="' + esc(l.id) + '" title="' + (p ? 'Change or remove the ' + n + ' link' : 'Add a ' + n + ' link') + '">&#9998;</button></span>'; }).join('') + '</span>';
@@ -790,7 +791,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     head('Files &amp; Box') +
     row('Files on hand', '<span class="cbs">' + FILES.map(([k, n]) => '<label class="cb"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '> ' + n + '</label>').join('') + '</span><span class="note" id="ms-' + id + '">' + msText(l) + '</span>') +
     row('Spec sheet folder', folderRow(l, 'folder')) +
-    row('Files folder', folderRow(l, 'filesDir') + '<div class="note" style="margin-top:4px">DST / EMB / PNG / sew-outs. Paste a folder path (in File Explorer: click the address bar and copy) or a SharePoint link.</div>') +
+    row('Files folder', folderRow(l, 'filesDir') + '<span class="note" style="margin-left:10px">DST / EMB / PNG / sew-outs</span>') +
     row('Approved (Box)', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-f="box" data-id="' + id + '"' + (l.box ? ' checked' : '') + '> Uploaded to the Box drive</label>') +
     row('Box uploads', boxSec(l)) + '</table>';
   const fold = (key, title, count, body) => '<details class="xfold" data-fold="' + id + '|' + key + '"' + (foldOpen[l.id + '|' + key] || (key === 'prod' && state.tab === 'check' && state.chkProd && foldOpen[l.id + '|' + key] !== false) ? ' open' : '') + '><summary>' + title + '<span class="cnt"' + (key === 'notes' ? ' id="nc-' + id + '"' : '') + '>' + count + '</span></summary><div class="xfold-bd">' + body + '</div></details>';
@@ -1196,6 +1197,9 @@ page.addEventListener('click', async e => {
       const v = prompt('Paste the ' + n + ' file path (in File Explorer: right-click the file > Copy as path) or its SharePoint link.\nLeave it empty to remove the link.', l[f] || '');
       if (v === null) return; setField(l, f, v.trim().replace(/^"+|"+$/g, '')); refreshRow(l); toast(v.trim() ? n + ' link saved.' : n + ' link removed.'); return; }
     if (a === 'copyFolder' && l){ const p = l[act.dataset.which || 'folder']; if (!p){ toast('No folder path yet.'); return; } try { await navigator.clipboard.writeText(p); toast('Folder path copied.'); } catch(err){ toast('Couldn&rsquo;t copy.'); } return; }
+    if (a === 'folderEdit' && l){ const f = act.dataset.which || 'folder', n = f === 'folder' ? 'spec sheet folder' : 'files folder';
+      const v = prompt('Paste the ' + n + ' path (in File Explorer: click the address bar, copy it) or its SharePoint link.\nLeave it empty to remove it.', l[f] || ''); if (v === null) return;
+      setField(l, f, v.trim().replace(/^"+|"+$/g, '')); render(); toast(v.trim() ? 'Folder saved.' : 'Folder removed.'); return; }
     if (a === 'openFolder' && l){ const p = l[act.dataset.which || 'folder'], u = folderUrl(p); if (!p){ toast('No folder path yet.'); return; } if (!u){ toast('That folder isn&rsquo;t in a synced SharePoint folder, so it can&rsquo;t open here. Use Copy and paste it into File Explorer.', 6000); return; } window.open(u, '_blank', 'noopener'); return; }
     if (a === 'crop' && l){ openCrop(l, act.dataset.slot); return; }
     if (a === 'pic' && l){ pickFor = [l.id, act.dataset.slot]; const fi = document.getElementById('picFile'); fi.value = ''; fi.click(); return; }
