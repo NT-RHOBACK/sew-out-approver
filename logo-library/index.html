@@ -254,7 +254,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.37</span>
+    <span class="vbadge">LL v1.38</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -268,7 +268,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.37';
+const VERSION = 'LL v1.38';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -964,8 +964,16 @@ const FILTERS = [['type', 'All types', () => DB.lists.type, (l, v) => l.type ===
 // LL v1.21: the same filters on Collegiate / Mainline / NFL (each tab keeps its own)
 const fOf = tab => tab === 'all' ? state.f : ((state.fx = state.fx || {})[tab] = state.fx[tab] || {});
 const passF = (tab, l) => { const f = fOf(tab); return FILTERS.every(([k, , , t]) => !f[k] || t(l, f[k])); };
+// LL v1.38: the school filter only lists this tab's schools / accounts / teams, by full name
+const TAB_TEST = {collegiate:l => isCol(l), mainline:l => isMain(l), nfl:l => isNFL(l)};
+function schoolOpts(tab, cur){
+  const t = TAB_TEST[tab] || (() => true), ks = [...new Set(DB.logos.filter(t).map(l => l.school).filter(Boolean))].sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));
+  if (cur && !ks.includes(cur)) ks.push(cur);
+  const all = tab === 'collegiate' ? 'All schools' : tab === 'mainline' ? 'All accounts' : tab === 'nfl' ? 'All teams' : 'All schools / accounts';
+  return '<option value="">' + all + '</option>' + ks.map(k => { const n = schoolFull(k); return '<option value="' + esc(k) + '"' + (k === cur ? ' selected' : '') + '>' + esc(n && n !== k ? n + ' (' + schoolCode(k) + ')' : k) + '</option>'; }).join('');
+}
 function filterBar(tab, skip){ const f = fOf(tab), fl = FILTERS.filter(([k]) => !skip.includes(k));
-  return fl.map(([k, label, opts]) => '<select data-filter="' + k + '" data-ftab="' + tab + '">' + opt(opts(), f[k] || '', label) + '</select>').join('') + (fl.some(([k]) => f[k]) ? '<button class="lnk" data-act="clearF" data-ftab="' + tab + '">Clear filters</button>' : ''); }
+  return fl.map(([k, label, opts]) => '<select data-filter="' + k + '" data-ftab="' + tab + '">' + (k === 'school' ? schoolOpts(tab, f[k] || '') : opt(opts(), f[k] || '', label)) + '</select>').join('') + (fl.some(([k]) => f[k]) ? '<button class="lnk" data-act="clearF" data-ftab="' + tab + '">Clear filters</button>' : ''); }
 function renderTodo(){
   const items = DB.lists.todo.concat([...new Set(activeLogos().flatMap(l => l.todo))].filter(t => !DB.lists.todo.includes(t)));
   const total = activeLogos().filter(l => l.todo.length).length;
