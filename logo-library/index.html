@@ -153,7 +153,8 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .lb-img img{width:min(80vw,600px);height:min(70vh,600px);object-fit:contain}
 .pic .big.over{border:2px dashed var(--red);background:var(--bg)}
 .pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
-.pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px;flex-wrap:wrap}.pic .acts .btn{white-space:nowrap}   /* LL v1.24: Replace / Remove / Crop never squished */
+.needs{display:grid;grid-template-columns:repeat(3,max-content);gap:4px 22px}.needs .cb{display:inline-flex}
 .pathrow{display:flex;gap:6px;align-items:center}
 /* LL v1.08: internal notes (like the portals) + To Do dropdown */
 .inote{padding:6px 0;border-bottom:1px solid #EEF0F4;font-size:13px;white-space:pre-wrap;word-break:break-word}
@@ -246,7 +247,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.23</span>
+    <span class="vbadge">LL v1.24</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -260,7 +261,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.23';
+const VERSION = 'LL v1.24';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -722,8 +723,9 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('EMB ID', inp('emb', '260px')) +
     row('School', inp('school', '150px') + (S.name ? '<span class="xs">' + esc(S.name) + '</span>' : '')) +
     row('Type / Ver', sel('type', L.type, '—') + ' &nbsp;Ver ' + inp('ver', '70px')) +
-    row('Status / Flag', sel('status', L.status, '—') + ' &nbsp;' + sel('flag', L.flag, 'No flag')) +
-    row('To Do', '<select data-step="1" data-id="' + id + '">' + opt(L.todo.filter(t => t !== TC), stepOf(l), 'Nothing to do') + '</select> &nbsp;<label class="cb" style="display:inline-flex"><input type="checkbox" data-todo="' + esc(TC) + '" data-id="' + id + '"' + (l.todo.includes(TC) ? ' checked' : '') + '> ' + esc(TC) + '</label>') +
+    row('Status', sel('status', L.status, '—')) +   // LL v1.24: one Status dropdown, then "Needs" checkboxes (tick as many as apply), then one Flag checkbox
+    row('Needs', '<div class="needs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t.replace(/^needs\s+/i, '')) + '</label>').join('') + '</div>') +
+    row('Flag', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> Flag for review' + (l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? ' (' + esc(l.flag) + ')' : '') + '</label>') +
     head('Thread Colors &amp; Size') +
     row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
     row('# Clrs', inp('clrs', '70px')) +
@@ -1166,6 +1168,7 @@ page.addEventListener('change', e => {
   const l = t.dataset.id ? byId(t.dataset.id) : null; if (!l) return;
   if (t.dataset.todo){ setTodo(l, t.dataset.todo, t.checked); refreshRow(l); return; }
   if (t.dataset.step){ setStep(l, t.value); refreshRow(l); return; }
+  if (t.dataset.flagcb){ setField(l, 'flag', t.checked ? (DB.lists.flag[0] || 'REVIEW') : ''); refreshRow(l); return; }
   if (t.dataset.bx){ const b = bx(l)[+t.dataset.i], k = t.dataset.bx, v = k === 'date' ? t.value : t.value.trim(); if (!b || b[k] === v) return;
     const was = boxText(b); b[k] = v; logEdit(l, 'Box ' + (k === 'ver' ? 'version' : 'date'), was, boxText(b)); touch();
     if (k === 'date'){ sortBoxes(l); render(); } else refreshRow(l); return; }
