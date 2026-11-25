@@ -154,6 +154,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .pic .big.over{border:2px dashed var(--red);background:var(--bg)}
 .pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
 .pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px;flex-wrap:wrap}.pic .acts .btn{white-space:nowrap}   /* LL v1.24: Replace / Remove / Crop never squished */
+.ibtn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:28px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;padding:0}.ibtn:hover{background:#F3F5FA}.ibtn.del:hover{color:#b3261e;border-color:#e8b4b0;background:#fdecea}
 .needs{display:grid;grid-template-columns:repeat(3,max-content);gap:4px 22px}.needs .cb{display:inline-flex}
 .pathrow{display:flex;gap:6px;align-items:center}
 /* LL v1.08: internal notes (like the portals) + To Do dropdown */
@@ -247,7 +248,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.24</span>
+    <span class="vbadge">LL v1.25</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -261,7 +262,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.24';
+const VERSION = 'LL v1.25';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -709,13 +710,17 @@ function opt(list, cur, blank){ const all = list.slice(); if (cur && !all.includ
   return (blank ? '<option value="">' + esc(blank) + '</option>' : '') + all.map(v => '<option' + (v === cur ? ' selected' : '') + '>' + esc(v) + '</option>').join(''); }
 const fld = (l, f, label, cls) => '<div class="emb-fld' + (cls ? ' ' + cls : '') + '"><label>' + esc(label) + '</label><input data-f="' + f + '" data-id="' + esc(l.id) + '" value="' + esc(l[f]) + '"' + (f === 'school' ? ' list="schoolList"' : '') + '></div>';
 const box = (n, title, right, body) => '<div class="emb-box"><div class="emb-box-hd"><span class="emb-box-num">' + n + '</span><span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
+// LL v1.25: icon buttons under pictures (Replace / Crop / Remove)
+const ICO = {rep:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>',
+  crop:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
+  del:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>'};
 function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures on top; Products / Notes / History fold away
   const id = esc(l.id), L = DB.lists, S = schoolGet(l.school);
   const inp = (f, w, ph) => '<input data-f="' + f + '" data-id="' + id + '" value="' + esc(l[f]) + '"' + (w ? ' style="width:' + w + '"' : '') + (f === 'school' ? ' list="schoolList"' : '') + (ph ? ' placeholder="' + ph + '"' : '') + '>';
   const sel = (f, list, blank) => '<select data-f="' + f + '" data-id="' + id + '">' + opt(list, l[f], blank) + '</select>';
   const row = (label, val) => '<tr><th>' + label + '</th><td>' + val + '</td></tr>', head = t => '<tr class="xh"><td colspan="2">' + t + '</td></tr>';
   const pic = ([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '"' + (l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger (or drop a new picture here)"' : ' title="Drop a picture here"') + '>' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
-    '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts"><button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">' + (l.img[k] ? 'Replace' : 'Add') + '</button>' + (l.img[k] ? '<button class="btn light small" data-act="unpic" data-slot="' + k + '" data-id="' + id + '">Remove</button>' : '') + (l.img[k] ? '<button class="btn light small" data-act="crop" data-slot="' + k + '" data-id="' + id + '">Crop</button>' : '') + '</div>' +
+    '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts">' + (l.img[k] ? [['pic', 'Replace picture', ICO.rep], ['crop', 'Crop picture', ICO.crop], ['unpic', 'Remove picture (moves to Images\\DELETE)', ICO.del]].map(([a, t, ic]) => '<button class="ibtn' + (a === 'unpic' ? ' del' : '') + '" data-act="' + a + '" data-slot="' + k + '" data-id="' + id + '" title="' + t + '" aria-label="' + t + '">' + ic + '</button>').join('') : '<button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">Add</button>') + '</div>' +
     (state.tab === 'check' && SEWS.includes(k) && l.img[k] ? '<div class="sewmv"><span class="lbl2">Belongs in:</span>' + [['bar', 'Barrett'], ['qd', 'QD'], ['sew', 'Other']].map(([t, n]) => '<button' + (t === k ? ' class="on" disabled' : ' data-act="sewMove" data-slot="' + k + '" data-to="' + t + '" data-id="' + id + '"') + '>' + n + '</button>').join('') + '</div>' : '') + '</div>';
   const pics = '<div class="pics strip">' + SLOTS.filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div><div class="note" style="margin-top:0">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
   const rows = '<table class="xrows">' +
@@ -726,6 +731,8 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('Status', sel('status', L.status, '—')) +   // LL v1.24: one Status dropdown, then "Needs" checkboxes (tick as many as apply), then one Flag checkbox
     row('Needs', '<div class="needs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t.replace(/^needs\s+/i, '')) + '</label>').join('') + '</div>') +
     row('Flag', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> Flag for review' + (l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? ' (' + esc(l.flag) + ')' : '') + '</label>') +
+    (state.tab !== 'check' ? row('Setup Check', (c => '<span class="chk-pill ' + (c ? c.res : 'none') + '">' + (c ? (c.res === 'ok' ? '✓ Verified' : '⚑ Flagged') : 'Not checked') + '</span>' + (c && c.res === 'flag' && c.note ? '<span class="xs">' + esc(c.note) + '</span>' : '') +
+      ' &nbsp;<button class="btn small" data-act="chkHereOk" data-id="' + id + '">✓ Verified</button> <button class="btn light small" data-act="chkHereFlag" data-id="' + id + '">⚑ Flag for Claude</button>' + (c ? ' <button class="lnk" data-act="chkClear" data-id="' + id + '">Clear</button>' : ''))((DB.check || {})[l.id])) : '') +   // LL v1.25: verify one logo from any tab
     head('Thread Colors &amp; Size') +
     row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
     row('# Clrs', inp('clrs', '70px')) +
@@ -1111,6 +1118,11 @@ page.addEventListener('click', async e => {
       if (a === 'chkFlag' && !note.trim()){ toast('Type what&rsquo;s wrong first.'); document.getElementById('chkNote').focus(); return; }
       DB.check[l.id] = {res:a === 'chkOk' ? 'ok' : 'flag', note:a === 'chkOk' ? '' : note.trim(), ts:nowStamp().replace('T', ' ')};
       logEdit(l, 'Setup Check', '', a === 'chkOk' ? 'Verified' : 'Flagged: ' + note.trim()); touch(); checkStep(1, true); return; }
+    if ((a === 'chkHereOk' || a === 'chkHereFlag') && l){   // LL v1.25: Setup Check from the logo card on any tab
+      DB.check = DB.check || {}; let note = '';
+      if (a === 'chkHereFlag'){ const c = DB.check[l.id]; note = (prompt('What’s wrong with ' + (l.emb || l.id) + '? (for Claude)', c && c.res === 'flag' ? c.note : '') || '').trim(); if (!note) return; }
+      DB.check[l.id] = {res:a === 'chkHereOk' ? 'ok' : 'flag', note, ts:nowStamp().replace('T', ' ')};
+      logEdit(l, 'Setup Check', '', a === 'chkHereOk' ? 'Verified' : 'Flagged: ' + note); touch(); render(); toast(esc(l.emb) + (a === 'chkHereOk' ? ' verified.' : ' flagged for Claude.')); return; }
     if (a === 'chkClear' && l){ delete DB.check[l.id]; touch(); render(); return; }
     if (a === 'sewMove' && l){ const f = act.dataset.slot, t = act.dataset.to, L = k => SLOTS.find(z => z[0] === k)[1], a1 = l.img[f], b1 = l.img[t];
       l.img[t] = a1; l.img[f] = b1 || ''; logEdit(l, 'Sew-out moved', L(f) + ': ' + a1, L(t) + (b1 ? ' (swapped with ' + b1 + ')' : '')); touch(); render(); toast('Moved to ' + L(t) + '.'); return; }
