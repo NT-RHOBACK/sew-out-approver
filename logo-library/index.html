@@ -163,6 +163,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .lkx{border:none;background:none;cursor:pointer;color:#9aa3b5;font-size:12px;padding:0 2px}.lkx:hover{color:var(--navy)}
 .pathrow a.btn{flex:none;white-space:nowrap;text-decoration:none}
 .ccdrop{border:1.5px dashed #c9cfdb;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#49516C;background:#fbfbfd}.ccdrop.over{border-color:var(--red);background:var(--bg)}
+.ckc{font-weight:800;font-size:13px;text-align:center;border-radius:4px;padding:3px 0}.ckc.ok{color:#256b31;background:#eaf6ec}.ckc.bad{color:#b3261e;background:#fdecea}.ckc.warn{color:#8a5a00;background:#fff4e0}.ckc.off{color:#9aa3b5}
 .clist{border-collapse:collapse;margin:0 0 12px;background:#fff;font-size:12px}
 .clist th{padding:5px 10px;border:1px solid var(--line);background:#F0F2F7;color:var(--navy);font-weight:700;font-size:11px;white-space:nowrap}
 .clist td{padding:4px 10px;border:1px solid var(--line);text-align:center;font-weight:800;font-size:14px}
@@ -260,7 +261,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.44</span>
+    <span class="vbadge">LL v1.45</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -274,7 +275,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.44';
+const VERSION = 'LL v1.45';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -737,7 +738,7 @@ function addLogo(emb, school, type){
 }
 
 // ---------------- UI state ----------------
-const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'mainline', label:'Mainline'}, {key:'nfl', label:'NFL'}, {key:'all', label:'All Logos'}, {key:'todo', label:'To Do'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
+const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'mainline', label:'Mainline'}, {key:'nfl', label:'NFL'}, {key:'all', label:'All Logos'}, {key:'checklist', label:'Checklist'}, {key:'todo', label:'To Do'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
 let state = {tab:'collegiate', open:'', sort:{}, secOpen:{}, f:{}, adding:false, acct:'', audit:{q:'', what:'', from:'', to:''}};
 try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
 state.open = ''; state.adding = false; state.audit = Object.assign({q:'', what:'', from:'', to:''}, state.audit); const histOpen = {}; if (!TABS.some(t => t.key === state.tab)) state.tab = 'collegiate'; state.acct = '';   // LL v1.37: school pages open from the School column
@@ -752,6 +753,7 @@ function matches(l){
 }
 
 // ---------------- Columns ----------------
+const CK_MARK = {ok:'✓', bad:'✗', warn:'!', off:'–'}, CK_NAMES = ['Spec', 'PNG', 'DST', 'EMB', 'Sew-out', 'Thread colors', 'NetSuite', 'Wilcom card', 'Size', 'Box', 'Folders'];
 const C = {
   chev: {h:'', w:'22px', nos:true, v:l => '<span class="chev">' + (state.open === l.id ? '&#9660;' : '&#9654;') + '</span>'},
   spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th" data-drop="spec" data-id="' + esc(l.id) + '"' + popAttr(l, 'spec') + '>' + imgTag(l.img.spec) + '</div>'},
@@ -774,6 +776,7 @@ const C = {
     // LL v1.36: just the status + a flag (needs, threads and Box stay on the card, the filters and the To Do tab; the red side bar still marks a needed sew-out)
     return st + (l.flag ? ' <span class="flag">&#9873; ' + esc(l.flag) + '</span>' : ''); }},
   flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') + (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
+  ...Object.fromEntries(CK_NAMES.map((n, i) => ['ck' + i, {h:n, w:(i === 5 ? '7%' : '5.5%'), s:l => ({bad:0, warn:1, off:2, ok:3})[checkCells(l)[i][1]], v:l => { const c = checkCells(l)[i]; return '<div class="ckc ' + c[1] + '" title="' + esc(c[2] || c[0]) + '">' + CK_MARK[c[1]] + '</div>'; }}])),   // LL v1.45
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
@@ -782,6 +785,7 @@ const TAB_COLS = {
   mainline:   ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','stat3'],
   nfl:        ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','stat3'],
   all:        ['chev','spec','logo','bar','qd','emb','schoolF','type','ver','size','clrs','files','stat3'],
+  checklist:  ['chev','emb','schoolF','type'].concat(CK_NAMES.map((n, i) => 'ck' + i)),
   todo:       ['chev','spec','logo','bar','qd','embS','type','ver','size','clrs','files','stat3','done']
 };
 function sorted(tab, list){
@@ -834,9 +838,9 @@ const linksCell = l => '<span class="lks">' + LINKS.map(([f, n]) => { const p = 
   return '<span class="lk">' + (p ? (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(p) + '">' + n + ' &#8599;</a>' : '<span class="muted" title="' + esc(p) + ' (not in a synced SharePoint folder)">' + n + '</span>') : '<span class="muted">' + n + ' &mdash;</span>') +
     '<button class="lkx" data-act="linkEdit" data-lk="' + f + '" data-id="' + esc(l.id) + '" title="' + (p ? 'Change or remove the ' + n + ' link' : 'Add a ' + n + ' link') + '">&#9998;</button></span>'; }).join('') + '</span>';
 // LL v1.44: quick checklist at the top of the card, like one Excel row (green = done, red = missing / needs it, amber = in progress, grey = not set or optional)
-function checklist(l){
+function checkCells(l){
   const sc = sizeCheck(l), ns = needsSew(l), th = String(l.threads || '').trim();
-  const cells = [
+  return [
     ['Spec', l.fSpec ? 'ok' : 'bad'], ['PNG', l.fPng ? 'ok' : 'bad'], ['DST', l.fDst ? 'ok' : 'bad'], ['EMB', l.fEmb ? 'ok' : 'off', 'Only needed when there is a native EMB'],
     ['Sew-out', ns ? 'bad' : 'ok', ns ? (SEWS.some(k => l.img[k]) ? 'Needs a new sew-out (To Do)' : 'No sew-out picture yet') : ''],
     ['Thread colors', th ? 'ok' : 'bad'],
@@ -845,7 +849,9 @@ function checklist(l){
     ['Size', sc === 'OK' ? 'ok' : sc === 'CHECK' ? 'bad' : 'off', sc ? 'Size Check: ' + sc + (sc === 'OK' && sizeRaw(l) === 'CHECK' ? ' (difference OK’d)' : '') : 'Needs Spec H and DST H'],
     ['Box', l.boxSt === 'Uploaded' ? 'ok' : l.boxSt ? 'bad' : 'off', l.boxSt || 'Box drive not set'],
     ['Folders', l.folder && l.filesDir ? 'ok' : l.folder || l.filesDir ? 'warn' : 'bad', (l.folder ? 'Spec sheet folder ✓' : 'No spec sheet folder') + ' · ' + (l.filesDir ? 'Files folder ✓' : 'No files folder')]];
-  const mark = {ok:'✓', bad:'✗', warn:'!', off:'–'};
+}
+function checklist(l){
+  const cells = checkCells(l), mark = CK_MARK;
   return '<table class="clist"><thead><tr>' + cells.map(c => '<th>' + c[0] + '</th>').join('') + '</tr></thead><tbody><tr>' +
     cells.map(c => '<td class="' + c[1] + '" title="' + esc(c[2] || c[0]) + '">' + mark[c[1]] + '</td>').join('') + '</tr></tbody></table>';
 }
@@ -966,7 +972,14 @@ function renderList(tab, title, test){
     (gone.length ? '<div style="margin-top:18px">' + sectionHtml(tab, 'Archived & Retired', gone.filter(matches), false) + '</div>' : '');
 }
 const renderCollegiate = () => renderList('collegiate', 'Collegiate', isCol);
-const renderAll = () => renderList('all', 'All Logos', () => true);   // LL v1.37: All Logos works the same
+const renderAll = () => renderList('all', 'All Logos', () => true);
+function renderChecklist(){   // LL v1.45: every logo as a row, every check as a column (like Excel)
+  const all = activeLogos(), only = state.ckOnly || '', bad = l => checkCells(l).some(c => c[1] === 'bad');
+  const list = all.filter(l => matches(l) && passF('checklist', l) && (!only || (only === 'missing' ? bad(l) : !bad(l))));
+  return '<h1>Checklist</h1><div class="bar"><select data-ckonly="1">' + [['', 'All logos'], ['missing', 'Something missing (red ✗)'], ['done', 'Nothing missing']].map(([v, t]) => '<option value="' + v + '"' + (v === only ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>' + filterBar('checklist', []) +
+    '<span class="count">' + (list.length !== all.length ? list.length + ' of ' : '') + all.length + ' logos &middot; ' + all.filter(bad).length + ' with something missing</span></div>' +
+    '<div class="note" style="margin:-4px 0 10px">Green ✓ done &middot; red ✗ missing / needs it &middot; amber ! in progress &middot; grey – not set or optional. Click a column heading to sort (missing first); click a row to open the logo.</div>' + tableHtml('checklist', list);
+}   // LL v1.37: All Logos works the same
 const NO_SCHOOL = '(no school / account)';
 const schoolFull = k => (DB.schools[k] && DB.schools[k].name) || '';
 const schoolSort = k => (schoolFull(k) || k).replace(/^(the|university of)\s+/i, '');
@@ -1191,7 +1204,7 @@ function render(){
   const p = document.getElementById('page');
   const needConnect = !dirHandle || saveState === 'reconnect' || saveState === 'unsupported';
   p.innerHTML = (needConnect && !DB.logos.length) || saveState === 'unsupported' ? renderConnect()
-    : (needConnect ? renderConnect() : '') + (state.acct ? renderAccounts() : state.tab === 'all' ? renderAll() : state.tab === 'todo' ? renderTodo() : state.tab === 'audit' ? renderAudit() : state.tab === 'check' ? renderCheck() : state.tab === 'products' ? renderProducts() : state.tab === 'nfl' ? renderList('nfl', 'NFL', isNFL) : state.tab === 'collegiate' ? renderCollegiate() : renderList('mainline', 'Mainline', isMain)) +
+    : (needConnect ? renderConnect() : '') + (state.acct ? renderAccounts() : state.tab === 'all' ? renderAll() : state.tab === 'checklist' ? renderChecklist() : state.tab === 'todo' ? renderTodo() : state.tab === 'audit' ? renderAudit() : state.tab === 'check' ? renderCheck() : state.tab === 'products' ? renderProducts() : state.tab === 'nfl' ? renderList('nfl', 'NFL', isNFL) : state.tab === 'collegiate' ? renderCollegiate() : renderList('mainline', 'Mainline', isMain)) +
       '<datalist id="placeList">' + [...new Set(['Left Chest', 'Center Chest'].concat(prods().map(p => p.place)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       '<datalist id="colorList">' + [...new Set(prods().map(p => p.color).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       (state.tab === 'products' ? '<datalist id="embList">' + DB.logos.map(l => '<option value="' + esc(l.emb) + '">').join('') + '</datalist>' : '') +
@@ -1310,6 +1323,7 @@ page.addEventListener('click', async e => {
 });
 page.addEventListener('change', e => {
   const t = e.target;
+  if (t.dataset.ckonly){ state.ckOnly = t.value; saveUi(); render(); return; }   // LL v1.45
   if (t.dataset.filter){ fOf(t.dataset.ftab || 'all')[t.dataset.filter] = t.value; saveUi(); render(); return; }
   if (t.dataset.audit){ state.audit[t.dataset.audit] = t.value; saveUi(); render(); return; }
   if (t.dataset.pfilter){ (state.pf = state.pf || {})[t.dataset.pfilter] = t.value; saveUi(); render(); return; }
