@@ -255,7 +255,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.40</span>
+    <span class="vbadge">LL v1.41</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -269,7 +269,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.40';
+const VERSION = 'LL v1.41';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -286,9 +286,9 @@ const FILES = [['fEmb', 'EMB'], ['fDst', 'DST'], ['fPng', 'PNG'], ['fSpec', 'Spe
 const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Type','type'],['Ver','ver'],['Spec H','specH','num'],['Spec W','specW','num'],['DST H','dstH','num'],['DST W','dstW','num'],
   ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Stops','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
   ['Approved (Box)','box','box'],['Box Drive','boxes','boxes'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
-  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate'],['Size OK','sizeOk','check'],['Files Folder','filesDir'],['Box Status','boxSt'],['Color Card','ccSt'],['Color Card Date','ccDate']];   // LL v1.40: Wilcom color card tracker   // LL v1.35: Box drive = Needs upload / Uploaded   // LL v1.33: Folder = main folder (spec sheet), Files Folder = version folder (DST / EMB / PNG / sew-outs)   // LL v1.31: size difference OK'd   // LL v1.27: thread color update tracker
+  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate'],['Size OK','sizeOk','check'],['Files Folder','filesDir'],['Box Status','boxSt'],['Color Card','ccSt'],['Color Card Date','ccDate'],['Digitized By','digBy']];   // LL v1.41   // LL v1.40: Wilcom color card tracker   // LL v1.35: Box drive = Needs upload / Uploaded   // LL v1.33: Folder = main folder (spec sheet), Files Folder = version folder (DST / EMB / PNG / sew-outs)   // LL v1.31: size difference OK'd   // LL v1.27: thread color update tracker
 const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Stops',
-  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', filesDir:'Files folder', boxSt:'Box drive', ccSt:'Color card', sizeOk:'Size difference OK', status:'Status', flag:'Flag', notes:'Notes', folder:'Main folder (spec sheet)'};
+  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', filesDir:'Files folder', boxSt:'Box drive', ccSt:'Color card', digBy:'Digitized by', sizeOk:'Size difference OK', status:'Status', flag:'Flag', notes:'Notes', folder:'Main folder (spec sheet)'};
 const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Settings', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
 function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, products:[], mounts:[], deleted:[], schools:{}, other:[], savedAt:''}; }
@@ -296,7 +296,7 @@ const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived
 const inactive = l => l.status === ARCH || l.status === RETIRED;
 const activeLogos = () => DB.logos.filter(l => !inactive(l));
 function ensureLists(db){ [ARCH, RETIRED].forEach(v => { if (!db.lists.status.includes(v)) db.lists.status.push(v); }); if (!db.lists.type.includes('NFL')) db.lists.type.push('NFL'); return db; }   // LL v1.18: NFL type
-function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}, tcStatus:'', tcDate:'', sizeOk:false, filesDir:'', boxSt:'', ccSt:'', ccDate:''}; }
+function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}, tcStatus:'', tcDate:'', sizeOk:false, filesDir:'', boxSt:'', ccSt:'', ccDate:'', digBy:''}; }
 const byId = id => DB.logos.find(l => l.id === id);
 function sizeRaw(l){ const n = [l.specH, l.specW, l.dstH, l.dstW].map(v => parseFloat(v));
   if (String(l.specH).trim() === '' || String(l.dstH).trim() === '' || n.some(isNaN)) return '';
@@ -348,7 +348,7 @@ function cellOut(l, f, kind){
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(DB.logos.map(l => COLS.map(([, f, k]) => cellOut(l, f, k)))));
-  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28, 28, 28, 18, 12, 8, 70, 14, 18, 12].map(w => ({wch:w}));
+  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28, 28, 28, 18, 12, 8, 70, 14, 18, 12, 18].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, 'Logos');
   DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
   // LL v1.06: school info + colors (current set and past sets, newest first)
@@ -781,6 +781,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('EMB ID', inp('emb', '260px')) +
     row('School', inp('school', '150px') + (S.name ? '<span class="xs">' + esc(S.name) + '</span>' : '')) +
     row('Type / Ver', sel('type', L.type, '—') + ' &nbsp;Ver ' + inp('ver', '70px')) +
+    row('Digitized by', '<input data-f="digBy" data-id="' + id + '" value="' + esc(l.digBy) + '" list="digList" placeholder="Pick or type (QD, Barrett, …)" style="width:240px">') +   // LL v1.41
     row('Status', sel('status', L.status, '—')) +   // LL v1.24: one Status dropdown, then "Needs" checkboxes (tick as many as apply), then one Flag checkbox
     row('Needs', '<div class="needs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t.replace(/^needs\s+/i, '')) + '</label>').join('') + '</div>') +
     row('Flag', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> Flag for review' + (l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? ' (' + esc(l.flag) + ')' : '') + '</label>') +
@@ -962,6 +963,7 @@ const FILTERS = [['type', 'All types', () => DB.lists.type, (l, v) => l.type ===
   ['todo', 'All To Do', () => DB.lists.todo.concat('(nothing to do)'), (l, v) => v === '(nothing to do)' ? !l.todo.length : l.todo.includes(v)],
   ['flag', 'Any flag', () => DB.lists.flag.concat('(no flag)'), (l, v) => v === '(no flag)' ? !l.flag : l.flag === v],
   ['missing', 'Sew-out: any', () => ['Needs sew-out', 'Has a sew-out'], (l, v) => v === 'Needs sew-out' ? needsSew(l) : !needsSew(l)],
+  ['dig', 'Digitized by: any', () => [...new Set(DB.logos.map(l => l.digBy).filter(Boolean))].sort(coll.compare).concat('(not set)'), (l, v) => v === '(not set)' ? !l.digBy : l.digBy === v],
   ['cc', 'Color card: any', () => CCST.concat('(not set)'), (l, v) => v === '(not set)' ? !l.ccSt : l.ccSt === v],
   ['box', 'Box drive: any', () => BOXST.concat('(not set)'), (l, v) => v === '(not set)' ? !l.boxSt : l.boxSt === v],
   ['tstat', 'Thread status: any', () => TSTAT.concat('(none)'), (l, v) => v === '(none)' ? !l.tcStatus : l.tcStatus === v],
@@ -1110,6 +1112,7 @@ function render(){
       '<datalist id="placeList">' + [...new Set(['Left Chest', 'Center Chest'].concat(prods().map(p => p.place)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       '<datalist id="colorList">' + [...new Set(prods().map(p => p.color).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       (state.tab === 'products' ? '<datalist id="embList">' + DB.logos.map(l => '<option value="' + esc(l.emb) + '">').join('') + '</datalist>' : '') +
+      '<datalist id="digList">' + [...new Set(['Q Digitizing (QD)', 'Barrett'].concat(DB.logos.map(l => l.digBy)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       '<datalist id="schoolList">' + [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>';
   hookImgs(); window.scrollTo(0, y);
 }

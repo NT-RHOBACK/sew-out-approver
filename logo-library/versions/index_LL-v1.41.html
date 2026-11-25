@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Rhoback — Logo Library</title>
+<style>
+/* Same look as the Embroidery Portal / live portal: Admiral Navy, Old Glory Red, #E8ECF0 lines, Futura PT headings, Aptos body. */
+:root{--navy:#29304E;--navy-h:#49516C;--red:#BF2033;--line:#E8ECF0;--bg:#FAFAFA;--text:#29304E;--grey:#6B7B8D}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Aptos","Segoe UI",sans-serif;font-size:14px;color:var(--text);background:#fff;-webkit-font-smoothing:antialiased}
+h1,.brand-sub,.sec-head .name,.top-bar,.emb-box-title{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic","Futura",sans-serif}
+.top-bar{background:var(--navy);color:#fff;font-size:12px;font-weight:500;letter-spacing:3px;text-transform:uppercase;padding:10px 24px;text-align:center}
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);gap:12px;background:#fff;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:16px}
+.brand{font-size:20px;font-weight:700;letter-spacing:3px;color:var(--navy)}
+.ridge{display:flex}.ridge span{width:4px;height:36px}.ridge .r{background:var(--red)}.ridge .n{background:var(--navy)}
+.brand-sub{font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--navy)}
+.header-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.header-user{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:var(--navy)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.msearch{position:relative}
+.msearch input{width:260px;padding:7px 28px 7px 12px;border:1px solid var(--line);border-radius:18px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.msearch button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--grey);font-size:16px;cursor:pointer;padding:0 4px}
+.vbadge{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--grey);border:1px solid var(--line);border-radius:10px;padding:3px 9px;background:#fff}
+.savepill{font:inherit;font-size:12px;font-weight:600;border-radius:14px;padding:6px 12px;border:1px solid var(--line);background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap}
+.savepill.ok{color:#2e7d32;border-color:#c5e5cb;background:#f1faf2}
+.savepill.warn{color:#7a5800;border-color:#f0d58a;background:#fff8e1}
+.savepill.err{color:#a61b1b;border-color:#f3c4c4;background:#fdecec}
+.tabs{background:#fff;border-bottom:1px solid var(--line);padding:0 24px;display:flex;overflow-x:auto}
+.tab{padding:14px 24px;font:inherit;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--navy)}.tab.on{color:var(--navy);border-bottom-color:var(--red)}
+.tab .tcnt{font-size:11px;font-weight:600;letter-spacing:0;margin-left:6px;color:var(--grey)}
+.page{max-width:1400px;margin:0 auto;padding:24px 24px 60px}
+h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.bar select{padding:6px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.bar .count{font-size:13px;color:var(--grey);margin-left:auto}
+.btn{font:inherit;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer}
+.btn:hover{background:var(--navy-h);border-color:var(--navy-h)}
+.btn.light{background:#fff;color:var(--navy);border-color:var(--line)}.btn.light:hover{background:var(--bg)}
+.btn.small{padding:5px 12px;font-size:12px}
+.bar .btn{padding:6px 14px;font-size:12px}
+.lnk{border:none;background:none;color:var(--navy);font:inherit;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0}
+/* sections */
+.sec{margin-bottom:16px}
+.sec-head{display:flex;align-items:center;gap:8px;margin:0 0 8px;cursor:pointer;user-select:none}
+.sec-head .chev{width:14px;font-size:12px;color:var(--navy)}
+.sec-head .name{font-size:16px;font-weight:700;color:var(--navy)}
+.sec-head .cnt{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;background:#F0F2F7;color:var(--grey)}
+/* tables (emb-list look) */
+.tblwrap{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
+.tbl th{background:#fff;font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--grey);text-align:left;border-bottom:2px solid var(--navy);padding:12px 8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl th.nos{cursor:default;padding-left:4px;padding-right:4px;letter-spacing:.3px;text-overflow:clip}
+.tbl th .arr{font-size:10px;margin-left:3px;color:#B5BCC8}.tbl th.sorted{color:var(--navy)}.tbl th.sorted .arr{color:var(--navy)}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow-wrap:anywhere}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.row{cursor:pointer}.tbl tr.row:hover td{background:#F8F9FC}.tbl tr.row.open td{background:#F3F5FA}
+.tbl .chev{color:var(--grey);font-size:11px}
+.emb{font-weight:600;color:var(--navy)}.sch{display:block;font-size:11px;color:#49516C;margin-top:2px;font-weight:400}
+.th{width:48px;height:48px;border-radius:4px;border:1px solid var(--line);background:#F7F8FB;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#C2C8D2;font-size:11px}
+.th img{width:100%;height:100%;object-fit:contain;background:#fff}
+.ft{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 5px;margin:1px 3px 1px 0}
+.ft.on{background:#eaf6ec;color:#256b31}.ft.off{background:#F3F4F6;color:#A0A7B3;text-decoration:line-through}
+.stp{display:inline-block;font-size:12px;font-weight:700;border-radius:4px;padding:2px 8px;background:#eef0f6;color:var(--navy);margin:0 4px 3px 0}.stp.ok{background:#eaf6ec;color:#256b31}.stp.no{background:#fff1e6;color:#9a4b00}.stp.off{background:#F3F4F6;color:#6B7385}
+.stt{display:flex;flex-wrap:wrap;gap:2px 0}
+.nl{font-size:11.5px;color:#6B7385;line-height:1.4;margin-top:1px}.nl .nr{color:#b3261e;font-weight:600}.nl .nf{color:#8a5a00;font-weight:600}   /* LL v1.35 */
+.tdt{display:inline-block;font-size:11px;font-weight:600;border-radius:10px;padding:2px 8px;margin:1px 3px 1px 0;background:#eef0f6;color:#49516C}
+.flag{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#fdf0c4;color:#7a5800}
+.chk-bad{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;background:#f8d7d7;color:#a61b1b;margin-left:4px}
+.muted{color:#A0A7B3}
+.empty{background:#fff;border:1px dashed #d6dbe4;border-radius:8px;padding:18px;text-align:center;color:var(--grey);font-size:13px}
+.tblwrap .empty{border:none;text-align:left;padding:14px 16px}
+.done-btn{font:inherit;font-size:12px;font-weight:600;color:#256b31;background:#eaf6ec;border:1px solid #c5e5cb;border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.done-btn:hover{border-color:#256b31}
+/* connect screen */
+.connect{max-width:620px;margin:40px auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:28px;text-align:center}
+.connect h2{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic",sans-serif;color:var(--navy);font-size:20px;margin-bottom:10px}
+.connect p{color:#49516C;font-size:14px;line-height:1.55;margin-bottom:16px}
+/* logo card (emb-card look) */
+.card-cell{padding:0!important;background:#FAFAFA!important;cursor:default}
+.emb-card{padding:14px 14px 14px 30px}
+.emb-card-cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:900px){.emb-card-cols{grid-template-columns:1fr}.emb-card{padding-left:14px}}
+.emb-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.emb-box{background:#fff;border:1px solid var(--line);border-radius:8px}
+.emb-box-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.emb-box-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+.emb-box-title{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy)}
+.emb-box-right{margin-left:auto;font-size:12px;color:var(--grey);font-weight:600}
+.emb-box-bd{padding:12px}
+.emb-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px}
+.emb-grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.emb-fld{min-width:0}.emb-fld.full{grid-column:1 / -1}
+.emb-fld>label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:3px}
+.emb-card input:not([type=checkbox]):not([type=file]),.emb-card select,.emb-card textarea,.af input,.af select,.school-top input,.school-top textarea{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.emb-card textarea,.school-top textarea{min-height:56px;resize:vertical}
+.emb-val{font-size:13px;color:var(--navy);padding:6px 0}
+.cb{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;cursor:pointer;color:var(--navy)}
+.cb input{width:16px;height:16px;accent-color:var(--navy);cursor:pointer}
+.cbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 14px}
+.cbs.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pic{text-align:center}
+.pic .lbl{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:4px}
+.pic .big{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:#F7F8FB;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#B5BCC8;font-size:12px}
+.pic .big img{width:100%;height:100%;object-fit:contain;background:#fff}
+[data-pop]{cursor:zoom-in}
+/* LL v1.06: school page (info, colors, past colors) */
+.school-top{margin-bottom:22px}
+.ctbl{width:100%;border-collapse:collapse;font-size:13px}
+.ctbl th{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);text-align:left;padding:0 6px 6px 0}
+.ctbl td{padding:3px 6px 3px 0;vertical-align:middle}
+.ctbl td.x{width:28px;text-align:right}
+.ctbl input{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.xbtn{border:none;background:none;color:var(--grey);font-size:17px;cursor:pointer;padding:0 4px}.xbtn:hover{color:var(--red)}
+.past{border-top:1px solid #EEF0F4;padding:8px 0}.past:first-child{border-top:none;padding-top:0}
+.past-h{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.past-c{font-size:12.5px;color:#49516C;line-height:1.6}
+/* LL v1.04: Accounts tab, Archive / Retire / Restore / Delete */
+.back{background:none;border:none;color:var(--navy);font:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;padding:0}
+.tbl tr.acct-row{cursor:pointer}.tbl tr.acct-row:hover td{background:#F8F9FC}
+.emb-card-foot{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:14px}
+.emb-card-foot .foot-note{font-size:12px;font-weight:700;color:#7a5800;background:#fdf0c4;border-radius:10px;padding:3px 10px;margin-right:auto}
+.emb-btn-del{background:#fff;border:1px solid var(--red);color:var(--red);padding:5px 12px;border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.emb-btn-del:hover{background:#fdecec}
+/* LL v1.03: approved logos stand out (Status = Approved, or Approved (Box) checked) */
+.crop-wrap{display:flex;justify-content:center;background:#F3F4F6;border-radius:6px;padding:8px}
+#cropC{max-width:100%;cursor:crosshair;touch-action:none}
+.crop-acts{display:flex;gap:8px;justify-content:flex-end;align-items:center}.crop-acts .note{margin:0 auto 0 0}
+.sewpill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:2px 6px;background:#fdecea;color:#b3261e;margin:1px 4px 1px 0;white-space:nowrap;line-height:1.25;text-align:center}
+.tbl tr.row.needsew>td:first-child{box-shadow:inset 4px 0 0 #c62828}   /* LL v1.21: needs a sew-out */
+.apill{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#eaf6ec;color:#256b31;margin:1px 4px 1px 0;white-space:nowrap}
+/* LL v1.02: History on each logo + Audit tab */
+.emb-hist summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);user-select:none}
+.emb-hist-row{display:grid;grid-template-columns:130px minmax(0,1fr) 90px;gap:8px;padding:6px 0;border-bottom:1px solid #EEF0F4;font-size:12.5px}
+.emb-hist-row:last-child{border-bottom:none}
+.emb-hist-date{color:var(--grey)}.emb-hist-by{color:#49516C;text-align:right}
+.emb-hist-list{margin-top:8px}
+.ch-from{color:#8A93A3;text-decoration:line-through}.ch-arr{color:var(--grey);margin:0 4px}
+.bar input[type=search],.bar input[type=date]{padding:6px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;color:var(--navy);background:#fff}
+.bar input[type=search]{min-width:260px}
+.bar .dlbl{font-size:12px;color:var(--grey);display:inline-flex;align-items:center;gap:6px}
+.tbl tr.aud-row{cursor:pointer}.tbl tr.aud-row:hover td{background:#F8F9FC}
+/* LL v1.01: click a picture to see it bigger */
+.lb{position:fixed;inset:0;z-index:60;background:rgba(20,24,40,.72);display:flex;align-items:center;justify-content:center;padding:24px}
+.lb[hidden]{display:none}
+.lb-box{background:#fff;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:14px 16px 16px;max-width:min(92vw,900px);max-height:92vh;display:flex;flex-direction:column;gap:10px}
+.lb-hd{display:flex;align-items:center;gap:10px}
+.lb-t{font-family:"Futura PT",futura-pt,"Tw Cen MT","Century Gothic",sans-serif;font-size:15px;font-weight:700;color:var(--navy)}
+.lb-s{font-size:12px;color:var(--grey)}
+.lb-x{margin-left:auto;border:none;background:none;font-size:26px;line-height:1;color:var(--grey);cursor:pointer;padding:0 4px}.lb-x:hover{color:var(--navy)}
+.lb-img{display:flex;align-items:center;justify-content:center;min-width:min(80vw,600px);min-height:min(60vh,600px);background:#fff}
+.lb-img img{width:min(80vw,600px);height:min(70vh,600px);object-fit:contain}
+.th.over{outline:2px dashed var(--red);outline-offset:1px;background:var(--bg)}
+.pic .big.over{border:2px dashed var(--red);background:var(--bg)}
+.pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
+.pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px;flex-wrap:wrap}.pic .acts .btn{white-space:nowrap}   /* LL v1.24: Replace / Remove / Crop never squished */
+.ibtn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:28px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;padding:0}.ibtn:hover{background:#F3F5FA}.ibtn.del:hover{color:#b3261e;border-color:#e8b4b0;background:#fdecea}
+.lks{display:flex;flex-wrap:wrap;gap:4px 14px}.lk{display:inline-flex;align-items:center;gap:3px;font-size:13px}.lk a{color:#1d4f91;font-weight:600;text-decoration:none}.lk a:hover{text-decoration:underline}
+.lkx{border:none;background:none;cursor:pointer;color:#9aa3b5;font-size:12px;padding:0 2px}.lkx:hover{color:var(--navy)}
+.pathrow a.btn{flex:none;white-space:nowrap;text-decoration:none}
+.needs{display:grid;grid-template-columns:repeat(3,max-content);gap:4px 22px}.needs .cb{display:inline-flex}
+.pathrow{display:flex;gap:6px;align-items:center}
+/* LL v1.08: internal notes (like the portals) + To Do dropdown */
+.inote{padding:6px 0;border-bottom:1px solid #EEF0F4;font-size:13px;white-space:pre-wrap;word-break:break-word}
+.inote:last-child{border-bottom:none}
+.inote .when{display:block;color:var(--grey);font-size:11.5px;white-space:normal}
+.inote-list{max-height:260px;overflow:auto}
+.inote-add{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
+.inote-add textarea{flex:1;min-width:0;min-height:54px}
+.inote-add .btn{flex:none;white-space:nowrap}
+.todo-tc{margin-top:10px}
+/* LL v1.09: Box drive uploads (version + date) */
+.boxsec{margin-top:12px;padding-top:10px;border-top:1px solid #EEF0F4}
+.boxsec-h{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:6px}
+.ctbl input[type=date]{padding:5px 7px}
+.ft.box{background:#e8f0fb;color:#1d4f91}
+/* LL v1.10: Barrett + QD sew-outs, compare side by side */
+.pics.p2{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}
+.lb-cmp{display:flex;gap:14px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+.lb-cmp figure{margin:0;text-align:center;flex:1 1 0;min-width:220px}
+.lb-cmp figcaption{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:6px}
+.lb-cmp img{width:100%;max-width:440px;height:min(62vh,440px);object-fit:contain;background:#fff}
+.lb-box.wide{max-width:min(96vw,1400px)}
+/* LL v1.11 (temporary): Setup Check tab */
+.chk-bar{position:sticky;top:0;z-index:5;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.chk-scope{display:flex;gap:6px;align-items:center;margin:0 0 8px}.chk-scope button{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;color:var(--navy)}.chk-scope button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chk-bar .who{font-size:18px;font-weight:700;color:var(--navy);margin-right:6px}
+.chk-bar .sub{font-size:12px;color:var(--grey)}
+.chk-bar .sp{flex:1}
+.chk-prog{height:6px;background:#EEF0F4;border-radius:4px;overflow:hidden;width:100%}
+.chk-prog span{display:block;height:100%;background:#2e7d32}
+.chk-pill{font-size:11px;font-weight:700;border-radius:10px;padding:2px 9px}
+.chk-pill.ok{background:#eaf6ec;color:#256b31}.chk-pill.flag{background:#fdecea;color:#b3261e}.chk-pill.none{background:#F3F4F6;color:#6B7385}
+.chk-note{display:flex;gap:8px;width:100%}.chk-note textarea{flex:1;min-height:44px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px}
+.sewmv{display:flex;gap:4px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+.sewmv .lbl2{font-size:10.5px;color:var(--grey);width:100%}
+.sewmv button{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:2px 9px;cursor:pointer;color:var(--navy)}
+.sewmv button.on{background:var(--navy);color:#fff;border-color:var(--navy);cursor:default}
+/* LL v1.12: Products (kit info) */
+.prod-tbl td input{padding:5px 7px;font-size:12.5px}
+.prod-tbl td.pn{width:38%}.prod-tbl td.pc{width:16%}.prod-tbl td.ps{width:22%}.prod-tbl td.pp{width:12%}.prod-tbl td.pd{width:12%}
+.knote{font-size:11px;color:var(--grey);margin-top:2px}
+.nolink{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 6px;background:#fff4e0;color:#8a5a00;white-space:nowrap}
+.plink{width:100%;margin-top:4px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px}
+.tbl tr.prow.arch td{opacity:.55}.parch{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:2px 9px;cursor:pointer;color:var(--navy);white-space:nowrap}
+.tbl tr.prow{cursor:pointer}.tbl tr.prow:hover td{background:#F8F9FC}
+.tbl td.sm{font-size:12.5px}
+/* LL v1.17: school logos + full names; Excel-style card */
+.slogo{display:inline-flex;align-items:center;justify-content:center;width:46px;height:34px;flex:none;border-radius:4px;background:#fff;overflow:hidden}
+.slogo img{max-width:100%;max-height:100%;object-fit:contain}.slogo.sm{width:36px;height:26px}.slogo.lg{width:96px;height:70px}
+.sec-head .abbr{font-size:11px;font-weight:700;color:var(--grey);border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+.acc-n{display:flex;align-items:center;gap:10px}.sch-link[data-act]{cursor:pointer}.sch-link[data-act]:hover>span{text-decoration:underline}
+.school-h{display:flex;align-items:center;gap:16px;margin:4px 0 14px}.school-h h1{margin:0}.school-h .sub{font-size:13px;color:var(--grey);margin-top:2px}
+.xcard{padding:14px 18px 14px 30px}
+.pics.strip{grid-template-columns:repeat(auto-fill,minmax(130px,160px));gap:12px;margin-bottom:4px}
+.xrows{width:100%;max-width:1000px;border-collapse:collapse;margin-top:12px;background:#fff;border:1px solid var(--line)}
+.xrows th{width:170px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--grey);padding:6px 10px;border-bottom:1px solid #EEF0F4;border-right:1px solid #EEF0F4;vertical-align:middle;background:#FBFBFD}
+.xrows td{padding:5px 10px;border-bottom:1px solid #EEF0F4;vertical-align:middle;font-size:13px;color:var(--navy)}
+.xrows tr.xh td{background:#F0F2F7;font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);padding:6px 10px}
+.emb-card .xrows input:not([type=checkbox]),.emb-card .xrows select{width:auto;min-width:0;display:inline-block;vertical-align:middle}
+.emb-card .xrows select{min-width:170px}.emb-card .xrows textarea{min-height:44px}
+.xrows .xs{font-size:12.5px;color:#49516C;margin-left:8px}.xrows .note{display:inline;margin:0 0 0 10px}
+.xrows .cbs{display:inline-flex;gap:14px;flex-wrap:wrap}.xrows .boxsec{margin:0}.xrows .boxsec-h{display:none}
+.xfold{max-width:1000px;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:6px}
+.xfold>summary{cursor:pointer;padding:9px 12px;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);user-select:none}
+.xfold>summary .cnt{font-size:11px;font-weight:600;padding:2px 9px;border-radius:12px;background:#F0F2F7;color:var(--grey);margin-left:6px;letter-spacing:0}
+.xfold-bd{padding:4px 12px 12px}
+/* LL v1.07: Copy button never squished */
+.pathrow input{flex:1;min-width:0}
+.pathrow .btn{flex:none;white-space:nowrap}
+.note{font-size:12px;color:var(--grey);margin-top:6px;line-height:1.45}
+/* add logo */
+.addbox{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:14px}
+.af{display:grid;grid-template-columns:1.2fr 1fr .8fr auto auto;gap:10px;align-items:end}
+.af label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grey);margin-bottom:3px}
+@media(max-width:800px){.af{grid-template-columns:1fr}}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:14px 24px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+@media(max-width:700px){.msearch input{width:180px}.header-user{display:none}.page{padding:16px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="top-bar">Rhoback &mdash; Embroidery Logo Library</div>
+<div class="header">
+  <div class="header-left">
+    <div class="brand">RHOBACK</div>
+    <div class="ridge"><span class="r"></span><span class="n"></span></div>
+    <div class="brand-sub">Logo Library</div>
+  </div>
+  <div class="header-right">
+    <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
+    <button class="savepill" id="savePill" type="button"></button>
+    <span class="vbadge">LL v1.41</span>
+    <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
+  </div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div class="page" id="page"></div>
+<div class="toast" id="toast"></div>
+<div class="lb" id="lb" hidden><div class="lb-box" role="dialog" aria-modal="true"><div class="lb-hd"><span class="lb-t" id="lbT"></span><span class="lb-s" id="lbS"></span><button class="lb-x" id="lbX" title="Close (Esc)">&times;</button></div><div class="lb-img" id="lbImg"></div></div></div>
+<input type="file" id="picFile" accept="image/*" hidden>
+<div class="lb" id="crop" hidden><div class="lb-box"><div class="lb-hd"><span class="lb-t" id="cropT">Crop picture</span><span class="lb-s">Drag a box around the part to keep</span><button class="lb-x" id="cropX" title="Close (Esc)">&times;</button></div>
+<div class="crop-wrap"><canvas id="cropC"></canvas></div><div class="crop-acts"><span class="note">The old picture moves to Images\DELETE.</span><button class="btn light" id="cropReset">Reset</button><button class="btn" id="cropSave">Save crop</button></div></div></div>
+<script>
+// Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
+// in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
+const VERSION = 'LL v1.41';
+const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
+const BY = 'Noelle';
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const coll = new Intl.Collator(undefined, {numeric:true, sensitivity:'base'});
+const pad = n => String(n).padStart(2, '0');
+const nowStamp = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+const safeName = s => String(s || 'logo').replace(/[\\/:*?"<>|]/g, '-').trim();
+
+// ---------------- Data ----------------
+const SLOTS = [['spec', 'Spec Artwork', 'Spec'], ['logo', 'Logo (stitch)', 'Logo'], ['bar', 'Sew-Out (Barrett)', 'Sew-Out Barrett'], ['qd', 'Sew-Out (QD)', 'Sew-Out QD'], ['sew', 'Sew-Out (other)', 'Sew-Out']];
+const SEWS = ['bar', 'qd', 'sew'];   // LL v1.10
+const FILES = [['fEmb', 'EMB'], ['fDst', 'DST'], ['fPng', 'PNG'], ['fSpec', 'Spec']];
+// Logos sheet: [header, field, kind]
+const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Type','type'],['Ver','ver'],['Spec H','specH','num'],['Spec W','specW','num'],['DST H','dstH','num'],['DST W','dstW','num'],
+  ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Stops','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
+  ['Approved (Box)','box','box'],['Box Drive','boxes','boxes'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
+  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate'],['Size OK','sizeOk','check'],['Files Folder','filesDir'],['Box Status','boxSt'],['Color Card','ccSt'],['Color Card Date','ccDate'],['Digitized By','digBy']];   // LL v1.41   // LL v1.40: Wilcom color card tracker   // LL v1.35: Box drive = Needs upload / Uploaded   // LL v1.33: Folder = main folder (spec sheet), Files Folder = version folder (DST / EMB / PNG / sew-outs)   // LL v1.31: size difference OK'd   // LL v1.27: thread color update tracker
+const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Stops',
+  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', filesDir:'Files folder', boxSt:'Box drive', ccSt:'Color card', digBy:'Digitized by', sizeOk:'Size difference OK', status:'Status', flag:'Flag', notes:'Notes', folder:'Main folder (spec sheet)'};
+const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Settings', 'Deleted Logos', 'Info'];
+let DB = emptyDB();
+function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, products:[], mounts:[], deleted:[], schools:{}, other:[], savedAt:''}; }
+const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived and retired logos only show in their school (Accounts tab) or at the bottom of Mainline
+const inactive = l => l.status === ARCH || l.status === RETIRED;
+const activeLogos = () => DB.logos.filter(l => !inactive(l));
+function ensureLists(db){ [ARCH, RETIRED].forEach(v => { if (!db.lists.status.includes(v)) db.lists.status.push(v); }); if (!db.lists.type.includes('NFL')) db.lists.type.push('NFL'); return db; }   // LL v1.18: NFL type
+function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}, tcStatus:'', tcDate:'', sizeOk:false, filesDir:'', boxSt:'', ccSt:'', ccDate:'', digBy:''}; }
+const byId = id => DB.logos.find(l => l.id === id);
+function sizeRaw(l){ const n = [l.specH, l.specW, l.dstH, l.dstW].map(v => parseFloat(v));
+  if (String(l.specH).trim() === '' || String(l.dstH).trim() === '' || n.some(isNaN)) return '';
+  return Math.max(Math.abs(n[0] - n[2]), Math.abs(n[1] - n[3])) > 0.05 ? 'CHECK' : 'OK'; }
+function sizeCheck(l){ const r = sizeRaw(l); return r === 'CHECK' && l.sizeOk ? 'OK' : r; }   // LL v1.31: a CHECK she OK'd counts as OK
+// LL v1.08: internal notes (newest first), like the portals. Logos use their LL ID; schools use S:<account>.
+const NOTES_V13 = '2026-11-11T00:00:00';
+const notesFor = id => (DB.notes || []).filter(n => n.id === id).reverse().sort((a, b) => b.ts.localeCompare(a.ts));
+const notesText = id => notesFor(id).map(n => n.ts.slice(5, 7) + '/' + n.ts.slice(8, 10) + '/' + n.ts.slice(2, 4) + ': ' + n.text).join('\n');
+function migrateNotes(db){   // the old single Notes box becomes the first note (from the v13 build on 11/11/26)
+  db.notes = db.notes || [];
+  db.logos.forEach(l => { if (l.notes && String(l.notes).trim()) db.notes.push({ts:NOTES_V13, id:l.id, text:String(l.notes).trim(), by:'from v13'}); l.notes = ''; });
+  Object.keys(db.schools).forEach(k => { const x = db.schools[k]; if (x.notes && String(x.notes).trim()) db.notes.push({ts:NOTES_V13, id:'S:' + k, text:String(x.notes).trim(), by:BY}); x.notes = ''; });
+  return db;
+}
+// LL v1.08: To Do = one dropdown (the step) + its own Check Thread Colors checkbox
+const TC = 'Check Thread Colors';
+// LL v1.12: Products (kit info: one row per SKU). id = LL ID ('' = no logo yet), dst = Insignia URL (the DST file name)
+const PF = [['name', 'Display Name'], ['color', 'Product Color'], ['sku', 'SKU'], ['place', 'Insignia Placement'], ['dst', 'Insignia URL']];
+const prods = () => DB.products || (DB.products = []);
+const prodsOf = id => prods().map((p, i) => [p, i]).filter(([p]) => p.id === id);
+const embOf = p => { const l = p.id && byId(p.id); return l ? l.emb : String(p.dst || '').replace(/\.dst$/i, ''); };
+function sewStatus(l){ if (!l) return 'No logo yet'; if (isApproved(l)) return 'Approved'; if (inactive(l)) return l.status; return SEWS.some(k => l.img[k]) ? 'Sew-out on file' : 'Needs sew-out'; }
+// LL v1.09: Box drive uploads, newest first: [{ver, date:'YYYY-MM-DD'}]
+const bx = l => l.boxes || (l.boxes = []);
+const isoDay = v => { v = String(v || '').trim(); let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]);
+  m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if (m) return (m[3].length === 2 ? '20' + m[3] : m[3]) + '-' + pad(+m[1]) + '-' + pad(+m[2]); return v; };
+const boxText = b => [b.ver ? 'Ver ' + b.ver : 'no version', b.date ? fmtDate(b.date) : 'no date'].join(' · ');
+const sortBoxes = l => bx(l).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+const stepOf = l => l.todo.find(t => t !== TC) || '';
+const isApproved = l => l.status === 'Approved';   // LL v1.15: approval = Status only; Approved (Box) = uploaded to the Box drive (separate check, 11/20)
+const apPill = l => isApproved(l) ? '<span class="apill" title="Status Approved' + (l.box ? ' + uploaded to the Box drive' : '') + '">APPROVED</span>' : '';
+function missing(l){ return !SEWS.some(k => l.img[k]) ? 'Sew-Out' : ''; }   // LL v1.21: EMB is optional (only ticked when there's a native EMB)
+const needsSew = l => (!SEWS.some(k => l.img[k]) || l.todo.some(t => /(need|reorder).*sew/i.test(t))) && !inactive(l);   // LL v1.22: no sew-out picture, OR To Do says it needs a (new) sew-out
+const fmtNum = v => { const n = parseFloat(v); return isNaN(n) ? '' : n.toFixed(2); };
+
+// ---------------- Excel (SheetJS) ----------------
+function cellOut(l, f, kind){
+  if (kind === 'calc') return f === 'sizeCheck' ? sizeCheck(l) : missing(l);
+  if (kind === 'check') return l[f] ? '✓' : '—';
+  if (kind === 'box') return l[f] ? '✓' : '';
+  if (kind === 'list') return (l[f] || []).join('; ');
+  if (kind === 'notes') return notesText(l.id);
+  if (kind === 'boxes') return bx(l).map(b => (b.ver || '-') + ' ' + (b.date ? fmtDate(b.date) : '')).join('; ');
+  if (kind === 'num'){ const s = String(l[f] == null ? '' : l[f]).trim(); return s !== '' && isFinite(+s) ? +s : s; }
+  if (f.startsWith('img_')) return l.img[f.slice(4)] || '';
+  return l[f] == null ? '' : l[f];
+}
+function buildWorkbook(){
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(DB.logos.map(l => COLS.map(([, f, k]) => cellOut(l, f, k)))));
+  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28, 28, 28, 18, 12, 8, 70, 14, 18, 12, 18].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Logos');
+  DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
+  // LL v1.06: school info + colors (current set and past sets, newest first)
+  const sch = Object.keys(DB.schools).sort(coll.compare);
+  const ss = XLSX.utils.aoa_to_sheet([['Account', 'Full name', 'EMB code', 'Notes', 'Logo image']].concat(sch.map(k => { const x = DB.schools[k]; return [k, x.name, x.code, notesText('S:' + k), x.logo || '']; })));
+  ss['!cols'] = [22, 34, 12, 60, 34].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ss, 'Schools');
+  const cr = [];
+  sch.forEach(k => { const x = DB.schools[k]; x.colors.forEach(c => cr.push([k, 'Current', '', c.name, c.pms, c.mad]));
+    x.past.forEach(pz => pz.colors.forEach(c => cr.push([k, 'Past', pz.until, c.name, c.pms, c.mad]))); });
+  const cs = XLSX.utils.aoa_to_sheet([['Account', 'Set', 'Used until', 'Color', 'PMS', 'Madeira']].concat(cr));
+  cs['!cols'] = [22, 9, 12, 20, 14, 12].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, cs, 'School Colors');
+  const L = DB.lists, n = Math.max(L.status.length, L.todo.length, L.type.length, L.flag.length);
+  const lr = [['STATUS', 'TO DO', 'TYPE', 'FLAG', '', DB.listsNote || 'Edit these lists - the Logo Library page reads its dropdowns and To Do checkboxes from here.']];
+  for (let i = 0; i < n; i++) lr.push([L.status[i] || '', L.todo[i] || '', L.type[i] || '', L.flag[i] || '']);
+  const ls = XLSX.utils.aoa_to_sheet(lr); ls['!cols'] = [20, 22, 12, 10, 4, 60].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ls, 'Lists');
+  const es = XLSX.utils.aoa_to_sheet([['Date','Time','LL ID','EMB ID','What changed','From','To','By']].concat(DB.edits.slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(e => [e.ts.slice(0, 10), e.ts.slice(11), e.id, e.emb, e.what, e.from, e.to, e.by])));
+  es['!cols'] = [12, 10, 10, 24, 30, 30, 30, 14].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, es, 'Page Edits');
+  const nm = id => id.startsWith('S:') ? id.slice(2) : ((byId(id) || {}).emb || '');
+  const ns = XLSX.utils.aoa_to_sheet([['Date','Time','LL ID / School','EMB ID / School','Note','By']].concat((DB.notes || []).slice().sort((a, b) => b.ts.localeCompare(a.ts)).map(n => [n.ts.slice(0, 10), n.ts.slice(11), n.id, nm(n.id), n.text, n.by])));
+  ns['!cols'] = [12, 10, 14, 24, 80, 12].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ns, 'Internal Notes');
+  const bxr = []; DB.logos.forEach(l => bx(l).forEach(b => bxr.push([l.id, l.emb, b.ver, b.date])));
+  const bs = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID', 'Version', 'Date added']].concat(bxr)); bs['!cols'] = [10, 24, 9, 12].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, bs, 'Box Drive');
+  const ck = DB.check || {}, cr2 = Object.keys(ck).map(id => [id, (byId(id) || {}).emb || '', ck[id].res === 'ok' ? 'Verified' : 'Flagged', ck[id].note || '', ck[id].ts || '']);
+  const cs2 = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID', 'Result', 'Note for Claude', 'Checked at']].concat(cr2)); cs2['!cols'] = [10, 24, 10, 70, 20].map(w => ({wch:w}));
+  XLSX.utils.book_append_sheet(wb, cs2, 'Setup Check');   // LL v1.11 (temporary)
+  const ps = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID'].concat(PF.map(f => f[1]), 'Kit Notes', 'Archived')].concat(prods().map(p => [p.id, p.id ? embOf(p) : ''].concat(PF.map(([k]) => p[k] || ''), p.note || '', p.arch ? '✓' : ''))));
+  ps['!cols'] = [10, 24, 70, 26, 38, 18, 28, 40, 9].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ps, 'Products');
+  if ((DB.mounts || []).length){ const se = XLSX.utils.aoa_to_sheet([['Local synced folder', 'SharePoint URL', 'Note']].concat(DB.mounts.map(m => [m[0], m[1], 'The Logo Library page turns file paths under this folder into SharePoint links.']))); se['!cols'] = [70, 80, 60].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, se, 'Settings'); }   // LL v1.32   // LL v1.12
+  if (DB.deleted.length){ const ds = XLSX.utils.aoa_to_sheet([['Deleted at'].concat(COLS.map(c => c[0]))].concat(DB.deleted)); ds['!cols'] = [18].concat(COLS.map(() => 14)).map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ds, 'Deleted Logos'); }
+  const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || nowStamp()], ['Saved by', VERSION],
+    ['Note', 'Keep this file closed in Excel while the Logo Library page is open. Pictures live in the Images folder; the image columns hold their file names. To Do = items separated by "; ". Box drive uploads live in the Box Drive sheet (the Box Drive column on Logos is a copy). Internal notes live in the Internal Notes sheet; the Notes columns on Logos and Schools are a copy for reading (edit notes on the page).']]);
+  info['!cols'] = [{wch:12}, {wch:110}];
+  XLSX.utils.book_append_sheet(wb, info, 'Info');
+  return XLSX.write(wb, {bookType:'xlsx', type:'array'});
+}
+function readWorkbook(buf){
+  const wb = XLSX.read(buf, {type:'array'});
+  const rows = name => wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:'', raw:false}) : [];
+  const db = emptyDB();
+  const lr = rows('Logos'), head = (lr[0] || []).map(h => String(h).trim());
+  lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
+    const l = blankLogo(), get = h => { let i = head.indexOf(h); if (i < 0 && h === '# Stops') i = head.indexOf('# Clrs');   // LL v1.29: renamed from # Clrs
+    return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+    COLS.forEach(([h, f, k]) => { const v = get(h);
+      if (k === 'calc') return;
+      if (k === 'notes'){ l.notes = v; return; }
+      if (k === 'boxes') return;
+      if (k === 'check' || k === 'box') l[f] = /✓|^y/i.test(v);
+      else if (k === 'list') l[f] = v.split(/\s*;\s*/).filter(Boolean);
+      else if (f.startsWith('img_')) l.img[f.slice(4)] = v;
+      else l[f] = v; });
+    const dirOf = p => String(p || '').trim().replace(/[\\/][^\\/]*$/, ''), spec = get('Link Spec'), fil = ['Link DST', 'Link EMB', 'Link PNG', 'Link Barrett', 'Link QD', 'Link Sew-Out'].map(get).find(Boolean);   // LL v1.33
+    if (spec && !l.folder) l.folder = dirOf(spec);
+    if (fil && !l.filesDir) l.filesDir = dirOf(fil);
+    if (!l.boxSt && l.box) l.boxSt = 'Uploaded';   // LL v1.35: the old Approved (Box) checkbox
+    db.logos.push(l);
+  });
+  let next = db.logos.reduce((m, l) => Math.max(m, parseInt(String(l.id).replace(/\D/g, ''), 10) || 0), 0);
+  db.logos.forEach(l => { if (!l.id) l.id = 'LL-' + String(++next).padStart(4, '0'); });
+  const li = rows('Lists'); if (li.length){
+    const h = li[0].map(x => String(x).trim().toUpperCase()), col = name => { const i = h.indexOf(name); return i < 0 ? [] : li.slice(1).map(r => String(r[i] || '').trim()).filter(Boolean); };
+    db.lists = {status:col('STATUS'), todo:col('TO DO'), type:col('TYPE'), flag:col('FLAG')};
+    if (!db.lists.type.length) db.lists.type = ['Collegiate', 'Mainline'];
+    db.listsNote = String(li[0][5] || '');
+  }
+  rows('Page Edits').slice(1).filter(r => r[0]).forEach(r => db.edits.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), emb:String(r[3]), what:String(r[4]), from:String(r[5]), to:String(r[6]), by:String(r[7])}));
+  rows('Schools').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.schools[String(r[0]).trim()] = {name:String(r[1] || ''), code:String(r[2] || ''), notes:String(r[3] || ''), logo:String(r[4] || ''), colors:[], past:[]}; });
+  rows('School Colors').slice(1).filter(r => String(r[0]).trim()).forEach(r => {
+    const k = String(r[0]).trim(), x = db.schools[k] || (db.schools[k] = {name:'', code:'', notes:'', colors:[], past:[]}), c = {name:String(r[3] || ''), pms:String(r[4] || ''), mad:String(r[5] || '')};
+    if (/^past/i.test(r[1])){ const u = String(r[2] || ''); let pz = x.past.find(z => z.until === u); if (!pz) x.past.push(pz = {until:u, colors:[]}); pz.colors.push(c); } else x.colors.push(c); });
+  rows('Box Drive').slice(1).filter(r => String(r[0]).trim()).forEach(r => { const l = db.logos.find(x => x.id === String(r[0]).trim()); if (l) l.boxes.push({ver:String(r[2] || ''), date:isoDay(r[3])}); });
+  db.logos.forEach(l => l.boxes.sort((a, b) => String(b.date).localeCompare(String(a.date))));
+  rows('Setup Check').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.check[String(r[0]).trim()] = {res:/^flag/i.test(r[2]) ? 'flag' : 'ok', note:String(r[3] || ''), ts:String(r[4] || '')}; });
+  db.mounts = rows('Settings').slice(1).filter(r => String(r[0]).trim() && /^https?:/i.test(String(r[1]).trim())).map(r => [String(r[0]).trim().replace(/[\\/]+$/, ''), String(r[1]).trim()]);   // LL v1.32
+  rows('Products').slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => { const g = i => String(r[i] == null ? '' : r[i]).trim();
+    db.products.push({id:g(0), name:g(2), color:g(3), sku:g(4), place:g(5), dst:g(6), note:g(7), arch:/✓|^y|^true/i.test(g(8))}); });   // LL v1.16: Archived
+  const nr = rows('Internal Notes');
+  if (wb.Sheets['Internal Notes']){ nr.slice(1).filter(r => r[0] && String(r[4]).trim()).forEach(r => db.notes.push({ts:String(r[0]) + 'T' + String(r[1] || '00:00:00'), id:String(r[2]), text:String(r[4]), by:String(r[5] || '')}));
+    db.logos.forEach(l => { l.notes = ''; }); Object.values(db.schools).forEach(x => { x.notes = ''; }); }
+  else migrateNotes(db);
+  db.deleted = rows('Deleted Logos').slice(1).filter(r => r.some(v => String(v).trim()));
+  ensureLists(db);
+  wb.SheetNames.filter(n => !KNOWN_SHEETS.includes(n)).forEach(n => db.other.push({name:n, rows:rows(n), cols:wb.Sheets[n]['!cols']}));   // Approved - No Sew-Out, Logo Change Log, anything you add: kept as-is
+  const s = rows('Info').find(r => r[0] === 'Saved at'); db.savedAt = s ? String(s[1]) : '';
+  return db;
+}
+
+// ---------------- OneDrive folder (File System Access API) ----------------
+const FS_OK = 'showDirectoryPicker' in window;
+let dirHandle = null, saveTimer = null, retryTimer = null, saving = false, again = false, lastSaved = null, saveState = 'local', saveErr = '', dirty = false;
+const idb = (mode, fn) => new Promise((res, rej) => { const o = indexedDB.open('logoLibrary', 1); o.onupgradeneeded = () => o.result.createObjectStore('kv');
+  o.onsuccess = () => { const t = o.result.transaction('kv', mode), r = fn(t.objectStore('kv')); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }; o.onerror = () => rej(o.error); });
+const idbGet = k => idb('readonly', s => s.get(k)).catch(() => null);
+const idbSet = (k, v) => idb('readwrite', s => s.put(v, k)).catch(() => null);
+function touch(){ DB.savedAt = nowStamp(); dirty = true; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} scheduleSave(); }
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 700); if (dirHandle) setSave('saving'); }
+async function saveNow(){
+  clearTimeout(retryTimer);
+  if (!dirHandle){ setSave('local'); return; }
+  if (saving){ again = true; return; }
+  if (!(await permOk(dirHandle, false))){ setSave('reconnect'); return; }
+  saving = true; setSave('saving');
+  try {
+    const fh = await dirHandle.getFileHandle(XLSX_NAME, {create:true});
+    const w = await fh.createWritable(); await w.write(new Blob([buildWorkbook()])); await w.close();
+    lastSaved = new Date(); dirty = false; setSave('saved');
+  } catch(e){
+    saveErr = e && e.name || 'Error'; setSave('error');
+    retryTimer = setTimeout(saveNow, 10000);   // usually the file is open in Excel; try again
+  }
+  saving = false;
+  if (again){ again = false; saveNow(); }
+}
+function setSave(s){
+  saveState = s; const p = document.getElementById('savePill');
+  const t = lastSaved ? lastSaved.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+  const map = {
+    unsupported: ['warn', '&#9888; Open in Edge or Chrome to use the Logo Library'],
+    local: ['warn', '&#9729; Connect Excel'],
+    reconnect: ['warn', '&#9729; Reconnect Excel'],
+    saving: ['', 'Saving&hellip;'],
+    saved: ['ok', '&#10003; Saved to Excel ' + t],
+    error: ['err', /NoModificationAllowed|InvalidState/.test(saveErr) ? '&#9888; Can&rsquo;t save: close ' + esc(XLSX_NAME) + ' in Excel' : '&#9888; Can&rsquo;t save (' + esc(saveErr) + '). Click to try again']
+  };
+  const [cls, html] = map[s] || map.local;
+  p.className = 'savepill ' + cls; p.innerHTML = html;
+  p.title = s === 'saved' ? 'Saving to the "' + (dirHandle ? dirHandle.name : '') + '" folder. Click to pick a different folder.' : s === 'error' ? 'Retrying every 10 seconds. Click to try now.' : '';
+}
+async function permOk(h, ask){ const o = {mode:'readwrite'}; if ((await h.queryPermission(o)) === 'granted') return true; return ask ? (await h.requestPermission(o)) === 'granted' : false; }
+async function pickFolder(){
+  try {
+    const h = await window.showDirectoryPicker({id:'logoLibrary', mode:'readwrite', startIn:'documents'});
+    dirHandle = h; imgDir = null; await idbSet('dir', h); await afterConnect();
+  } catch(e){ if (e.name !== 'AbortError') toast('Couldn&rsquo;t open that folder (' + esc(e.name) + ').'); }
+}
+document.getElementById('savePill').onclick = async () => {
+  if (saveState === 'unsupported') return;
+  if (saveState === 'error'){ saveNow(); return; }
+  if (saveState === 'reconnect' && dirHandle){ if (await permOk(dirHandle, true)) await afterConnect(); return; }
+  if (saveState === 'saved' && !confirm('Saving to the "' + dirHandle.name + '" folder.\n\nPick a different folder?')) return;
+  pickFolder();
+};
+async function afterConnect(){
+  let file = null;
+  try { const fh = await dirHandle.getFileHandle(XLSX_NAME); file = readWorkbook(await (await fh.getFile()).arrayBuffer()); }
+  catch(e){
+    if (e.name === 'NotFoundError'){ toast('No "' + esc(XLSX_NAME) + '" in that folder. Pick the Logo Library folder.', 6000); dirHandle = null; setSave('local'); render(); return; }
+    toast('Couldn&rsquo;t read ' + esc(XLSX_NAME) + ' (' + esc(e.name) + '). Is it open in Excel?', 6000); setSave('error'); return;
+  }
+  const browserNewer = DB.logos.length && DB.savedAt && file.savedAt && DB.savedAt > file.savedAt && JSON.stringify([DB.logos, DB.notes, DB.products]) !== JSON.stringify([file.logos, file.notes, file.products]);
+  if (browserNewer && confirm('This browser has changes from ' + new Date(DB.savedAt).toLocaleString() + ' that aren’t in the Excel file yet (saved ' + new Date(file.savedAt).toLocaleString() + ').\n\nOK = keep this browser’s version and save it to Excel\nCancel = use the Excel file')){
+    touch();
+  } else {
+    DB = file; dirty = false; try { localStorage.setItem(LS_DATA, JSON.stringify(DB)); } catch(e){} lastSaved = file.savedAt ? new Date(file.savedAt) : null; setSave('saved');
+  }
+  render();
+}
+async function boot(){
+  try { const d = JSON.parse(localStorage.getItem(LS_DATA) || 'null'); if (d && d.logos){ DB = ensureLists(Object.assign(emptyDB(), d)); if (!d.notes) migrateNotes(DB); } } catch(e){}
+  if (!FS_OK){ setSave('unsupported'); render(); return; }
+  const h = await idbGet('dir');
+  if (!h){ setSave('local'); render(); return; }
+  dirHandle = h;
+  if (await permOk(h, false)) await afterConnect(); else { setSave('reconnect'); render(); }
+}
+window.addEventListener('beforeunload', e => { if (dirHandle && dirty){ e.preventDefault(); e.returnValue = ''; } });   // changes not in Excel yet
+
+// ---------------- Pictures (Images folder) ----------------
+let imgDir = null; const imgUrl = new Map();
+async function getImgDir(create){ if (!imgDir) imgDir = await dirHandle.getDirectoryHandle(IMG_DIR, {create:!!create}); return imgDir; }
+async function loadImg(name){
+  if (imgUrl.has(name)) return imgUrl.get(name);
+  const p = (async () => { try { const f = await (await (await getImgDir()).getFileHandle(name)).getFile(); return URL.createObjectURL(f); } catch(e){ return ''; } })();
+  imgUrl.set(name, p); return p;
+}
+// watch the picture's box (a hidden <img> never "intersects"), then load the file from the Images folder
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting){ io.unobserve(en.target); const i = en.target.querySelector('img[data-img]'); if (i) showImg(i); } }), {rootMargin:'400px'}) : null;
+async function showImg(el){ if (!dirHandle || saveState === 'reconnect') return; const u = await loadImg(el.dataset.img); if (u){ el.src = u; el.hidden = false; const ph = el.nextElementSibling; if (ph) ph.hidden = true; } }
+function hookImgs(){ document.querySelectorAll('img[data-img]').forEach(el => { if (io) io.observe(el.parentElement); else showImg(el); }); }
+const imgTag = name => name ? '<img data-img="' + esc(name) + '" alt="" hidden><span>&hellip;</span>' : '<span>&mdash;</span>';
+async function fileExists(d, name){ try { await d.getFileHandle(name); return true; } catch(e){ return false; } }
+async function moveToDelete(name){   // never delete: the old picture moves to Images\DELETE
+  const d = await getImgDir(true), f = await (await d.getFileHandle(name)).getFile();
+  const del = await d.getDirectoryHandle(DELETE_DIR, {create:true});
+  let to = name, i = 2; while (await fileExists(del, to)) to = name.replace(/(\.[^.]+)?$/, ' (' + (i++) + ')$1');
+  const w = await (await del.getFileHandle(to, {create:true})).createWritable(); await w.write(f); await w.close();
+  await d.removeEntry(name); imgUrl.delete(name);
+}
+// ---------------- Crop a picture (LL v1.21) ----------------
+const CR = {l:null, k:'', img:null, sc:1, r:null, drag:null};
+async function openCrop(l, k){
+  const name = l.img[k]; if (!name) return;
+  const u = dirHandle ? await loadImg(name) : ''; if (!u){ toast('Couldn&rsquo;t open ' + esc(name) + '. Reconnect Excel (top right).'); return; }
+  const im = new Image(); im.onload = () => {
+    Object.assign(CR, {l, k, img:im, r:null, drag:null}); CR.sc = Math.min(1, 760 / im.naturalWidth, Math.min(560, window.innerHeight * 0.66) / im.naturalHeight);
+    const c = document.getElementById('cropC'); c.width = Math.round(im.naturalWidth * CR.sc); c.height = Math.round(im.naturalHeight * CR.sc);
+    document.getElementById('cropT').textContent = 'Crop: ' + (l.emb || l.id) + ' · ' + SLOTS.find(x => x[0] === k)[1];
+    document.getElementById('crop').hidden = false; drawCrop();
+  }; im.src = u;
+}
+function drawCrop(){
+  const c = document.getElementById('cropC'), g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(CR.img, 0, 0, c.width, c.height);
+  const r = CR.r; if (!r || r.w < 2 || r.h < 2) return;
+  g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, 0, c.width, r.y); g.fillRect(0, r.y + r.h, c.width, c.height - r.y - r.h); g.fillRect(0, r.y, r.x, r.h); g.fillRect(r.x + r.w, r.y, c.width - r.x - r.w, r.h);
+  g.strokeStyle = '#fff'; g.lineWidth = 2; g.setLineDash([6, 4]); g.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2); g.setLineDash([]);
+}
+(function(){
+  const c = document.getElementById('cropC'), pt = e => { const b = c.getBoundingClientRect(); return {x:Math.max(0, Math.min(c.width, (e.clientX - b.left) * c.width / b.width)), y:Math.max(0, Math.min(c.height, (e.clientY - b.top) * c.height / b.height))}; };
+  c.addEventListener('pointerdown', e => { CR.drag = pt(e); CR.r = null; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', e => { if (!CR.drag) return; const p = pt(e), a = CR.drag; CR.r = {x:Math.min(a.x, p.x), y:Math.min(a.y, p.y), w:Math.abs(p.x - a.x), h:Math.abs(p.y - a.y)}; drawCrop(); });
+  c.addEventListener('pointerup', () => { CR.drag = null; });
+  const close = () => { document.getElementById('crop').hidden = true; CR.img = null; };
+  document.getElementById('cropX').onclick = close;
+  document.getElementById('crop').addEventListener('click', e => { if (e.target.id === 'crop') close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('crop').hidden) close(); });
+  document.getElementById('cropReset').onclick = () => { CR.r = null; drawCrop(); };
+  document.getElementById('cropSave').onclick = () => {
+    const r = CR.r; if (!r || r.w < 8 || r.h < 8){ toast('Drag a box on the picture first.'); return; }
+    const sx = Math.round(r.x / CR.sc), sy = Math.round(r.y / CR.sc), sw = Math.round(r.w / CR.sc), sh = Math.round(r.h / CR.sc);
+    const o = document.createElement('canvas'); o.width = sw; o.height = sh; const g = o.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, sw, sh); g.drawImage(CR.img, sx, sy, sw, sh, 0, 0, sw, sh);
+    const png = /\.png$/i.test(CR.l.img[CR.k]), l = CR.l, k = CR.k;
+    o.toBlob(b => { close(); putPicture(l, k, new File([b], 'crop' + (png ? '.png' : '.jpg'), {type:png ? 'image/png' : 'image/jpeg'})).then(() => toast('Cropped. The old picture is in Images\\DELETE.')); }, png ? 'image/png' : 'image/jpeg', 0.92);
+  };
+})();
+async function putPicture(l, slot, file){
+  if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
+  if (!/^image\//.test(file.type)){ toast('That isn&rsquo;t a picture.'); return; }
+  const s = SLOTS.find(x => x[0] === slot), old = l.img[slot];
+  try {
+    const d = await getImgDir(true);
+    if (old && await fileExists(d, old)) await moveToDelete(old);
+    const ext = (file.name.match(/\.[a-z0-9]+$/i) || ['.jpg'])[0].toLowerCase(), base = safeName(l.emb || l.id) + ' - ' + s[2];
+    let name = base + ext, i = 2; while (await fileExists(d, name)) name = base + ' (' + (i++) + ')' + ext;
+    const w = await (await d.getFileHandle(name, {create:true})).createWritable(); await w.write(file); await w.close();
+    imgUrl.delete(name); if (old) imgUrl.delete(old);   // LL v1.21: show the new picture, not the cached old one
+    l.img[slot] = name; logEdit(l, s[1] + ' picture', old, name + (old ? ' (old one moved to Images\\DELETE)' : '')); touch(); render();
+  } catch(e){ toast('Couldn&rsquo;t save the picture (' + esc(e.name) + ').'); }
+}
+async function removePicture(l, slot){
+  const s = SLOTS.find(x => x[0] === slot), old = l.img[slot]; if (!old) return;
+  if (!confirm('Remove the ' + s[1] + ' picture from ' + (l.emb || l.id) + '?\n\nIt moves to the Images\\DELETE folder, so you can delete it yourself later.')) return;
+  try { if (dirHandle && await permOk(dirHandle, true) && await fileExists(await getImgDir(true), old)) await moveToDelete(old); } catch(e){}
+  l.img[slot] = ''; logEdit(l, s[1] + ' picture', old, '(removed, moved to Images\\DELETE)'); touch(); render();
+}
+
+// LL v1.01: click the spec art, logo, or sew-out picture to see it bigger in a pop-up
+const popAttr = (l, k) => l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger. Drop a picture here to replace it."' : ' title="Drop a picture here"';   // LL v1.39: table pictures take drops too
+async function openPop(l, k){
+  const s = SLOTS.find(x => x[0] === k), name = l.img[k]; if (!s || !name) return;
+  document.getElementById('lbT').textContent = l.emb || l.id; document.getElementById('lbS').textContent = s[1];
+  const box = document.getElementById('lbImg'); box.innerHTML = '<span class="muted">Loading&hellip;</span>';
+  document.getElementById('lb').hidden = false;
+  const lbBox = document.querySelector('#lb .lb-box'), sews = SEWS.includes(k) ? SEWS.filter(x => l.img[x]) : [];
+  lbBox.classList.toggle('wide', sews.length > 1);
+  if (sews.length > 1){   // LL v1.10: compare Barrett / QD / other side by side
+    document.getElementById('lbS').textContent = 'Sew-outs side by side';
+    const us = await Promise.all(sews.map(x => dirHandle ? loadImg(l.img[x]) : ''));
+    box.innerHTML = '<div class="lb-cmp">' + sews.map((x, i) => '<figure><figcaption>' + esc(SLOTS.find(z => z[0] === x)[1]) + '</figcaption>' + (us[i] ? '<img src="' + us[i] + '" alt="">' : '<span class="muted">Couldn&rsquo;t open it</span>') + '</figure>').join('') + '</div>';
+    return;
+  }
+  const u = dirHandle ? await loadImg(name) : '';
+  box.innerHTML = u ? '<img src="' + u + '" alt="' + esc(s[1]) + '">' : '<span class="muted">Couldn&rsquo;t open ' + esc(name) + '. Reconnect Excel (top right).</span>';
+}
+const closePop = () => { document.getElementById('lb').hidden = true; document.getElementById('lbImg').innerHTML = ''; };
+document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb' || e.target.closest('#lbX')) closePop(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('lb').hidden) closePop(); });
+
+// ---------------- Edits ----------------
+function logEdit(l, what, from, to){ DB.edits.push({ts:nowStamp(), id:l.id, emb:l.emb, what, from:String(from == null ? '' : from), to:String(to == null ? '' : to), by:BY}); }
+const showVal = v => v === true ? '✓' : v === false ? '—' : v;
+// LL v1.26: a Verified logo goes back to "Not checked" when its Status changes, a Needs item is added, or it's flagged for review
+function unverify(l, why){
+  const c = DB.check && DB.check[l.id]; if (!c || c.res !== 'ok') return;
+  delete DB.check[l.id]; logEdit(l, 'Setup Check', 'Verified', 'Not checked (' + why + ' changed, needs a new check)'); toast(esc(l.emb) + ' needs a new Setup Check (' + esc(why) + ' changed).', 4500);
+}
+const BOXST = ['Needs upload', 'Uploaded'];   // LL v1.35
+const CCST = ['Needs Wilcom card', 'Wilcom card done'];   // LL v1.40
+const ccCell = l => '<select data-ccst="1" data-id="' + esc(l.id) + '">' + opt(CCST, l.ccSt || '', '—') + '</select>' + (l.ccDate ? '<span class="xs">' + (l.ccSt === 'Wilcom card done' ? 'done ' : 'since ') + fmtDate(l.ccDate) + '</span>' : '');
+const TSTAT = ['Check', 'Shared with team', 'Updated in NetSuite'];   // LL v1.27: thread color update tracker
+const tsCell = l => '<select data-tstat="1" data-id="' + esc(l.id) + '">' + opt(TSTAT, l.tcStatus || '', '—') + '</select>' + (l.tcDate ? '<span class="xs">since ' + fmtDate(l.tcDate) + '</span>' : '') + '<span class="note">Changes to Check by itself when the thread colors change.</span>';
+function setField(l, f, v){
+  const old = l[f]; if (old === v || (old == null && v === '')) return;
+  l[f] = v; if (f === 'boxSt') l.box = v === 'Uploaded'; logEdit(l, LABEL[f] || f, showVal(old), showVal(v));
+  if (f === 'status') unverify(l, 'Status'); else if (f === 'flag' && v) unverify(l, 'Flag');
+  if (['specH', 'specW', 'dstH', 'dstW'].includes(f) && l.sizeOk && sizeRaw(l) === 'CHECK'){ l.sizeOk = false; logEdit(l, 'Size difference OK', '✓', '— (sizes changed, check again)'); }   // LL v1.31
+  if (f === 'threads' && l.tcStatus !== 'Check'){ logEdit(l, 'Thread Status', l.tcStatus || '', 'Check (thread colors changed)'); l.tcStatus = 'Check'; l.tcDate = nowStamp().slice(0, 10); }   // LL v1.27
+  touch();
+}
+function setTodo(l, item, on){
+  const has = l.todo.includes(item); if (has === on) return;
+  l.todo = on ? l.todo.concat(item) : l.todo.filter(t => t !== item);
+  logEdit(l, 'To Do', on ? '' : item, on ? item : '(done)'); if (on) unverify(l, 'Needs');
+  touch();
+}
+function setStep(l, v){
+  const old = stepOf(l); if (old === v) return;
+  l.todo = (v ? [v] : []).concat(l.todo.filter(t => t === TC));
+  logEdit(l, 'To Do', old, v || '(done)'); if (v) unverify(l, 'Needs');
+  touch();
+}
+const chkCell = l => { const c = (DB.check || {})[l.id], id = esc(l.id); return '<span class="chk-pill ' + (c ? c.res : 'none') + '">' + (c ? (c.res === 'ok' ? '✓ Verified' : '⚑ Flagged') : 'Not checked') + '</span>' + (c && c.res === 'flag' && c.note ? '<span class="xs">' + esc(c.note) + '</span>' : '') +
+  ' &nbsp;<button class="btn small" data-act="chkHereOk" data-id="' + id + '">✓ Verified</button> <button class="btn light small" data-act="chkHereFlag" data-id="' + id + '">⚑ Flag for Claude</button>' + (c ? ' <button class="btn light small" data-act="chkClear" data-id="' + id + '">' + (c.res === 'ok' ? 'Unverify' : 'Clear flag') + '</button>' : ''); };
+function addNote(id, text){
+  text = String(text || '').trim(); if (!text) return false;
+  DB.notes.push({ts:nowStamp(), id, text, by:BY});
+  if (id.startsWith('S:')) schoolLog(id.slice(2), 'Internal note', '', text); else { const l = byId(id); if (l) logEdit(l, 'Internal note', '', text); }
+  touch(); return true;
+}
+const notesBox = id => { const ns = notesFor(id), a = ' data-nid="' + esc(id) + '"';
+  return '<div class="inote-list">' + (ns.length ? ns.map(n => '<div class="inote"><span class="when">' + fmtDate(n.ts) + (n.ts === NOTES_V13 ? '' : ' ' + time12(n.ts)) + ' &middot; ' + esc(n.by) + '</span>' + esc(n.text) + '</div>').join('') : '<div class="emb-val muted">No notes yet.</div>') + '</div>' +
+    '<div class="inote-add"><textarea class="note-in"' + a + ' placeholder="Add an internal note&hellip;"></textarea><button class="btn small" data-act="noteAdd"' + a + '>Add</button></div><div class="note">Ctrl+Enter to save</div>'; };
+function addLogo(emb, school, type){
+  const next = DB.logos.reduce((m, l) => Math.max(m, parseInt(String(l.id).replace(/\D/g, ''), 10) || 0), 0) + 1;
+  const l = Object.assign(blankLogo(), {id:'LL-' + String(next).padStart(4, '0'), emb, school, type});
+  DB.logos.push(l); logEdit(l, 'Added logo', '', emb + (school ? ' (' + school + ')' : '')); touch(); return l;
+}
+
+// ---------------- UI state ----------------
+const TABS = [{key:'collegiate', label:'Collegiate'}, {key:'mainline', label:'Mainline'}, {key:'nfl', label:'NFL'}, {key:'all', label:'All Logos'}, {key:'todo', label:'To Do'}, {key:'products', label:'Products'}, {key:'audit', label:'Audit'}, {key:'check', label:'Setup Check'}];   // Setup Check: temporary (LL v1.11)
+let state = {tab:'collegiate', open:'', sort:{}, secOpen:{}, f:{}, adding:false, acct:'', audit:{q:'', what:'', from:'', to:''}};
+try { Object.assign(state, JSON.parse(localStorage.getItem(LS_UI) || '{}')); } catch(e){}
+state.open = ''; state.adding = false; state.audit = Object.assign({q:'', what:'', from:'', to:''}, state.audit); const histOpen = {}; if (!TABS.some(t => t.key === state.tab)) state.tab = 'collegiate'; state.acct = '';   // LL v1.37: school pages open from the School column
+let q = '';
+const saveUi = () => { try { localStorage.setItem(LS_UI, JSON.stringify(Object.assign({}, state, {open:'', adding:false}))); } catch(e){} };
+function toast(msg, ms){ const t = document.getElementById('toast'); t.innerHTML = msg; t.classList.add('on'); clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('on'), ms || 3600); }
+const isCol = l => /^coll/i.test(l.type), isMain = l => /^main/i.test(l.type), isNFL = l => /^nfl/i.test(l.type);
+function matches(l){
+  if (!q) return true;
+  const hay = [l.tcStatus, prodsOf(l.id).map(([p]) => p.sku + ' ' + p.name).join(' '), l.id, l.emb, l.school, l.type, l.ver, l.threads, l.notes, l.status, l.flag, l.todo.join(' '), l.folder, notesFor(l.id).map(n => n.text).join(' ')].join(' ').toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+
+// ---------------- Columns ----------------
+const C = {
+  chev: {h:'', w:'22px', nos:true, v:l => '<span class="chev">' + (state.open === l.id ? '&#9660;' : '&#9654;') + '</span>'},
+  spec: {h:'Spec Art', w:'76px', nos:true, v:l => '<div class="th" data-drop="spec" data-id="' + esc(l.id) + '"' + popAttr(l, 'spec') + '>' + imgTag(l.img.spec) + '</div>'},
+  logo: {h:'Logo', w:'76px', nos:true, v:l => '<div class="th" data-drop="logo" data-id="' + esc(l.id) + '"' + popAttr(l, 'logo') + '>' + imgTag(l.img.logo) + '</div>'},
+  bar:  {h:'Barrett', w:'76px', nos:true, v:l => '<div class="th" data-drop="bar" data-id="' + esc(l.id) + '"' + popAttr(l, 'bar') + '>' + imgTag(l.img.bar) + '</div>'},
+  qd:   {h:'QD', w:'76px', nos:true, v:l => '<div class="th" data-drop="qd" data-id="' + esc(l.id) + '"' + popAttr(l, 'qd') + '>' + imgTag(l.img.qd) + '</div>'},
+  emb:  {h:'EMB ID', w:'17%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span>'},
+  embS: {h:'EMB ID', w:'19%', s:l => l.emb, v:l => '<span class="emb">' + esc(l.emb || '(no EMB ID)') + '</span><span class="sch">' + esc(l.school) + '</span>'},
+  school:{h:'School / Account', w:'12%', s:l => l.school, v:l => esc(l.school)},
+  schoolF:{h:'School / Account', w:'17%', s:l => schoolSort(l.school || ''), v:l => '<div class="acc-n sch-link"' + (l.school ? ' data-act="openSchool" data-acct="' + esc(l.school) + '" title="Open the ' + esc(schoolFull(l.school) || l.school) + ' page (colors, notes)"' : '') + '>' + schoolLogo(l.school, 'sm') + '<span>' + esc(schoolFull(l.school) || l.school) + (schoolFull(l.school) ? '<span class="sch">' + esc(schoolCode(l.school)) + '</span>' : '') + '</span></div>'},   // LL v1.19
+  type: {h:'Type', w:'9%', s:l => l.type, v:l => esc(l.type)},
+  ver:  {h:'Ver', w:'5%', s:l => l.ver, v:l => esc(l.ver) || '<span class="muted">&mdash;</span>'},
+  size: {h:'Size (H × W)', w:'11%', s:l => parseFloat(l.specH) || 0, v:l => (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : '<span class="muted">&mdash;</span>') + (sizeCheck(l) === 'CHECK' ? '<span class="chk-bad" title="Spec and DST sizes differ by more than 0.05&quot;">CHECK</span>' : '')},
+  clrs: {h:'# Stops', w:'6%', s:l => parseFloat(l.clrs) || 0, v:l => esc(l.clrs) || '<span class="muted">&mdash;</span>'},
+  files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (l.boxSt === 'Uploaded' ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (l.boxSt === 'Uploaded' ? '<span class="ft box" title="Uploaded to the Box drive">Box</span>' : '')},
+  status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
+  todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
+  stat3:{h:'Status', w:'16%', s:l => (l.status || '~') + (needsSew(l) ? ' 0' : ' 1'), v:l => {   // LL v1.30: Status + To Do + Flag in one column
+    const st = l.status ? '<span class="stp' + (l.status === 'Approved' ? ' ok' : l.status === 'Not Approved' ? ' no' : inactive(l) ? ' off' : '') + '">' + esc(l.status) + '</span>' : '<span class="muted">No status</span>';
+    // LL v1.36: just the status + a flag (needs, threads and Box stay on the card, the filters and the To Do tab; the red side bar still marks a needed sew-out)
+    return st + (l.flag ? ' <span class="flag">&#9873; ' + esc(l.flag) + '</span>' : ''); }},
+  flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') + (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
+  done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
+};
+const TAB_COLS = {
+  collegiate: ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','stat3'],
+  accounts:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','stat3'],
+  mainline:   ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','stat3'],
+  nfl:        ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','stat3'],
+  all:        ['chev','spec','logo','bar','qd','emb','schoolF','type','ver','size','clrs','files','stat3'],
+  todo:       ['chev','spec','logo','bar','qd','embS','type','ver','size','clrs','files','stat3','done']
+};
+function sorted(tab, list){
+  const s = state.sort[tab] || {k:'emb', d:1}, col = C[s.k] || C.emb;
+  return list.slice().sort((a, b) => { const x = col.s(a), y = col.s(b);
+    const r = typeof x === 'number' ? x - y : coll.compare(String(x || ''), String(y || ''));
+    return (r || coll.compare(a.emb, b.emb)) * (r ? s.d : 1); });
+}
+function tableHtml(tab, list, sec){
+  const cols = TAB_COLS[tab].map(k => [k, C[k]]), s = state.sort[tab] || {k:'emb', d:1};
+  const sk = k => k === 'embS' ? 'emb' : k;
+  let h = '<div class="tblwrap"><table class="tbl"><colgroup>' + cols.map(([, c]) => '<col style="width:' + c.w + '">').join('') + '</colgroup><thead><tr>' +
+    cols.map(([k, c]) => c.nos ? '<th class="nos">' + esc(c.h) + '</th>' : '<th data-sort="' + sk(k) + '" class="' + (s.k === sk(k) ? 'sorted' : '') + '">' + esc(c.h) + '<span class="arr">' + (s.k === sk(k) ? (s.d > 0 ? '&#9650;' : '&#9660;') : '&#8693;') + '</span></th>').join('') + '</tr></thead><tbody>';
+  if (!list.length) h += '<tr><td colspan="' + cols.length + '"><div class="empty">No logos here' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div></td></tr>';
+  sorted(tab, list).forEach(l => {
+    h += '<tr class="row' + (state.open === l.id ? ' open' : '') + (needsSew(l) ? ' needsew' : '') + '" data-id="' + esc(l.id) + '">' + cols.map(([, c]) => '<td>' + c.v(l, sec) + '</td>').join('') + '</tr>';
+    if (state.open === l.id) h += '<tr><td class="card-cell" colspan="' + cols.length + '">' + cardHtml(l) + '</td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+function sectionHtml(tab, name, list, defOpen, sec, label){
+  const key = tab + '|' + name, open = q ? list.length > 0 : (state.secOpen[key] == null ? defOpen : state.secOpen[key]);
+  return '<div class="sec"><div class="sec-head" data-sec="' + esc(key) + '"><span class="chev">' + (open ? '&#9660;' : '&#9654;') + '</span>' + (label || '<span class="name">' + esc(name) + '</span>') + '<span class="cnt">' + list.length + '</span></div>' +
+    (open ? tableHtml(tab, list, sec) : '') + '</div>';
+}
+
+// ---------------- Logo card ----------------
+function opt(list, cur, blank){ const all = list.slice(); if (cur && !all.includes(cur)) all.push(cur);
+  return (blank ? '<option value="">' + esc(blank) + '</option>' : '') + all.map(v => '<option' + (v === cur ? ' selected' : '') + '>' + esc(v) + '</option>').join(''); }
+const fld = (l, f, label, cls) => '<div class="emb-fld' + (cls ? ' ' + cls : '') + '"><label>' + esc(label) + '</label><input data-f="' + f + '" data-id="' + esc(l.id) + '" value="' + esc(l[f]) + '"' + (f === 'school' ? ' list="schoolList"' : '') + '></div>';
+const box = (n, title, right, body) => '<div class="emb-box"><div class="emb-box-hd"><span class="emb-box-num">' + n + '</span><span class="emb-box-title">' + title + '</span>' + (right ? '<span class="emb-box-right">' + right + '</span>' : '') + '</div><div class="emb-box-bd">' + body + '</div></div>';
+// LL v1.25: icon buttons under pictures (Replace / Crop / Remove)
+const ICO = {rep:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>',
+  crop:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
+  del:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>'};
+// ---------------- File links (LL v1.32): local synced path -> SharePoint link (mapping lives in the Excel "Settings" sheet, not here) ----------------
+const LINKS = [['lk_spec', 'Spec'], ['lk_png', 'PNG'], ['lk_dst', 'DST'], ['lk_emb', 'EMB'], ['lk_bar', 'Barrett'], ['lk_qd', 'QD'], ['lk_sew', 'Sew-Out']];
+function spMap(p){
+  p = String(p || '').trim().replace(/^"+|"+$/g, '').replace(/\//g, '\\'); if (!p) return null;
+  const m = (DB.mounts || []).filter(([loc]) => p.toLowerCase().startsWith(loc.toLowerCase() + '\\')).sort((a, b) => b[0].length - a[0].length)[0];
+  return m ? {base:m[1].replace(/\/?$/, '/'), rel:p.slice(m[0].length + 1).split('\\').filter(Boolean)} : null;
+}
+function fileUrl(p){ p = String(p || '').trim(); if (/^https?:\/\//i.test(p)) return p; const m = spMap(p); return m ? encodeURI(m.base) + m.rel.map(encodeURIComponent).join('/') : ''; }
+function folderUrl(p){ p = String(p || '').trim(); if (/^https?:\/\//i.test(p)) return p; const m = spMap(p); if (!m) return '';
+  const u = new URL(encodeURI(m.base)), path = decodeURIComponent(u.pathname), srv = path + m.rel.join('/');
+  return /-my\.sharepoint\.com$/i.test(u.hostname) ? u.origin + '/' + path.split('/').filter(Boolean).slice(0, 2).join('/') + '/_layouts/15/onedrive.aspx?id=' + encodeURIComponent(srv) : u.origin + encodeURI(path) + 'Forms/AllItems.aspx?id=' + encodeURIComponent(srv); }
+const folderRow = (l, f) => { const a = ' data-which="' + f + '" data-id="' + esc(l.id) + '"';   // LL v1.34: buttons only (no path shown)
+  return '<span id="fr-' + f + '-' + esc(l.id) + '" style="display:inline-flex;gap:6px;flex-wrap:wrap">' + (l[f] ? '<button class="btn small" data-act="openFolder"' + a + ' title="Open this folder in SharePoint">Open &#8599;</button><button class="btn light small" data-act="copyFolder"' + a + ' title="Copy the folder path">Copy path</button><button class="btn light small" data-act="folderEdit"' + a + '>Change</button>' : '<button class="btn light small" data-act="folderEdit"' + a + '>+ Add folder</button>') + '</span>'; };
+const linksCell = l => '<span class="lks">' + LINKS.map(([f, n]) => { const p = l[f], u = fileUrl(p);
+  return '<span class="lk">' + (p ? (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(p) + '">' + n + ' &#8599;</a>' : '<span class="muted" title="' + esc(p) + ' (not in a synced SharePoint folder)">' + n + '</span>') : '<span class="muted">' + n + ' &mdash;</span>') +
+    '<button class="lkx" data-act="linkEdit" data-lk="' + f + '" data-id="' + esc(l.id) + '" title="' + (p ? 'Change or remove the ' + n + ' link' : 'Add a ' + n + ' link') + '">&#9998;</button></span>'; }).join('') + '</span>';
+function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures on top; Products / Notes / History fold away
+  const id = esc(l.id), L = DB.lists, S = schoolGet(l.school);
+  const inp = (f, w, ph) => '<input data-f="' + f + '" data-id="' + id + '" value="' + esc(l[f]) + '"' + (w ? ' style="width:' + w + '"' : '') + (f === 'school' ? ' list="schoolList"' : '') + (ph ? ' placeholder="' + ph + '"' : '') + '>';
+  const sel = (f, list, blank) => '<select data-f="' + f + '" data-id="' + id + '">' + opt(list, l[f], blank) + '</select>';
+  const row = (label, val) => '<tr><th>' + label + '</th><td>' + val + '</td></tr>', head = t => '<tr class="xh"><td colspan="2">' + t + '</td></tr>';
+  const pic = ([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '"' + (l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger (or drop a new picture here)"' : ' title="Drop a picture here"') + '>' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
+    '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts">' + (l.img[k] ? [['pic', 'Replace picture', ICO.rep], ['crop', 'Crop picture', ICO.crop], ['unpic', 'Remove picture (moves to Images\\DELETE)', ICO.del]].map(([a, t, ic]) => '<button class="ibtn' + (a === 'unpic' ? ' del' : '') + '" data-act="' + a + '" data-slot="' + k + '" data-id="' + id + '" title="' + t + '" aria-label="' + t + '">' + ic + '</button>').join('') : '<button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">Add</button>') + '</div>' +
+    (state.tab === 'check' && SEWS.includes(k) && l.img[k] ? '<div class="sewmv"><span class="lbl2">Belongs in:</span>' + [['bar', 'Barrett'], ['qd', 'QD'], ['sew', 'Other']].map(([t, n]) => '<button' + (t === k ? ' class="on" disabled' : ' data-act="sewMove" data-slot="' + k + '" data-to="' + t + '" data-id="' + id + '"') + '>' + n + '</button>').join('') + '</div>' : '') + '</div>';
+  const pics = '<div class="pics strip">' + SLOTS.filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div><div class="note" style="margin-top:0">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
+  const rows = '<table class="xrows">' +
+    head('Logo &middot; ' + id) +
+    row('EMB ID', inp('emb', '260px')) +
+    row('School', inp('school', '150px') + (S.name ? '<span class="xs">' + esc(S.name) + '</span>' : '')) +
+    row('Type / Ver', sel('type', L.type, '—') + ' &nbsp;Ver ' + inp('ver', '70px')) +
+    row('Digitized by', '<input data-f="digBy" data-id="' + id + '" value="' + esc(l.digBy) + '" list="digList" placeholder="Pick or type (QD, Barrett, …)" style="width:240px">') +   // LL v1.41
+    row('Status', sel('status', L.status, '—')) +   // LL v1.24: one Status dropdown, then "Needs" checkboxes (tick as many as apply), then one Flag checkbox
+    row('Needs', '<div class="needs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t.replace(/^needs\s+/i, '')) + '</label>').join('') + '</div>') +
+    row('Flag', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> Flag for review' + (l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? ' (' + esc(l.flag) + ')' : '') + '</label>') +
+    row('Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>') +   // LL v1.28: also on the Setup Check tab   // LL v1.25: verify one logo from any tab
+    head('Thread Colors &amp; Size') +
+    row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
+    row('# Stops', inp('clrs', '70px')) +
+    row('Thread Status', '<span id="ts-' + id + '">' + tsCell(l) + '</span>') +
+    row('Color card', '<span id="cc-' + id + '">' + ccCell(l) + '</span>') +
+    row('Spec H × W', inp('specH', '80px') + ' × ' + inp('specW', '80px')) +
+    row('DST H × W', inp('dstH', '80px') + ' × ' + inp('dstW', '80px') + '<span class="note" id="sc-' + id + '">' + scText(l) + '</span>') +
+    head('Files &amp; Box') +
+    row('Files on hand', '<span class="cbs">' + FILES.map(([k, n]) => '<label class="cb"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '> ' + n + '</label>').join('') + '</span><span class="note" id="ms-' + id + '">' + msText(l) + '</span>') +
+    row('Spec sheet folder', folderRow(l, 'folder')) +
+    row('Files folder', folderRow(l, 'filesDir') + '<span class="note" style="margin-left:10px">DST / EMB / PNG / sew-outs</span>') +
+    row('Box drive', '<select data-f="boxSt" data-id="' + id + '">' + opt(BOXST, l.boxSt || '', '—') + '</select><span class="note" style="margin-left:10px">The Box drive shared with Barrett</span>') + '</table>';
+  const fold = (key, title, count, body) => '<details class="xfold" data-fold="' + id + '|' + key + '"' + (foldOpen[l.id + '|' + key] || (key === 'prod' && state.tab === 'check' && state.chkProd && foldOpen[l.id + '|' + key] !== false) ? ' open' : '') + '><summary>' + title + '<span class="cnt"' + (key === 'notes' ? ' id="nc-' + id + '"' : '') + '>' + count + '</span></summary><div class="xfold-bd">' + body + '</div></details>';
+  const hist = '<details class="xfold emb-hist" data-hist="' + id + '"' + (histOpen[l.id] ? ' open' : '') + '><summary id="hs-' + id + '">' + histSum(l) + '</summary><div class="xfold-bd"><div class="emb-hist-list" id="hl-' + id + '">' + histRows(l) + '</div></div></details>';
+  return '<div class="emb-card xcard">' + pics + rows + fold('prod', 'Products (kit info)', prodsOf(l.id).length, prodSec(l)) + fold('notes', 'Internal notes', notesFor(l.id).length, notesBox(l.id)) + hist + footHtml(l) + '</div>';
+}
+const foldOpen = {};
+function prodSec(l){   // LL v1.12: one row per SKU
+  const P = prodsOf(l.id), inp = (p, i, k) => '<input data-pf="' + k + '" data-pi="' + i + '" value="' + esc(p[k]) + '"' + (k === 'place' ? ' list="placeList"' : k === 'color' ? ' list="colorList"' : '') + '>';
+  return (P.length ? '<table class="ctbl prod-tbl"><thead><tr><th>Display Name</th><th>Product Color</th><th>SKU</th><th>Placement</th><th>Insignia URL</th><th></th></tr></thead><tbody>' +
+    P.map(([p, i]) => '<tr><td class="pn">' + inp(p, i, 'name') + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + (p.arch ? '<div class="knote"><span class="nolink">Archived</span> (not in the Warehouse Excel)</div>' : '') + '</td><td class="pc">' + inp(p, i, 'color') + '</td><td class="ps">' + inp(p, i, 'sku') + '</td><td class="pp">' + inp(p, i, 'place') + '</td><td class="pd">' + inp(p, i, 'dst') + '</td>' +
+      '<td class="x"><button class="xbtn" data-act="prodDel" data-pi="' + i + '" title="Remove this product">&times;</button></td></tr>').join('') + '</tbody></table>'
+    : '<div class="emb-val muted">No products yet.</div>') +
+    '<div style="margin-top:8px"><button class="btn light small" data-act="prodAdd" data-id="' + esc(l.id) + '">+ Add product</button></div><div class="note">One row per SKU. These go into the Warehouse Excel (Products tab).</div>';
+}
+function boxSec(l){   // LL v1.09: each time it goes to the Box drive (version + date), newest first
+  const id = esc(l.id), B = bx(l);
+  return '<div class="boxsec"><div class="boxsec-h">Box drive</div>' + (B.length ? '<table class="ctbl"><thead><tr><th>Version</th><th>Date added</th><th></th></tr></thead><tbody>' +
+    B.map((b, i) => '<tr><td><input data-bx="ver" data-i="' + i + '" data-id="' + id + '" value="' + esc(b.ver) + '"></td><td><input type="date" data-bx="date" data-i="' + i + '" data-id="' + id + '" value="' + esc(b.date) + '"></td><td class="x"><button class="xbtn" data-act="boxDel" data-i="' + i + '" data-id="' + id + '" title="Remove this Box entry">&times;</button></td></tr>').join('') + '</tbody></table>'
+    : '<div class="emb-val muted">Not added to Box yet.</div>') +
+    '<div style="margin-top:8px"><button class="btn light small" data-act="boxAdd" data-id="' + id + '">+ Added to Box</button></div><div class="note">Fills in this logo&rsquo;s Ver and today&rsquo;s date; change either one if needed.</div></div>';
+}
+function scText(l){ const sc = sizeCheck(l), raw = sizeRaw(l);
+  return 'Size Check: ' + (sc === 'CHECK' ? '<span class="chk-bad" style="margin:0">CHECK</span> spec and DST differ by more than 0.05&quot;' : sc === 'OK' ? '<b style="color:#256b31">OK</b>' + (raw === 'CHECK' ? ' (difference OK&rsquo;d)' : '') : 'needs Spec H and DST H') +
+    (raw === 'CHECK' ? ' &nbsp;<label class="cb" style="display:inline-flex;color:var(--navy)"><input type="checkbox" data-f="sizeOk" data-id="' + esc(l.id) + '"' + (l.sizeOk ? ' checked' : '') + '> OK to proceed with this size difference</label>' : ''); }
+const msText = l => 'Missing: ' + (missing(l) ? '<b>' + esc(missing(l)) + '</b>' : 'nothing');
+const tcText = l => l.todo.length ? l.todo.length + ' open' : 'nothing open';
+
+// ---------------- History (each logo) + Audit tab (LL v1.02) ----------------
+const fmtDate = ts => { const [y, m, d] = ts.slice(0, 10).split('-'); return m + '/' + d + '/' + y.slice(2); };
+const time12 = ts => { const h = +ts.slice(11, 13), m = ts.slice(14, 16); return (h % 12 || 12) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM'); };
+const change = e => esc(e.what) + ': ' + (e.from ? '<span class="ch-from">' + esc(e.from) + '</span><span class="ch-arr">&rarr;</span>' : '') + esc(e.to);
+const logoEdits = l => DB.edits.filter(e => e.id === l.id).reverse().sort((a, b) => b.ts.localeCompare(a.ts));
+const histSum = l => { const n = logoEdits(l).length; return 'Show history (' + n + ' entr' + (n === 1 ? 'y' : 'ies') + ')'; };
+const histRows = l => { const h = logoEdits(l); return h.length ? h.map(e => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmtDate(e.ts) + ' ' + time12(e.ts) + '</span><span>' + change(e) + '</span><span class="emb-hist-by">' + esc(e.by) + '</span></div>').join('') : '<div class="emb-val muted">No changes yet.</div>'; };
+function renderAudit(){
+  const af = state.audit, aq = af.q.toLowerCase().trim();
+  const rows = DB.edits.filter(e => (!af.what || e.what === af.what) && (!af.from || e.ts.slice(0, 10) >= af.from) && (!af.to || e.ts.slice(0, 10) <= af.to) &&
+    (!aq || [e.id, e.emb, (byId(e.id) || {}).school, e.what, e.from, e.to, e.by].join(' ').toLowerCase().includes(aq))).reverse();
+  const today = nowStamp().slice(0, 10), yest = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })();
+  const label = d => d === today ? 'Today' : d === yest ? 'Yesterday' : new Date(d + 'T12:00:00').toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+  const days = [...new Set(rows.map(e => e.ts.slice(0, 10)))].sort().reverse();
+  const whats = [...new Set(DB.edits.map(e => e.what))].sort(coll.compare);
+  let h = '<h1>Audit</h1><div class="bar"><input type="search" id="aSearch" placeholder="Search logo, school, change, or person&hellip;" value="' + esc(af.q) + '">' +
+    '<select data-audit="what">' + opt(whats, af.what, 'All changes') + '</select>' +
+    '<label class="dlbl">From <input type="date" data-audit="from" value="' + esc(af.from) + '"></label><label class="dlbl">To <input type="date" data-audit="to" value="' + esc(af.to) + '"></label>' +
+    '<button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
+    (af.q || af.what || af.from || af.to ? '<button class="lnk" data-act="aClear">Clear</button>' : '') + '<span class="count">' + rows.length + ' change' + (rows.length === 1 ? '' : 's') + '</span></div>';
+  if (!days.length) return h + '<div class="empty">' + (DB.edits.length ? 'No changes match.' : 'No changes yet. Every change made on this page shows here.') + '</div>';
+  return h + days.map(d => {
+    const key = 'audit|' + d, open = state.secOpen[key] == null ? d === days[0] : state.secOpen[key], items = rows.filter(e => e.ts.slice(0, 10) === d).sort((a, b) => b.ts.localeCompare(a.ts));
+    return '<div class="sec"><div class="sec-head" data-sec="' + key + '"><span class="chev">' + (open ? '&#9660;' : '&#9654;') + '</span><span class="name">' + label(d) + '</span><span class="cnt">' + items.length + '</span></div>' +
+      (open ? '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:9%"><col style="width:18%"><col style="width:13%"><col style="width:16%"><col style="width:16%"><col style="width:18%"><col style="width:10%"></colgroup>' +
+        '<thead><tr><th class="nos">Time</th><th class="nos">Logo</th><th class="nos">School / Account</th><th class="nos">What changed</th><th class="nos">From</th><th class="nos">To</th><th class="nos">By</th></tr></thead><tbody>' +
+        items.map(e => { const l = byId(e.id), isS = e.id.startsWith('S:'); return '<tr class="aud-row" data-id="' + esc(e.id) + '" title="' + (isS ? 'Open this school' : l ? 'Open this logo' : 'This logo isn&rsquo;t in the library anymore') + '"><td>' + time12(e.ts) + '</td><td><span class="emb">' + esc(e.emb) + '</span></td><td>' + esc(l ? l.school : isS ? e.id.slice(2) : '') + '</td><td>' + esc(e.what) + '</td><td>' + (e.from ? '<span class="ch-from">' + esc(e.from) + '</span>' : '<span class="muted">&mdash;</span>') + '</td><td>' + (esc(e.to) || '<span class="muted">(blank)</span>') + '</td><td>' + esc(e.by) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>' : '') + '</div>';
+  }).join('');
+}
+function openLogo(l){   // from the Audit tab: go to the logo's tab, open its section and card (LL v1.37)
+  state.acct = ''; state.tab = isCol(l) ? 'collegiate' : isNFL(l) ? 'nfl' : isMain(l) ? 'mainline' : 'all';
+  if (state.tab === 'all') state.f = {}; else { state.fx = state.fx || {}; state.fx[state.tab] = {}; if (inactive(l)) state.secOpen[state.tab + '|Archived & Retired'] = true; }
+  if (q && !matches(l)){ q = ''; ms.value = ''; }
+  state.open = l.id; saveUi(); render();
+  setTimeout(() => { const r = document.querySelector('tr.row[data-id="' + l.id + '"]'); if (r) r.scrollIntoView({block:'center'}); }, 30);
+}
+
+// ---------------- Tabs ----------------
+function addBoxHtml(tab){
+  if (!state.adding) return '';
+  const t = tab === 'mainline' ? 'Mainline' : tab === 'collegiate' ? 'Collegiate' : tab === 'nfl' ? 'NFL' : '';
+  return '<div class="addbox"><div class="af"><div><label>EMB ID</label><input id="addEmb" placeholder="e.g. AK 11 RED"></div><div><label>School / Account</label><input id="addSchool" list="schoolList"></div>' +
+    '<div><label>Type</label><select id="addType">' + opt(DB.lists.type, t, '—') + '</select></div><button class="btn" data-act="addSave">Add logo</button><button class="btn light" data-act="addCancel">Cancel</button></div></div>';
+}
+function groupsHtml(tab, list, defOpen){
+  const g = {}; list.forEach(l => { const k = l.school || '(no school / account)'; (g[k] = g[k] || []).push(l); });
+  const names = Object.keys(g).sort(coll.compare);
+  if (!names.length) return '<div class="empty">No logos' + (q ? ' match &ldquo;' + esc(q) + '&rdquo;' : '') + '.</div>';
+  return names.map(n => sectionHtml(tab, n, g[n], defOpen)).join('');
+}
+// LL v1.37: Collegiate, Mainline and NFL all work the same: one list (School column, filters), Archived & Retired collapsed at the bottom
+function renderList(tab, title, test){
+  const f = fOf(tab), withGone = !!f.school || f.status === ARCH || f.status === RETIRED;   // a school / account picked (or an archived status) also shows its archived + retired logos in the list
+  const all = activeLogos().filter(test), list = DB.logos.filter(l => test(l) && (withGone || !inactive(l)) && matches(l) && passF(tab, l)), gone = withGone ? [] : DB.logos.filter(l => test(l) && inactive(l));
+  return '<h1>' + title + '</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button>' + filterBar(tab, tab === 'all' ? [] : ['type']) + '<span class="count">' + (list.length !== all.length ? list.length + ' of ' : '') + all.length + ' logos</span></div>' + addBoxHtml(tab) + tableHtml(tab, list) +
+    (gone.length ? '<div style="margin-top:18px">' + sectionHtml(tab, 'Archived & Retired', gone.filter(matches), false) + '</div>' : '');
+}
+const renderCollegiate = () => renderList('collegiate', 'Collegiate', isCol);
+const renderAll = () => renderList('all', 'All Logos', () => true);   // LL v1.37: All Logos works the same
+const NO_SCHOOL = '(no school / account)';
+const schoolFull = k => (DB.schools[k] && DB.schools[k].name) || '';
+const schoolSort = k => (schoolFull(k) || k).replace(/^(the|university of)\s+/i, '');
+const schoolLogo = (k, cls) => { const x = DB.schools[k]; return '<span class="slogo' + (cls ? ' ' + cls : '') + '">' + (x && x.logo ? '<img data-img="' + esc(x.logo) + '" alt="" hidden><span></span>' : '') + '</span>'; };
+const schoolCode = k => (DB.schools[k] && DB.schools[k].code) || k;
+const schoolLabel = k => schoolLogo(k) + '<span class="name">' + esc(schoolFull(k) || k) + '</span>' + (schoolFull(k) && schoolFull(k) !== schoolCode(k) ? '<span class="abbr">' + esc(schoolCode(k)) + '</span>' : '');
+function renderAccounts(){   // LL v1.04: schools; click one to see its logos, archived, and retired
+  const col = DB.logos.filter(l => state.acct ? true : isCol(l)), g = {};   // LL v1.37: the school page works for any school / account / team
+  col.forEach(l => { const k = l.school || NO_SCHOOL; (g[k] = g[k] || []).push(l); });
+  if (state.acct){
+    const name = state.acct, mine = g[name] || [];
+    const a = mine.filter(l => !inactive(l)), ar = mine.filter(l => l.status === ARCH), re = mine.filter(l => l.status === RETIRED);
+    return '<button class="back" data-act="acctBack">&larr; Back to ' + esc((TABS.find(t => t.key === state.tab) || {label:'logos'}).label) + '</button><div class="school-h">' + schoolLogo(name, 'lg') + '<div><h1>' + esc(schoolFull(name) || name) + '</h1><div class="sub">' + esc(schoolCode(name)) + (schoolCode(name) !== name ? ' &middot; ' + esc(name) : '') + '</div></div></div>' + schoolTop(name) + '<div class="bar"><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button>' +
+      '<span class="count">' + a.length + ' logos &middot; ' + ar.length + ' archived &middot; ' + re.length + ' retired</span></div>' +
+      sectionHtml('accounts', 'Logos', a.filter(matches), true) + sectionHtml('accounts', 'Archived', ar.filter(matches), false) + sectionHtml('accounts', 'Retired', re.filter(matches), false);
+  }
+  let names = Object.keys(g).sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));   // LL v1.17: by full name
+  if (q) names = names.filter(n => (n + ' ' + schoolFull(n)).toLowerCase().includes(q.toLowerCase()) || g[n].some(matches));
+  const n = (list, f) => list.filter(f).length, cnt = v => v ? v : '<span class="muted">&mdash;</span>';
+  return '<h1>Accounts</h1><div class="bar"><span class="count">' + (q ? names.length + ' of ' : '') + Object.keys(g).length + ' schools</span></div>' +
+    '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:40%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>' +
+    '<thead><tr><th class="nos">School / Account</th><th class="nos">Logos</th><th class="nos">Approved</th><th class="nos">Archived</th><th class="nos">Retired</th></tr></thead><tbody>' +
+    (names.length ? names.map(k => { const L = g[k]; return '<tr class="acct-row" data-acct="' + esc(k) + '"><td><div class="acc-n">' + schoolLogo(k, 'sm') + '<span><span class="emb">' + esc(schoolFull(k) || k) + '</span>' + (schoolFull(k) ? '<span class="sch">' + esc(schoolCode(k)) + '</span>' : '') + '</span></div></td><td>' + cnt(n(L, l => !inactive(l))) + '</td><td>' + cnt(n(L, l => !inactive(l) && isApproved(l))) + '</td><td>' + cnt(n(L, l => l.status === ARCH)) + '</td><td>' + cnt(n(L, l => l.status === RETIRED)) + '</td></tr>'; }).join('')
+      : '<tr><td colspan="5"><div class="empty">No schools match &ldquo;' + esc(q) + '&rdquo;.</div></td></tr>') + '</tbody></table></div>';
+}
+// ---------------- School page (LL v1.06) ----------------
+const blankSchool = () => ({name:'', code:'', notes:'', logo:'', colors:[], past:[]});
+const schoolGet = k => DB.schools[k] || blankSchool();
+const schoolSave = (k, x) => { DB.schools[k] = x; return x; };
+const SKEY = k => 'S:' + k;
+const colorText = c => [c.name, c.pms ? 'PMS ' + c.pms : '', c.mad ? 'Madeira ' + c.mad : ''].filter(Boolean).join(' · ');
+function schoolLog(k, what, from, to){ DB.edits.push({ts:nowStamp(), id:SKEY(k), emb:k, what, from:String(from || ''), to:String(to || ''), by:BY}); }
+function schoolHist(k){ const h = DB.edits.filter(e => e.id === SKEY(k)).reverse().sort((a, b) => b.ts.localeCompare(a.ts));
+  return h.length ? h.map(e => '<div class="emb-hist-row"><span class="emb-hist-date">' + fmtDate(e.ts) + ' ' + time12(e.ts) + '</span><span>' + change(e) + '</span><span class="emb-hist-by">' + esc(e.by) + '</span></div>').join('') : '<div class="emb-val muted">No changes yet.</div>'; }
+function schoolTop(k){
+  const x = schoolGet(k), a = ' data-acct="' + esc(k) + '"';
+  const info = '<div class="emb-grid"><div class="emb-fld"><label>Full name</label><input data-sf="name"' + a + ' value="' + esc(x.name) + '" placeholder="e.g. University of Arkansas"></div>' +
+    '<div class="emb-fld"><label>Abbreviation / EMB code</label><input data-sf="code"' + a + ' value="' + esc(x.code) + '" placeholder="e.g. AK"></div>' +
+    '</div>';
+  const colors = '<table class="ctbl"><thead><tr><th>Color</th><th>PMS</th><th>Madeira thread</th><th></th></tr></thead><tbody>' +
+    (x.colors.length ? x.colors.map((c, i) => '<tr><td><input data-sc="name" data-i="' + i + '"' + a + ' value="' + esc(c.name) + '" placeholder="e.g. Cardinal"></td><td><input data-sc="pms" data-i="' + i + '"' + a + ' value="' + esc(c.pms) + '" placeholder="e.g. 201 C"></td>' +
+      '<td><input data-sc="mad" data-i="' + i + '"' + a + ' value="' + esc(c.mad) + '" placeholder="e.g. 1181"></td><td class="x"><button class="xbtn" data-act="colDel" data-i="' + i + '"' + a + ' title="Remove this color">&times;</button></td></tr>').join('')
+      : '<tr><td colspan="4" class="muted" style="padding:6px 0">No colors yet.</td></tr>') + '</tbody></table>' +
+    '<div class="btns" style="display:flex;gap:8px;margin-top:10px"><button class="btn light small" data-act="colAdd"' + a + '>+ Add color</button>' +
+    (x.colors.length ? '<button class="btn light small" data-act="colUpdate"' + a + ' title="Keeps today&rsquo;s colors in Past colors, then you change them">School colors changed</button>' : '') + '</div>' +
+    '<div class="note">When the school changes its colors, click <b>School colors changed</b>: the current set is saved in Past colors with today&rsquo;s date, then you update them here.</div>';
+  const past = x.past.length ? x.past.map(pz => '<div class="past"><div class="past-h">Used until ' + esc(pz.until ? fmtDate(pz.until) : '?') + '</div><div class="past-c">' + pz.colors.map(c => esc(colorText(c))).join('<br>') + '</div></div>').join('') : '<div class="emb-val muted">No past colors yet.</div>';
+  const hist = '<details class="emb-hist" data-hist="' + esc(SKEY(k)) + '"' + (histOpen[SKEY(k)] ? ' open' : '') + '><summary>Show history (' + DB.edits.filter(e => e.id === SKEY(k)).length + ')</summary><div class="emb-hist-list" id="shl">' + schoolHist(k) + '</div></details>';
+  return '<div class="school-top emb-card-cols"><div class="emb-col">' + box(1, 'School Info', '', info) + box(4, 'History', '', hist) + box(5, 'Internal notes', notesFor(SKEY(k)).length, notesBox(SKEY(k))) + '</div><div class="emb-col">' + box(2, 'School Colors', x.colors.length + ' color' + (x.colors.length === 1 ? '' : 's'), colors) + box(3, 'Past Colors', x.past.length ? x.past.length + ' set' + (x.past.length === 1 ? '' : 's') : '', past) + '</div></div>';
+}
+function footHtml(l){   // Archive / Retire / Restore / Delete
+  const id = esc(l.id);
+  return '<div class="emb-card-foot">' + (inactive(l) ? '<span class="foot-note">' + (l.status === RETIRED ? 'Retired' : 'Archived') + '</span><button class="btn light small" data-act="restore" data-id="' + id + '">Restore</button>'
+    : '<button class="btn light small" data-act="archive" data-id="' + id + '">Archive</button><button class="btn light small" data-act="retire" data-id="' + id + '">Retire</button>') +
+    '<button class="emb-btn-del" data-act="delete" data-id="' + id + '">Delete</button></div>';
+}
+function setInactive(l, st){
+  setField(l, 'status', st); state.open = ''; render();
+  toast(esc(l.emb) + (st === RETIRED ? ' retired' : ' archived') + '. ' + (isCol(l) ? 'It&rsquo;s under ' + esc(l.school || 'its school') + ' in the Accounts tab.' : 'It&rsquo;s under Archived &amp; Retired at the bottom of Mainline.'), 6000);
+}
+function restoreLogo(l){
+  const e = DB.edits.filter(x => x.id === l.id && x.what === 'Status' && (x.to === ARCH || x.to === RETIRED)).sort((a, b) => b.ts.localeCompare(a.ts))[0];
+  let prev = e ? e.from : ''; if (prev === ARCH || prev === RETIRED) prev = '';
+  setField(l, 'status', prev); render(); toast(esc(l.emb) + ' restored.');
+}
+async function deleteLogo(l){
+  if (!confirm('Delete ' + (l.emb || l.id) + ' from the Logo Library?\n\nA copy of its row stays in the "Deleted Logos" sheet in the Excel, and its pictures move to Images\\DELETE, so nothing is lost.')) return;
+  try { if (dirHandle && await permOk(dirHandle, true)){ const d = await getImgDir(true); for (const k of SLOTS.map(x => x[0])) if (l.img[k] && await fileExists(d, l.img[k])) await moveToDelete(l.img[k]); } } catch(e){}
+  DB.deleted.push([nowStamp().replace('T', ' ')].concat(COLS.map(([, f, k]) => cellOut(l, f, k))));
+  DB.logos = DB.logos.filter(x => x !== l);
+  logEdit(l, 'Deleted logo', l.emb, '(deleted: row kept in the Deleted Logos sheet, pictures in Images\\DELETE)');
+  state.open = ''; touch(); render(); toast('Deleted ' + esc(l.emb) + '.');
+}
+const FILTERS = [['type', 'All types', () => DB.lists.type, (l, v) => l.type === v],
+  ['school', 'All schools / accounts', () => [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare), (l, v) => l.school === v],
+  ['status', 'All statuses', () => DB.lists.status.concat('(no status)'), (l, v) => v === '(no status)' ? !l.status : l.status === v],
+  ['todo', 'All To Do', () => DB.lists.todo.concat('(nothing to do)'), (l, v) => v === '(nothing to do)' ? !l.todo.length : l.todo.includes(v)],
+  ['flag', 'Any flag', () => DB.lists.flag.concat('(no flag)'), (l, v) => v === '(no flag)' ? !l.flag : l.flag === v],
+  ['missing', 'Sew-out: any', () => ['Needs sew-out', 'Has a sew-out'], (l, v) => v === 'Needs sew-out' ? needsSew(l) : !needsSew(l)],
+  ['dig', 'Digitized by: any', () => [...new Set(DB.logos.map(l => l.digBy).filter(Boolean))].sort(coll.compare).concat('(not set)'), (l, v) => v === '(not set)' ? !l.digBy : l.digBy === v],
+  ['cc', 'Color card: any', () => CCST.concat('(not set)'), (l, v) => v === '(not set)' ? !l.ccSt : l.ccSt === v],
+  ['box', 'Box drive: any', () => BOXST.concat('(not set)'), (l, v) => v === '(not set)' ? !l.boxSt : l.boxSt === v],
+  ['tstat', 'Thread status: any', () => TSTAT.concat('(none)'), (l, v) => v === '(none)' ? !l.tcStatus : l.tcStatus === v],
+  ['size', 'Size Check: any', () => ['CHECK', 'OK', '(no DST size)'], (l, v) => v === '(no DST size)' ? !sizeCheck(l) : sizeCheck(l) === v]];
+// LL v1.21: the same filters on Collegiate / Mainline / NFL (each tab keeps its own)
+const fOf = tab => tab === 'all' ? state.f : ((state.fx = state.fx || {})[tab] = state.fx[tab] || {});
+const passF = (tab, l) => { const f = fOf(tab); return FILTERS.every(([k, , , t]) => !f[k] || t(l, f[k])); };
+// LL v1.38: the school filter only lists this tab's schools / accounts / teams, by full name
+const TAB_TEST = {collegiate:l => isCol(l), mainline:l => isMain(l), nfl:l => isNFL(l)};
+function schoolOpts(tab, cur){
+  const t = TAB_TEST[tab] || (() => true), ks = [...new Set(DB.logos.filter(t).map(l => l.school).filter(Boolean))].sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));
+  if (cur && !ks.includes(cur)) ks.push(cur);
+  const all = tab === 'collegiate' ? 'All schools' : tab === 'mainline' ? 'All accounts' : tab === 'nfl' ? 'All teams' : 'All schools / accounts';
+  return '<option value="">' + all + '</option>' + ks.map(k => { const n = schoolFull(k); return '<option value="' + esc(k) + '"' + (k === cur ? ' selected' : '') + '>' + esc(n && n !== k ? n + ' (' + schoolCode(k) + ')' : k) + '</option>'; }).join('');
+}
+function filterBar(tab, skip){ const f = fOf(tab), fl = FILTERS.filter(([k]) => !skip.includes(k));
+  return fl.map(([k, label, opts]) => '<select data-filter="' + k + '" data-ftab="' + tab + '">' + (k === 'school' ? schoolOpts(tab, f[k] || '') : opt(opts(), f[k] || '', label)) + '</select>').join('') + (fl.some(([k]) => f[k]) ? '<button class="lnk" data-act="clearF" data-ftab="' + tab + '">Clear filters</button>' : ''); }
+function renderTodo(){
+  const items = DB.lists.todo.concat([...new Set(activeLogos().flatMap(l => l.todo))].filter(t => !DB.lists.todo.includes(t)));
+  const total = activeLogos().filter(l => l.todo.length).length;
+  return '<h1>To Do</h1><div class="bar"><button class="btn light" data-act="expand">Expand all</button><button class="btn light" data-act="collapse">Collapse all</button><span class="count">' + total + ' logos with something to do</span></div>' +
+    items.map(t => sectionHtml('todo', t, activeLogos().filter(l => l.todo.includes(t) && matches(l)), false, t)).join('');
+}
+function renderConnect(){
+  if (!FS_OK) return '<div class="connect"><h2>Open this page in Edge or Chrome</h2><p>The Logo Library reads and saves your Excel file in OneDrive, which only works in Microsoft Edge or Google Chrome.</p></div>';
+  if (saveState === 'reconnect') return '<div class="connect"><h2>Reconnect your Logo Library</h2><p>Click below and allow access so the page can read and save <b>' + esc(XLSX_NAME) + '</b> and its pictures.</p><button class="btn" data-act="reconnect">Reconnect Excel</button></div>';
+  return '<div class="connect"><h2>Connect your Logo Library</h2><p>Pick the <b>Logo Library</b> folder in OneDrive<br><span style="color:var(--grey)">CLAUDE AI &rsaquo; CLAUDE &rsaquo; Logo Library</span><br>It holds <b>' + esc(XLSX_NAME) + '</b> and the <b>Images</b> folder. Nothing is stored on GitHub.</p><button class="btn" data-act="connect">Connect Excel</button></div>';
+}
+// ---------------- Setup Check (LL v1.11, temporary: one logo at a time) ----------------
+const hasProd = l => prods().some(p => p.id === l.id && !p.arch);   // LL v1.20: Setup Check can go through only the logos used by products
+function checkOrder(){
+  const g = l => isCol(l) ? 0 : isMain(l) ? 1 : 2;
+  return DB.logos.filter(l => !state.chkProd || hasProd(l)).sort((a, b) => g(a) - g(b) || coll.compare(a.school || '', b.school || '') || coll.compare(a.emb || '', b.emb || ''));
+}
+function checkCur(){ const o = checkOrder(); let l = state.chk && byId(state.chk); if (l && !o.includes(l)) l = null; if (!l){ l = o.find(x => !DB.check[x.id]) || o[0]; state.chk = l ? l.id : ''; } return l; }
+function checkStep(dir, onlyOpen){
+  const o = checkOrder(), i = o.findIndex(x => x.id === state.chk);
+  for (let k = 1; k <= o.length; k++){ const x = o[(i + dir * k + o.length * 2) % o.length]; if (!onlyOpen || !DB.check[x.id]){ state.chk = x.id; break; } }
+  saveUi(); render(); window.scrollTo(0, 0);
+}
+function renderCheck(){
+  DB.check = DB.check || {}; const o = checkOrder(), l = checkCur(); if (!l) return '<h1>Setup Check</h1><div class="empty">No logos yet.</div>';
+  const vals = o.map(x => DB.check[x.id]), ok = vals.filter(v => v && v.res === 'ok').length, fl = vals.filter(v => v && v.res === 'flag').length, c = DB.check[l.id], pos = o.indexOf(l) + 1;
+  return '<h1>Setup Check</h1><div class="note" style="margin:-4px 0 10px">Temporary: go through every logo once. Fix anything right on the card, then click Verified. Flag anything you want Claude to fix.</div>' +
+    '<div class="chk-scope"><span class="sub">Go through:</span><button class="' + (state.chkProd ? '' : 'on') + '" data-act="chkScope" data-v="">All logos (' + DB.logos.length + ')</button><button class="' + (state.chkProd ? 'on' : '') + '" data-act="chkScope" data-v="1">Logos with products (' + DB.logos.filter(hasProd).length + ')</button></div>' +
+    '<div class="chk-bar"><div class="chk-prog"><span style="width:' + ((ok + fl) / o.length * 100).toFixed(1) + '%"></span></div>' +
+    '<span class="who">' + esc(l.emb || '(no EMB ID)') + '</span><span class="sub">' + esc([l.school, l.type, l.status].filter(Boolean).join(' · ')) + ' &middot; ' + pos + ' of ' + o.length + '</span>' +
+    '<span class="chk-pill ' + (c ? c.res : 'none') + '">' + (c ? (c.res === 'ok' ? '✓ Verified' : '⚑ Flagged') : 'Not checked') + '</span><span class="sp"></span>' +
+    '<span class="sub">' + ok + ' verified &middot; ' + fl + ' flagged &middot; ' + (o.length - ok - fl) + ' to go</span>' +
+    '<button class="btn light small" data-act="chkPrev">&larr; Back</button><button class="btn light small" data-act="chkNext">Next &rarr;</button><button class="btn light small" data-act="chkOpen">Next not checked</button>' +
+    '<button class="btn small" data-act="chkOk" data-id="' + esc(l.id) + '">✓ Verified, next</button>' +
+    '<div class="chk-note"><textarea id="chkNote" placeholder="What&rsquo;s wrong? (for Claude)">' + esc(c && c.res === 'flag' ? c.note : '') + '</textarea><button class="btn light small" data-act="chkFlag" data-id="' + esc(l.id) + '">⚑ Flag for Claude, next</button>' + (c ? '<button class="lnk" data-act="chkClear" data-id="' + esc(l.id) + '">Clear</button>' : '') + '</div></div>' +
+    cardHtml(l);
+}
+// ---------------- Products tab (LL v1.12) ----------------
+const lineOf = p => String(p.name || '').split(' - ')[0].split(' | ')[0].trim();
+const PFILT = [['line', 'All products', () => [...new Set(prods().map(lineOf).filter(Boolean))].sort(coll.compare), (p, l, v) => lineOf(p) === v],
+  ['place', 'All placements', () => [...new Set(prods().map(p => p.place).filter(Boolean))].sort(coll.compare), (p, l, v) => p.place === v],
+  ['link', 'All', () => ['Linked to a logo', 'No logo yet'], (p, l, v) => v === 'No logo yet' ? !l : !!l],
+  ['arch', 'Hide archived', () => ['Show archived too', 'Only archived'], (p, l, v) => v === 'Only archived' ? !!p.arch : true]];   // LL v1.16
+function prodSort(a, b){ return (a.l ? 0 : 1) - (b.l ? 0 : 1) || coll.compare(a.l ? a.l.school : '', b.l ? b.l.school : '') || coll.compare(embOf(a.p), embOf(b.p)) || coll.compare(a.p.name, b.p.name); }
+function renderProducts(){
+  const f = state.pf || (state.pf = {}), all = prods().map((p, i) => ({p, i, l:p.id ? byId(p.id) : null}));
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const list = all.filter(x => (f.arch || !x.p.arch) && PFILT.every(([k, , , t]) => !f[k] || t(x.p, x.l, f[k])) && (!words.length || (h => words.every(w => h.includes(w)))([x.p.name, x.p.color, x.p.sku, x.p.place, x.p.dst, x.p.note, x.l ? x.l.emb + ' ' + x.l.school : ''].join(' ').toLowerCase()))).sort(prodSort);
+  const act = all.filter(x => !x.p.arch), narch = all.length - act.length, nol = act.filter(x => !x.l).length, any = PFILT.some(([k]) => f[k]);
+  let h = '<h1>Products</h1><div class="bar"><button class="btn" data-act="whXlsx" title="Builds a fresh Excel for the warehouse from this data">&#11015; Warehouse Excel</button>' +
+    PFILT.map(([k, label, o]) => '<select data-pfilter="' + k + '">' + opt(o(), f[k] || '', label) + '</select>').join('') + (any ? '<button class="lnk" data-act="pClear">Clear filters</button>' : '') +
+    '<span class="count">' + (list.length !== act.length ? list.length + ' of ' : '') + act.length + ' SKUs &middot; ' + new Set(act.filter(x => x.l).map(x => x.l.id)).size + ' logos' + (nol ? ' &middot; <b style="color:#8a5a00">' + nol + ' no logo yet</b>' : '') + (narch ? ' &middot; ' + narch + ' archived' : '') + '</span></div>' +
+    '<div class="note" style="margin:-4px 0 10px">One row per SKU. Click a row to open its logo. Edit products on the logo&rsquo;s card (box 8). <b>Warehouse Excel</b> saves a fresh file in the Logo Library\\Warehouse folder.</div>';
+  if (!all.length) return h + '<div class="empty">No products yet. Add them on a logo&rsquo;s card (box 8).</div>';
+  h += '<div class="tblwrap"><table class="tbl"><colgroup><col style="width:62px"><col style="width:15%"><col style="width:31%"><col style="width:13%"><col style="width:18%"><col style="width:9%"><col style="width:11%"><col style="width:80px"></colgroup>' +
+    '<thead><tr><th class="nos">Logo</th><th class="nos">EMB ID</th><th class="nos">Display Name</th><th class="nos">Product Color</th><th class="nos">SKU</th><th class="nos">Placement</th><th class="nos">Insignia URL</th><th class="nos"></th></tr></thead><tbody>';
+  if (!list.length) h += '<tr><td colspan="8"><div class="empty">No products match.</div></td></tr>';
+  list.forEach(({p, i, l}) => {
+    h += '<tr class="prow' + (p.arch ? ' arch' : '') + '"' + (l ? ' data-pid="' + esc(l.id) + '" title="Open ' + esc(l.emb) + '"' : '') + '><td><div class="th">' + imgTag(l ? (l.img.logo || l.img.spec) : '') + '</div></td>' +
+      '<td>' + (l ? '<span class="emb">' + esc(l.emb) + '</span><span class="sch">' + esc(l.school) + '</span>' : '<span class="emb">' + esc(embOf(p)) + '</span><br><span class="nolink">' + (p.arch ? 'Archived' : 'No logo yet') + '</span><input class="plink" data-plink="' + i + '" list="embList" placeholder="Link to EMB ID&hellip;">') + '</td>' +
+      '<td class="sm">' + esc(p.name) + (p.note ? '<div class="knote">Kit note: ' + esc(p.note) + '</div>' : '') + '</td><td class="sm">' + esc(p.color) + '</td><td class="sm">' + esc(p.sku) + '</td><td class="sm">' + esc(p.place) + '</td><td class="sm">' + esc(p.dst) + '</td><td><button class="parch" data-act="prodArch" data-pi="' + i + '" title="' + (p.arch ? 'Show it again (and in the Warehouse Excel)' : 'Hide it from this tab and the Warehouse Excel (stays in the Excel)') + '">' + (p.arch ? 'Restore' : 'Archive') + '</button></td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+// ---------------- Warehouse Excel (LL v1.12): ExcelJS (only loaded when the button is clicked), pictures from the Images folder ----------------
+const EXCELJS = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Couldn’t load ' + src)); document.head.appendChild(s); });
+const PIC_BOX = [96, 76], PIC_AT = [4, 3], EMU = 9525;   // LL v1.14: picture spot in the Logo cell, in pixels (column 15 wide is about 105 px, row 62 pt is about 83 px)
+async function thumb(name){   // small JPEG for the Excel (keeps the file light)
+  try { const f = await (await (await getImgDir()).getFileHandle(name)).getFile(), bm = await createImageBitmap(f);
+    // LL v1.14: the picture is centered on a white box the same shape as its spot in the cell, so Excel never stretches it (same idea as the v13 file)
+    const W = PIC_BOX[0] * 2, H = PIC_BOX[1] * 2, sc = Math.min(W / bm.width, H / bm.height), w = Math.round(bm.width * sc), h = Math.round(bm.height * sc);
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.imageSmoothingQuality = 'high'; g.drawImage(bm, (W - w) / 2, (H - h) / 2, w, h);
+    return {b64:c.toDataURL('image/jpeg', 0.88).split(',')[1]}; } catch(e){ return null; }
+}
+async function warehouseExcel(btn){
+  if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
+  const rows = prods().filter(p => !p.arch).map(p => ({p, l:p.id ? byId(p.id) : null})).sort(prodSort);   // LL v1.16: archived products left out
+  if (!rows.length){ toast('No products yet.'); return; }
+  const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'Building&hellip;';
+  try {
+    if (!window.ExcelJS) await loadScript(EXCELJS);
+    const wb = new ExcelJS.Workbook(); wb.creator = 'Rhoback Logo Library ' + VERSION;
+    const ws = wb.addWorksheet('Kit Info', {views:[{state:'frozen', ySplit:3}], pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, printTitlesRow:'3:3'}});
+    const H = [['Logo', 15], ['School / Account', 18], ['Display Name', 58], ['Product Color', 24], ['SKU', 36], ['Insignia Placement', 15], ['Insignia URL', 24], ['EMB ID', 20], ['Ver', 6], ['Thread Colors (Madeira)', 40], ['# Stops', 8], ['Size H × W (in)', 13], ['Sew-Out Status', 16]];
+    ws.columns = H.map(([, w]) => ({width:w}));
+    const NAVY = 'FF1B2A4A', d = new Date(), today = pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2);
+    ws.mergeCells(1, 1, 1, H.length); ws.getCell(1, 1).value = 'Rhoback Embroidery: Kit Info for the Warehouse'; ws.getCell(1, 1).font = {bold:true, size:16, color:{argb:NAVY}}; ws.getRow(1).height = 26;
+    ws.mergeCells(2, 1, 2, H.length); ws.getCell(2, 1).value = 'Updated ' + today + '  ·  ' + rows.length + ' SKUs  ·  ' + new Set(rows.filter(r => r.l).map(r => r.l.id)).size + ' logos  ·  one row per SKU'; ws.getCell(2, 1).font = {italic:true, size:10, color:{argb:'FF6B7385'}};
+    const hr = ws.getRow(3); hr.values = H.map(h => h[0]); hr.height = 32;   // LL v1.14: room for two-line headers
+    hr.eachCell(c => { c.font = {bold:true, color:{argb:'FFFFFFFF'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:NAVY}}; c.alignment = {vertical:'middle', horizontal:'center', wrapText:true}; });
+    ws.autoFilter = {from:{row:3, column:1}, to:{row:3 + rows.length, column:H.length}};   // LL v1.13: whole table
+    const pics = {}, need = [...new Set(rows.filter(r => r.l).map(r => r.l.img.logo || r.l.img.spec).filter(Boolean))];
+    let done = 0; for (const n of need){ pics[n] = await thumb(n); if (++done % 25 === 0) btn.innerHTML = 'Pictures ' + done + '/' + need.length + '&hellip;'; }
+    const ids = {}, border = {style:'thin', color:{argb:'FFD9DDE5'}};
+    let band = false, last = null;
+    rows.forEach(({p, l}, k) => {
+      const r = 4 + k, key = l ? l.id : 'x' + embOf(p); if (key !== last){ band = !band; last = key; }
+      const size = l ? (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : l.dstH || l.dstW ? fmtNum(l.dstH) + ' × ' + fmtNum(l.dstW) : '') : '';
+      const row = ws.getRow(r);
+      row.values = ['', l ? l.school : '', p.name, p.color, p.sku, p.place, p.dst, l ? l.emb : embOf(p) + ' (no logo yet)', l ? l.ver : '', l ? l.threads : '', l && l.clrs !== '' ? (isFinite(+l.clrs) ? +l.clrs : l.clrs) : '', size, sewStatus(l)];
+      row.height = 62;
+      row.eachCell({includeEmpty:true}, (c, ci) => { c.alignment = {vertical:'middle', wrapText:ci === 3 || ci === 10 || ci === 2, horizontal:[1, 6, 9, 11, 12].includes(ci) ? 'center' : 'left'}; c.border = {bottom:border};
+        if (band) c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF3F5FA'}}; });
+      const st = row.getCell(13); st.font = {bold:true, color:{argb:st.value === 'Approved' ? 'FF256B31' : st.value === 'Needs sew-out' || st.value === 'No logo yet' ? 'FFB3261E' : 'FF1B2A4A'}};
+      const n = l && (l.img.logo || l.img.spec), t = n && pics[n];
+      if (t){ if (ids[n] == null) ids[n] = wb.addImage({base64:t.b64, extension:'jpeg'});
+        // inside its own cell + 'move and size with cells' (sorting and filtering carry it with the row); exact offsets in EMU like the v13 file
+        ws.addImage(ids[n], {tl:{nativeCol:0, nativeColOff:PIC_AT[0] * EMU, nativeRow:r - 1, nativeRowOff:PIC_AT[1] * EMU}, br:{nativeCol:0, nativeColOff:(PIC_AT[0] + PIC_BOX[0]) * EMU, nativeRow:r - 1, nativeRowOff:(PIC_AT[1] + PIC_BOX[1]) * EMU}, editAs:'twoCell'}); }
+    });
+    const buf = await wb.xlsx.writeBuffer();
+    const dir = await dirHandle.getDirectoryHandle('Warehouse', {create:true}), name = 'Kit Info_Warehouse ' + nowStamp().slice(0, 10) + '.xlsx';
+    const fh = await dir.getFileHandle(name, {create:true}), w = await fh.createWritable(); await w.write(new Blob([buf])); await w.close();
+    toast('Saved <b>' + esc(name) + '</b> in Logo Library\\Warehouse (' + rows.length + ' SKUs).', 7000);
+  } catch(e){ toast('Couldn&rsquo;t build it (' + esc(e.name === 'NoModificationAllowedError' ? 'close that file in Excel first' : e.message || e.name) + ').', 7000); }
+  btn.disabled = false; btn.innerHTML = old;
+}
+function renderTabs(){
+  const A = activeLogos(), counts = {collegiate:A.filter(isCol).length, accounts:new Set(DB.logos.filter(isCol).map(l => l.school || NO_SCHOOL)).size, mainline:A.filter(isMain).length, nfl:A.filter(isNFL).length, all:A.length, todo:A.filter(l => l.todo.length).length, check:Object.keys(DB.check || {}).filter(id => byId(id)).length + '/' + DB.logos.length, products:prods().filter(p => !p.arch).length};
+  document.getElementById('tabs').innerHTML = TABS.map(t => '<button class="tab' + (state.tab === t.key ? ' on' : '') + '" data-tab="' + t.key + '">' + t.label + (DB.logos.length && counts[t.key] != null ? '<span class="tcnt">' + counts[t.key] + '</span>' : '') + '</button>').join('');
+}
+function render(){
+  const y = window.scrollY;
+  renderTabs();
+  const p = document.getElementById('page');
+  const needConnect = !dirHandle || saveState === 'reconnect' || saveState === 'unsupported';
+  p.innerHTML = (needConnect && !DB.logos.length) || saveState === 'unsupported' ? renderConnect()
+    : (needConnect ? renderConnect() : '') + (state.acct ? renderAccounts() : state.tab === 'all' ? renderAll() : state.tab === 'todo' ? renderTodo() : state.tab === 'audit' ? renderAudit() : state.tab === 'check' ? renderCheck() : state.tab === 'products' ? renderProducts() : state.tab === 'nfl' ? renderList('nfl', 'NFL', isNFL) : state.tab === 'collegiate' ? renderCollegiate() : renderList('mainline', 'Mainline', isMain)) +
+      '<datalist id="placeList">' + [...new Set(['Left Chest', 'Center Chest'].concat(prods().map(p => p.place)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
+      '<datalist id="colorList">' + [...new Set(prods().map(p => p.color).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
+      (state.tab === 'products' ? '<datalist id="embList">' + DB.logos.map(l => '<option value="' + esc(l.emb) + '">').join('') + '</datalist>' : '') +
+      '<datalist id="digList">' + [...new Set(['Q Digitizing (QD)', 'Barrett'].concat(DB.logos.map(l => l.digBy)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
+      '<datalist id="schoolList">' + [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>';
+  hookImgs(); window.scrollTo(0, y);
+}
+
+// ---------------- Events ----------------
+document.getElementById('tabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; state.acct = ''; state.open = ''; saveUi(); render(); window.scrollTo(0, 0); };
+const ms = document.getElementById('msearch');
+ms.oninput = () => { q = ms.value.trim(); render(); };
+document.getElementById('msclear').onclick = () => { ms.value = ''; q = ''; render(); };
+const page = document.getElementById('page');
+let pickFor = null;
+page.addEventListener('click', async e => {
+  const act = e.target.closest('[data-act]');
+  if (act){
+    e.stopPropagation(); const a = act.dataset.act, l = act.dataset.id ? byId(act.dataset.id) : null;
+    if (a === 'connect') return pickFolder();
+    if (a === 'reconnect'){ if (dirHandle && await permOk(dirHandle, true)) await afterConnect(); return; }
+    if (a === 'add'){ state.adding = true; render(); const i = document.getElementById('addEmb'); if (i) i.focus(); return; }
+    if (a === 'addCancel'){ state.adding = false; render(); return; }
+    if (a === 'addSave'){
+      const emb = document.getElementById('addEmb').value.trim(), school = document.getElementById('addSchool').value.trim(), type = document.getElementById('addType').value;
+      if (!emb){ toast('Type the EMB ID first.'); return; }
+      if (DB.logos.some(x => x.emb.toLowerCase() === emb.toLowerCase()) && !confirm(emb + ' is already in the library. Add it again anyway?')) return;
+      const n = addLogo(emb, school, type); state.adding = false; state.open = n.id;
+      if (state.tab !== 'all') state.secOpen[state.tab + '|' + (school || '(no school / account)')] = true;
+      if ((state.tab === 'collegiate' && !isCol(n)) || (state.tab === 'mainline' && !isMain(n)) || (state.tab === 'nfl' && !isNFL(n))) state.tab = 'all';
+      saveUi(); render(); toast('Added ' + esc(emb) + '.');
+      setTimeout(() => { const r = document.querySelector('.row[data-id="' + n.id + '"]'); if (r) r.scrollIntoView({block:'center'}); }, 30); return;
+    }
+    if (a === 'expand' || a === 'collapse'){
+      document.querySelectorAll('.sec-head[data-sec]').forEach(h => { state.secOpen[h.dataset.sec] = a === 'expand'; });
+      if (state.tab === 'todo') DB.lists.todo.forEach(t => { state.secOpen['todo|' + t] = a === 'expand'; });
+      saveUi(); render(); return;
+    }
+    if (a === 'clearF'){ const tb = act.dataset.ftab || 'all'; if (tb === 'all') state.f = {}; else fOf(tb) && (state.fx[tb] = {}); saveUi(); render(); return; }
+    if (a === 'colAdd' || a === 'colDel' || a === 'colUpdate'){
+      const k = act.dataset.acct, x = schoolSave(k, schoolGet(k));
+      if (a === 'colAdd'){ x.colors.push({name:'', pms:'', mad:''}); render(); const ins = document.querySelectorAll('input[data-sc="name"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+      if (a === 'colDel'){ const c = x.colors[+act.dataset.i]; if (!c) return; if ((c.name || c.pms || c.mad) && !confirm('Remove ' + (colorText(c) || 'this color') + '?')) return;
+        x.colors.splice(+act.dataset.i, 1); if (c.name || c.pms || c.mad) schoolLog(k, 'Color removed', colorText(c), ''); touch(); render(); return; }
+      if (!confirm('Save the current colors in Past colors (used until today), then update them?')) return;
+      const today = nowStamp().slice(0, 10), keep = x.colors.filter(c => c.name || c.pms || c.mad).map(c => Object.assign({}, c));
+      x.past.unshift({until:today, colors:keep}); schoolLog(k, 'School colors changed', keep.map(colorText).join('; '), '(saved in Past colors, used until ' + fmtDate(today) + ')');
+      touch(); render(); toast('Old colors saved in Past colors. Update the colors now.'); return;
+    }
+    if (a === 'openSchool'){ state.acct = act.dataset.acct; state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
+    if (a === 'acctBack'){ state.acct = ''; state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
+    if ((a === 'archive' || a === 'retire') && l){ setInactive(l, a === 'retire' ? RETIRED : ARCH); return; }
+    if (a === 'restore' && l){ restoreLogo(l); return; }
+    if (a === 'delete' && l){ deleteLogo(l); return; }
+    if (a === 'aClear'){ state.audit = {q:'', what:'', from:'', to:''}; saveUi(); render(); return; }
+    if (a === 'done' && l){ setTodo(l, act.dataset.todo, false); render(); toast(esc(l.emb) + ': ' + esc(act.dataset.todo) + ' done.'); return; }
+    if (a === 'chkPrev' || a === 'chkNext'){ checkStep(a === 'chkPrev' ? -1 : 1, false); return; }
+    if (a === 'chkOpen'){ checkStep(1, true); return; }
+    if (a === 'chkScope'){ state.chkProd = !!act.dataset.v; state.chk = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
+    if ((a === 'chkOk' || a === 'chkFlag') && l){
+      const note = (document.getElementById('chkNote') || {}).value || '';
+      if (a === 'chkFlag' && !note.trim()){ toast('Type what&rsquo;s wrong first.'); document.getElementById('chkNote').focus(); return; }
+      DB.check[l.id] = {res:a === 'chkOk' ? 'ok' : 'flag', note:a === 'chkOk' ? '' : note.trim(), ts:nowStamp().replace('T', ' ')};
+      logEdit(l, 'Setup Check', '', a === 'chkOk' ? 'Verified' : 'Flagged: ' + note.trim()); touch(); checkStep(1, true); return; }
+    if ((a === 'chkHereOk' || a === 'chkHereFlag') && l){   // LL v1.25: Setup Check from the logo card on any tab
+      DB.check = DB.check || {}; let note = '';
+      if (a === 'chkHereFlag'){ const c = DB.check[l.id]; note = (prompt('What’s wrong with ' + (l.emb || l.id) + '? (for Claude)', c && c.res === 'flag' ? c.note : '') || '').trim(); if (!note) return; }
+      DB.check[l.id] = {res:a === 'chkHereOk' ? 'ok' : 'flag', note, ts:nowStamp().replace('T', ' ')};
+      logEdit(l, 'Setup Check', '', a === 'chkHereOk' ? 'Verified' : 'Flagged: ' + note); touch(); if (state.tab === 'check'){ checkStep(1, true); return; } render(); toast(esc(l.emb) + (a === 'chkHereOk' ? ' verified.' : ' flagged for Claude.')); return; }
+    if (a === 'chkClear' && l){ const c = DB.check[l.id]; if (!c) return; delete DB.check[l.id]; logEdit(l, 'Setup Check', c.res === 'ok' ? 'Verified' : 'Flagged', 'Not checked (by hand)'); touch(); render(); toast(esc(l.emb) + (c.res === 'ok' ? ' unverified.' : ' flag cleared.')); return; }   // LL v1.26: manual unverify
+    if (a === 'sewMove' && l){ const f = act.dataset.slot, t = act.dataset.to, L = k => SLOTS.find(z => z[0] === k)[1], a1 = l.img[f], b1 = l.img[t];
+      l.img[t] = a1; l.img[f] = b1 || ''; logEdit(l, 'Sew-out moved', L(f) + ': ' + a1, L(t) + (b1 ? ' (swapped with ' + b1 + ')' : '')); touch(); render(); toast('Moved to ' + L(t) + '.'); return; }
+    if (a === 'whXlsx'){ warehouseExcel(act); return; }
+    if (a === 'prodArch'){ const p = prods()[+act.dataset.pi]; if (!p) return; p.arch = !p.arch; const pl = byId(p.id); if (pl) logEdit(pl, p.arch ? 'Archived product' : 'Restored product', '', p.sku || p.name);
+      touch(); render(); toast((p.arch ? 'Archived ' : 'Restored ') + esc(p.sku || p.name) + '.'); return; }
+    if (a === 'pClear'){ state.pf = {}; saveUi(); render(); return; }
+    if (a === 'prodAdd' && l){ prods().push({id:l.id, name:'', color:'', sku:'', place:'', dst:l.emb ? l.emb + '.DST' : '', note:''}); logEdit(l, 'Added product', '', '(new SKU row)'); touch(); render();
+      const ins = document.querySelectorAll('input[data-pf="name"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+    if (a === 'prodDel'){ const i = +act.dataset.pi, p = prods()[i]; if (!p) return; if ((p.sku || p.name) && !confirm('Remove ' + (p.sku || p.name) + ' from this logo?')) return;
+      prods().splice(i, 1); const pl = byId(p.id); if (pl) logEdit(pl, 'Removed product', p.sku || p.name || '(blank row)', ''); touch(); render(); return; }
+    if (a === 'boxAdd' && l){ const b = {ver:l.ver || '', date:nowStamp().slice(0, 10)}; bx(l).unshift(b); sortBoxes(l); logEdit(l, 'Added to Box', '', boxText(b)); touch(); render(); toast(esc(l.emb) + ' marked as added to Box.'); return; }
+    if (a === 'boxDel' && l){ const b = bx(l)[+act.dataset.i]; if (!b || !confirm('Remove the Box entry ' + boxText(b) + ' from ' + (l.emb || l.id) + '?')) return;
+      bx(l).splice(+act.dataset.i, 1); logEdit(l, 'Removed Box entry', boxText(b), ''); touch(); render(); return; }
+    if (a === 'noteAdd'){ const nid = act.dataset.nid, t = document.querySelector('.note-in[data-nid="' + CSS.escape(nid) + '"]'); if (t && addNote(nid, t.value)){ render(); toast('Note added.'); } return; }
+    if (a === 'linkEdit' && l){   // LL v1.32: change / add / remove a file link
+      const f = act.dataset.lk, n = (LINKS.find(x => x[0] === f) || [f, f])[1];
+      const v = prompt('Paste the ' + n + ' file path (in File Explorer: right-click the file > Copy as path) or its SharePoint link.\nLeave it empty to remove the link.', l[f] || '');
+      if (v === null) return; setField(l, f, v.trim().replace(/^"+|"+$/g, '')); refreshRow(l); toast(v.trim() ? n + ' link saved.' : n + ' link removed.'); return; }
+    if (a === 'copyFolder' && l){ const p = l[act.dataset.which || 'folder']; if (!p){ toast('No folder path yet.'); return; } try { await navigator.clipboard.writeText(p); toast('Folder path copied.'); } catch(err){ toast('Couldn&rsquo;t copy.'); } return; }
+    if (a === 'folderEdit' && l){ const f = act.dataset.which || 'folder', n = f === 'folder' ? 'spec sheet folder' : 'files folder';
+      const v = prompt('Paste the ' + n + ' path (in File Explorer: click the address bar, copy it) or its SharePoint link.\nLeave it empty to remove it.', l[f] || ''); if (v === null) return;
+      setField(l, f, v.trim().replace(/^"+|"+$/g, '')); render(); toast(v.trim() ? 'Folder saved.' : 'Folder removed.'); return; }
+    if (a === 'openFolder' && l){ const p = l[act.dataset.which || 'folder'], u = folderUrl(p); if (!p){ toast('No folder path yet.'); return; } if (!u){ toast('That folder isn&rsquo;t in a synced SharePoint folder, so it can&rsquo;t open here. Use Copy and paste it into File Explorer.', 6000); return; } window.open(u, '_blank', 'noopener'); return; }
+    if (a === 'crop' && l){ openCrop(l, act.dataset.slot); return; }
+    if (a === 'pic' && l){ pickFor = [l.id, act.dataset.slot]; const fi = document.getElementById('picFile'); fi.value = ''; fi.click(); return; }
+    if (a === 'unpic' && l){ removePicture(l, act.dataset.slot); return; }
+    return;
+  }
+  const th = e.target.closest('th[data-sort]');
+  if (th){ const k = th.dataset.sort, s = state.sort[state.tab]; state.sort[state.tab] = s && s.k === k ? {k, d:-s.d} : {k, d:1}; saveUi(); render(); return; }
+  const sh = e.target.closest('.sec-head[data-sec]');
+  if (sh){ const k = sh.dataset.sec, open = sh.querySelector('.chev').innerHTML.charCodeAt(0) === 9660; state.secOpen[k] = !open; saveUi(); render(); return; }
+  const acr = e.target.closest('tr.acct-row');
+  if (acr){ state.acct = acr.dataset.acct; state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
+  const ar = e.target.closest('tr.aud-row');
+  if (ar && ar.dataset.id.startsWith('S:')){ state.acct = ar.dataset.id.slice(2); state.open = ''; saveUi(); render(); window.scrollTo(0, 0); return; }
+  if (ar){ const l = byId(ar.dataset.id); if (l) openLogo(l); else toast('That logo isn&rsquo;t in the library anymore.'); return; }
+  const pr = e.target.closest('tr.prow');
+  if (pr && !e.target.closest('input')){ const l = pr.dataset.pid && byId(pr.dataset.pid); if (l) openLogo(l); return; }
+  const pop = e.target.closest('[data-pop]');
+  if (pop){ const l = byId(pop.dataset.id); if (l) openPop(l, pop.dataset.pop); return; }
+  if (e.target.closest('.card-cell')) return;
+  const row = e.target.closest('tr.row');
+  if (row){ state.open = state.open === row.dataset.id ? '' : row.dataset.id; render(); }
+});
+page.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.filter){ fOf(t.dataset.ftab || 'all')[t.dataset.filter] = t.value; saveUi(); render(); return; }
+  if (t.dataset.audit){ state.audit[t.dataset.audit] = t.value; saveUi(); render(); return; }
+  if (t.dataset.pfilter){ (state.pf = state.pf || {})[t.dataset.pfilter] = t.value; saveUi(); render(); return; }
+  if (t.dataset.pf){ const p = prods()[+t.dataset.pi], k = t.dataset.pf, v = t.value.trim(); if (!p || (p[k] || '') === v) return;
+    const was = p[k] || ''; p[k] = v; const pl = byId(p.id); if (pl) logEdit(pl, {name:'Product name', color:'Product color', sku:'SKU', place:'Placement', dst:'Insignia URL'}[k], (p.sku && k !== 'sku' ? p.sku + ': ' : '') + was, v); touch(); if (pl) refreshRow(pl); return; }
+  if (t.dataset.plink){ const p = prods()[+t.dataset.plink], v = t.value.trim().toLowerCase(), l = DB.logos.find(x => x.emb.toLowerCase() === v); if (!p || !v) return;
+    if (!l){ toast('No logo with EMB ID &ldquo;' + esc(t.value) + '&rdquo;.'); return; }
+    p.id = l.id; logEdit(l, 'Linked product', p.dst || '', p.sku || p.name); touch(); render(); toast('Linked ' + esc(p.sku || p.name) + ' to ' + esc(l.emb) + '.'); return; }
+  if (t.dataset.sf || t.dataset.sc){   // school page: save without redrawing (so the next click still lands)
+    const k = t.dataset.acct, x = schoolSave(k, schoolGet(k)), v = t.value.trim(), LBL = {name:'Full name', code:'Abbreviation / EMB code', notes:'Notes', pms:'PMS', mad:'Madeira'};
+    if (t.dataset.sf){ if (x[t.dataset.sf] === v) return; schoolLog(k, 'School ' + LBL[t.dataset.sf], x[t.dataset.sf], v); x[t.dataset.sf] = v; }
+    else { const c = x.colors[+t.dataset.i]; if (!c || c[t.dataset.sc] === v) return; schoolLog(k, 'Color ' + (+t.dataset.i + 1) + ' ' + (LBL[t.dataset.sc] || 'name'), c[t.dataset.sc], v); c[t.dataset.sc] = v; }
+    touch(); const hl = document.getElementById('shl'); if (hl) hl.innerHTML = schoolHist(k); return;
+  }
+  const l = t.dataset.id ? byId(t.dataset.id) : null; if (!l) return;
+  if (t.dataset.todo){ setTodo(l, t.dataset.todo, t.checked); refreshRow(l); return; }
+  if (t.dataset.step){ setStep(l, t.value); refreshRow(l); return; }
+  if (t.dataset.ccst){ const v = t.value; if ((l.ccSt || '') === v) return; logEdit(l, 'Color card', l.ccSt || '', v || '(none)'); l.ccSt = v; l.ccDate = v ? nowStamp().slice(0, 10) : ''; touch(); refreshRow(l); const c = document.getElementById('cc-' + l.id); if (c) c.innerHTML = ccCell(l); return; }   // LL v1.40
+  if (t.dataset.tstat){ const v = t.value; if ((l.tcStatus || '') === v) return; logEdit(l, 'Thread Status', l.tcStatus || '', v || '(none)'); l.tcStatus = v; l.tcDate = v ? nowStamp().slice(0, 10) : ''; touch(); refreshRow(l); return; }
+  if (t.dataset.flagcb){ setField(l, 'flag', t.checked ? (DB.lists.flag[0] || 'REVIEW') : ''); refreshRow(l); return; }
+  if (t.dataset.bx){ const b = bx(l)[+t.dataset.i], k = t.dataset.bx, v = k === 'date' ? t.value : t.value.trim(); if (!b || b[k] === v) return;
+    const was = boxText(b); b[k] = v; logEdit(l, 'Box ' + (k === 'ver' ? 'version' : 'date'), was, boxText(b)); touch();
+    if (k === 'date'){ sortBoxes(l); render(); } else refreshRow(l); return; }
+  const f = t.dataset.f; if (!f) return;
+  if (t.type === 'checkbox') setField(l, f, t.checked); else setField(l, f, t.value.trim());
+  refreshRow(l);
+});
+// After an edit in the open card, update just that logo's row + the card's live notes (a full redraw would eat the click into the next field).
+function refreshRow(l){
+  const tr = document.querySelector('tr.row[data-id="' + l.id + '"]');
+  if (tr){ const d = tr.querySelector('[data-todo]'), sec = d ? d.dataset.todo : ''; tr.innerHTML = TAB_COLS[state.tab].map(k => '<td>' + C[k].v(l, sec) + '</td>').join(''); }
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set('ck-' + l.id, chkCell(l)); set('ts-' + l.id, tsCell(l)); set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l)); set('hs-' + l.id, histSum(l)); set('hl-' + l.id, histRows(l));
+
+  renderTabs(); hookImgs();
+}
+page.addEventListener('input', e => { if (e.target.id !== 'aSearch') return; state.audit.q = e.target.value; saveUi(); const pos = e.target.selectionStart; render(); const n = document.getElementById('aSearch'); n.focus(); n.setSelectionRange(pos, pos); });
+page.addEventListener('keydown', e => { const t = e.target; if (!(e.key === 'Enter' && (e.ctrlKey || e.metaKey) && t.classList && t.classList.contains('note-in'))) return;   // LL v1.08: Ctrl+Enter saves the note
+  e.preventDefault(); if (addNote(t.dataset.nid, t.value)){ render(); toast('Note added.'); } });
+page.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.hist) histOpen[d.dataset.hist] = d.open; if (d.dataset && d.dataset.fold) foldOpen[d.dataset.fold] = d.open; }, true);
+document.getElementById('picFile').onchange = e => { const f = e.target.files[0], l = pickFor && byId(pickFor[0]); if (f && l) putPicture(l, pickFor[1], f); };
+page.addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d){ e.preventDefault(); d.classList.add('over'); } });
+page.addEventListener('dragleave', e => { const d = e.target.closest('[data-drop]'); if (d) d.classList.remove('over'); });
+page.addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); if (!d) return; e.preventDefault(); d.classList.remove('over');
+  const f = e.dataTransfer.files[0], l = byId(d.dataset.id), k = d.dataset.drop; if (!f || !l) return;
+  if (d.classList.contains('th') && l.img[k] && !confirm('Replace the ' + SLOTS.find(x => x[0] === k)[1] + ' picture for ' + (l.emb || l.id) + '?\n(The old one moves to Images\\DELETE.)')) return;   // LL v1.39: table drops ask first
+  putPicture(l, k, f); });
+window.addEventListener('dragover', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });   // a picture dropped outside a box does nothing (instead of opening the file)
+window.addEventListener('drop', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });
+
+boot();
+</script>
+</body>
+</html>
