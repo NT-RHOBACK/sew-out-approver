@@ -177,6 +177,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .tbl .ckc select.cksel,.emb-card .clist select.cksel{display:block;width:100%;min-width:74px;margin-top:2px;padding:2px 4px;font-size:11px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--navy)}
 .ckok{display:block;font-size:10.5px;font-weight:600;color:var(--navy);margin-top:2px;white-space:nowrap}.ckauto{cursor:help}
 .clist td.ok{color:#256b31;background:#eaf6ec}.clist td.bad{color:#b3261e;background:#fdecea}.clist td.warn{color:#8a5a00;background:#fff4e0}.clist td.off{color:#9aa3b5;background:#fafafa}
+.chksel.ok{background:#eaf6ec !important;color:#256b31 !important;font-weight:700}.chksel.flag{background:#fdecea !important}
 .needs{display:grid;grid-template-columns:repeat(3,max-content);gap:4px 22px}.needs .cb{display:inline-flex}
 .pathrow{display:flex;gap:6px;align-items:center}
 /* LL v1.08: internal notes (like the portals) + To Do dropdown */
@@ -270,7 +271,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.48</span>
+    <span class="vbadge">LL v1.49</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -284,7 +285,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.48';
+const VERSION = 'LL v1.49';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -729,8 +730,8 @@ function setStep(l, v){
   logEdit(l, 'To Do', old, v || '(done)'); if (v) unverify(l, 'Needs');
   touch();
 }
-const chkCell = l => { const c = (DB.check || {})[l.id], id = esc(l.id); return '<span class="chk-pill ' + (c ? c.res : 'none') + '">' + (c ? (c.res === 'ok' ? '✓ Verified' : '⚑ Flagged') : 'Not checked') + '</span>' + (c && c.res === 'flag' && c.note ? '<span class="xs">' + esc(c.note) + '</span>' : '') +
-  ' &nbsp;<button class="btn small" data-act="chkHereOk" data-id="' + id + '">✓ Verified</button> <button class="btn light small" data-act="chkHereFlag" data-id="' + id + '">⚑ Flag for Claude</button>' + (c ? ' <button class="btn light small" data-act="chkClear" data-id="' + id + '">' + (c.res === 'ok' ? 'Unverify' : 'Clear flag') + '</button>' : ''); };
+const chkCell = l => { const c = (DB.check || {})[l.id], v = c ? c.res : '';   // LL v1.49: one dropdown (Flag for Claude removed)
+  return '<select data-chksel="1" data-id="' + esc(l.id) + '" class="chksel ' + (v || 'none') + '"><option value="">Not checked</option><option value="ok"' + (v === 'ok' ? ' selected' : '') + '>✓ Verified</option>' + (v === 'flag' ? '<option value="flag" selected>⚑ Flagged (old)</option>' : '') + '</select>'; };
 function addNote(id, text){
   text = String(text || '').trim(); if (!text) return false;
   DB.notes.push({ts:nowStamp(), id, text, by:BY});
@@ -880,6 +881,17 @@ function checklist(l){   // LL v1.46: the checklist is where you fill these in (
   return '<div class="gtitle">Checklist</div><table class="clist"><thead><tr>' + cells.map(c => '<th>' + c[0] + '</th>').join('') + '</tr></thead><tbody><tr>' +
     cells.map((c, i) => '<td class="' + c[1] + '">' + ctl[i] + '</td>').join('') + '</tr></tbody></table><div class="note" style="margin:-8px 0 12px">Click a ✓ / ✗ to switch it, or pick from the dropdowns. The others fill in by themselves from the fields below.</div>';
 }
+// LL v1.49: School and Digitized by are dropdowns ("+ Add new…" at the bottom for anything not listed yet)
+const NEW_OPT = '<option value="__new__">+ Add new&hellip;</option>';
+function schoolSel(l){
+  const same = DB.logos.filter(x => !l.type || x.type === l.type), ks = [...new Set(same.map(x => x.school).filter(Boolean))].sort((a, b) => coll.compare(schoolSort(a), schoolSort(b)));
+  if (l.school && !ks.includes(l.school)) ks.unshift(l.school);
+  return '<select data-f="school" data-id="' + esc(l.id) + '"><option value="">—</option>' + ks.map(k => { const n = schoolFull(k); return '<option value="' + esc(k) + '"' + (k === l.school ? ' selected' : '') + '>' + esc(n && n !== k ? n + ' (' + schoolCode(k) + ')' : k) + '</option>'; }).join('') + NEW_OPT + '</select>';
+}
+function digSel(l){
+  const ks = [...new Set(['Q Digitizing (QD)', 'Barrett', 'Abcoln', 'Vlead'].concat(DB.logos.map(x => x.digBy)).filter(Boolean))].sort(coll.compare);
+  return '<select data-f="digBy" data-id="' + esc(l.id) + '"><option value="">—</option>' + ks.map(k => '<option' + (k === l.digBy ? ' selected' : '') + '>' + esc(k) + '</option>').join('') + NEW_OPT + '</select>';
+}
 function needsGrid(l){   // LL v1.48: Needs as a row of checkboxes (red when it's needed)
   const L = DB.lists, id = esc(l.id), items = L.todo.concat(l.todo.filter(t => !L.todo.includes(t)));
   return '<div class="gsec"><div class="gtitle">Needs</div><table class="clist cgrid"><thead><tr>' + items.map(t => '<th>' + esc(t.replace(/^needs\s+/i, '')) + '</th>').join('') + '</tr></thead><tbody><tr>' +
@@ -899,10 +911,10 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
   const rows =
     grid('Logo &middot; ' + id, [
       ['EMB ID', inp('emb'), '17%'],
-      ['School', inp('school') + (S.name ? '<div class="gsub">' + esc(S.name) + '</div>' : ''), '15%'],
+      ['School', schoolSel(l), '15%'],   // LL v1.49: dropdowns
       ['Type', sel('type', L.type, '—'), '10%'],
       ['Ver', inp('ver'), '5%'],
-      ['Digitized by', '<input data-f="digBy" data-id="' + id + '" value="' + esc(l.digBy) + '" list="digList" placeholder="Pick or type">', '13%'],
+      ['Digitized by', digSel(l), '13%'],
       ['Status', sel('status', L.status, '—'), '14%'],
       ['Flag', '<label class="gcb" title="Flag for review"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> ' + esc(l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? l.flag : 'Review') + '</label>', '7%'],
       ['Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>']]) +
@@ -1141,7 +1153,7 @@ function renderCheck(){
     '<span class="sub">' + ok + ' verified &middot; ' + fl + ' flagged &middot; ' + (o.length - ok - fl) + ' to go</span>' +
     '<button class="btn light small" data-act="chkPrev">&larr; Back</button><button class="btn light small" data-act="chkNext">Next &rarr;</button><button class="btn light small" data-act="chkOpen">Next not checked</button>' +
     '<button class="btn small" data-act="chkOk" data-id="' + esc(l.id) + '">✓ Verified, next</button>' +
-    '<div class="chk-note"><textarea id="chkNote" placeholder="What&rsquo;s wrong? (for Claude)">' + esc(c && c.res === 'flag' ? c.note : '') + '</textarea><button class="btn light small" data-act="chkFlag" data-id="' + esc(l.id) + '">⚑ Flag for Claude, next</button>' + (c ? '<button class="lnk" data-act="chkClear" data-id="' + esc(l.id) + '">Clear</button>' : '') + '</div></div>' +
+    '</div>' +
     cardHtml(l);
 }
 // ---------------- Products tab (LL v1.12) ----------------
@@ -1373,6 +1385,10 @@ page.addEventListener('change', e => {
   const l = t.dataset.id ? byId(t.dataset.id) : null; if (!l) return;
   if (t.dataset.todo){ setTodo(l, t.dataset.todo, t.checked); refreshRow(l); return; }
   if (t.dataset.step){ setStep(l, t.value); refreshRow(l); return; }
+  if (t.dataset.chksel){ DB.check = DB.check || {}; const was = DB.check[l.id], v = t.value;   // LL v1.49
+    if (v === 'ok'){ DB.check[l.id] = {res:'ok', note:'', ts:nowStamp().replace('T', ' ')}; logEdit(l, 'Setup Check', was ? (was.res === 'ok' ? 'Verified' : 'Flagged') : '', 'Verified'); }
+    else if (!v && was){ delete DB.check[l.id]; logEdit(l, 'Setup Check', was.res === 'ok' ? 'Verified' : 'Flagged', 'Not checked (by hand)'); }
+    touch(); if (state.tab === 'check' && v === 'ok'){ checkStep(1, true); return; } refreshRow(l); renderTabs(); return; }
   if (t.dataset.ccst){ const v = t.value; if ((l.ccSt || '') === v) return; logEdit(l, 'Color card', l.ccSt || '', v || '(none)'); l.ccSt = v; l.ccDate = v ? nowStamp().slice(0, 10) : ''; touch(); refreshRow(l); const c = document.getElementById('cc-' + l.id); if (c) c.innerHTML = ccCell(l); return; }   // LL v1.40
   if (t.dataset.tstat){ const v = t.value; if ((l.tcStatus || '') === v) return; logEdit(l, 'Thread Status', l.tcStatus || '', v || '(none)'); l.tcStatus = v; l.tcDate = v ? nowStamp().slice(0, 10) : ''; touch(); refreshRow(l); return; }
   if (t.dataset.flagcb){ setField(l, 'flag', t.checked ? (DB.lists.flag[0] || 'REVIEW') : ''); refreshRow(l); return; }
@@ -1380,6 +1396,7 @@ page.addEventListener('change', e => {
     const was = boxText(b); b[k] = v; logEdit(l, 'Box ' + (k === 'ver' ? 'version' : 'date'), was, boxText(b)); touch();
     if (k === 'date'){ sortBoxes(l); render(); } else refreshRow(l); return; }
   const f = t.dataset.f; if (!f) return;
+  if (t.value === '__new__'){ const v = (prompt(f === 'school' ? 'New school / account code (like AK or Rhoback Mainline):' : 'New digitizer name:') || '').trim(); if (!v){ t.value = l[f] || ''; return; } setField(l, f, v); render(); return; }   // LL v1.49
   if (t.type === 'checkbox') setField(l, f, t.checked); else setField(l, f, t.value.trim());
   refreshRow(l);
 });
