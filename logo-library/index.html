@@ -64,6 +64,8 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .th img{width:100%;height:100%;object-fit:contain;background:#fff}
 .ft{display:inline-block;font-size:10.5px;font-weight:700;border-radius:4px;padding:1px 5px;margin:1px 3px 1px 0}
 .ft.on{background:#eaf6ec;color:#256b31}.ft.off{background:#F3F4F6;color:#A0A7B3;text-decoration:line-through}
+.stp{display:inline-block;font-size:12px;font-weight:700;border-radius:4px;padding:2px 8px;background:#eef0f6;color:var(--navy);margin:0 4px 3px 0}.stp.ok{background:#eaf6ec;color:#256b31}.stp.no{background:#fff1e6;color:#9a4b00}.stp.off{background:#F3F4F6;color:#6B7385}
+.stt{display:flex;flex-wrap:wrap;gap:2px 0}
 .tdt{display:inline-block;font-size:11px;font-weight:600;border-radius:10px;padding:2px 8px;margin:1px 3px 1px 0;background:#eef0f6;color:#49516C}
 .flag{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:2px 6px;background:#fdf0c4;color:#7a5800}
 .chk-bad{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;background:#f8d7d7;color:#a61b1b;margin-left:4px}
@@ -248,7 +250,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.29</span>
+    <span class="vbadge">LL v1.30</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -262,7 +264,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.29';
+const VERSION = 'LL v1.30';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -685,16 +687,23 @@ const C = {
   files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (bx(l).length ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (bx(l).length ? '<span class="ft box" title="In Box: ' + esc(bx(l).map(boxText).join(', ')) + '">Box' + (bx(l)[0].ver ? ' ' + esc(bx(l)[0].ver) : '') + '</span>' : '')},
   status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
   todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
+  stat3:{h:'Status / Needs / Flag', w:'24%', s:l => (l.status || '~') + (needsSew(l) ? ' 0' : ' 1'), v:l => {   // LL v1.30: Status + To Do + Flag in one column
+    const st = l.status ? '<span class="stp' + (l.status === 'Approved' ? ' ok' : l.status === 'Not Approved' ? ' no' : inactive(l) ? ' off' : '') + '">' + esc(l.status) + '</span>' : '<span class="muted">No status</span>';
+    const tags = (needsSew(l) ? '<span class="sewpill" style="white-space:nowrap" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS SEW-OUT</span>' : '') +
+      l.todo.filter(t => !(needsSew(l) && /^needs?\s+sew/i.test(t))).map(t => '<span class="tdt">' + esc(t) + '</span>').join('') +
+      (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') +
+      (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '');
+    return st + (tags ? '<div class="stt">' + tags + '</div>' : ''); }},
   flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') + (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
-  collegiate: ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','status','todo','flag'],
-  accounts:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
-  mainline:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
-  nfl:        ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','status','todo','flag'],
-  all:        ['chev','spec','logo','bar','qd','emb','school','type','ver','size','clrs','files','status','todo','flag'],
-  todo:       ['chev','spec','logo','bar','qd','embS','type','ver','size','clrs','files','status','flag','done']
+  collegiate: ['chev','spec','logo','bar','qd','emb','schoolF','ver','size','clrs','files','stat3'],
+  accounts:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','stat3'],
+  mainline:   ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','stat3'],
+  nfl:        ['chev','spec','logo','bar','qd','emb','ver','size','clrs','files','stat3'],
+  all:        ['chev','spec','logo','bar','qd','emb','school','type','ver','size','clrs','files','stat3'],
+  todo:       ['chev','spec','logo','bar','qd','embS','type','ver','size','clrs','files','stat3','done']
 };
 function sorted(tab, list){
   const s = state.sort[tab] || {k:'emb', d:1}, col = C[s.k] || C.emb;
