@@ -261,21 +261,75 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:14px 24px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
 .toast.on{opacity:1}
 @media(max-width:700px){.msearch input{width:180px}.header-user{display:none}.page{padding:16px}}
+
+/* ===== LL v1.55: NetSuite portal (EMB Hub) theme - same colors, header, tabs, cards, tables and pills. Layout and fields unchanged. ===== */
+:root{--navy:#1c2340;--navy-h:#2a3a4f;--text:#1c2340;--grey:#8892a0;--line:#e2e6ef;--line-d:#d1d6de;--bg:#f5f7fb;--text-m:#49516C}
+body{background:var(--bg);font-family:'Aptos','Aptos Display','Segoe UI','DM Sans',sans-serif;line-height:1.45}
+h1,.brand-sub,.sec-head .name,.top-bar,.emb-box-title,.connect h2{font-family:inherit}
+.top-bar{font-size:13px;color:rgba(255,255,255,.9);padding:8px 24px}
+.header{padding:8px 24px;border-bottom:2px solid var(--line)}
+.header-left{gap:10px}
+.ridge{gap:3px}.ridge span{width:3px;height:22px;border-radius:1px}
+.brand-sub{font-size:13px;font-weight:600;letter-spacing:3px}
+.vbadge{margin-left:0;padding:1px 7px;border-radius:9px;background:#f0f1f5;border:1px solid #cdd0dc;color:var(--text-m);font-size:11px;font-weight:600;letter-spacing:.02em}
+.header-user{font-size:15px;font-weight:400;color:var(--text-m)}
+.avatar{width:28px;height:28px;border:1px solid var(--line)}
+.msearch input{border-color:var(--line-d);border-radius:7px}
+.tabs{padding:0 24px}
+.tab{padding:12px 18px;font-size:14px;font-weight:500;letter-spacing:1.5px;border-bottom-width:2px}
+.page{padding:24px 24px 60px}
+h1{font-size:22px;margin-bottom:12px}
+.bar select,.bar input{padding:8px 10px;border:1px solid var(--line-d);border-radius:7px;font-size:13px}
+.btn{border-radius:8px}.btn.light{border-color:var(--line-d)}.btn.light:hover{background:#f4f6f8}
+.ibtn{border-color:var(--line-d);border-radius:7px}
+.savepill{border-color:var(--line-d)}
+/* tables = portal "card" tables */
+.tblwrap{border:1px solid var(--line);border-radius:10px;box-shadow:none}
+.tbl th{background:#fafbfc;font-size:11px;font-weight:700;letter-spacing:.44px;color:var(--grey);border-bottom:1px solid var(--line);padding:10px 8px}
+.tbl th.sorted,.tbl th.sorted .arr{color:var(--navy)}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--line)}
+.tbl tr.row:hover td{background:#f8f9fc}.tbl tr.row.open td{background:#eef2f8}
+.sec-head .cnt,.xfold>summary .cnt,.tab .tcnt{border-radius:11px}
+/* pills */
+.stp,.flag,.tdt,.chk-bad{border-radius:11px;padding:2px 9px;font-size:11px;font-weight:600;line-height:1.5}
+.stp{background:#eef0f4;color:#4a5568}.stp.ok{background:#e0efe1;color:#2f7a4d}.stp.no{background:#ffe6d2;color:#c05621}.stp.off{background:#eceef1;color:#5b6472}
+.flag{background:#fef2d5;color:#b7791f}.chk-bad{background:#fde7e3;color:#c0392b}
+.ft{border-radius:11px;padding:1px 7px;font-weight:600}.ft.on{background:#e0efe1;color:#2f7a4d}.ft.off{background:#eceef1;color:#a0a7b3}
+.tdt{background:#eef0f4;color:#4a5568}
+/* the open drop-down card = a white portal card */
+.card-cell{background:var(--bg)!important}
+.emb-card.xcard{background:#fff;border:1px solid var(--line);border-radius:10px;margin:10px 14px 14px 30px;padding:18px 20px}
+.gtitle{font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--navy);margin:0 0 6px}
+.emb-card input:not([type=checkbox]):not([type=file]),.emb-card select,.emb-card textarea{border-color:var(--line-d);border-radius:7px}
+.clist.cgrid{border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.clist.cgrid th{background:#fafbfc;color:var(--grey);font-size:11px;font-weight:700;letter-spacing:.44px;text-transform:uppercase;border:none;border-bottom:1px solid var(--line);padding:8px 6px 8px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clist.cgrid td{border:none;padding:8px 10px}
+.clist.cgrid th + th,.clist.cgrid td + td{border-left:1px solid var(--line)}
+.clist th{background:#fafbfc;color:var(--grey);border-color:var(--line)}.clist td{border-color:var(--line)}
+.clist td.ok{color:#2f7a4d;background:#e0efe1}.clist td.bad{color:#c0392b;background:#fde7e3}.clist td.warn{color:#b7791f;background:#fef2d5}
+.chksel.ok{background:#e0efe1 !important;color:#2f7a4d !important}
+.ftop{background:#fafbfc;border-color:var(--line);border-radius:10px}
+.pic .lbl{color:var(--grey);font-size:11px;letter-spacing:.44px}
+.pic .big{border-color:var(--line);border-radius:8px;background:#f4f6f9}
+.th{border-radius:6px;border-color:var(--line);background:#f4f6f9}
+.ccdrop{border-color:var(--line-d);background:#fafbfc}
+.xfold{border-color:var(--line);border-radius:10px;max-width:1200px}
+.xfold>summary{font-size:13px;font-weight:700;letter-spacing:0;text-transform:none}
+.toast{border-radius:10px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-<div class="top-bar">Rhoback &mdash; Embroidery Logo Library</div>
+<div class="top-bar">Rhoback &mdash; Embroidery Management System</div>
 <div class="header">
   <div class="header-left">
-    <div class="brand">RHOBACK</div>
     <div class="ridge"><span class="r"></span><span class="n"></span></div>
     <div class="brand-sub">Logo Library</div>
+    <span class="vbadge">LL v1.55</span>
   </div>
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.54</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -289,7 +343,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.54';
+const VERSION = 'LL v1.55';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
