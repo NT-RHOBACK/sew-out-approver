@@ -157,6 +157,9 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .pic .fn{font-size:11px;color:#49516C;margin-top:3px;overflow-wrap:anywhere;min-height:14px}
 .pic .acts{display:flex;gap:6px;justify-content:center;margin-top:4px;flex-wrap:wrap}.pic .acts .btn{white-space:nowrap}   /* LL v1.24: Replace / Remove / Crop never squished */
 .ibtn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:28px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--navy);cursor:pointer;padding:0}.ibtn:hover{background:#F3F5FA}.ibtn.del:hover{color:#b3261e;border-color:#e8b4b0;background:#fdecea}
+.lks{display:flex;flex-wrap:wrap;gap:4px 14px}.lk{display:inline-flex;align-items:center;gap:3px;font-size:13px}.lk a{color:#1d4f91;font-weight:600;text-decoration:none}.lk a:hover{text-decoration:underline}
+.lkx{border:none;background:none;cursor:pointer;color:#9aa3b5;font-size:12px;padding:0 2px}.lkx:hover{color:var(--navy)}
+.pathrow a.btn{flex:none;white-space:nowrap;text-decoration:none}
 .needs{display:grid;grid-template-columns:repeat(3,max-content);gap:4px 22px}.needs .cb{display:inline-flex}
 .pathrow{display:flex;gap:6px;align-items:center}
 /* LL v1.08: internal notes (like the portals) + To Do dropdown */
@@ -250,7 +253,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.31</span>
+    <span class="vbadge">LL v1.32</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -264,7 +267,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.31';
+const VERSION = 'LL v1.32';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -281,17 +284,18 @@ const FILES = [['fEmb', 'EMB'], ['fDst', 'DST'], ['fPng', 'PNG'], ['fSpec', 'Spe
 const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Type','type'],['Ver','ver'],['Spec H','specH','num'],['Spec W','specW','num'],['DST H','dstH','num'],['DST W','dstW','num'],
   ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Stops','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
   ['Approved (Box)','box','box'],['Box Drive','boxes','boxes'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
-  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate'],['Size OK','sizeOk','check']];   // LL v1.31: size difference OK'd   // LL v1.27: thread color update tracker
+  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate'],['Size OK','sizeOk','check'],
+  ['Link Spec','lk_spec'],['Link PNG','lk_png'],['Link DST','lk_dst'],['Link EMB','lk_emb'],['Link Barrett','lk_bar'],['Link QD','lk_qd'],['Link Sew-Out','lk_sew']];   // LL v1.32: file paths -> SharePoint links   // LL v1.31: size difference OK'd   // LL v1.27: thread color update tracker
 const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Stops',
-  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', sizeOk:'Size difference OK', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
-const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Deleted Logos', 'Info'];
+  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', lk_spec:'Spec link', lk_png:'PNG link', lk_dst:'DST link', lk_emb:'EMB link', lk_bar:'Barrett sew-out link', lk_qd:'QD sew-out link', lk_sew:'Sew-out link', sizeOk:'Size difference OK', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
+const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Settings', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
-function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, products:[], deleted:[], schools:{}, other:[], savedAt:''}; }
+function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, products:[], mounts:[], deleted:[], schools:{}, other:[], savedAt:''}; }
 const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived and retired logos only show in their school (Accounts tab) or at the bottom of Mainline
 const inactive = l => l.status === ARCH || l.status === RETIRED;
 const activeLogos = () => DB.logos.filter(l => !inactive(l));
 function ensureLists(db){ [ARCH, RETIRED].forEach(v => { if (!db.lists.status.includes(v)) db.lists.status.push(v); }); if (!db.lists.type.includes('NFL')) db.lists.type.push('NFL'); return db; }   // LL v1.18: NFL type
-function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}, tcStatus:'', tcDate:'', sizeOk:false}; }
+function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}, tcStatus:'', tcDate:'', sizeOk:false, lk_spec:'', lk_png:'', lk_dst:'', lk_emb:'', lk_bar:'', lk_qd:'', lk_sew:''}; }
 const byId = id => DB.logos.find(l => l.id === id);
 function sizeRaw(l){ const n = [l.specH, l.specW, l.dstH, l.dstW].map(v => parseFloat(v));
   if (String(l.specH).trim() === '' || String(l.dstH).trim() === '' || n.some(isNaN)) return '';
@@ -343,7 +347,7 @@ function cellOut(l, f, kind){
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(DB.logos.map(l => COLS.map(([, f, k]) => cellOut(l, f, k)))));
-  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28, 28, 28, 18, 12, 8].map(w => ({wch:w}));
+  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28, 28, 28, 18, 12, 8, 40, 40, 40, 40, 40, 40, 40].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, 'Logos');
   DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
   // LL v1.06: school info + colors (current set and past sets, newest first)
@@ -374,7 +378,8 @@ function buildWorkbook(){
   const cs2 = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID', 'Result', 'Note for Claude', 'Checked at']].concat(cr2)); cs2['!cols'] = [10, 24, 10, 70, 20].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, cs2, 'Setup Check');   // LL v1.11 (temporary)
   const ps = XLSX.utils.aoa_to_sheet([['LL ID', 'EMB ID'].concat(PF.map(f => f[1]), 'Kit Notes', 'Archived')].concat(prods().map(p => [p.id, p.id ? embOf(p) : ''].concat(PF.map(([k]) => p[k] || ''), p.note || '', p.arch ? '✓' : ''))));
-  ps['!cols'] = [10, 24, 70, 26, 38, 18, 28, 40, 9].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ps, 'Products');   // LL v1.12
+  ps['!cols'] = [10, 24, 70, 26, 38, 18, 28, 40, 9].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ps, 'Products');
+  if ((DB.mounts || []).length){ const se = XLSX.utils.aoa_to_sheet([['Local synced folder', 'SharePoint URL', 'Note']].concat(DB.mounts.map(m => [m[0], m[1], 'The Logo Library page turns file paths under this folder into SharePoint links.']))); se['!cols'] = [70, 80, 60].map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, se, 'Settings'); }   // LL v1.32   // LL v1.12
   if (DB.deleted.length){ const ds = XLSX.utils.aoa_to_sheet([['Deleted at'].concat(COLS.map(c => c[0]))].concat(DB.deleted)); ds['!cols'] = [18].concat(COLS.map(() => 14)).map(w => ({wch:w})); XLSX.utils.book_append_sheet(wb, ds, 'Deleted Logos'); }
   const info = XLSX.utils.aoa_to_sheet([['Saved at', DB.savedAt || nowStamp()], ['Saved by', VERSION],
     ['Note', 'Keep this file closed in Excel while the Logo Library page is open. Pictures live in the Images folder; the image columns hold their file names. To Do = items separated by "; ". Box drive uploads live in the Box Drive sheet (the Box Drive column on Logos is a copy). Internal notes live in the Internal Notes sheet; the Notes columns on Logos and Schools are a copy for reading (edit notes on the page).']]);
@@ -416,6 +421,7 @@ function readWorkbook(buf){
   rows('Box Drive').slice(1).filter(r => String(r[0]).trim()).forEach(r => { const l = db.logos.find(x => x.id === String(r[0]).trim()); if (l) l.boxes.push({ver:String(r[2] || ''), date:isoDay(r[3])}); });
   db.logos.forEach(l => l.boxes.sort((a, b) => String(b.date).localeCompare(String(a.date))));
   rows('Setup Check').slice(1).filter(r => String(r[0]).trim()).forEach(r => { db.check[String(r[0]).trim()] = {res:/^flag/i.test(r[2]) ? 'flag' : 'ok', note:String(r[3] || ''), ts:String(r[4] || '')}; });
+  db.mounts = rows('Settings').slice(1).filter(r => String(r[0]).trim() && /^https?:/i.test(String(r[1]).trim())).map(r => [String(r[0]).trim().replace(/[\\/]+$/, ''), String(r[1]).trim()]);   // LL v1.32
   rows('Products').slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => { const g = i => String(r[i] == null ? '' : r[i]).trim();
     db.products.push({id:g(0), name:g(2), color:g(3), sku:g(4), place:g(5), dst:g(6), note:g(7), arch:/✓|^y|^true/i.test(g(8))}); });   // LL v1.16: Archived
   const nr = rows('Internal Notes');
@@ -740,6 +746,20 @@ const box = (n, title, right, body) => '<div class="emb-box"><div class="emb-box
 const ICO = {rep:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>',
   crop:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
   del:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>'};
+// ---------------- File links (LL v1.32): local synced path -> SharePoint link (mapping lives in the Excel "Settings" sheet, not here) ----------------
+const LINKS = [['lk_spec', 'Spec'], ['lk_png', 'PNG'], ['lk_dst', 'DST'], ['lk_emb', 'EMB'], ['lk_bar', 'Barrett'], ['lk_qd', 'QD'], ['lk_sew', 'Sew-Out']];
+function spMap(p){
+  p = String(p || '').trim().replace(/^"+|"+$/g, '').replace(/\//g, '\\'); if (!p) return null;
+  const m = (DB.mounts || []).filter(([loc]) => p.toLowerCase().startsWith(loc.toLowerCase() + '\\')).sort((a, b) => b[0].length - a[0].length)[0];
+  return m ? {base:m[1].replace(/\/?$/, '/'), rel:p.slice(m[0].length + 1).split('\\').filter(Boolean)} : null;
+}
+function fileUrl(p){ p = String(p || '').trim(); if (/^https?:\/\//i.test(p)) return p; const m = spMap(p); return m ? encodeURI(m.base) + m.rel.map(encodeURIComponent).join('/') : ''; }
+function folderUrl(p){ p = String(p || '').trim(); if (/^https?:\/\//i.test(p)) return p; const m = spMap(p); if (!m) return '';
+  const u = new URL(encodeURI(m.base)), path = decodeURIComponent(u.pathname), srv = path + m.rel.join('/');
+  return /-my\.sharepoint\.com$/i.test(u.hostname) ? u.origin + '/' + path.split('/').filter(Boolean).slice(0, 2).join('/') + '/_layouts/15/onedrive.aspx?id=' + encodeURIComponent(srv) : u.origin + encodeURI(path) + 'Forms/AllItems.aspx?id=' + encodeURIComponent(srv); }
+const linksCell = l => '<span class="lks">' + LINKS.map(([f, n]) => { const p = l[f], u = fileUrl(p);
+  return '<span class="lk">' + (p ? (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(p) + '">' + n + ' &#8599;</a>' : '<span class="muted" title="' + esc(p) + ' (not in a synced SharePoint folder)">' + n + '</span>') : '<span class="muted">' + n + ' &mdash;</span>') +
+    '<button class="lkx" data-act="linkEdit" data-lk="' + f + '" data-id="' + esc(l.id) + '" title="' + (p ? 'Change or remove the ' + n + ' link' : 'Add a ' + n + ' link') + '">&#9998;</button></span>'; }).join('') + '</span>';
 function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures on top; Products / Notes / History fold away
   const id = esc(l.id), L = DB.lists, S = schoolGet(l.school);
   const inp = (f, w, ph) => '<input data-f="' + f + '" data-id="' + id + '" value="' + esc(l[f]) + '"' + (w ? ' style="width:' + w + '"' : '') + (f === 'school' ? ' list="schoolList"' : '') + (ph ? ' placeholder="' + ph + '"' : '') + '>';
@@ -766,7 +786,8 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('DST H × W', inp('dstH', '80px') + ' × ' + inp('dstW', '80px') + '<span class="note" id="sc-' + id + '">' + scText(l) + '</span>') +
     head('Files &amp; Box') +
     row('Files on hand', '<span class="cbs">' + FILES.map(([k, n]) => '<label class="cb"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '> ' + n + '</label>').join('') + '</span><span class="note" id="ms-' + id + '">' + msText(l) + '</span>') +
-    row('Folder', '<div class="pathrow"><input data-f="folder" data-id="' + id + '" value="' + esc(l.folder) + '"><button class="btn light small" data-act="copyFolder" data-id="' + id + '"' + (l.folder ? '' : ' disabled') + '>Copy</button></div>') +
+    row('Folder', '<div class="pathrow"><input data-f="folder" data-id="' + id + '" value="' + esc(l.folder) + '"><button class="btn light small" data-act="copyFolder" data-id="' + id + '"' + (l.folder ? '' : ' disabled') + '>Copy</button>' + (folderUrl(l.folder) ? '<a class="btn light small" href="' + esc(folderUrl(l.folder)) + '" target="_blank" rel="noopener" title="Open this folder in SharePoint">Open &#8599;</a>' : '') + '</div>') +
+    row('File links', '<span id="lk-' + id + '">' + linksCell(l) + '</span>') +
     row('Approved (Box)', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-f="box" data-id="' + id + '"' + (l.box ? ' checked' : '') + '> Uploaded to the Box drive</label>') +
     row('Box uploads', boxSec(l)) + '</table>';
   const fold = (key, title, count, body) => '<details class="xfold" data-fold="' + id + '|' + key + '"' + (foldOpen[l.id + '|' + key] || (key === 'prod' && state.tab === 'check' && state.chkProd && foldOpen[l.id + '|' + key] !== false) ? ' open' : '') + '><summary>' + title + '<span class="cnt"' + (key === 'notes' ? ' id="nc-' + id + '"' : '') + '>' + count + '</span></summary><div class="xfold-bd">' + body + '</div></details>';
@@ -1167,6 +1188,10 @@ page.addEventListener('click', async e => {
     if (a === 'boxDel' && l){ const b = bx(l)[+act.dataset.i]; if (!b || !confirm('Remove the Box entry ' + boxText(b) + ' from ' + (l.emb || l.id) + '?')) return;
       bx(l).splice(+act.dataset.i, 1); logEdit(l, 'Removed Box entry', boxText(b), ''); touch(); render(); return; }
     if (a === 'noteAdd'){ const nid = act.dataset.nid, t = document.querySelector('.note-in[data-nid="' + CSS.escape(nid) + '"]'); if (t && addNote(nid, t.value)){ render(); toast('Note added.'); } return; }
+    if (a === 'linkEdit' && l){   // LL v1.32: change / add / remove a file link
+      const f = act.dataset.lk, n = (LINKS.find(x => x[0] === f) || [f, f])[1];
+      const v = prompt('Paste the ' + n + ' file path (in File Explorer: right-click the file > Copy as path) or its SharePoint link.\nLeave it empty to remove the link.', l[f] || '');
+      if (v === null) return; setField(l, f, v.trim().replace(/^"+|"+$/g, '')); refreshRow(l); toast(v.trim() ? n + ' link saved.' : n + ' link removed.'); return; }
     if (a === 'copyFolder' && l){ try { await navigator.clipboard.writeText(l.folder); toast('Folder path copied.'); } catch(err){ toast('Couldn&rsquo;t copy.'); } return; }
     if (a === 'crop' && l){ openCrop(l, act.dataset.slot); return; }
     if (a === 'pic' && l){ pickFor = [l.id, act.dataset.slot]; const fi = document.getElementById('picFile'); fi.value = ''; fi.click(); return; }
@@ -1223,7 +1248,7 @@ function refreshRow(l){
   const tr = document.querySelector('tr.row[data-id="' + l.id + '"]');
   if (tr){ const d = tr.querySelector('[data-todo]'), sec = d ? d.dataset.todo : ''; tr.innerHTML = TAB_COLS[state.tab].map(k => '<td>' + C[k].v(l, sec) + '</td>').join(''); }
   const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
-  set('ck-' + l.id, chkCell(l)); set('ts-' + l.id, tsCell(l)); set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l)); set('hs-' + l.id, histSum(l)); set('hl-' + l.id, histRows(l));
+  set('lk-' + l.id, linksCell(l)); set('ck-' + l.id, chkCell(l)); set('ts-' + l.id, tsCell(l)); set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l)); set('hs-' + l.id, histSum(l)); set('hl-' + l.id, histRows(l));
   const cb = document.querySelector('[data-act="copyFolder"][data-id="' + l.id + '"]'); if (cb) cb.disabled = !l.folder;
   renderTabs(); hookImgs();
 }
