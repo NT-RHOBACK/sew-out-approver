@@ -248,7 +248,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.28</span>
+    <span class="vbadge">LL v1.29</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -262,7 +262,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.28';
+const VERSION = 'LL v1.29';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -277,10 +277,10 @@ const SEWS = ['bar', 'qd', 'sew'];   // LL v1.10
 const FILES = [['fEmb', 'EMB'], ['fDst', 'DST'], ['fPng', 'PNG'], ['fSpec', 'Spec']];
 // Logos sheet: [header, field, kind]
 const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Type','type'],['Ver','ver'],['Spec H','specH','num'],['Spec W','specW','num'],['DST H','dstH','num'],['DST W','dstW','num'],
-  ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Clrs','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
+  ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Stops','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
   ['Approved (Box)','box','box'],['Box Drive','boxes','boxes'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
   ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate']];   // LL v1.27: thread color update tracker
-const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Clrs',
+const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Stops',
   fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
 const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
@@ -385,7 +385,8 @@ function readWorkbook(buf){
   const db = emptyDB();
   const lr = rows('Logos'), head = (lr[0] || []).map(h => String(h).trim());
   lr.slice(1).filter(r => r.some(v => String(v).trim())).forEach(r => {
-    const l = blankLogo(), get = h => { const i = head.indexOf(h); return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+    const l = blankLogo(), get = h => { let i = head.indexOf(h); if (i < 0 && h === '# Stops') i = head.indexOf('# Clrs');   // LL v1.29: renamed from # Clrs
+    return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
     COLS.forEach(([h, f, k]) => { const v = get(h);
       if (k === 'calc') return;
       if (k === 'notes'){ l.notes = v; return; }
@@ -680,7 +681,7 @@ const C = {
   type: {h:'Type', w:'9%', s:l => l.type, v:l => esc(l.type)},
   ver:  {h:'Ver', w:'5%', s:l => l.ver, v:l => esc(l.ver) || '<span class="muted">&mdash;</span>'},
   size: {h:'Size (H × W)', w:'11%', s:l => parseFloat(l.specH) || 0, v:l => (l.specH || l.specW ? fmtNum(l.specH) + ' × ' + fmtNum(l.specW) : '<span class="muted">&mdash;</span>') + (sizeCheck(l) === 'CHECK' ? '<span class="chk-bad" title="Spec and DST sizes differ by more than 0.05&quot;">CHECK</span>' : '')},
-  clrs: {h:'# Clrs', w:'6%', s:l => parseFloat(l.clrs) || 0, v:l => esc(l.clrs) || '<span class="muted">&mdash;</span>'},
+  clrs: {h:'# Stops', w:'6%', s:l => parseFloat(l.clrs) || 0, v:l => esc(l.clrs) || '<span class="muted">&mdash;</span>'},
   files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (bx(l).length ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (bx(l).length ? '<span class="ft box" title="In Box: ' + esc(bx(l).map(boxText).join(', ')) + '">Box' + (bx(l)[0].ver ? ' ' + esc(bx(l)[0].ver) : '') + '</span>' : '')},
   status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
   todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
@@ -748,7 +749,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>') +   // LL v1.28: also on the Setup Check tab   // LL v1.25: verify one logo from any tab
     head('Thread Colors &amp; Size') +
     row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
-    row('# Clrs', inp('clrs', '70px')) +
+    row('# Stops', inp('clrs', '70px')) +
     row('Thread Status', '<span id="ts-' + id + '">' + tsCell(l) + '</span>') +
     row('Spec H × W', inp('specH', '80px') + ' × ' + inp('specW', '80px')) +
     row('DST H × W', inp('dstH', '80px') + ' × ' + inp('dstW', '80px') + '<span class="note" id="sc-' + id + '">' + scText(l) + '</span>') +
@@ -1027,7 +1028,7 @@ async function warehouseExcel(btn){
     if (!window.ExcelJS) await loadScript(EXCELJS);
     const wb = new ExcelJS.Workbook(); wb.creator = 'Rhoback Logo Library ' + VERSION;
     const ws = wb.addWorksheet('Kit Info', {views:[{state:'frozen', ySplit:3}], pageSetup:{orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, printTitlesRow:'3:3'}});
-    const H = [['Logo', 15], ['School / Account', 18], ['Display Name', 58], ['Product Color', 24], ['SKU', 36], ['Insignia Placement', 15], ['Insignia URL', 24], ['EMB ID', 20], ['Ver', 6], ['Thread Colors (Madeira)', 40], ['# Clrs', 7], ['Size H × W (in)', 13], ['Sew-Out Status', 16]];
+    const H = [['Logo', 15], ['School / Account', 18], ['Display Name', 58], ['Product Color', 24], ['SKU', 36], ['Insignia Placement', 15], ['Insignia URL', 24], ['EMB ID', 20], ['Ver', 6], ['Thread Colors (Madeira)', 40], ['# Stops', 8], ['Size H × W (in)', 13], ['Sew-Out Status', 16]];
     ws.columns = H.map(([, w]) => ({width:w}));
     const NAVY = 'FF1B2A4A', d = new Date(), today = pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + String(d.getFullYear()).slice(2);
     ws.mergeCells(1, 1, 1, H.length); ws.getCell(1, 1).value = 'Rhoback Embroidery: Kit Info for the Warehouse'; ws.getCell(1, 1).font = {bold:true, size:16, color:{argb:NAVY}}; ws.getRow(1).height = 26;
