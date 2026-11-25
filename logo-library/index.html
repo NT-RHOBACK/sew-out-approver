@@ -255,7 +255,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.41</span>
+    <span class="vbadge">LL v1.42</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -269,7 +269,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.41';
+const VERSION = 'LL v1.42';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1112,7 +1112,7 @@ function render(){
       '<datalist id="placeList">' + [...new Set(['Left Chest', 'Center Chest'].concat(prods().map(p => p.place)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       '<datalist id="colorList">' + [...new Set(prods().map(p => p.color).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       (state.tab === 'products' ? '<datalist id="embList">' + DB.logos.map(l => '<option value="' + esc(l.emb) + '">').join('') + '</datalist>' : '') +
-      '<datalist id="digList">' + [...new Set(['Q Digitizing (QD)', 'Barrett'].concat(DB.logos.map(l => l.digBy)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
+      '<datalist id="digList">' + [...new Set(['Q Digitizing (QD)', 'Barrett', 'Abcoln', 'Vlead'].concat(DB.logos.map(l => l.digBy)).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       '<datalist id="schoolList">' + [...new Set(DB.logos.map(l => l.school).filter(Boolean))].sort(coll.compare).map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>';
   hookImgs(); window.scrollTo(0, y);
 }
