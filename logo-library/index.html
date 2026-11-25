@@ -169,7 +169,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .emb-card .cgrid input:not([type=checkbox]),.emb-card .cgrid select,.emb-card .cgrid textarea{width:100%;min-width:0;padding:5px 7px;font-size:12.5px}
 .emb-card .cgrid textarea{min-height:52px}.gsub{font-size:11px;color:#49516C;margin-top:2px}.gcb{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer}.gcb.c{display:flex;justify-content:center}
 .gsz{font-size:12px}.szr{display:flex;align-items:center;gap:4px;margin:2px 0}.szr span{flex:0 0 30px;white-space:nowrap;font-size:10.5px;font-weight:700;color:var(--grey)}.emb-card .cgrid select[data-f=boxSt]{max-width:220px}.emb-card .cgrid .szr input{flex:1 1 0;width:auto}.szr i{font-style:normal;color:var(--grey)}
-.szt{white-space:nowrap}.szt span{display:inline-block;width:30px;font-size:10.5px;font-weight:700;color:var(--grey)}.cgrid .ccdrop{padding:6px 8px;font-size:11.5px}.ptop{display:flex;align-items:flex-start;gap:16px;max-width:1200px}.ppics{flex:1 1 auto;min-width:0}.ftop{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex:0 0 auto;margin-left:auto;padding:8px 10px;border:1px solid #e3e6ee;border-radius:8px;background:#fbfbfd}
+.szt{white-space:nowrap}.szt span{display:inline-block;width:30px;font-size:10.5px;font-weight:700;color:var(--grey)}.cgrid .ccdrop{padding:6px 8px;font-size:11.5px}.ptop{display:flex;align-items:flex-start;gap:16px;max-width:1200px}.ppics{flex:1 1 auto;min-width:0}.ppics .pics.strip{margin-bottom:12px}.ftop{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex:0 0 auto;margin-left:auto;padding:8px 10px;border:1px solid #e3e6ee;border-radius:8px;background:#fbfbfd}
 .cgrid textarea + .ccdrop{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ftop .gtitle{margin:0}.ftop .pathrow,.ftop [id^=fr-]{display:flex;flex-wrap:wrap;gap:6px}
 .cgrid .pathrow,.cgrid [id^=fr-]{display:flex;flex-wrap:wrap;gap:6px}
 .ckc{font-weight:800;font-size:13px;text-align:center;border-radius:4px;padding:3px 2px}.tbl .ckc select.cksel{min-width:0;font-size:10.5px}.tbl .ckc .ckok{font-size:10px}.ckc.ok{color:#256b31;background:#eaf6ec}.ckc.bad{color:#b3261e;background:#fdecea}.ckc.warn{color:#8a5a00;background:#fff4e0}.ckc.off{color:#9aa3b5}
@@ -274,7 +274,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.51</span>
+    <span class="vbadge">LL v1.52</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -288,7 +288,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.51';
+const VERSION = 'LL v1.52';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -908,7 +908,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
   const pic = ([k, label]) => '<div class="pic"><div class="lbl">' + label + '</div><div class="big" data-drop="' + k + '" data-id="' + id + '"' + (l.img[k] ? ' data-pop="' + k + '" title="Click to see it bigger (or drop a new picture here)"' : ' title="Drop a picture here"') + '>' + (l.img[k] ? '<img data-img="' + esc(l.img[k]) + '" alt="" hidden><span>&hellip;</span>' : '<span>No picture</span>') + '</div>' +
     '<div class="fn">' + esc(l.img[k]) + '</div><div class="acts">' + (l.img[k] ? [['pic', 'Replace picture', ICO.rep], ['crop', 'Crop picture', ICO.crop], ['unpic', 'Remove picture (moves to Images\\DELETE)', ICO.del]].map(([a, t, ic]) => '<button class="ibtn' + (a === 'unpic' ? ' del' : '') + '" data-act="' + a + '" data-slot="' + k + '" data-id="' + id + '" title="' + t + '" aria-label="' + t + '">' + ic + '</button>').join('') : '<button class="btn light small" data-act="pic" data-slot="' + k + '" data-id="' + id + '">Add</button>') + '</div>' +
     (state.tab === 'check' && SEWS.includes(k) && l.img[k] ? '<div class="sewmv"><span class="lbl2">Belongs in:</span>' + [['bar', 'Barrett'], ['qd', 'QD'], ['sew', 'Other']].map(([t, n]) => '<button' + (t === k ? ' class="on" disabled' : ' data-act="sewMove" data-slot="' + k + '" data-to="' + t + '" data-id="' + id + '"') + '>' + n + '</button>').join('') + '</div>' : '') + '</div>';
-  const pics = '<div class="pics strip">' + SLOTS.filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div><div class="note" style="margin-top:0">Drop a picture on a box or click Add / Replace. Old pictures move to Images\\DELETE.</div>';
+  const pics = '<div class="pics strip">' + SLOTS.filter(([k]) => k !== 'sew' || l.img.sew).map(pic).join('') + '</div>';   // LL v1.52: no "Drop a picture…" note
   // LL v1.48: the whole card is checklist-style grids (headings across, the value under each) - no more label | value rows
   const grid = (title, cols, gid) => '<div class="gsec"' + (gid ? ' id="' + gid + '"' : '') + '>' + (title ? '<div class="gtitle">' + title + '</div>' : '') + '<table class="clist cgrid"><thead><tr>' + cols.map(c => '<th' + (c[2] ? ' style="width:' + c[2] + '"' : '') + '>' + c[0] + '</th>').join('') + '</tr></thead><tbody><tr>' + cols.map(c => '<td' + (c[3] ? ' class="' + c[3] + '"' : '') + '>' + c[1] + '</td>').join('') + '</tr></tbody></table></div>';
   const rows =
