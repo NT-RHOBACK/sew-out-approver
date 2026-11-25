@@ -248,7 +248,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.27</span>
+    <span class="vbadge">LL v1.28</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -262,7 +262,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.27';
+const VERSION = 'LL v1.28';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -745,7 +745,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('Status', sel('status', L.status, '—')) +   // LL v1.24: one Status dropdown, then "Needs" checkboxes (tick as many as apply), then one Flag checkbox
     row('Needs', '<div class="needs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t.replace(/^needs\s+/i, '')) + '</label>').join('') + '</div>') +
     row('Flag', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> Flag for review' + (l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? ' (' + esc(l.flag) + ')' : '') + '</label>') +
-    (state.tab !== 'check' ? row('Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>') : '') +   // LL v1.25: verify one logo from any tab
+    row('Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>') +   // LL v1.28: also on the Setup Check tab   // LL v1.25: verify one logo from any tab
     head('Thread Colors &amp; Size') +
     row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
     row('# Clrs', inp('clrs', '70px')) +
@@ -1137,7 +1137,7 @@ page.addEventListener('click', async e => {
       DB.check = DB.check || {}; let note = '';
       if (a === 'chkHereFlag'){ const c = DB.check[l.id]; note = (prompt('What’s wrong with ' + (l.emb || l.id) + '? (for Claude)', c && c.res === 'flag' ? c.note : '') || '').trim(); if (!note) return; }
       DB.check[l.id] = {res:a === 'chkHereOk' ? 'ok' : 'flag', note, ts:nowStamp().replace('T', ' ')};
-      logEdit(l, 'Setup Check', '', a === 'chkHereOk' ? 'Verified' : 'Flagged: ' + note); touch(); render(); toast(esc(l.emb) + (a === 'chkHereOk' ? ' verified.' : ' flagged for Claude.')); return; }
+      logEdit(l, 'Setup Check', '', a === 'chkHereOk' ? 'Verified' : 'Flagged: ' + note); touch(); if (state.tab === 'check'){ checkStep(1, true); return; } render(); toast(esc(l.emb) + (a === 'chkHereOk' ? ' verified.' : ' flagged for Claude.')); return; }
     if (a === 'chkClear' && l){ const c = DB.check[l.id]; if (!c) return; delete DB.check[l.id]; logEdit(l, 'Setup Check', c.res === 'ok' ? 'Verified' : 'Flagged', 'Not checked (by hand)'); touch(); render(); toast(esc(l.emb) + (c.res === 'ok' ? ' unverified.' : ' flag cleared.')); return; }   // LL v1.26: manual unverify
     if (a === 'sewMove' && l){ const f = act.dataset.slot, t = act.dataset.to, L = k => SLOTS.find(z => z[0] === k)[1], a1 = l.img[f], b1 = l.img[t];
       l.img[t] = a1; l.img[f] = b1 || ''; logEdit(l, 'Sew-out moved', L(f) + ': ' + a1, L(t) + (b1 ? ' (swapped with ' + b1 + ')' : '')); touch(); render(); toast('Moved to ' + L(t) + '.'); return; }
