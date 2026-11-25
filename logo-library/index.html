@@ -248,7 +248,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.25</span>
+    <span class="vbadge">LL v1.26</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -262,7 +262,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.25';
+const VERSION = 'LL v1.26';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -608,20 +608,31 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.
 // ---------------- Edits ----------------
 function logEdit(l, what, from, to){ DB.edits.push({ts:nowStamp(), id:l.id, emb:l.emb, what, from:String(from == null ? '' : from), to:String(to == null ? '' : to), by:BY}); }
 const showVal = v => v === true ? '✓' : v === false ? '—' : v;
+// LL v1.26: a Verified logo goes back to "Not checked" when its Status changes, a Needs item is added, or it's flagged for review
+function unverify(l, why){
+  const c = DB.check && DB.check[l.id]; if (!c || c.res !== 'ok') return;
+  delete DB.check[l.id]; logEdit(l, 'Setup Check', 'Verified', 'Not checked (' + why + ' changed, needs a new check)'); toast(esc(l.emb) + ' needs a new Setup Check (' + esc(why) + ' changed).', 4500);
+}
 function setField(l, f, v){
   const old = l[f]; if (old === v || (old == null && v === '')) return;
-  l[f] = v; logEdit(l, LABEL[f] || f, showVal(old), showVal(v)); touch();
+  l[f] = v; logEdit(l, LABEL[f] || f, showVal(old), showVal(v));
+  if (f === 'status') unverify(l, 'Status'); else if (f === 'flag' && v) unverify(l, 'Flag');
+  touch();
 }
 function setTodo(l, item, on){
   const has = l.todo.includes(item); if (has === on) return;
   l.todo = on ? l.todo.concat(item) : l.todo.filter(t => t !== item);
-  logEdit(l, 'To Do', on ? '' : item, on ? item : '(done)'); touch();
+  logEdit(l, 'To Do', on ? '' : item, on ? item : '(done)'); if (on) unverify(l, 'Needs');
+  touch();
 }
 function setStep(l, v){
   const old = stepOf(l); if (old === v) return;
   l.todo = (v ? [v] : []).concat(l.todo.filter(t => t === TC));
-  logEdit(l, 'To Do', old, v || '(done)'); touch();
+  logEdit(l, 'To Do', old, v || '(done)'); if (v) unverify(l, 'Needs');
+  touch();
 }
+const chkCell = l => { const c = (DB.check || {})[l.id], id = esc(l.id); return '<span class="chk-pill ' + (c ? c.res : 'none') + '">' + (c ? (c.res === 'ok' ? '✓ Verified' : '⚑ Flagged') : 'Not checked') + '</span>' + (c && c.res === 'flag' && c.note ? '<span class="xs">' + esc(c.note) + '</span>' : '') +
+  ' &nbsp;<button class="btn small" data-act="chkHereOk" data-id="' + id + '">✓ Verified</button> <button class="btn light small" data-act="chkHereFlag" data-id="' + id + '">⚑ Flag for Claude</button>' + (c ? ' <button class="btn light small" data-act="chkClear" data-id="' + id + '">' + (c.res === 'ok' ? 'Unverify' : 'Clear flag') + '</button>' : ''); };
 function addNote(id, text){
   text = String(text || '').trim(); if (!text) return false;
   DB.notes.push({ts:nowStamp(), id, text, by:BY});
@@ -731,8 +742,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('Status', sel('status', L.status, '—')) +   // LL v1.24: one Status dropdown, then "Needs" checkboxes (tick as many as apply), then one Flag checkbox
     row('Needs', '<div class="needs">' + L.todo.concat(l.todo.filter(t => !L.todo.includes(t))).map(t => '<label class="cb"><input type="checkbox" data-todo="' + esc(t) + '" data-id="' + id + '"' + (l.todo.includes(t) ? ' checked' : '') + '> ' + esc(t.replace(/^needs\s+/i, '')) + '</label>').join('') + '</div>') +
     row('Flag', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> Flag for review' + (l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? ' (' + esc(l.flag) + ')' : '') + '</label>') +
-    (state.tab !== 'check' ? row('Setup Check', (c => '<span class="chk-pill ' + (c ? c.res : 'none') + '">' + (c ? (c.res === 'ok' ? '✓ Verified' : '⚑ Flagged') : 'Not checked') + '</span>' + (c && c.res === 'flag' && c.note ? '<span class="xs">' + esc(c.note) + '</span>' : '') +
-      ' &nbsp;<button class="btn small" data-act="chkHereOk" data-id="' + id + '">✓ Verified</button> <button class="btn light small" data-act="chkHereFlag" data-id="' + id + '">⚑ Flag for Claude</button>' + (c ? ' <button class="lnk" data-act="chkClear" data-id="' + id + '">Clear</button>' : ''))((DB.check || {})[l.id])) : '') +   // LL v1.25: verify one logo from any tab
+    (state.tab !== 'check' ? row('Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>') : '') +   // LL v1.25: verify one logo from any tab
     head('Thread Colors &amp; Size') +
     row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
     row('# Clrs', inp('clrs', '70px')) +
@@ -1123,7 +1133,7 @@ page.addEventListener('click', async e => {
       if (a === 'chkHereFlag'){ const c = DB.check[l.id]; note = (prompt('What’s wrong with ' + (l.emb || l.id) + '? (for Claude)', c && c.res === 'flag' ? c.note : '') || '').trim(); if (!note) return; }
       DB.check[l.id] = {res:a === 'chkHereOk' ? 'ok' : 'flag', note, ts:nowStamp().replace('T', ' ')};
       logEdit(l, 'Setup Check', '', a === 'chkHereOk' ? 'Verified' : 'Flagged: ' + note); touch(); render(); toast(esc(l.emb) + (a === 'chkHereOk' ? ' verified.' : ' flagged for Claude.')); return; }
-    if (a === 'chkClear' && l){ delete DB.check[l.id]; touch(); render(); return; }
+    if (a === 'chkClear' && l){ const c = DB.check[l.id]; if (!c) return; delete DB.check[l.id]; logEdit(l, 'Setup Check', c.res === 'ok' ? 'Verified' : 'Flagged', 'Not checked (by hand)'); touch(); render(); toast(esc(l.emb) + (c.res === 'ok' ? ' unverified.' : ' flag cleared.')); return; }   // LL v1.26: manual unverify
     if (a === 'sewMove' && l){ const f = act.dataset.slot, t = act.dataset.to, L = k => SLOTS.find(z => z[0] === k)[1], a1 = l.img[f], b1 = l.img[t];
       l.img[t] = a1; l.img[f] = b1 || ''; logEdit(l, 'Sew-out moved', L(f) + ': ' + a1, L(t) + (b1 ? ' (swapped with ' + b1 + ')' : '')); touch(); render(); toast('Moved to ' + L(t) + '.'); return; }
     if (a === 'whXlsx'){ warehouseExcel(act); return; }
@@ -1193,7 +1203,7 @@ function refreshRow(l){
   const tr = document.querySelector('tr.row[data-id="' + l.id + '"]');
   if (tr){ const d = tr.querySelector('[data-todo]'), sec = d ? d.dataset.todo : ''; tr.innerHTML = TAB_COLS[state.tab].map(k => '<td>' + C[k].v(l, sec) + '</td>').join(''); }
   const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
-  set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l)); set('hs-' + l.id, histSum(l)); set('hl-' + l.id, histRows(l));
+  set('ck-' + l.id, chkCell(l)); set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l)); set('hs-' + l.id, histSum(l)); set('hl-' + l.id, histRows(l));
   const cb = document.querySelector('[data-act="copyFolder"][data-id="' + l.id + '"]'); if (cb) cb.disabled = !l.folder;
   renderTabs(); hookImgs();
 }
