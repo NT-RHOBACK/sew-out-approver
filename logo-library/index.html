@@ -248,7 +248,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.26</span>
+    <span class="vbadge">LL v1.27</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -262,7 +262,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.26';
+const VERSION = 'LL v1.27';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -279,9 +279,9 @@ const FILES = [['fEmb', 'EMB'], ['fDst', 'DST'], ['fPng', 'PNG'], ['fSpec', 'Spe
 const COLS = [['LL ID','id'],['EMB ID','emb'],['School / Account','school'],['Type','type'],['Ver','ver'],['Spec H','specH','num'],['Spec W','specW','num'],['DST H','dstH','num'],['DST W','dstW','num'],
   ['Size Check','sizeCheck','calc'],['Thread Colors (Madeira)','threads'],['# Clrs','clrs','num'],['EMB','fEmb','check'],['DST','fDst','check'],['PNG','fPng','check'],['Spec','fSpec','check'],
   ['Approved (Box)','box','box'],['Box Drive','boxes','boxes'],['Status','status'],['To Do','todo','list'],['Flag','flag'],['Missing','missing','calc'],['Notes','notes','notes'],['Folder','folder'],
-  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd']];
+  ['Spec Artwork image','img_spec'],['Logo (stitch) image','img_logo'],['Sew-Out image','img_sew'],['Sew-Out Barrett image','img_bar'],['Sew-Out QD image','img_qd'],['Thread Status','tcStatus'],['Thread Changed','tcDate']];   // LL v1.27: thread color update tracker
 const LABEL = {emb:'EMB ID', school:'School / Account', type:'Type', ver:'Ver', specH:'Spec H', specW:'Spec W', dstH:'DST H', dstW:'DST W', threads:'Thread Colors', clrs:'# Clrs',
-  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
+  fEmb:'EMB file', fDst:'DST file', fPng:'PNG file', fSpec:'Spec file', box:'Approved (Box)', tcStatus:'Thread Status', status:'Status', flag:'Flag', notes:'Notes', folder:'Folder'};
 const KNOWN_SHEETS = ['Logos', 'Schools', 'School Colors', 'Lists', 'Page Edits', 'Internal Notes', 'Box Drive', 'Setup Check', 'Products', 'Deleted Logos', 'Info'];
 let DB = emptyDB();
 function emptyDB(){ return {logos:[], lists:{status:[], todo:[], type:['Collegiate','Mainline'], flag:['REVIEW']}, listsNote:'', edits:[], notes:[], check:{}, products:[], deleted:[], schools:{}, other:[], savedAt:''}; }
@@ -289,7 +289,7 @@ const ARCH = 'Inactive / Archived', RETIRED = 'Retired';   // LL v1.04: archived
 const inactive = l => l.status === ARCH || l.status === RETIRED;
 const activeLogos = () => DB.logos.filter(l => !inactive(l));
 function ensureLists(db){ [ARCH, RETIRED].forEach(v => { if (!db.lists.status.includes(v)) db.lists.status.push(v); }); if (!db.lists.type.includes('NFL')) db.lists.type.push('NFL'); return db; }   // LL v1.18: NFL type
-function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}}; }
+function blankLogo(){ return {id:'', emb:'', school:'', type:'', ver:'', specH:'', specW:'', dstH:'', dstW:'', threads:'', clrs:'', fEmb:false, fDst:false, fPng:false, fSpec:false, box:false, boxes:[], status:'', todo:[], flag:'', notes:'', folder:'', img:{spec:'', logo:'', sew:'', bar:'', qd:''}, tcStatus:'', tcDate:''}; }
 const byId = id => DB.logos.find(l => l.id === id);
 function sizeCheck(l){ const n = [l.specH, l.specW, l.dstH, l.dstW].map(v => parseFloat(v));
   if (String(l.specH).trim() === '' || String(l.dstH).trim() === '' || n.some(isNaN)) return '';
@@ -340,7 +340,7 @@ function cellOut(l, f, kind){
 function buildWorkbook(){
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([COLS.map(c => c[0])].concat(DB.logos.map(l => COLS.map(([, f, k]) => cellOut(l, f, k)))));
-  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28, 28, 28].map(w => ({wch:w}));
+  ws['!cols'] = [10, 24, 22, 11, 5, 7, 7, 7, 7, 9, 40, 6, 5, 5, 5, 5, 9, 22, 16, 40, 8, 14, 40, 40, 28, 28, 28, 28, 28, 18, 12].map(w => ({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, 'Logos');
   DB.other.forEach(s => { const o = XLSX.utils.aoa_to_sheet(s.rows); if (s.cols) o['!cols'] = s.cols; XLSX.utils.book_append_sheet(wb, o, s.name); });
   // LL v1.06: school info + colors (current set and past sets, newest first)
@@ -613,10 +613,13 @@ function unverify(l, why){
   const c = DB.check && DB.check[l.id]; if (!c || c.res !== 'ok') return;
   delete DB.check[l.id]; logEdit(l, 'Setup Check', 'Verified', 'Not checked (' + why + ' changed, needs a new check)'); toast(esc(l.emb) + ' needs a new Setup Check (' + esc(why) + ' changed).', 4500);
 }
+const TSTAT = ['Check', 'Shared with team', 'Updated in NetSuite'];   // LL v1.27: thread color update tracker
+const tsCell = l => '<select data-tstat="1" data-id="' + esc(l.id) + '">' + opt(TSTAT, l.tcStatus || '', '—') + '</select>' + (l.tcDate ? '<span class="xs">since ' + fmtDate(l.tcDate) + '</span>' : '') + '<span class="note">Changes to Check by itself when the thread colors change.</span>';
 function setField(l, f, v){
   const old = l[f]; if (old === v || (old == null && v === '')) return;
   l[f] = v; logEdit(l, LABEL[f] || f, showVal(old), showVal(v));
   if (f === 'status') unverify(l, 'Status'); else if (f === 'flag' && v) unverify(l, 'Flag');
+  if (f === 'threads' && l.tcStatus !== 'Check'){ logEdit(l, 'Thread Status', l.tcStatus || '', 'Check (thread colors changed)'); l.tcStatus = 'Check'; l.tcDate = nowStamp().slice(0, 10); }   // LL v1.27
   touch();
 }
 function setTodo(l, item, on){
@@ -659,7 +662,7 @@ function toast(msg, ms){ const t = document.getElementById('toast'); t.innerHTML
 const isCol = l => /^coll/i.test(l.type), isMain = l => /^main/i.test(l.type), isNFL = l => /^nfl/i.test(l.type);
 function matches(l){
   if (!q) return true;
-  const hay = [prodsOf(l.id).map(([p]) => p.sku + ' ' + p.name).join(' '), l.id, l.emb, l.school, l.type, l.ver, l.threads, l.notes, l.status, l.flag, l.todo.join(' '), l.folder, notesFor(l.id).map(n => n.text).join(' ')].join(' ').toLowerCase();
+  const hay = [l.tcStatus, prodsOf(l.id).map(([p]) => p.sku + ' ' + p.name).join(' '), l.id, l.emb, l.school, l.type, l.ver, l.threads, l.notes, l.status, l.flag, l.todo.join(' '), l.folder, notesFor(l.id).map(n => n.text).join(' ')].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
 }
 
@@ -681,7 +684,7 @@ const C = {
   files:{h:'Files', w:'15%', s:l => FILES.filter(([k]) => l[k]).length + (bx(l).length ? 0.5 : 0), v:l => FILES.map(([k, n]) => '<span class="ft ' + (l[k] ? 'on' : 'off') + '">' + n + '</span>').join('') + (bx(l).length ? '<span class="ft box" title="In Box: ' + esc(bx(l).map(boxText).join(', ')) + '">Box' + (bx(l)[0].ver ? ' ' + esc(bx(l)[0].ver) : '') + '</span>' : '')},
   status:{h:'Status', w:'11%', s:l => l.status, v:l => esc(l.status) || '<span class="muted">&mdash;</span>'},
   todo: {h:'To Do', w:'17%', s:l => l.todo.length, v:l => l.todo.map(t => '<span class="tdt">' + esc(t) + '</span>').join('') || '<span class="muted">&mdash;</span>'},
-  flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
+  flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') + (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
@@ -746,6 +749,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     head('Thread Colors &amp; Size') +
     row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
     row('# Clrs', inp('clrs', '70px')) +
+    row('Thread Status', '<span id="ts-' + id + '">' + tsCell(l) + '</span>') +
     row('Spec H × W', inp('specH', '80px') + ' × ' + inp('specW', '80px')) +
     row('DST H × W', inp('dstH', '80px') + ' × ' + inp('dstW', '80px') + '<span class="note" id="sc-' + id + '">' + scText(l) + '</span>') +
     head('Files &amp; Box') +
@@ -927,6 +931,7 @@ const FILTERS = [['type', 'All types', () => DB.lists.type, (l, v) => l.type ===
   ['flag', 'Any flag', () => DB.lists.flag.concat('(no flag)'), (l, v) => v === '(no flag)' ? !l.flag : l.flag === v],
   ['missing', 'Sew-out: any', () => ['Needs sew-out', 'Has a sew-out'], (l, v) => v === 'Needs sew-out' ? needsSew(l) : !needsSew(l)],
   ['box', 'Approved (Box): any', () => ['Approved (Box)', 'Not approved (Box)'], (l, v) => v === 'Approved (Box)' ? l.box : !l.box],
+  ['tstat', 'Thread status: any', () => TSTAT.concat('(none)'), (l, v) => v === '(none)' ? !l.tcStatus : l.tcStatus === v],
   ['size', 'Size Check: any', () => ['CHECK', 'OK', '(no DST size)'], (l, v) => v === '(no DST size)' ? !sizeCheck(l) : sizeCheck(l) === v]];
 // LL v1.21: the same filters on Collegiate / Mainline / NFL (each tab keeps its own)
 const fOf = tab => tab === 'all' ? state.f : ((state.fx = state.fx || {})[tab] = state.fx[tab] || {});
@@ -1190,6 +1195,7 @@ page.addEventListener('change', e => {
   const l = t.dataset.id ? byId(t.dataset.id) : null; if (!l) return;
   if (t.dataset.todo){ setTodo(l, t.dataset.todo, t.checked); refreshRow(l); return; }
   if (t.dataset.step){ setStep(l, t.value); refreshRow(l); return; }
+  if (t.dataset.tstat){ const v = t.value; if ((l.tcStatus || '') === v) return; logEdit(l, 'Thread Status', l.tcStatus || '', v || '(none)'); l.tcStatus = v; l.tcDate = v ? nowStamp().slice(0, 10) : ''; touch(); refreshRow(l); return; }
   if (t.dataset.flagcb){ setField(l, 'flag', t.checked ? (DB.lists.flag[0] || 'REVIEW') : ''); refreshRow(l); return; }
   if (t.dataset.bx){ const b = bx(l)[+t.dataset.i], k = t.dataset.bx, v = k === 'date' ? t.value : t.value.trim(); if (!b || b[k] === v) return;
     const was = boxText(b); b[k] = v; logEdit(l, 'Box ' + (k === 'ver' ? 'version' : 'date'), was, boxText(b)); touch();
@@ -1203,7 +1209,7 @@ function refreshRow(l){
   const tr = document.querySelector('tr.row[data-id="' + l.id + '"]');
   if (tr){ const d = tr.querySelector('[data-todo]'), sec = d ? d.dataset.todo : ''; tr.innerHTML = TAB_COLS[state.tab].map(k => '<td>' + C[k].v(l, sec) + '</td>').join(''); }
   const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
-  set('ck-' + l.id, chkCell(l)); set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l)); set('hs-' + l.id, histSum(l)); set('hl-' + l.id, histRows(l));
+  set('ck-' + l.id, chkCell(l)); set('ts-' + l.id, tsCell(l)); set('sc-' + l.id, scText(l)); set('ms-' + l.id, msText(l)); set('tc-' + l.id, tcText(l)); set('hs-' + l.id, histSum(l)); set('hl-' + l.id, histRows(l));
   const cb = document.querySelector('[data-act="copyFolder"][data-id="' + l.id + '"]'); if (cb) cb.disabled = !l.folder;
   renderTabs(); hookImgs();
 }
