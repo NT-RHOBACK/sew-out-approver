@@ -316,6 +316,12 @@ h1{font-size:22px;margin-bottom:12px}
 .xfold{border-color:var(--line);border-radius:10px;max-width:1200px}
 .xfold>summary{font-size:13px;font-weight:700;letter-spacing:0;text-transform:none}
 .toast{border-radius:10px}
+.tiles{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 18px}   /* LL v1.56: portal-style count tiles */
+.tile{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;flex:1;min-width:150px;cursor:pointer;text-align:left;font:inherit;color:var(--navy);display:flex;flex-direction:column;gap:6px}
+.tile:hover{border-color:var(--line-d)}
+.tile .num{font-size:30px;font-weight:700;line-height:1}.tile .lbl{color:var(--grey);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.tile.ok .num{color:#2f7a4d}.tile.no .num{color:#c05621}.tile.bad .num{color:#c0392b}.tile.warn .num{color:#b7791f}
+.tile.on{border-color:var(--navy);box-shadow:inset 0 -3px 0 var(--red)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -325,7 +331,7 @@ h1{font-size:22px;margin-bottom:12px}
   <div class="header-left">
     <div class="ridge"><span class="r"></span><span class="n"></span></div>
     <div class="brand-sub">Logo Library</div>
-    <span class="vbadge">LL v1.55</span>
+    <span class="vbadge">LL v1.56</span>
   </div>
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
@@ -343,7 +349,7 @@ h1{font-size:22px;margin-bottom:12px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.55';
+const VERSION = 'LL v1.56';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1067,10 +1073,22 @@ function groupsHtml(tab, list, defOpen){
   return names.map(n => sectionHtml(tab, n, g[n], defOpen)).join('');
 }
 // LL v1.37: Collegiate, Mainline and NFL all work the same: one list (School column, filters), Archived & Retired collapsed at the bottom
+// LL v1.56: count tiles above the list (portal-style). Counts = this tab's active logos (and the picked school). Click = filter; click again = clear.
+const TILES = [['Approved', 'status', 'Approved', l => l.status === 'Approved', 'ok'],
+  ['Not Approved', 'status', 'Not Approved', l => l.status === 'Not Approved', 'no'],
+  ['Needs Sew-Out', 'missing', 'Needs sew-out', l => needsSew(l), 'no'],
+  ['Size CHECK', 'size', 'CHECK', l => sizeCheck(l) === 'CHECK', 'bad'],
+  ['Needs Wilcom card', 'cc', 'Needs Wilcom card', l => l.ccSt === 'Needs Wilcom card', 'warn']];
+const TILE_KEYS = [...new Set(TILES.map(t => t[1]))];
+function tilesHtml(tab, base){
+  const f = fOf(tab), pool = base.filter(l => !f.school || l.school === f.school);
+  return '<div class="tiles">' + TILES.map(([lbl, k, v, test, cls], i) => { const on = f[k] === v;
+    return '<button class="tile ' + cls + (on ? ' on' : '') + '" data-act="tile" data-i="' + i + '" data-ftab="' + tab + '" title="' + (on ? 'Click to show all again' : 'Click to show only these') + '"><span class="num">' + pool.filter(test).length + '</span><span class="lbl">' + lbl + '</span></button>'; }).join('') + '</div>';
+}
 function renderList(tab, title, test){
   const f = fOf(tab), withGone = !!f.school || f.status === ARCH || f.status === RETIRED;   // a school / account picked (or an archived status) also shows its archived + retired logos in the list
   const all = activeLogos().filter(test), list = DB.logos.filter(l => test(l) && (withGone || !inactive(l)) && matches(l) && passF(tab, l)), gone = withGone ? [] : DB.logos.filter(l => test(l) && inactive(l));
-  return '<h1>' + title + '</h1><div class="bar"><button class="btn" data-act="add">+ Add logo</button>' + filterBar(tab, tab === 'all' ? [] : ['type']) + '<span class="count">' + (list.length !== all.length ? list.length + ' of ' : '') + all.length + ' logos</span></div>' + addBoxHtml(tab) + tableHtml(tab, list) +
+  return '<h1>' + title + '</h1>' + tilesHtml(tab, all) + '<div class="bar"><button class="btn" data-act="add">+ Add logo</button>' + filterBar(tab, tab === 'all' ? [] : ['type']) + '<span class="count">' + (list.length !== all.length ? list.length + ' of ' : '') + all.length + ' logos</span></div>' + addBoxHtml(tab) + tableHtml(tab, list) +
     (gone.length ? '<div style="margin-top:18px">' + sectionHtml(tab, 'Archived & Retired', gone.filter(matches), false) + '</div>' : '');
 }
 const renderCollegiate = () => renderList('collegiate', 'Collegiate', isCol);
@@ -1344,6 +1362,8 @@ page.addEventListener('click', async e => {
       if (state.tab === 'todo') DB.lists.todo.forEach(t => { state.secOpen['todo|' + t] = a === 'expand'; });
       saveUi(); render(); return;
     }
+    if (a === 'tile'){ const [, k, v] = TILES[+act.dataset.i], f = fOf(act.dataset.ftab || 'all'), was = f[k] === v;   // LL v1.56
+      TILE_KEYS.forEach(x => delete f[x]); if (!was) f[k] = v; saveUi(); render(); return; }
     if (a === 'clearF'){ const tb = act.dataset.ftab || 'all'; if (tb === 'all') state.f = {}; else fOf(tb) && (state.fx[tb] = {}); saveUi(); render(); return; }
     if (a === 'colAdd' || a === 'colDel' || a === 'colUpdate'){
       const k = act.dataset.acct, x = schoolSave(k, schoolGet(k));
