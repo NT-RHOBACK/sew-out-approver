@@ -163,12 +163,12 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .lkx{border:none;background:none;cursor:pointer;color:#9aa3b5;font-size:12px;padding:0 2px}.lkx:hover{color:var(--navy)}
 .pathrow a.btn{flex:none;white-space:nowrap;text-decoration:none}
 .ccdrop{border:1.5px dashed #c9cfdb;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#49516C;background:#fbfbfd}.ccdrop.over{border-color:var(--red);background:var(--bg)}
-.ckc{font-weight:800;font-size:13px;text-align:center;border-radius:4px;padding:3px 0}.ckc.ok{color:#256b31;background:#eaf6ec}.ckc.bad{color:#b3261e;background:#fdecea}.ckc.warn{color:#8a5a00;background:#fff4e0}.ckc.off{color:#9aa3b5}
+.ckc{font-weight:800;font-size:13px;text-align:center;border-radius:4px;padding:3px 2px}.tbl .ckc select.cksel{min-width:0;font-size:10.5px}.tbl .ckc .ckok{font-size:10px}.ckc.ok{color:#256b31;background:#eaf6ec}.ckc.bad{color:#b3261e;background:#fdecea}.ckc.warn{color:#8a5a00;background:#fff4e0}.ckc.off{color:#9aa3b5}
 .clist{border-collapse:collapse;margin:0 0 12px;background:#fff;font-size:12px}
 .clist th{padding:5px 10px;border:1px solid var(--line);background:#F0F2F7;color:var(--navy);font-weight:700;font-size:11px;white-space:nowrap}
 .clist td{padding:4px 6px;border:1px solid var(--line);text-align:center;font-weight:800;font-size:14px;vertical-align:middle}
 .clist .ckm{display:block;line-height:1.2}.cktog{border:none;background:none;cursor:pointer;font:inherit;color:inherit;width:100%;padding:2px 0}.cktog:hover{text-decoration:underline}
-.emb-card .clist select.cksel{display:block;width:100%;min-width:74px;margin-top:2px;padding:2px 4px;font-size:11px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--navy)}
+.tbl .ckc select.cksel,.emb-card .clist select.cksel{display:block;width:100%;min-width:74px;margin-top:2px;padding:2px 4px;font-size:11px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--navy)}
 .ckok{display:block;font-size:10.5px;font-weight:600;color:var(--navy);margin-top:2px;white-space:nowrap}.ckauto{cursor:help}
 .clist td.ok{color:#256b31;background:#eaf6ec}.clist td.bad{color:#b3261e;background:#fdecea}.clist td.warn{color:#8a5a00;background:#fff4e0}.clist td.off{color:#9aa3b5;background:#fafafa}
 .needs{display:grid;grid-template-columns:repeat(3,max-content);gap:4px 22px}.needs .cb{display:inline-flex}
@@ -264,7 +264,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.46</span>
+    <span class="vbadge">LL v1.47</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -278,7 +278,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.46';
+const VERSION = 'LL v1.47';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -779,7 +779,7 @@ const C = {
     // LL v1.36: just the status + a flag (needs, threads and Box stay on the card, the filters and the To Do tab; the red side bar still marks a needed sew-out)
     return st + (l.flag ? ' <span class="flag">&#9873; ' + esc(l.flag) + '</span>' : ''); }},
   flag: {h:'Flag', w:'11%', s:l => (needsSew(l) ? 'A ' : 'B ') + (isApproved(l) ? 'APPROVED ' : '') + l.flag, v:l => (l.tcStatus === 'Check' ? '<span class="flag" title="Thread colors changed ' + esc(l.tcDate ? fmtDate(l.tcDate) : '') + '">THREADS: CHECK</span>' : l.tcStatus === 'Shared with team' ? '<span class="flag" style="background:#e8f0fb;color:#1d4f91">THREADS: SHARED</span>' : '') + (needsSew(l) ? '<span class="sewpill" title="' + (SEWS.some(k => l.img[k]) ? 'To Do: needs a new sew-out' : 'No sew-out picture yet') + '">NEEDS<br>SEW-OUT</span>' : '') + apPill(l) + (l.flag ? '<span class="flag">' + esc(l.flag) + '</span>' : '')},   // LL v1.05: Approved shows here (no green row)
-  ...Object.fromEntries(CK_NAMES.map((n, i) => ['ck' + i, {h:n, w:(i === 5 ? '7%' : '5.5%'), s:l => ({bad:0, warn:1, off:2, ok:3})[checkCells(l)[i][1]], v:l => { const c = checkCells(l)[i]; return '<div class="ckc ' + c[1] + '" title="' + esc(c[2] || c[0]) + '">' + CK_MARK[c[1]] + '</div>'; }}])),   // LL v1.45
+  ...Object.fromEntries(CK_NAMES.map((n, i) => ['ck' + i, {h:n, w:(i === 5 ? '7%' : '5.5%'), s:l => ({bad:0, warn:1, off:2, ok:3})[checkCells(l)[i][1]], v:l => { const c = checkCells(l)[i]; return '<div class="ckc ' + c[1] + '">' + ckControls(l)[i] + '</div>'; }}])),   // LL v1.47: editable in the Checklist tab too   // LL v1.45
   done: {h:'', w:'84px', nos:true, v:(l, sec) => '<button class="done-btn" data-act="done" data-id="' + esc(l.id) + '" data-todo="' + esc(sec) + '" title="Take ' + esc(l.emb) + ' off ' + esc(sec) + '">&#10003; Done</button>'}
 };
 const TAB_COLS = {
@@ -853,7 +853,7 @@ function checkCells(l){
     ['Box', l.boxSt === 'Uploaded' ? 'ok' : l.boxSt ? 'bad' : 'off', l.boxSt || 'Box drive not set'],
     ['Folders', l.folder && l.filesDir ? 'ok' : l.folder || l.filesDir ? 'warn' : 'bad', (l.folder ? 'Spec sheet folder ✓' : 'No spec sheet folder') + ' · ' + (l.filesDir ? 'Files folder ✓' : 'No files folder')]];
 }
-function checklist(l){   // LL v1.46: the checklist is where you fill these in (click a ✓/✗ to switch it, or pick from the little dropdown)
+function ckControls(l){   // LL v1.46/1.47: the controls inside each checklist cell (card grid + Checklist tab)
   const cells = checkCells(l), id = esc(l.id), m = c => '<span class="ckm">' + CK_MARK[c[1]] + '</span>';
   const tog = (f, c) => '<button class="cktog" data-act="ckToggle" data-f="' + f + '" data-id="' + id + '" title="' + esc((l[f] ? 'On hand' : 'Not on hand') + ' - click to switch' + (c[2] ? ' (' + c[2] + ')' : '')) + '">' + m(c) + '</button>';
   const sel = (attr, list, v, short) => '<select ' + attr + ' data-id="' + id + '" class="cksel">' + '<option value="">—</option>' + list.map((x, i) => '<option value="' + esc(x) + '"' + (x === v ? ' selected' : '') + '>' + esc(short[i]) + '</option>').join('') + '</select>';
@@ -867,6 +867,10 @@ function checklist(l){   // LL v1.46: the checklist is where you fill these in (
     auto(cells[8], 'fill in Spec / DST sizes below') + (sizeRaw(l) === 'CHECK' ? '<label class="ckok" title="OK to proceed with this size difference"><input type="checkbox" data-f="sizeOk" data-id="' + id + '"' + (l.sizeOk ? ' checked' : '') + '> OK</label>' : ''),
     m(cells[9]) + sel('data-f="boxSt"', BOXST, l.boxSt || '', ['Needs', 'Uploaded']),
     auto(cells[10], 'set the Spec sheet / Files folders below')];
+  return ctl;
+}
+function checklist(l){   // LL v1.46: the checklist is where you fill these in (click a ✓/✗ to switch it, or pick from the little dropdown)
+  const cells = checkCells(l), ctl = ckControls(l);
   return '<table class="clist"><thead><tr>' + cells.map(c => '<th>' + c[0] + '</th>').join('') + '</tr></thead><tbody><tr>' +
     cells.map((c, i) => '<td class="' + c[1] + '">' + ctl[i] + '</td>').join('') + '</tr></tbody></table><div class="note" style="margin:-8px 0 12px">Click a ✓ / ✗ to switch it, or pick from the dropdowns. The others fill in by themselves from the fields below.</div>';
 }
@@ -1330,6 +1334,7 @@ page.addEventListener('click', async e => {
   const pop = e.target.closest('[data-pop]');
   if (pop){ const l = byId(pop.dataset.id); if (l) openPop(l, pop.dataset.pop); return; }
   if (e.target.closest('.card-cell')) return;
+  if (e.target.closest('select, input, label')) return;   // LL v1.47: using a control in a row doesn't open / close the row
   const row = e.target.closest('tr.row');
   if (row){ state.open = state.open === row.dataset.id ? '' : row.dataset.id; render(); }
 });
