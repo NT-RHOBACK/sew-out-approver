@@ -162,6 +162,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .lks{display:flex;flex-wrap:wrap;gap:4px 14px}.lk{display:inline-flex;align-items:center;gap:3px;font-size:13px}.lk a{color:#1d4f91;font-weight:600;text-decoration:none}.lk a:hover{text-decoration:underline}
 .lkx{border:none;background:none;cursor:pointer;color:#9aa3b5;font-size:12px;padding:0 2px}.lkx:hover{color:var(--navy)}
 .pathrow a.btn{flex:none;white-space:nowrap;text-decoration:none}
+.ccdrop{border:1.5px dashed #c9cfdb;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#49516C;background:#fbfbfd}.ccdrop.over{border-color:var(--red);background:var(--bg)}
 .needs{display:grid;grid-template-columns:repeat(3,max-content);gap:4px 22px}.needs .cb{display:inline-flex}
 .pathrow{display:flex;gap:6px;align-items:center}
 /* LL v1.08: internal notes (like the portals) + To Do dropdown */
@@ -255,7 +256,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.42</span>
+    <span class="vbadge">LL v1.43</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -269,7 +270,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.42';
+const VERSION = 'LL v1.43';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -577,6 +578,67 @@ function drawCrop(){
     o.toBlob(b => { close(); putPicture(l, k, new File([b], 'crop' + (png ? '.png' : '.jpg'), {type:png ? 'image/png' : 'image/jpeg'})).then(() => toast('Cropped. The old picture is in Images\\DELETE.')); }, png ? 'image/png' : 'image/jpeg', 0.92);
   };
 })();
+// ---------------- Color card PDF / DST -> thread colors, stops, DST size (LL v1.43) ----------------
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+function parseCard(items){   // Wilcom "Production Worksheet" or Pulse / Tajima worksheet (text from pdf.js)
+  const t = '|' + items.map(s => String(s).trim()).filter(Boolean).join('|') + '|', r = {fmt:'', threads:[], h:'', w:'', design:'', colorway:''};
+  if (/Production Worksheet|EmbroideryStudio/i.test(t)){
+    r.fmt = 'Wilcom';
+    let m = t.match(/\|Height:\|([\d.]+) in\|/); if (m) r.h = m[1]; m = t.match(/\|Width:\|([\d.]+) in\|/); if (m) r.w = m[1];
+    m = t.match(/\|Design:\|([^|]+)\|/); if (m) r.design = m[1]; m = t.match(/\|Colorway:\|([^|]+)\|/); if (m) r.colorway = m[1];
+    const seq = t.slice(t.indexOf('Stop Sequence:')), re = /\|(\d+)\.(?:\||\s+)(\d+)\|([\d,]+)\|(\d{3,5})\b([^|]*)(?=\|)/g; let x;
+    while ((x = re.exec(seq))){ if (+x[1] !== r.threads.length + 1) break; r.threads.push(x[4]); }
+  } else {
+    r.fmt = 'Pulse';
+    let m = t.match(/Dimension: W ([\d.]+) in x H ([\d.]+) in/); if (m){ r.w = m[1]; r.h = m[2]; }
+    m = t.match(/\|Design: ([^|]+)\|/); if (m) r.design = m[1];
+    const cs = t.indexOf('|Color sequence:|'); let x;
+    if (cs >= 0){ const re = /\|(\d+)\|(\d{3,5})(?=\|)/g, part = t.slice(cs + 16); while ((x = re.exec(part))){ if (+x[1] !== r.threads.length + 1) break; r.threads.push(x[2]); } }
+    else { const re = /\|(\d+)\|(?:Needle \d+\|)?([^|]*)\|(\d{3,5})(?=\|Madeira)/g; while ((x = re.exec(t))){ if (+x[1] !== r.threads.length + 1) break; r.threads.push(x[3]); } }
+  }
+  return r;
+}
+async function readCardPdf(file){
+  if (!window.pdfjsLib){ await loadScript(PDFJS + 'pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; }
+  const pdf = await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise; let items = [];
+  for (let i = 1; i <= pdf.numPages; i++) items = items.concat((await (await pdf.getPage(i)).getTextContent()).items.map(x => x.str));
+  return parseCard(items);
+}
+async function readDst(file){   // Tajima DST header: +X/-X/+Y/-Y in 0.1 mm, CO = color changes
+  const h = new TextDecoder('latin1').decode(await file.slice(0, 512).arrayBuffer()), g = k => { const m = h.match(new RegExp(k + ':\\s*(\\d+)')); return m ? +m[1] : null; };
+  const px = g('\\+X'), mx = g('-X'), py = g('\\+Y'), my = g('-Y'), co = g('CO');
+  if (px == null || py == null) return null;
+  const la = (h.match(/LA:([^\r\n]*)/) || ['', ''])[1].trim();
+  return {w:((px + mx) / 254).toFixed(2), h:((py + my) / 254).toFixed(2), stops:co == null ? '' : co + 1, label:la};
+}
+const cardKey = s => String(s || '').toUpperCase().replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+async function applyCardFile(l, file){
+  const name = file.name || '', isDst = /\.dst$/i.test(name), isPdf = /\.pdf$/i.test(name) || file.type === 'application/pdf';
+  if (!isDst && !isPdf){ toast('Drop a color card PDF or a DST file here.'); return; }
+  let ch = [], note = '';
+  try {
+    if (isDst){
+      const d = await readDst(file); if (!d){ toast('Couldn&rsquo;t read that DST.'); return; }
+      ch = [['dstH', 'DST H', d.h], ['dstW', 'DST W', d.w]];
+      if (d.stops && String(l.clrs) !== String(d.stops)) note = '\nThe DST has ' + d.stops + ' color(s); # Stops says ' + (l.clrs || '—') + '.';
+      const k = cardKey(l.emb), base = (k.match(/^(.*?\d+)/) || [k])[0], lab = cardKey(d.label + ' ' + name.replace(/\.dst$/i, ''));
+      if (!(lab.includes(k) || lab.includes(base))) note += '\nHeads up: this DST is named "' + (d.label || name) + '", not ' + l.emb + '.';
+    } else {
+      toast('Reading the color card&hellip;'); const c = await readCardPdf(file);
+      if (!c.threads.length && !c.w){ toast('Couldn&rsquo;t find thread colors or sizes in that PDF (is it a scanned picture?).', 6000); return; }
+      if (c.threads.length){ ch.push(['threads', 'Thread colors', c.threads.map((x, i) => (i + 1) + ': ' + x).join(', ')]); ch.push(['clrs', '# Stops', String(c.threads.length)]); }
+      if (c.h) ch.push(['dstH', 'DST H', c.h]); if (c.w) ch.push(['dstW', 'DST W', c.w]);
+      if (c.fmt === 'Wilcom' && l.ccSt !== 'Wilcom card done') ch.push(['ccSt', 'Color card', 'Wilcom card done']);
+      const k = cardKey(l.emb), base = (k.match(/^(.*?\d+)/) || [k])[0], txt = cardKey(c.design + ' ' + c.colorway);
+      if (!(txt.includes(k) || txt.includes(base))) note = '\nHeads up: the card says "' + [c.design, c.colorway].filter(Boolean).join(' / ') + '", not ' + l.emb + '.';
+    }
+  } catch(e){ toast('Couldn&rsquo;t read that file (' + esc(e.message || e.name) + ').', 6000); return; }
+  const diff = ch.filter(([f, , v]) => String(l[f] == null ? '' : l[f]).trim() !== String(v));
+  if (!diff.length){ toast(esc(name) + ' matches what&rsquo;s here. Nothing to change.' + (note ? ' ' + esc(note.trim()) : ''), 6000); return; }
+  if (!confirm('Update ' + (l.emb || l.id) + ' from ' + name + '?\n\n' + diff.map(([f, n, v]) => n + ': ' + (l[f] || '—') + '  →  ' + v).join('\n') + note)) return;
+  diff.forEach(([f, , v]) => { if (f === 'ccSt'){ logEdit(l, 'Color card', l.ccSt || '', v + ' (from ' + name + ')'); l.ccSt = v; l.ccDate = nowStamp().slice(0, 10); } else setField(l, f, v); });
+  touch(); render(); toast(esc(l.emb) + ' updated from ' + esc(name) + '.');
+}
 async function putPicture(l, slot, file){
   if (!dirHandle || !(await permOk(dirHandle, true))){ toast('Connect Excel first (top right).'); return; }
   if (!/^image\//.test(file.type)){ toast('That isn&rsquo;t a picture.'); return; }
@@ -787,6 +849,7 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
     row('Flag', '<label class="cb" style="display:inline-flex"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> Flag for review' + (l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? ' (' + esc(l.flag) + ')' : '') + '</label>') +
     row('Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>') +   // LL v1.28: also on the Setup Check tab   // LL v1.25: verify one logo from any tab
     head('Thread Colors &amp; Size') +
+    row('Color card / DST', '<div class="ccdrop" data-ccdrop="1" data-id="' + id + '">Drop a <b>color card PDF</b> (Wilcom or Pulse worksheet) or a <b>DST</b> here to fill these in &nbsp;<button class="btn light small" data-act="ccPick" data-id="' + id + '">Choose file</button></div>') +   // LL v1.43
     row('Thread Colors', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>') +
     row('# Stops', inp('clrs', '70px')) +
     row('Thread Status', '<span id="ts-' + id + '">' + tsCell(l) + '</span>') +
@@ -1203,6 +1266,7 @@ page.addEventListener('click', async e => {
       setField(l, f, v.trim().replace(/^"+|"+$/g, '')); render(); toast(v.trim() ? 'Folder saved.' : 'Folder removed.'); return; }
     if (a === 'openFolder' && l){ const p = l[act.dataset.which || 'folder'], u = folderUrl(p); if (!p){ toast('No folder path yet.'); return; } if (!u){ toast('That folder isn&rsquo;t in a synced SharePoint folder, so it can&rsquo;t open here. Use Copy and paste it into File Explorer.', 6000); return; } window.open(u, '_blank', 'noopener'); return; }
     if (a === 'crop' && l){ openCrop(l, act.dataset.slot); return; }
+    if (a === 'ccPick' && l){ const fi = document.createElement('input'); fi.type = 'file'; fi.accept = '.pdf,.dst,application/pdf'; fi.onchange = () => { if (fi.files[0]) applyCardFile(l, fi.files[0]); }; fi.click(); return; }   // LL v1.43
     if (a === 'pic' && l){ pickFor = [l.id, act.dataset.slot]; const fi = document.getElementById('picFile'); fi.value = ''; fi.click(); return; }
     if (a === 'unpic' && l){ removePicture(l, act.dataset.slot); return; }
     return;
@@ -1267,14 +1331,15 @@ page.addEventListener('keydown', e => { const t = e.target; if (!(e.key === 'Ent
   e.preventDefault(); if (addNote(t.dataset.nid, t.value)){ render(); toast('Note added.'); } });
 page.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.hist) histOpen[d.dataset.hist] = d.open; if (d.dataset && d.dataset.fold) foldOpen[d.dataset.fold] = d.open; }, true);
 document.getElementById('picFile').onchange = e => { const f = e.target.files[0], l = pickFor && byId(pickFor[0]); if (f && l) putPicture(l, pickFor[1], f); };
-page.addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d){ e.preventDefault(); d.classList.add('over'); } });
-page.addEventListener('dragleave', e => { const d = e.target.closest('[data-drop]'); if (d) d.classList.remove('over'); });
+page.addEventListener('dragover', e => { const d = e.target.closest('[data-drop],[data-ccdrop]'); if (d){ e.preventDefault(); d.classList.add('over'); } });
+page.addEventListener('dragleave', e => { const d = e.target.closest('[data-drop],[data-ccdrop]'); if (d) d.classList.remove('over'); });
+page.addEventListener('drop', e => { const d = e.target.closest('[data-ccdrop]'); if (!d) return; e.preventDefault(); d.classList.remove('over'); const f = e.dataTransfer.files[0], l = byId(d.dataset.id); if (f && l) applyCardFile(l, f); });   // LL v1.43
 page.addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); if (!d) return; e.preventDefault(); d.classList.remove('over');
   const f = e.dataTransfer.files[0], l = byId(d.dataset.id), k = d.dataset.drop; if (!f || !l) return;
   if (d.classList.contains('th') && l.img[k] && !confirm('Replace the ' + SLOTS.find(x => x[0] === k)[1] + ' picture for ' + (l.emb || l.id) + '?\n(The old one moves to Images\\DELETE.)')) return;   // LL v1.39: table drops ask first
   putPicture(l, k, f); });
-window.addEventListener('dragover', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });   // a picture dropped outside a box does nothing (instead of opening the file)
-window.addEventListener('drop', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });
+window.addEventListener('dragover', e => { if (!e.target.closest || !e.target.closest('[data-drop],[data-ccdrop]')) e.preventDefault(); });   // a picture dropped outside a box does nothing (instead of opening the file)
+window.addEventListener('drop', e => { if (!e.target.closest || !e.target.closest('[data-drop],[data-ccdrop]')) e.preventDefault(); });
 
 boot();
 </script>
