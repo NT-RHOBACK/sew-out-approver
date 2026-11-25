@@ -169,7 +169,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 .emb-card .cgrid input:not([type=checkbox]),.emb-card .cgrid select,.emb-card .cgrid textarea{width:100%;min-width:0;padding:5px 7px;font-size:12.5px}
 .emb-card .cgrid textarea{min-height:52px}.gsub{font-size:11px;color:#49516C;margin-top:2px}.gcb{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer}.gcb.c{display:flex;justify-content:center}
 .gsz{font-size:12px}.szr{display:flex;align-items:center;gap:4px;margin:2px 0}.szr span{flex:0 0 30px;white-space:nowrap;font-size:10.5px;font-weight:700;color:var(--grey)}.emb-card .cgrid select[data-f=boxSt]{max-width:220px}.emb-card .cgrid .szr input{flex:1 1 0;width:auto}.szr i{font-style:normal;color:var(--grey)}
-.szt{white-space:nowrap}.szt span{display:inline-block;width:30px;font-size:10.5px;font-weight:700;color:var(--grey)}.cgrid .ccdrop{padding:6px 8px;font-size:11.5px}.ptop{display:flex;align-items:flex-start;gap:16px;max-width:1200px}.ppics{flex:1 1 auto;min-width:0}.ppics .pics.strip{margin-bottom:12px}.ftop{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex:0 0 auto;margin-left:auto;padding:8px 10px;border:1px solid #e3e6ee;border-radius:8px;background:#fbfbfd}
+.szt{white-space:nowrap}.szt span{display:inline-block;width:30px;font-size:10.5px;font-weight:700;color:var(--grey)}.cgrid .ccdrop{padding:6px 8px;font-size:11.5px}.ptop{display:flex;align-items:flex-start;gap:16px;max-width:1200px}.ppics{flex:1 1 auto;min-width:0}.ppics .pics.strip{margin-bottom:12px}.gsec[id^=nw-]{max-width:460px}.ftop{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex:0 0 auto;margin-left:auto;padding:8px 10px;border:1px solid #e3e6ee;border-radius:8px;background:#fbfbfd}
 .cgrid textarea + .ccdrop{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ftop .gtitle{margin:0}.ftop .pathrow,.ftop [id^=fr-]{display:flex;flex-wrap:wrap;gap:6px}
 .cgrid .pathrow,.cgrid [id^=fr-]{display:flex;flex-wrap:wrap;gap:6px}
 .ckc{font-weight:800;font-size:13px;text-align:center;border-radius:4px;padding:3px 2px}.tbl .ckc select.cksel{min-width:0;font-size:10.5px}.tbl .ckc .ckok{font-size:10px}.ckc.ok{color:#256b31;background:#eaf6ec}.ckc.bad{color:#b3261e;background:#fdecea}.ckc.warn{color:#8a5a00;background:#fff4e0}.ckc.off{color:#9aa3b5}
@@ -274,7 +274,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
   <div class="header-right">
     <div class="msearch"><input id="msearch" placeholder="&#128269; Search logos&hellip;" autocomplete="off"><button id="msclear" title="Clear">&times;</button></div>
     <button class="savepill" id="savePill" type="button"></button>
-    <span class="vbadge">LL v1.52</span>
+    <span class="vbadge">LL v1.53</span>
     <div class="header-user"><div class="avatar">NT</div>Noelle Thompson</div>
   </div>
 </div>
@@ -288,7 +288,7 @@ h1{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:14px}
 <script>
 // Logo Library (LL vX.YZ). The page code is on GitHub; the data is not. It lives only in "Logo Library.xlsx" + the Images folder
 // in Noelle's OneDrive (CLAUDE AI\CLAUDE\Logo Library), opened with the File System Access API (Edge/Chrome). Started from a copy of v13.
-const VERSION = 'LL v1.52';
+const VERSION = 'LL v1.53';
 const XLSX_NAME = 'Logo Library.xlsx', IMG_DIR = 'Images', DELETE_DIR = 'DELETE', LS_DATA = 'logoLibrary_data_v1', LS_UI = 'logoLibrary_ui_v1';
 const BY = 'Noelle';
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -922,12 +922,13 @@ function cardHtml(l){   // LL v1.17: Excel-style rows (label | value); pictures 
       ['Flag', '<label class="gcb" title="Flag for review"><input type="checkbox" data-flagcb="1" data-id="' + id + '"' + (l.flag ? ' checked' : '') + '> ' + esc(l.flag && l.flag !== (L.flag[0] || 'REVIEW') ? l.flag : 'Review') + '</label>', '7%'],
       ['Setup Check', '<span id="ck-' + id + '">' + chkCell(l) + '</span>']]) +
     grid('Thread colors &amp; size', [
-      ['Thread colors (Madeira)', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>' + '<div class="ccdrop" data-ccdrop="1" data-id="' + id + '">Drop a color card PDF or DST <button class="btn light small" data-act="ccPick" data-id="' + id + '">Choose</button></div>', '30%'],
-      ['# Stops', inp('clrs'), '7%'],
-      ['Size (H × W)', '<div class="szr"><span>Spec</span>' + inp('specH') + '<i>×</i>' + inp('specW') + '</div><div class="szr"><span>DST</span>' + inp('dstH') + '<i>×</i>' + inp('dstW') + '</div>', '22%'],   // LL v1.50: stacked
-      ['Size check', '<span id="sc-' + id + '" class="gsz">' + scText(l) + '</span>', '15%'],
-      ['NetSuite', '<select data-tstat="1" data-id="' + id + '">' + opt(TSTAT, l.tcStatus || '', '—') + '</select>', '13%'],
-      ['Wilcom card', '<select data-ccst="1" data-id="' + id + '">' + opt(CCST, l.ccSt || '', '—') + '</select>', '13%']]) +   // LL v1.51: color card / DST drop moved under Thread colors
+      ['Thread colors (Madeira)', '<textarea data-f="threads" data-id="' + id + '">' + esc(l.threads) + '</textarea>' + '<div class="ccdrop" data-ccdrop="1" data-id="' + id + '">Drop a color card PDF or DST <button class="btn light small" data-act="ccPick" data-id="' + id + '">Choose</button></div>', '40%'],
+      ['# Stops', inp('clrs'), '8%'],
+      ['Size (H × W)', '<div class="szr"><span>Spec</span>' + inp('specH') + '<i>×</i>' + inp('specW') + '</div><div class="szr"><span>DST</span>' + inp('dstH') + '<i>×</i>' + inp('dstW') + '</div>', '28%'],   // LL v1.50: stacked
+      ['Size check', '<span id="sc-' + id + '" class="gsz">' + scText(l) + '</span>']]) +   // LL v1.51: color card / DST drop moved under Thread colors
+    grid('NetSuite &amp; Wilcom card', [   // LL v1.53: own table below Thread colors & size
+      ['NetSuite (thread colors)', '<select data-tstat="1" data-id="' + id + '">' + opt(TSTAT, l.tcStatus || '', '—') + '</select>', '50%'],
+      ['Wilcom card', '<select data-ccst="1" data-id="' + id + '">' + opt(CCST, l.ccSt || '', '—') + '</select>']], 'nw-' + id) +
     grid('Files &amp; folders', [
       ...FILES.map(([k, n]) => [n, '<label class="gcb c"><input type="checkbox" data-f="' + k + '" data-id="' + id + '"' + (l[k] ? ' checked' : '') + '></label>', '5%']),
       ['Box drive', '<select data-f="boxSt" data-id="' + id + '">' + opt(BOXST, l.boxSt || '', '—') + '</select>']]);   // LL v1.50: Folder path moved to the top of the card
